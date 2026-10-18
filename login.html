@@ -74,7 +74,9 @@
       if (!form.reportValidity()) return;
       const { data, error } = await sb.auth.signUp({
         email: form.email.value.trim(),
-        password: form.password.value
+        password: form.password.value,
+        // ลิงก์ในอีเมลยืนยันให้กลับมาหน้า login.html ของเว็บนี้ (ใช้ได้ทั้ง github.io และโดเมนจริงในอนาคต)
+        options: { emailRedirectTo: new URL("login.html", window.location.href).href }
       });
       if (error) return show("สมัครไม่สำเร็จ: " + error.message, true);
       if (data.session) window.location.href = "incident.html";
