@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>รายงานอุบัติเหตุ | SHE Portal</title>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>รายงานอุบัติเหตุ</h2>
+    <p id="msg" role="status" class="msg" hidden></p>
+    <form id="incident-form">
+      <p>
+        <label for="date">วันที่เกิดเหตุ</label><br>
+        <input type="date" id="date" name="date" required>
+      </p>
+      <p>
+        <label for="location">สถานที่</label><br>
+        <input type="text" id="location" name="location" required>
+      </p>
+      <p>
+        <label for="type">ประเภทเหตุ</label><br>
+        <select id="type" name="type" required>
+          <option value="">-- เลือก --</option>
+          <option value="near-miss">เหตุเกือบเกิดอุบัติเหตุ (Near miss)</option>
+          <option value="first-aid">ปฐมพยาบาล</option>
+          <option value="lost-time">หยุดงาน (Lost time)</option>
+          <option value="property">ทรัพย์สินเสียหาย</option>
+        </select>
+      </p>
+      <p>
+        <label for="severity">ความรุนแรง</label><br>
+        <select id="severity" name="severity" required>
+          <option value="">-- เลือก --</option>
+          <option value="low">ต่ำ</option>
+          <option value="medium">กลาง</option>
+          <option value="high">สูง</option>
+        </select>
+      </p>
+      <p>
+        <label for="description">รายละเอียดเหตุการณ์</label><br>
+        <textarea id="description" name="description" rows="5" cols="40" required></textarea>
+      </p>
+      <button type="submit" id="btn-save">บันทึกรายงาน</button>
+    </form>
+  </main>
+
+  <footer>
+    <small>ข้อมูลในระบบนี้เป็นข้อมูลจำลองระหว่างพัฒนา</small>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>requireLogin();</script>
+  <script>
+    const form = document.getElementById("incident-form");
+    const msg = document.getElementById("msg");
+    const btn = document.getElementById("btn-save");
+
+    function show(text, isError) {
+      msg.textContent = text;
+      msg.className = "msg " + (isError ? "error" : "ok");
+      msg.hidden = false;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();          // กันไม่ให้เบราว์เซอร์โหลดหน้าใหม่
+      btn.disabled = true;         // กันกดซ้ำจนข้อมูลซ้ำ
+
+      // ไม่ส่ง reporter_id เอง: ฐานข้อมูลใส่ auth.uid() ให้ (กันปลอมตัวเป็นคนอื่น)
+      const { error } = await sb.from("incident_reports").insert({
+        occurred_on: form.date.value,
+        location: form.location.value.trim(),
+        type: form.type.value,
+        severity: form.severity.value,
+        description: form.description.value.trim()
+      });
+
+      btn.disabled = false;
+      if (error) return show("บันทึกไม่สำเร็จ: " + error.message, true);
+      form.reset();
+      show("บันทึกรายงานเรียบร้อยแล้ว", false);
+    });
+  </script>
+</body>
+</html>

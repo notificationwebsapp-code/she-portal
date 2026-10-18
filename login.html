@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>เข้าสู่ระบบ | SHE Portal</title>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>เข้าสู่ระบบ</h2>
+    <p id="msg" role="status" class="msg" hidden></p>
+    <form id="login-form">
+      <p>
+        <label for="email">อีเมล</label><br>
+        <input type="email" id="email" name="email" autocomplete="email" required>
+      </p>
+      <p>
+        <label for="password">รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)</label><br>
+        <input type="password" id="password" name="password" autocomplete="current-password" minlength="8" required>
+      </p>
+      <button type="submit" id="btn-login">เข้าสู่ระบบ</button>
+      <button type="button" id="btn-signup" class="secondary">สมัครสมาชิก</button>
+    </form>
+    <p><small>ใช้อีเมลและรหัสผ่านสมมติระหว่างพัฒนา อย่าใช้รหัสผ่านจริงของคุณ</small></p>
+  </main>
+
+  <footer>
+    <small>ข้อมูลในระบบนี้เป็นข้อมูลจำลองระหว่างพัฒนา</small>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const msg = document.getElementById("msg");
+    const form = document.getElementById("login-form");
+
+    function show(text, isError) {
+      msg.textContent = text;          // textContent ปลอดภัยจาก XSS (ไม่แปลงเป็น HTML)
+      msg.className = "msg " + (isError ? "error" : "ok");
+      msg.hidden = false;
+    }
+
+    // ถ้าล็อกอินอยู่แล้ว ไปหน้ารายงานเลย
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = "incident.html";
+    });
+
+    // เข้าสู่ระบบ
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const { error } = await sb.auth.signInWithPassword({
+        email: form.email.value.trim(),
+        password: form.password.value
+      });
+      if (error) return show("เข้าสู่ระบบไม่สำเร็จ: " + error.message, true);
+      window.location.href = "incident.html";
+    });
+
+    // สมัครสมาชิก
+    document.getElementById("btn-signup").addEventListener("click", async () => {
+      if (!form.reportValidity()) return;
+      const { data, error } = await sb.auth.signUp({
+        email: form.email.value.trim(),
+        password: form.password.value
+      });
+      if (error) return show("สมัครไม่สำเร็จ: " + error.message, true);
+      if (data.session) window.location.href = "incident.html";
+      else show("สมัครแล้ว กรุณาตรวจอีเมลเพื่อยืนยัน จากนั้นกลับมาเข้าสู่ระบบ", false);
+    });
+  </script>
+</body>
+</html>

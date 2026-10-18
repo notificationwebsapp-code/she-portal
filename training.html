@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>บันทึกการอบรม | SHE Portal</title>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>บันทึกการอบรม</h2>
+    <p id="msg" role="status" class="msg" hidden></p>
+    <form id="main-form">
+      <p>
+        <label for="course">ชื่อหลักสูตร</label><br>
+        <input type="text" id="course" name="course" required>
+      </p>
+      <p>
+        <label for="date">วันที่อบรม</label><br>
+        <input type="date" id="date" name="date" required>
+      </p>
+      <p>
+        <label for="hours">จำนวนชั่วโมง</label><br>
+        <input type="number" id="hours" name="hours" min="0.5" step="0.5" required>
+      </p>
+      <p>
+        <label for="attendees">จำนวนผู้เข้าอบรม</label><br>
+        <input type="number" id="attendees" name="attendees" min="1" required>
+      </p>
+      <button type="submit" id="btn-save">บันทึกการอบรม</button>
+    </form>
+  </main>
+
+  <footer>
+    <small>ข้อมูลในระบบนี้เป็นข้อมูลจำลองระหว่างพัฒนา</small>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>requireLogin();</script>
+  <script>
+    const form = document.getElementById("main-form");
+    const msg = document.getElementById("msg");
+    const btn = document.getElementById("btn-save");
+    function show(text, isError) {
+      msg.textContent = text;
+      msg.className = "msg " + (isError ? "error" : "ok");
+      msg.hidden = false;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      const { error } = await sb.from("training_records").insert({
+        course: form.course.value.trim(),
+        trained_on: form.date.value,
+        hours: Number(form.hours.value),        // ฟอร์มส่งเป็นข้อความ ต้องแปลงเป็นตัวเลข
+        attendees: parseInt(form.attendees.value, 10)
+      });
+      btn.disabled = false;
+      if (error) return show("บันทึกไม่สำเร็จ: " + error.message, true);
+      form.reset();
+      show("บันทึกการอบรมเรียบร้อยแล้ว", false);
+    });
+  </script>
+</body>
+</html>

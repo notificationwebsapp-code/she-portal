@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>เช็กลิสต์ตรวจ | SHE Portal</title>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>เช็กลิสต์ตรวจ</h2>
+    <p id="msg" role="status" class="msg" hidden></p>
+    <form id="main-form">
+      <p>
+        <label for="date">วันที่ตรวจ</label><br>
+        <input type="date" id="date" name="date" required>
+      </p>
+      <p>
+        <label for="area">พื้นที่ที่ตรวจ</label><br>
+        <input type="text" id="area" name="area" required>
+      </p>
+      <fieldset>
+        <legend>รายการตรวจ</legend>
+        <p><input type="checkbox" id="c1" name="c1"> <label for="c1">ทางหนีไฟไม่มีสิ่งกีดขวาง</label></p>
+        <p><input type="checkbox" id="c2" name="c2"> <label for="c2">ถังดับเพลิงอยู่ในตำแหน่งและยังไม่หมดอายุ</label></p>
+        <p><input type="checkbox" id="c3" name="c3"> <label for="c3">พื้นแห้งและไม่มีสิ่งของวางเกะกะ</label></p>
+        <p><input type="checkbox" id="c4" name="c4"> <label for="c4">แสงสว่างเพียงพอ</label></p>
+      </fieldset>
+      <p>
+        <label for="note">หมายเหตุ</label><br>
+        <textarea id="note" name="note" rows="3" cols="40"></textarea>
+      </p>
+      <button type="submit" id="btn-save">บันทึกผลตรวจ</button>
+    </form>
+  </main>
+
+  <footer>
+    <small>ข้อมูลในระบบนี้เป็นข้อมูลจำลองระหว่างพัฒนา</small>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>requireLogin();</script>
+  <script>
+    const form = document.getElementById("main-form");
+    const msg = document.getElementById("msg");
+    const btn = document.getElementById("btn-save");
+    function show(text, isError) {
+      msg.textContent = text;
+      msg.className = "msg " + (isError ? "error" : "ok");
+      msg.hidden = false;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      // เก็บผลตรวจเป็นออบเจ็กต์ true/false เช่น {"c1": true, "c2": false}
+      const items = {
+        c1: form.c1.checked, c2: form.c2.checked,
+        c3: form.c3.checked, c4: form.c4.checked
+      };
+      const { error } = await sb.from("checklist_inspections").insert({
+        inspected_on: form.date.value,
+        area: form.area.value.trim(),
+        items: items,
+        note: form.note.value.trim() || null
+      });
+      btn.disabled = false;
+      if (error) return show("บันทึกไม่สำเร็จ: " + error.message, true);
+      form.reset();
+      show("บันทึกผลตรวจเรียบร้อยแล้ว", false);
+    });
+  </script>
+</body>
+</html>

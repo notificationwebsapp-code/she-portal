@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ดูข้อมูล | SHE Portal</title>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>ดูข้อมูลที่บันทึกแล้ว</h2>
+    <p id="msg" role="status" class="msg" hidden></p>
+    <p><small>ระบบแสดงเฉพาะข้อมูลที่สิทธิ์ของคุณเข้าถึงได้ (กรองโดยฐานข้อมูลด้วย RLS) พนักงานทั่วไปเห็นเฉพาะรายงานของตัวเอง</small></p>
+
+    <h3>รายงานอุบัติเหตุ</h3>
+    <div class="tablewrap"><table id="t-incident"></table></div>
+
+    <h3>เช็กลิสต์ตรวจ</h3>
+    <div class="tablewrap"><table id="t-checklist"></table></div>
+
+    <h3>บันทึกการอบรม</h3>
+    <div class="tablewrap"><table id="t-training"></table></div>
+  </main>
+
+  <footer>
+    <small>ข้อมูลในระบบนี้เป็นข้อมูลจำลองระหว่างพัฒนา</small>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    requireLogin();
+    const msg = document.getElementById("msg");
+
+    // สร้างตารางด้วย createElement + textContent (ไม่ใช้ innerHTML) กัน XSS
+    function render(tableId, headers, rows) {
+      const table = document.getElementById(tableId);
+      table.replaceChildren();
+      const thead = table.createTHead().insertRow();
+      headers.forEach((h) => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        thead.appendChild(th);
+      });
+      const tbody = table.createTBody();
+      if (rows.length === 0) {
+        const td = tbody.insertRow().insertCell();
+        td.colSpan = headers.length;
+        td.textContent = "ยังไม่มีข้อมูลที่คุณมีสิทธิ์เห็น";
+        return;
+      }
+      rows.forEach((r) => {
+        const tr = tbody.insertRow();
+        r.forEach((v) => { tr.insertCell().textContent = v ?? ""; });
+      });
+    }
+
+    async function load(table, order, cols, tableId, headers, toRow) {
+      const { data, error } = await sb.from(table).select(cols)
+        .order(order, { ascending: false }).limit(50);
+      if (error) {
+        msg.textContent = "โหลดข้อมูลไม่สำเร็จ: " + error.message;
+        msg.className = "msg error"; msg.hidden = false;
+        return;
+      }
+      render(tableId, headers, data.map(toRow));
+    }
+
+    load("incident_reports", "occurred_on",
+      "occurred_on, location, type, severity, description",
+      "t-incident", ["วันที่", "สถานที่", "ประเภท", "ความรุนแรง", "รายละเอียด"],
+      (r) => [r.occurred_on, r.location, r.type, r.severity, r.description]);
+
+    load("checklist_inspections", "inspected_on",
+      "inspected_on, area, items, note",
+      "t-checklist", ["วันที่", "พื้นที่", "ผ่าน", "หมายเหตุ"],
+      (r) => {
+        const v = Object.values(r.items || {});
+        return [r.inspected_on, r.area, v.filter(Boolean).length + "/" + v.length, r.note];
+      });
+
+    load("training_records", "trained_on",
+      "trained_on, course, hours, attendees",
+      "t-training", ["วันที่", "หลักสูตร", "ชั่วโมง", "ผู้เข้าอบรม"],
+      (r) => [r.trained_on, r.course, r.hours, r.attendees]);
+  </script>
+</body>
+</html>
