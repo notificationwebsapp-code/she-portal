@@ -67,9 +67,20 @@
       });
     }
 
+    // แสดงเวลาที่บันทึก (DB เก็บเป็น UTC) เป็นเวลาไทย
+    function fmtTime(v) {
+      if (!v) return "";
+      return new Date(v).toLocaleString("en-GB", {
+        timeZone: "Asia/Bangkok", hour12: false,
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit"
+      });
+    }
+
     async function load(table, order, cols, tableId, headers, toRow) {
       const { data, error } = await sb.from(table).select(cols)
-        .order(order, { ascending: false }).limit(50);
+        .order(order, { ascending: false })
+        .order("created_at", { ascending: false }).limit(50);
       if (error) {
         msg.textContent = "โหลดข้อมูลไม่สำเร็จ: " + error.message;
         msg.className = "msg error"; msg.hidden = false;
@@ -79,22 +90,22 @@
     }
 
     load("incident_reports", "occurred_on",
-      "occurred_on, location, type, severity, description",
-      "t-incident", ["วันที่", "สถานที่", "ประเภท", "ความรุนแรง", "รายละเอียด"],
-      (r) => [r.occurred_on, r.location, r.type, r.severity, r.description]);
+      "occurred_on, location, type, severity, description, created_at",
+      "t-incident", ["วันที่", "สถานที่", "ประเภท", "ความรุนแรง", "รายละเอียด", "บันทึกเมื่อ"],
+      (r) => [r.occurred_on, r.location, r.type, r.severity, r.description, fmtTime(r.created_at)]);
 
     load("checklist_inspections", "inspected_on",
-      "inspected_on, area, items, note",
-      "t-checklist", ["วันที่", "พื้นที่", "ผ่าน", "หมายเหตุ"],
+      "inspected_on, area, items, note, created_at",
+      "t-checklist", ["วันที่", "พื้นที่", "ผ่าน", "หมายเหตุ", "บันทึกเมื่อ"],
       (r) => {
         const v = Object.values(r.items || {});
-        return [r.inspected_on, r.area, v.filter(Boolean).length + "/" + v.length, r.note];
+        return [r.inspected_on, r.area, v.filter(Boolean).length + "/" + v.length, r.note, fmtTime(r.created_at)];
       });
 
     load("training_records", "trained_on",
-      "trained_on, course, hours, attendees",
-      "t-training", ["วันที่", "หลักสูตร", "ชั่วโมง", "ผู้เข้าอบรม"],
-      (r) => [r.trained_on, r.course, r.hours, r.attendees]);
+      "trained_on, course, hours, attendees, created_at",
+      "t-training", ["วันที่", "หลักสูตร", "ชั่วโมง", "ผู้เข้าอบรม", "บันทึกเมื่อ"],
+      (r) => [r.trained_on, r.course, r.hours, r.attendees, fmtTime(r.created_at)]);
   </script>
 </body>
 </html>
