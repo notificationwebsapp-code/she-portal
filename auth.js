@@ -33,3 +33,13 @@ async function requireLogin() {
 }
 
 setupNav();
+
+// ปุ่ม "แสดงรหัสผ่าน": checkbox ที่มี data-show-pw="id1,id2" สลับ type ของช่องรหัสผ่านระหว่าง password/text
+document.addEventListener("change", (e) => {
+  const t = e.target;
+  if (!t.matches || !t.matches("[data-show-pw]")) return;
+  t.dataset.showPw.split(",").forEach((id) => {
+    const el = document.getElementById(id.trim());
+    if (el) el.type = t.checked ? "text" : "password";
+  });
+});

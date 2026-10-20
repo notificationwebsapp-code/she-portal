@@ -42,3 +42,6 @@ button.secondary { background: #fff; color: var(--brand); border: 2px solid var(
 table { border-collapse: collapse; width: 100%; font-size: .95rem; }
 th, td { border: 1px solid #d5dbe6; padding: .4rem .6rem; text-align: left; vertical-align: top; }
 th { background: #eef2f9; }
+
+.show-pw{display:inline-flex;align-items:center;gap:.4rem;margin-top:.4rem;font-size:.9rem;font-weight:normal;cursor:pointer}
+.show-pw input{width:auto;margin:0}
