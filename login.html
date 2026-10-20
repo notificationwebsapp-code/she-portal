@@ -33,6 +33,7 @@
       </p>
       <button type="submit" id="btn-login">เข้าสู่ระบบ</button>
       <button type="button" id="btn-signup" class="secondary">สมัครสมาชิก</button>
+      <button type="button" id="btn-forgot" class="secondary">ลืมรหัสผ่าน</button>
     </form>
     <p><small>ใช้อีเมลและรหัสผ่านสมมติระหว่างพัฒนา อย่าใช้รหัสผ่านจริงของคุณ</small></p>
   </main>
@@ -81,6 +82,19 @@
       if (error) return show("สมัครไม่สำเร็จ: " + error.message, true);
       if (data.session) window.location.href = "incident.html";
       else show("สมัครแล้ว กรุณาตรวจอีเมลเพื่อยืนยัน จากนั้นกลับมาเข้าสู่ระบบ", false);
+    });
+
+    // ลืมรหัสผ่าน: ส่งลิงก์รีเซ็ตไปทางอีเมล (ไม่ส่งรหัสผ่านเดิม)
+    document.getElementById("btn-forgot").addEventListener("click", async () => {
+      const email = form.email.value.trim();
+      if (!form.email.checkValidity() || !email) {
+        return show("กรอกอีเมลในช่องด้านบนก่อน แล้วกด \"ลืมรหัสผ่าน\" อีกครั้ง", true);
+      }
+      await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: new URL("reset.html", window.location.href).href
+      });
+      // ตอบข้อความเดียวกันเสมอ ไม่บอกว่ามีอีเมลนี้ในระบบหรือไม่ (กัน user enumeration, OWASP A07)
+      show("หากอีเมลนี้มีบัญชีในระบบ จะได้รับลิงก์ตั้งรหัสผ่านใหม่ทางอีเมล (ลิงก์มีอายุจำกัด)", false);
     });
   </script>
 </body>

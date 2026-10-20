@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ตั้งรหัสผ่านใหม่ | SHE Portal</title>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>ตั้งรหัสผ่านใหม่</h2>
+    <p id="msg" role="status" class="msg" hidden></p>
+    <form id="reset-form" hidden>
+      <p>
+        <label for="pw1">รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</label><br>
+        <input type="password" id="pw1" autocomplete="new-password" minlength="8" required>
+      </p>
+      <p>
+        <label for="pw2">ยืนยันรหัสผ่านใหม่</label><br>
+        <input type="password" id="pw2" autocomplete="new-password" minlength="8" required>
+      </p>
+      <button type="submit">บันทึกรหัสผ่านใหม่</button>
+    </form>
+    <p id="invalid" hidden>ลิงก์นี้ไม่ถูกต้องหรือหมดอายุ กรุณาไปที่ <a href="login.html">หน้าเข้าสู่ระบบ</a> แล้วกด "ลืมรหัสผ่าน" เพื่อขอลิงก์ใหม่</p>
+  </main>
+
+  <footer>
+    <small>ข้อมูลในระบบนี้เป็นข้อมูลจำลองระหว่างพัฒนา</small>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const msg = document.getElementById("msg");
+    const form = document.getElementById("reset-form");
+    const invalid = document.getElementById("invalid");
+
+    function show(text, isError) {
+      msg.textContent = text;
+      msg.className = "msg " + (isError ? "error" : "ok");
+      msg.hidden = false;
+    }
+
+    // ลิงก์ในอีเมลพามาที่หน้านี้ แล้ว supabase-js ส่งเหตุการณ์ PASSWORD_RECOVERY
+    let ready = false;
+    sb.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        ready = true;
+        form.hidden = false;
+        invalid.hidden = true;
+      }
+    });
+    // ถ้ารอสักครู่แล้วยังไม่มีเหตุการณ์ แปลว่าเปิดหน้านี้ตรง ๆ หรือลิงก์หมดอายุ
+    setTimeout(() => { if (!ready) invalid.hidden = false; }, 2500);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pw1 = document.getElementById("pw1").value;
+      const pw2 = document.getElementById("pw2").value;
+      if (pw1 !== pw2) return show("รหัสผ่านสองช่องไม่ตรงกัน", true);
+      const { error } = await sb.auth.updateUser({ password: pw1 });
+      if (error) return show("ตั้งรหัสผ่านไม่สำเร็จ: " + error.message, true);
+      show("ตั้งรหัสผ่านใหม่สำเร็จ กำลังพาไปหน้าเข้าสู่ระบบ", false);
+      form.hidden = true;
+      await sb.auth.signOut();
+      setTimeout(() => { window.location.href = "login.html"; }, 1500);
+    });
+  </script>
+</body>
+</html>
