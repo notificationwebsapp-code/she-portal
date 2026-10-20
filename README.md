@@ -3,7 +3,7 @@
 เว็บแอปสำหรับบันทึกข้อมูลด้าน SHE (Safety, Health, Environment) — personal project เพื่อการเรียนรู้
 **ข้อมูลทั้งหมดในระบบเป็นข้อมูลจำลอง (mock data) ไม่มีข้อมูลจริงขององค์กรหรือพนักงาน**
 
-Live demo: https://notificationwebsapp-code.github.io/she-portal/
+Live demo: [https://notificationwebsapp-code.github.io/she-portal/](https://shewebapp.com)
 
 ## Problem
 
