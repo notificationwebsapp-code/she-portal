@@ -19,28 +19,36 @@
     </nav>
   </header>
 
-  <main>
-    <h2>เข้าสู่ระบบ</h2>
+  <main class="narrow">
+    <h2 id="title">เข้าสู่ระบบ</h2>
+    <p class="lead" id="lead">ยินดีต้อนรับกลับ กรุณากรอกอีเมลและรหัสผ่าน</p>
+
+    <div class="tabs" role="tablist" aria-label="เลือกโหมด">
+      <button type="button" role="tab" id="tab-login" aria-selected="true">เข้าสู่ระบบ</button>
+      <button type="button" role="tab" id="tab-signup" aria-selected="false">สมัครสมาชิก</button>
+    </div>
+
     <p id="msg" role="status" class="msg" hidden></p>
     <form id="login-form">
       <p>
         <label for="email">อีเมล</label><br>
         <input type="email" id="email" name="email" autocomplete="email" required>
       </p>
-      <p>
-        <label for="full_name">ชื่อ-นามสกุล (กรอกเฉพาะตอนสมัครสมาชิก เพื่อให้ Admin ตรวจสอบตัวตน)</label><br>
+      <p id="name-row" hidden>
+        <label for="full_name">ชื่อ-นามสกุล</label><br>
         <input type="text" id="full_name" name="full_name" autocomplete="name" maxlength="100">
+        <span class="helper">ใช้ให้ Admin ตรวจสอบตัวตนก่อนอนุมัติ</span>
       </p>
       <p>
-        <label for="password">รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)</label><br>
+        <label for="password">รหัสผ่าน <small>(อย่างน้อย 8 ตัวอักษร)</small></label><br>
         <input type="password" id="password" name="password" autocomplete="current-password" minlength="8" required>
         <label class="show-pw"><input type="checkbox" data-show-pw="password"> แสดงรหัสผ่าน</label>
       </p>
-      <button type="submit" id="btn-login">เข้าสู่ระบบ</button>
-      <button type="button" id="btn-signup" class="secondary">สมัครสมาชิก</button>
-      <button type="button" id="btn-forgot" class="secondary">ลืมรหัสผ่าน</button>
+      <label class="check" id="remember-row"><input type="checkbox" id="remember" checked> จดจำฉันบนอุปกรณ์นี้ (ไม่ต้องล็อกอินทุกครั้ง)</label>
+      <button type="submit" id="btn-submit" class="fullwidth">เข้าสู่ระบบ</button>
+      <p class="centered" id="forgot-row"><button type="button" id="btn-forgot" class="link">ลืมรหัสผ่าน?</button></p>
     </form>
-    <p><small>ใช้อีเมลและรหัสผ่านสมมติระหว่างพัฒนา อย่าใช้รหัสผ่านจริงของคุณ</small></p>
+    <p class="helper centered">ใช้อีเมลและรหัสผ่านสมมติระหว่างพัฒนา อย่าใช้รหัสผ่านจริงของคุณ</p>
   </main>
 
   <footer>
@@ -52,6 +60,7 @@
   <script>
     const msg = document.getElementById("msg");
     const form = document.getElementById("login-form");
+    let mode = "login";
 
     function show(text, isError) {
       msg.textContent = text;          // textContent ปลอดภัยจาก XSS (ไม่แปลงเป็น HTML)
@@ -59,39 +68,58 @@
       msg.hidden = false;
     }
 
-    // ถ้าล็อกอินอยู่แล้ว ไปหน้ารายงานเลย
+    // สลับโหมด: ช่องชื่อ-นามสกุลแสดงเฉพาะตอนสมัครสมาชิก
+    function setMode(m) {
+      mode = m;
+      const signup = m === "signup";
+      document.getElementById("tab-login").setAttribute("aria-selected", String(!signup));
+      document.getElementById("tab-signup").setAttribute("aria-selected", String(signup));
+      document.getElementById("name-row").hidden = !signup;
+      document.getElementById("full_name").required = signup;
+      document.getElementById("remember-row").hidden = signup;
+      document.getElementById("forgot-row").hidden = signup;
+      document.getElementById("title").textContent = signup ? "สมัครสมาชิก" : "เข้าสู่ระบบ";
+      document.getElementById("lead").textContent = signup
+        ? "กรอกข้อมูลเพื่อขอใช้งาน บัญชีจะใช้งานได้หลัง Admin อนุมัติ"
+        : "ยินดีต้อนรับกลับ กรุณากรอกอีเมลและรหัสผ่าน";
+      document.getElementById("btn-submit").textContent = signup ? "สมัครสมาชิก" : "เข้าสู่ระบบ";
+      form.password.autocomplete = signup ? "new-password" : "current-password";
+      msg.hidden = true;
+    }
+    document.getElementById("tab-login").addEventListener("click", () => setMode("login"));
+    document.getElementById("tab-signup").addEventListener("click", () => setMode("signup"));
+
+    // ถ้าล็อกอินอยู่แล้ว (จำไว้) ไปหน้ารายงานเลย
     sb.auth.getSession().then(({ data }) => {
       if (data.session) window.location.href = "incident.html";
     });
 
-    // เข้าสู่ระบบ
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const { error } = await sb.auth.signInWithPassword({
-        email: form.email.value.trim(),
-        password: form.password.value
-      });
-      if (error) return show("เข้าสู่ระบบไม่สำเร็จ: " + error.message, true);
-      window.location.href = "incident.html";
-    });
-
-    // สมัครสมาชิก
-    document.getElementById("btn-signup").addEventListener("click", async () => {
-      if (!form.reportValidity()) return;
-      const fullName = form.full_name.value.trim();
-      if (fullName.length < 2) {
-        return show("กรุณากรอกชื่อ-นามสกุลก่อนสมัครสมาชิก", true);
-      }
-      const { data, error } = await sb.auth.signUp({
-        email: form.email.value.trim(),
-        password: form.password.value,
-        // ลิงก์ในอีเมลยืนยันให้กลับมาหน้า login.html ของเว็บนี้ (ใช้ได้ทั้ง github.io และโดเมนจริงในอนาคต)
-        // full_name ถูกเก็บลง profiles โดย trigger handle_new_user (ฝั่งฐานข้อมูล)
-        options: { data: { full_name: fullName }, emailRedirectTo: new URL("login.html", window.location.href).href }
-      });
-      if (error) return show("สมัครไม่สำเร็จ: " + error.message, true);
-      if (data.session) window.location.href = "incident.html";
-      else show("สมัครแล้ว บัญชีอยู่ระหว่างรอ Admin อนุมัติ กรุณาเข้าสู่ระบบอีกครั้งภายหลัง", false);
+      const btn = document.getElementById("btn-submit");
+      btn.disabled = true;
+      try {
+        if (mode === "login") {
+          // ต้องตั้งค่า "จดจำฉัน" ก่อนล็อกอิน เพื่อให้ session ถูกเก็บในที่ที่เลือก
+          try { localStorage.setItem("she_remember", document.getElementById("remember").checked ? "1" : "0"); } catch (err) {}
+          const { error } = await sb.auth.signInWithPassword({
+            email: form.email.value.trim(), password: form.password.value });
+          if (error) return show("เข้าสู่ระบบไม่สำเร็จ: " + error.message, true);
+          window.location.href = "incident.html";
+        } else {
+          const fullName = form.full_name.value.trim();
+          if (fullName.length < 2) return show("กรุณากรอกชื่อ-นามสกุลก่อนสมัครสมาชิก", true);
+          const { data, error } = await sb.auth.signUp({
+            email: form.email.value.trim(),
+            password: form.password.value,
+            // full_name ถูกเก็บลง profiles โดย trigger handle_new_user (ฝั่งฐานข้อมูล)
+            options: { data: { full_name: fullName }, emailRedirectTo: new URL("login.html", window.location.href).href }
+          });
+          if (error) return show("สมัครไม่สำเร็จ: " + error.message, true);
+          if (data.session) window.location.href = "incident.html";
+          else { setMode("login"); show("สมัครแล้ว บัญชีอยู่ระหว่างรอ Admin อนุมัติ กรุณาเข้าสู่ระบบอีกครั้งภายหลัง", false); }
+        }
+      } finally { btn.disabled = false; }
     });
 
     // ลืมรหัสผ่าน: ส่งลิงก์รีเซ็ตไปทางอีเมล (ไม่ส่งรหัสผ่านเดิม)

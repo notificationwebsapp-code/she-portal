@@ -1,9 +1,27 @@
 // auth.js — ตัวช่วยเรื่องล็อกอิน ใช้ร่วมกันทุกหน้า
 // ต้องโหลดหลัง supabase-js และ config.js
 
+// "จดจำฉันบนอุปกรณ์นี้": ค่าเริ่มต้น = จำ (เก็บ session ใน localStorage จนกว่าจะกดออกจากระบบ)
+// ถ้าผู้ใช้ไม่ติ๊ก (เช่น คอมพิวเตอร์ส่วนกลาง) จะเก็บใน sessionStorage และหายเมื่อปิดแท็บ/เบราว์เซอร์
+// หมายเหตุ: token เก็บในเบราว์เซอร์เป็นวิธีมาตรฐานของ supabase-js; ความเสี่ยง XSS ลดด้วยการใช้ textContent ทุกหน้า (OWASP A03)
+function rememberMe() {
+  try { return localStorage.getItem("she_remember") !== "0"; } catch (e) { return true; }
+}
+const sessionStore = {
+  getItem(k) { try { return sessionStorage.getItem(k) ?? localStorage.getItem(k); } catch (e) { return null; } },
+  setItem(k, v) {
+    try {
+      const keep = rememberMe();
+      (keep ? localStorage : sessionStorage).setItem(k, v);
+      (keep ? sessionStorage : localStorage).removeItem(k);
+    } catch (e) { /* storage ถูกปิด: ใช้งานต่อได้แต่ต้องล็อกอินใหม่ทุกครั้ง */ }
+  },
+  removeItem(k) { try { sessionStorage.removeItem(k); localStorage.removeItem(k); } catch (e) {} }
+};
 const sb = window.supabase.createClient(
   window.SHE_CONFIG.url,
-  window.SHE_CONFIG.key
+  window.SHE_CONFIG.key,
+  { auth: { persistSession: true, autoRefreshToken: true, storage: sessionStore } }
 );
 
 // โปรไฟล์ของตัวเอง (role/status) — โหลดครั้งเดียวต่อหน้า แล้วใช้ซ้ำ
