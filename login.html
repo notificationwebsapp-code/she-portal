@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="style.css">
   <title>เข้าสู่ระบบ | SHE Portal</title>
 </head>
-<body>
+<body class="authpage">
   <header>
     <h1>SHE Portal</h1>
     <nav>
@@ -19,7 +19,17 @@
     </nav>
   </header>
 
-  <main class="narrow">
+  <main class="authsplit">
+    <section class="authhero">
+      <h2>ระบบบันทึกข้อมูล SHE</h2>
+      <p>บันทึกและตรวจดูข้อมูลด้านความปลอดภัย อาชีวอนามัย และสิ่งแวดล้อม ในที่เดียว</p>
+      <ul>
+        <li>รายงานอุบัติเหตุและเหตุเกือบพลาด</li>
+        <li>เช็กลิสต์ตรวจและบันทึกการอบรม</li>
+        <li>เห็นข้อมูลตามสิทธิ์และ Plant ของคุณ</li>
+      </ul>
+    </section>
+    <section class="authform"><div class="inner">
     <h2 id="title">เข้าสู่ระบบ</h2>
     <p class="lead" id="lead">ยินดีต้อนรับกลับ กรุณากรอกอีเมลและรหัสผ่าน</p>
 
@@ -52,6 +62,7 @@
         <button type="button" id="btn-forgot" class="link plain">ลืมรหัสผ่าน?</button>
       </div>
     </form>
+    </div></section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
