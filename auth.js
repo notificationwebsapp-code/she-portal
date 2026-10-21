@@ -51,7 +51,17 @@ function showAccountNotice(p) {
 }
 
 // อัปเดตเมนู: ล็อกอินแล้ว -> แสดงอีเมล + ปุ่มออกจากระบบ (+ เมนู "จัดการผู้ใช้" เฉพาะ Admin)
+// ทำเครื่องหมายเมนูของหน้าปัจจุบัน (aria-current) เพื่อให้ผู้ใช้รู้ว่าอยู่หน้าไหน (WCAG 2.2: Info and Relationships)
+function markCurrentNav() {
+  const here = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  document.querySelectorAll("nav a").forEach((a) => {
+    const target = (a.getAttribute("href") || "").split("/").pop().toLowerCase();
+    if (target === here) a.setAttribute("aria-current", "page");
+  });
+}
+
 async function setupNav() {
+  markCurrentNav();
   const link = document.querySelector('nav a[href="login.html"]');
   if (!link) return;
   const { data } = await sb.auth.getSession();
@@ -69,6 +79,7 @@ async function setupNav() {
       a.href = "admin-users.html";
       a.textContent = "จัดการผู้ใช้";
       link.insertAdjacentElement("beforebegin", a);
+      markCurrentNav();
     }
     showAccountNotice(p);
   }
