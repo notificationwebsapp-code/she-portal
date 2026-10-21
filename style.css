@@ -125,9 +125,16 @@ main.narrow h2{text-align:center;margin-bottom:.25rem}
 .tabs button:hover{background:rgba(255,255,255,.7);color:var(--brand)}
 .tabs button[aria-selected="true"]{background:#fff;color:var(--brand);box-shadow:0 1px 3px rgba(16,24,40,.15)}
 .fullwidth{width:100%}
+.toprow{display:flex;justify-content:flex-start;margin:0 0 .5rem}
+.toprow button.link{padding-left:0;text-decoration:none;font-size:.95rem}
+.toprow button.link:hover{text-decoration:underline;background:none}
+.formactions{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;margin-top:.5rem}
+.formactions button[type=submit]{min-width:10rem}
+button.link.plain{border:0;background:none;box-shadow:none}
+button.link[hidden]{display:none}
 .check{display:flex;align-items:center;gap:.5rem;font-weight:normal;margin:.2rem 0 1rem;cursor:pointer}
 .check input{margin:0}
-button.link{background:none;border:0;color:var(--brand);text-decoration:underline;min-height:36px;padding:.2rem .4rem;font-weight:600}
+button.link{display:inline-flex;background:none;border:0;color:var(--brand);text-decoration:underline;min-height:36px;padding:.2rem .4rem;font-weight:600}
 button.link:hover{background:var(--accent);color:var(--brand-dark)}
 .centered{text-align:center;margin:.5rem 0 0}
 

@@ -23,10 +23,7 @@
     <h2 id="title">เข้าสู่ระบบ</h2>
     <p class="lead" id="lead">ยินดีต้อนรับกลับ กรุณากรอกอีเมลและรหัสผ่าน</p>
 
-    <div class="tabs" role="tablist" aria-label="เลือกโหมด">
-      <button type="button" role="tab" id="tab-login" aria-selected="true">เข้าสู่ระบบ</button>
-      <button type="button" role="tab" id="tab-signup" aria-selected="false">สมัครสมาชิก</button>
-    </div>
+    <div class="toprow"><button type="button" id="btn-mode" class="link">สมัครสมาชิก</button></div>
 
     <p id="msg" role="status" class="msg" hidden></p>
     <form id="login-form">
@@ -45,8 +42,10 @@
         <label class="show-pw"><input type="checkbox" data-show-pw="password"> แสดงรหัสผ่าน</label>
       </p>
       <label class="check" id="remember-row"><input type="checkbox" id="remember" checked> จดจำฉันบนอุปกรณ์นี้ (ไม่ต้องล็อกอินทุกครั้ง)</label>
-      <button type="submit" id="btn-submit" class="fullwidth">เข้าสู่ระบบ</button>
-      <p class="centered" id="forgot-row"><button type="button" id="btn-forgot" class="link">ลืมรหัสผ่าน?</button></p>
+      <div class="formactions">
+        <button type="submit" id="btn-submit">เข้าสู่ระบบ</button>
+        <button type="button" id="btn-forgot" class="link plain">ลืมรหัสผ่าน?</button>
+      </div>
     </form>
     <p class="helper centered">ใช้อีเมลและรหัสผ่านสมมติระหว่างพัฒนา อย่าใช้รหัสผ่านจริงของคุณ</p>
   </main>
@@ -72,12 +71,11 @@
     function setMode(m) {
       mode = m;
       const signup = m === "signup";
-      document.getElementById("tab-login").setAttribute("aria-selected", String(!signup));
-      document.getElementById("tab-signup").setAttribute("aria-selected", String(signup));
+      document.getElementById("btn-mode").textContent = signup ? "← กลับไปเข้าสู่ระบบ" : "สมัครสมาชิก";
       document.getElementById("name-row").hidden = !signup;
       document.getElementById("full_name").required = signup;
       document.getElementById("remember-row").hidden = signup;
-      document.getElementById("forgot-row").hidden = signup;
+      document.getElementById("btn-forgot").hidden = signup;
       document.getElementById("title").textContent = signup ? "สมัครสมาชิก" : "เข้าสู่ระบบ";
       document.getElementById("lead").textContent = signup
         ? "กรอกข้อมูลเพื่อขอใช้งาน บัญชีจะใช้งานได้หลัง Admin อนุมัติ"
@@ -86,8 +84,7 @@
       form.password.autocomplete = signup ? "new-password" : "current-password";
       msg.hidden = true;
     }
-    document.getElementById("tab-login").addEventListener("click", () => setMode("login"));
-    document.getElementById("tab-signup").addEventListener("click", () => setMode("signup"));
+    document.getElementById("btn-mode").addEventListener("click", () => setMode(mode === "login" ? "signup" : "login"));
 
     // ถ้าล็อกอินอยู่แล้ว (จำไว้) ไปหน้ารายงานเลย
     sb.auth.getSession().then(({ data }) => {
