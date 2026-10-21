@@ -29,7 +29,7 @@
 
     <h3>ผู้ใช้ทั้งหมด</h3>
     <div class="tablewrap"><table id="allusers">
-      <thead><tr><th>ชื่อ</th><th>อีเมล</th><th>Role</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+      <thead><tr><th>ชื่อ</th><th>อีเมล</th><th>Role</th><th>สถานะ</th><th>เหตุผล (กรณีไม่อนุมัติ)</th><th>การทำงาน</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </main>
@@ -121,6 +121,29 @@
         load();
       });
       box.appendChild(btn);
+
+      // ปฏิเสธคำขอ: ต้องระบุเหตุผล 5-500 ตัวอักษร (ผู้สมัครจะเห็นเหตุผลนี้) ห้ามใส่ข้อมูลอ่อนไหว
+      const rj = el("div", undefined, "row");
+      const rjLabel = el("label", "เหตุผลที่ปฏิเสธ (ผู้สมัครจะเห็นข้อความนี้)");
+      const rjText = document.createElement("textarea");
+      rjText.rows = 2; rjText.maxLength = 500;
+      rjLabel.appendChild(document.createElement("br")); rjLabel.appendChild(rjText);
+      rj.appendChild(rjLabel);
+      const rjBtn = el("button", "ปฏิเสธคำขอ", "secondary");
+      rjBtn.type = "button";
+      rjBtn.addEventListener("click", async () => {
+        const reason = rjText.value.trim();
+        if (reason.length < 5) { show("กรุณาระบุเหตุผลที่ปฏิเสธอย่างน้อย 5 ตัวอักษร", false); return; }
+        if (!confirm("ยืนยันปฏิเสธ " + (u.email || "") + " ?")) return;
+        rjBtn.disabled = true;
+        const { error } = await sb.rpc("admin_reject_user", { target: u.id, reason: reason });
+        rjBtn.disabled = false;
+        if (error) { show("ปฏิเสธไม่สำเร็จ: " + error.message, false); return; }
+        show("ปฏิเสธ " + (u.email || "") + " แล้ว", true);
+        load();
+      });
+      rj.appendChild(rjBtn);
+      box.appendChild(rj);
       return box;
     }
 
@@ -130,8 +153,23 @@
       tr.appendChild(el("td", u.email || ""));
       tr.appendChild(el("td", u.role));
       const st = el("td"); st.appendChild(el("span", u.status, "badge " + u.status)); tr.appendChild(st);
+      tr.appendChild(el("td", u.reject_reason || ""));
       const act = el("td");
-      if (u.id !== myId && u.status !== "pending") {
+      if (u.id !== myId && u.status === "rejected") {
+        const b = el("button", "เปิดคำขอใหม่", "secondary");
+        b.type = "button";
+        b.addEventListener("click", async () => {
+          if (!confirm("เปิดคำขอของ " + (u.email || "") + " กลับเป็นรออนุมัติ ?")) return;
+          b.disabled = true;
+          const { error } = await sb.rpc("admin_reopen_user", { target: u.id });
+          b.disabled = false;
+          if (error) { show("ไม่สำเร็จ: " + error.message, false); return; }
+          show("เปิดคำขอของ " + (u.email || "") + " แล้ว (กลับเป็นรออนุมัติ)", true);
+          load();
+        });
+        act.appendChild(b);
+      }
+      if (u.id !== myId && (u.status === "active" || u.status === "suspended")) {
         const next = u.status === "active" ? "suspended" : "active";
         const b = el("button", next === "suspended" ? "ระงับ" : "เปิดใช้งาน", "secondary");
         b.type = "button";
@@ -164,7 +202,7 @@
       const [pl, dp, us] = await Promise.all([
         sb.from("plants").select("id, code, name").eq("active", true).order("code"),
         sb.from("departments").select("id, name").eq("active", true).order("name"),
-        sb.from("profiles").select("id, full_name, email, role, status, created_at").order("created_at", { ascending: false })
+        sb.from("profiles").select("id, full_name, email, role, status, reject_reason, created_at").order("created_at", { ascending: false })
       ]);
       const err = pl.error || dp.error || us.error;
       if (err) { show("โหลดข้อมูลไม่สำเร็จ: " + err.message, false); return; }

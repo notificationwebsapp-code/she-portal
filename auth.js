@@ -16,7 +16,7 @@ function getMyProfile() {
       if (!s.session) return null;
       const { data, error } = await sb
         .from("profiles")
-        .select("id, role, status, email")
+        .select("id, role, status, email, reject_reason")
         .eq("id", s.session.user.id)
         .maybeSingle();
       return error ? null : data;
@@ -25,7 +25,7 @@ function getMyProfile() {
   return _profilePromise;
 }
 
-// บัญชีที่ยังไม่ active (รออนุมัติ/ถูกระงับ): ซ่อนเนื้อหาหลักและแสดงข้อความ
+// บัญชีที่ยังไม่ active (รออนุมัติ/ไม่อนุมัติ/ถูกระงับ): ซ่อนเนื้อหาหลักและแสดงข้อความ
 // ยกเว้นหน้า login/reset เพื่อให้ผู้ใช้ยังตั้งรหัสผ่านหรือเปลี่ยนบัญชีได้
 function showAccountNotice(p) {
   if (!p || p.status === "active") return;
@@ -36,9 +36,16 @@ function showAccountNotice(p) {
   div.id = "account-notice";
   div.className = "msg error";
   div.setAttribute("role", "status");
-  div.textContent = p.status === "pending"
-    ? "บัญชีของคุณอยู่ระหว่างรอ Admin อนุมัติ จึงยังใช้งานข้อมูลไม่ได้ กรุณารอการแจ้งจาก Admin"
-    : "บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ Admin";
+  if (p.status === "pending") {
+    div.textContent = "บัญชีของคุณอยู่ระหว่างรอ Admin อนุมัติ จึงยังใช้งานข้อมูลไม่ได้ กรุณารอการแจ้งจาก Admin";
+  } else if (p.status === "rejected") {
+    // เหตุผลเขียนโดย Admin แสดงด้วย textContent เท่านั้น (OWASP A03)
+    div.textContent = "คำขอใช้งานของคุณไม่ได้รับการอนุมัติ" +
+      (p.reject_reason ? " — เหตุผล: " + p.reject_reason : "") +
+      " หากต้องการสอบถาม กรุณาติดต่อ Admin";
+  } else {
+    div.textContent = "บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ Admin";
+  }
   main.hidden = true;
   main.insertAdjacentElement("beforebegin", div);
 }

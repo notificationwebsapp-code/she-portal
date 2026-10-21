@@ -28,6 +28,10 @@
         <input type="email" id="email" name="email" autocomplete="email" required>
       </p>
       <p>
+        <label for="full_name">ชื่อ-นามสกุล (กรอกเฉพาะตอนสมัครสมาชิก เพื่อให้ Admin ตรวจสอบตัวตน)</label><br>
+        <input type="text" id="full_name" name="full_name" autocomplete="name" maxlength="100">
+      </p>
+      <p>
         <label for="password">รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)</label><br>
         <input type="password" id="password" name="password" autocomplete="current-password" minlength="8" required>
         <label class="show-pw"><input type="checkbox" data-show-pw="password"> แสดงรหัสผ่าน</label>
@@ -74,15 +78,20 @@
     // สมัครสมาชิก
     document.getElementById("btn-signup").addEventListener("click", async () => {
       if (!form.reportValidity()) return;
+      const fullName = form.full_name.value.trim();
+      if (fullName.length < 2) {
+        return show("กรุณากรอกชื่อ-นามสกุลก่อนสมัครสมาชิก", true);
+      }
       const { data, error } = await sb.auth.signUp({
         email: form.email.value.trim(),
         password: form.password.value,
         // ลิงก์ในอีเมลยืนยันให้กลับมาหน้า login.html ของเว็บนี้ (ใช้ได้ทั้ง github.io และโดเมนจริงในอนาคต)
-        options: { emailRedirectTo: new URL("login.html", window.location.href).href }
+        // full_name ถูกเก็บลง profiles โดย trigger handle_new_user (ฝั่งฐานข้อมูล)
+        options: { data: { full_name: fullName }, emailRedirectTo: new URL("login.html", window.location.href).href }
       });
       if (error) return show("สมัครไม่สำเร็จ: " + error.message, true);
       if (data.session) window.location.href = "incident.html";
-      else show("สมัครแล้ว กรุณาตรวจอีเมลเพื่อยืนยัน จากนั้นกลับมาเข้าสู่ระบบ", false);
+      else show("สมัครแล้ว บัญชีอยู่ระหว่างรอ Admin อนุมัติ กรุณาเข้าสู่ระบบอีกครั้งภายหลัง", false);
     });
 
     // ลืมรหัสผ่าน: ส่งลิงก์รีเซ็ตไปทางอีเมล (ไม่ส่งรหัสผ่านเดิม)
