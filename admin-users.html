@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>จัดการผู้ใช้ | SHE Portal</title>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <h2>จัดการผู้ใช้ (Admin)</h2>
+    <p>อนุมัติผู้สมัครใหม่ กำหนด Role และ Plant ในขั้นตอนเดียว (ISO/IEC 27001:2022 Annex A 5.18 Access rights)</p>
+    <div id="msg" class="msg" hidden role="status"></div>
+
+    <h3>รออนุมัติ</h3>
+    <div id="pending">กำลังโหลด…</div>
+
+    <h3>ผู้ใช้ทั้งหมด</h3>
+    <div class="tablewrap"><table id="allusers">
+      <thead><tr><th>ชื่อ</th><th>อีเมล</th><th>Role</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </main>
+
+  <footer>
+    <small>ข้อมูลในระบบนี้เป็นข้อมูลจำลองระหว่างพัฒนา</small>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // หมายเหตุ: หน้านี้เป็นเพียงหน้าจอ ความปลอดภัยจริงอยู่ที่ RPC admin_approve_user / admin_set_status
+    // (ตรวจ Role = admin ในฐานข้อมูล) ผู้ที่ไม่ใช่ Admin เปิดหน้านี้ได้แต่จะไม่เห็นข้อมูลและกดอนุมัติไม่ได้
+    const ROLES = [
+      ["employee", "employee (พนักงาน)"], ["contractor", "contractor (ผู้รับเหมา)"],
+      ["supplier", "supplier"], ["she", "she (SHE)"],
+      ["plant_director", "plant_director"], ["director", "director"],
+      ["md", "md"], ["ceo", "ceo"]
+    ];
+    const NO_PLANT_ROLES = ["md", "ceo"];
+    const msgEl = document.getElementById("msg");
+    let plants = [], depts = [];
+
+    function show(text, ok) {
+      msgEl.hidden = false;
+      msgEl.className = "msg " + (ok ? "ok" : "error");
+      msgEl.textContent = text;
+    }
+    function el(tag, text, cls) {
+      const e = document.createElement(tag);
+      if (text !== undefined) e.textContent = text;
+      if (cls) e.className = cls;
+      return e;
+    }
+    function fmt(v) {
+      return v ? new Date(v).toLocaleString("en-GB", { timeZone: "Asia/Bangkok", hour12: false,
+        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+    }
+
+    function buildCard(u) {
+      const box = el("div", undefined, "userbox");
+      box.appendChild(el("h4", (u.full_name || "(ไม่ระบุชื่อ)") + " — " + (u.email || "")));
+      box.appendChild(el("div", "สมัครเมื่อ " + fmt(u.created_at)));
+
+      const r1 = el("div", undefined, "row");
+      const roleLabel = el("label", "Role ");
+      const roleSel = document.createElement("select");
+      ROLES.forEach(([v, t]) => { const o = el("option", t); o.value = v; roleSel.appendChild(o); });
+      roleLabel.appendChild(roleSel); r1.appendChild(roleLabel);
+      const deptLabel = el("label", "  แผนก ");
+      const deptSel = document.createElement("select");
+      const o0 = el("option", "(ไม่ระบุ)"); o0.value = ""; deptSel.appendChild(o0);
+      depts.forEach(d => { const o = el("option", d.name); o.value = d.id; deptSel.appendChild(o); });
+      deptLabel.appendChild(deptSel); r1.appendChild(deptLabel);
+      box.appendChild(r1);
+
+      const r2 = el("div", undefined, "row");
+      const pHead = el("div", "Plant ที่เข้าถึงได้ (md/ceo เห็นทุก Plant ไม่ต้องเลือก)");
+      r2.appendChild(pHead);
+      const list = el("div", undefined, "plantlist");
+      const boxes = [];
+      plants.forEach(p => {
+        const lb = el("label");
+        const cb = document.createElement("input");
+        cb.type = "checkbox"; cb.value = p.id; boxes.push(cb);
+        lb.appendChild(cb); lb.appendChild(document.createTextNode(" " + p.code + " " + p.name));
+        list.appendChild(lb);
+      });
+      r2.appendChild(list); box.appendChild(r2);
+      roleSel.addEventListener("change", () => {
+        list.hidden = NO_PLANT_ROLES.includes(roleSel.value);
+      });
+
+      const btn = el("button", "อนุมัติ");
+      btn.type = "button";
+      btn.addEventListener("click", async () => {
+        const role = roleSel.value;
+        const ids = NO_PLANT_ROLES.includes(role) ? [] : boxes.filter(b => b.checked).map(b => b.value);
+        if (!NO_PLANT_ROLES.includes(role) && ids.length === 0) {
+          show("กรุณาเลือกอย่างน้อย 1 Plant ก่อนอนุมัติ", false); return;
+        }
+        if (!confirm("ยืนยันอนุมัติ " + (u.email || "") + " เป็น " + role + " ?")) return;
+        btn.disabled = true;
+        const { error } = await sb.rpc("admin_approve_user", {
+          target: u.id, new_role: role, plant_ids: ids, dept: deptSel.value || null });
+        btn.disabled = false;
+        if (error) { show("อนุมัติไม่สำเร็จ: " + error.message, false); return; }
+        show("อนุมัติ " + (u.email || "") + " เรียบร้อย", true);
+        load();
+      });
+      box.appendChild(btn);
+      return box;
+    }
+
+    function buildRow(u, myId) {
+      const tr = document.createElement("tr");
+      tr.appendChild(el("td", u.full_name || ""));
+      tr.appendChild(el("td", u.email || ""));
+      tr.appendChild(el("td", u.role));
+      const st = el("td"); st.appendChild(el("span", u.status, "badge " + u.status)); tr.appendChild(st);
+      const act = el("td");
+      if (u.id !== myId && u.status !== "pending") {
+        const next = u.status === "active" ? "suspended" : "active";
+        const b = el("button", next === "suspended" ? "ระงับ" : "เปิดใช้งาน", "secondary");
+        b.type = "button";
+        b.addEventListener("click", async () => {
+          if (!confirm((next === "suspended" ? "ระงับ " : "เปิดใช้งาน ") + (u.email || "") + " ?")) return;
+          b.disabled = true;
+          const { error } = await sb.rpc("admin_set_status", { target: u.id, new_status: next });
+          b.disabled = false;
+          if (error) { show("ไม่สำเร็จ: " + error.message, false); return; }
+          show("อัปเดตสถานะ " + (u.email || "") + " แล้ว", true);
+          load();
+        });
+        act.appendChild(b);
+      }
+      tr.appendChild(act);
+      return tr;
+    }
+
+    async function load() {
+      const session = await requireLogin();
+      if (!session) return;
+      const me = await getMyProfile();
+      const pendingEl = document.getElementById("pending");
+      pendingEl.replaceChildren();
+      if (!me || me.status !== "active" || me.role !== "admin") {
+        pendingEl.textContent = "หน้านี้สำหรับ Admin เท่านั้น";
+        document.querySelector("#allusers").parentElement.hidden = true;
+        return;
+      }
+      const [pl, dp, us] = await Promise.all([
+        sb.from("plants").select("id, code, name").eq("active", true).order("code"),
+        sb.from("departments").select("id, name").eq("active", true).order("name"),
+        sb.from("profiles").select("id, full_name, email, role, status, created_at").order("created_at", { ascending: false })
+      ]);
+      const err = pl.error || dp.error || us.error;
+      if (err) { show("โหลดข้อมูลไม่สำเร็จ: " + err.message, false); return; }
+      plants = pl.data; depts = dp.data;
+      const pend = us.data.filter(u => u.status === "pending");
+      if (pend.length === 0) pendingEl.textContent = "ไม่มีผู้สมัครที่รออนุมัติ";
+      else pend.forEach(u => pendingEl.appendChild(buildCard(u)));
+      const tb = document.querySelector("#allusers tbody");
+      tb.replaceChildren();
+      us.data.forEach(u => tb.appendChild(buildRow(u, session.user.id)));
+    }
+    load();
+  </script>
+</body>
+</html>

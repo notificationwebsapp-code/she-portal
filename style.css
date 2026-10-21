@@ -45,3 +45,15 @@ th { background: #eef2f9; }
 
 .show-pw{display:inline-flex;align-items:center;gap:.4rem;margin-top:.4rem;font-size:.9rem;font-weight:normal;cursor:pointer}
 .show-pw input{width:auto;margin:0}
+
+/* หน้า Admin จัดการผู้ใช้ + ข้อความบัญชีรออนุมัติ */
+main.wide { max-width: 1000px; }
+#account-notice { max-width: 720px; margin: 1.25rem auto; }
+.userbox { border: 1px solid var(--line); border-radius: 8px; padding: .75rem 1rem; margin: 0 0 1rem; }
+.userbox h4 { margin: 0 0 .25rem; }
+.userbox .row { margin: .5rem 0; }
+.plantlist { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
+.plantlist label { font-weight: normal; }
+.badge { display: inline-block; padding: .05rem .5rem; border-radius: 999px; font-size: .85rem; background: #eef2f9; }
+.badge.pending { background: #fff4d6; }
+.badge.suspended { background: #fdecea; }
