@@ -180,7 +180,7 @@ main.authsplit{flex:1;max-width:none;width:100%;margin:0;padding:0;border:0;bord
 .authhero li::before{content:"✓";display:inline-block;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;
   border-radius:50%;background:rgba(255,255,255,.22);margin-right:.6rem;font-weight:700}
 .authform{background:#fff;display:flex;flex-direction:column;justify-content:center;padding:3rem clamp(1.5rem,6vw,5rem)}
-.authform .inner{width:100%;max-width:420px}
+.authform .inner{width:100%;max-width:420px;margin:0 auto}
 .authform h2{margin:0 0 .25rem}
 .authform .lead{text-align:left}
 .authform form{max-width:none}
