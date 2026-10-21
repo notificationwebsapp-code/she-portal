@@ -159,7 +159,7 @@
         const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
         try {
           if (await write(sb.from(kind).insert({ code: code.value.trim(), name: name.value.trim() }).select("id"),
-              "เพิ่ม" + KINDS[kind] + " " + code.value.trim() + " เรียบร้อย")) { code.value = ""; name.value = ""; await load(); }
+              "เพิ่ม " + KINDS[kind] + " " + code.value.trim() + " เรียบร้อย")) { code.value = ""; name.value = ""; await load(); }
         } finally { btn.disabled = false; }
       });
     });
