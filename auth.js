@@ -92,7 +92,7 @@ async function setupNav() {
       window.location.href = "login.html";
     });
     const p = await getMyProfile();
-    if (p && p.status === "active" && p.role === "admin") {
+    if (p && p.status === "active" && (p.role === "admin" || p.role === "super_admin")) {
       const a = document.createElement("a");
       a.href = "admin-users.html";
       a.textContent = "จัดการผู้ใช้";

@@ -24,7 +24,7 @@
     <!-- เนื้อหาทั้งหมดซ่อนไว้จนกว่าจะยืนยันว่าเป็น Admin (ซ่อนหน้าจอเท่านั้น สิทธิ์จริงอยู่ที่ RPC/RLS) -->
     <div id="adminarea" hidden>
       <h2>จัดการผู้ใช้</h2>
-      <p>อนุมัติหรือปฏิเสธผู้สมัครใหม่ กำหนด Role และ Plant ในขั้นตอนเดียว</p>
+      <p>อนุมัติหรือปฏิเสธผู้สมัครใหม่ กำหนด Role และ Plant ในขั้นตอนเดียว และแก้ไขข้อมูลผู้ใช้ได้ที่ปุ่ม "แก้ไข"</p>
       <div id="msg" class="msg" hidden role="status"></div>
       <div id="summary" class="summary" aria-label="สรุปจำนวนผู้ใช้"></div>
 
@@ -33,7 +33,7 @@
 
       <h3>ผู้ใช้ทั้งหมด</h3>
       <div class="tablewrap"><table id="allusers">
-        <thead><tr><th>ชื่อ</th><th>อีเมล</th><th>Role</th><th>สถานะ</th><th>เหตุผล (กรณีไม่อนุมัติ)</th><th>การทำงาน</th></tr></thead>
+        <thead><tr><th>ชื่อ</th><th>รหัสพนักงาน</th><th>อีเมล</th><th>Role</th><th>สถานะ</th><th>เหตุผล (กรณีไม่อนุมัติ)</th><th>การทำงาน</th></tr></thead>
         <tbody></tbody>
       </table></div>
     </div>
@@ -51,6 +51,11 @@
       ["plant_director", "plant_director (ผู้อำนวยการโรงงาน)"], ["director", "director (ผู้อำนวยการ)"],
       ["md", "md (กรรมการผู้จัดการ)"], ["ceo", "ceo"]
     ];
+    const ROLES_ADMIN = ROLES.concat([["admin", "admin (ผู้ดูแลระบบ)"]]);
+    const ROLES_SUPER = ROLES_ADMIN.concat([["super_admin", "super_admin (ผู้ดูแลสูงสุด)"]]);
+    const NO_PLANT_EDIT = ["md", "ceo", "admin", "super_admin"];
+    let isSuper = false;   // ผู้ใช้ปัจจุบันเป็น super_admin หรือไม่ (ใช้แสดงผลเท่านั้น สิทธิ์จริงอยู่ที่ RPC/trigger ในฐานข้อมูล)
+    let userPlants = {};   // user_id -> [plant_id]
     const STATUS_TH = { pending: "รออนุมัติ", active: "ใช้งานอยู่", suspended: "ถูกระงับ", rejected: "ไม่อนุมัติ" };
     const NO_PLANT_ROLES = ["md", "ceo"];
     const msgEl = document.getElementById("msg");
@@ -85,7 +90,7 @@
     function buildCard(u) {
       const box = el("div", undefined, "userbox");
       box.appendChild(el("h4", (u.full_name || "(ไม่ระบุชื่อ)") + " — " + (u.email || "")));
-      box.appendChild(el("p", "สมัครเมื่อ " + fmt(u.created_at), "meta"));
+      box.appendChild(el("p", "รหัสพนักงาน: " + (u.employee_code || "ไม่ได้ระบุ") + " · สมัครเมื่อ " + fmt(u.created_at), "meta"));
 
       const grid = el("div", undefined, "grid");
       const roleSel = document.createElement("select");
@@ -165,11 +170,22 @@
     function buildRow(u, myId) {
       const tr = document.createElement("tr");
       tr.appendChild(el("td", u.full_name || ""));
+      tr.appendChild(el("td", u.employee_code || ""));
       tr.appendChild(el("td", u.email || ""));
       tr.appendChild(el("td", u.role));
       const st = el("td"); st.appendChild(el("span", STATUS_TH[u.status] || u.status, "badge " + u.status)); tr.appendChild(st);
       tr.appendChild(el("td", u.reject_reason || ""));
       const act = el("td");
+      const locked = u.role === "super_admin" && !isSuper;
+      if (locked) {
+        act.appendChild(el("span", "🔒 ผู้ดูแลสูงสุด (ป้องกัน)", "hint"));
+      }
+      if (u.status !== "rejected" && !locked) {
+        const eb = el("button", "แก้ไข", "secondary small");
+        eb.type = "button";
+        eb.addEventListener("click", () => toggleEdit(tr, u, myId));
+        act.appendChild(eb);
+      }
       if (u.id !== myId && u.status === "rejected") {
         const b = el("button", "เปิดคำขอใหม่", "secondary small");
         b.type = "button";
@@ -184,7 +200,7 @@
         });
         act.appendChild(b);
       }
-      if (u.id !== myId && (u.status === "active" || u.status === "suspended")) {
+      if (u.id !== myId && !locked && (u.status === "active" || u.status === "suspended")) {
         const next = u.status === "active" ? "suspended" : "active";
         const b = el("button", next === "suspended" ? "ระงับ" : "เปิดใช้งาน",
           (next === "suspended" ? "btn-danger-outline" : "btn-ok-outline") + " small");
@@ -202,6 +218,102 @@
       }
       tr.appendChild(act);
       return tr;
+    }
+
+    // แผงแก้ไขข้อมูลผู้ใช้ (แทรกใต้แถว): ชื่อ / รหัสพนักงาน / แผนก / Role / Plant — บันทึกในครั้งเดียวผ่าน RPC admin_update_user
+    function toggleEdit(tr, u, myId) {
+      const next = tr.nextElementSibling;
+      if (next && next.classList.contains("editrow")) { next.remove(); return; }
+      const isPending = u.status === "pending";
+      const isSelf = u.id === myId;
+      const row = document.createElement("tr");
+      row.className = "editrow";
+      const td = el("td"); td.colSpan = 7;
+      const box = el("div", undefined, "userbox editbox");
+      box.appendChild(el("h4", "แก้ไขข้อมูล: " + (u.email || "")));
+      const grid = el("div", undefined, "grid");
+      const nameIn = document.createElement("input");
+      nameIn.type = "text"; nameIn.maxLength = 100; nameIn.value = u.full_name || "";
+      grid.appendChild(field("ชื่อ-นามสกุล", nameIn));
+      const codeIn = document.createElement("input");
+      codeIn.type = "text"; codeIn.maxLength = 30; codeIn.value = u.employee_code || "";
+      grid.appendChild(field("รหัสพนักงาน", codeIn, "(ไม่บังคับ / ห้ามซ้ำทั้งระบบ)"));
+      const deptSel = document.createElement("select");
+      const o0 = el("option", "(ไม่ระบุ)"); o0.value = ""; deptSel.appendChild(o0);
+      depts.forEach(d => { const o = el("option", d.name); o.value = d.id; deptSel.appendChild(o); });
+      deptSel.value = u.department_id || "";
+      grid.appendChild(field("แผนก", deptSel));
+      let roleSel = null, boxes = [], plantWrap = null;
+      if (!isPending) {
+        roleSel = document.createElement("select");
+        (isSuper ? ROLES_SUPER : ROLES_ADMIN).forEach(([v, t]) => { const o = el("option", t); o.value = v; roleSel.appendChild(o); });
+        roleSel.value = u.role;
+        roleSel.disabled = isSelf && !isSuper;   // Admin แก้ Role ตัวเองไม่ได้ / super_admin ลดระดับตัวเองได้เมื่อยังมี super_admin คนอื่น
+        grid.appendChild(field("Role (สิทธิ์การใช้งาน)", roleSel, isSelf && !isSuper ? "(แก้ของตัวเองไม่ได้)" : ""));
+      }
+      box.appendChild(grid);
+      if (!isPending) {
+        plantWrap = el("div", undefined, "row");
+        plantWrap.appendChild(el("strong", "Plant ที่เข้าถึงได้ "));
+        plantWrap.appendChild(el("span", "(md/ceo/admin เห็นทุก Plant ไม่ต้องเลือก)", "hint"));
+        const list = el("div", undefined, "plantlist");
+        const mine = userPlants[u.id] || [];
+        plants.forEach(p => {
+          const lb = el("label");
+          const cb = document.createElement("input");
+          cb.type = "checkbox"; cb.value = p.id; cb.checked = mine.includes(p.id); boxes.push(cb);
+          lb.appendChild(cb); lb.appendChild(document.createTextNode(p.code + " " + p.name));
+          list.appendChild(lb);
+        });
+        plantWrap.appendChild(list); box.appendChild(plantWrap);
+        const sync = () => { list.hidden = NO_PLANT_EDIT.includes(roleSel.value); };
+        roleSel.addEventListener("change", sync); sync();
+      }
+      const actions = el("div", undefined, "actions");
+      const save = el("button", "✓ บันทึกการแก้ไข", "btn-ok");
+      save.type = "button";
+      const cancel = el("button", "ยกเลิก", "secondary");
+      cancel.type = "button";
+      cancel.addEventListener("click", () => row.remove());
+      save.addEventListener("click", async () => {
+        const nm = nameIn.value.trim();
+        if (nm.length < 2) { show("กรุณากรอกชื่อ-นามสกุลอย่างน้อย 2 ตัวอักษร", false); nameIn.focus(); return; }
+        const args = { target: u.id, new_name: nm, new_code: codeIn.value.trim(), new_dept: deptSel.value || null };
+        let summary = "ชื่อ/รหัส/แผนก";
+        if (!isPending) {
+          const role = roleSel.value;
+          const ids = NO_PLANT_EDIT.includes(role) ? [] : boxes.filter(b => b.checked).map(b => b.value);
+          if (!NO_PLANT_EDIT.includes(role) && ids.length === 0) {
+            show("กรุณาเลือกอย่างน้อย 1 Plant สำหรับ Role นี้", false); return;
+          }
+          if (!roleSel.disabled) args.new_role = role;
+          args.plant_ids = ids;
+          if (role === "super_admin" && u.role !== "super_admin") {
+            if (!confirm("ยืนยันมอบสิทธิ์ super_admin ให้ " + (u.email || "") + " ? ผู้นี้จะถอดสิทธิ์ของคนอื่นได้ รวมถึงตัวคุณ")) return;
+          } else if (u.role === "super_admin" && role !== "super_admin") {
+            if (!confirm("ยืนยันลดระดับ super_admin ของ " + (u.email || "") + " ?")) return;
+          } else if (role === "admin" && u.role !== "admin") {
+            if (!confirm("ยืนยันให้ " + (u.email || "") + " เป็น admin? Admin จัดการผู้ใช้ได้ทุกคน")) return;
+          } else if (u.role === "admin" && role !== "admin") {
+            if (!confirm("ยืนยันถอดสิทธิ์ admin ของ " + (u.email || "") + " ?")) return;
+          }
+          summary = "ข้อมูลผู้ใช้";
+        }
+        save.disabled = true;
+        const { error } = await sb.rpc("admin_update_user", args);
+        save.disabled = false;
+        if (error) {
+          const m = /already in use/.test(error.message) ? "รหัสพนักงานนี้ถูกใช้แล้ว" : error.message;
+          show("บันทึกไม่สำเร็จ: " + m, false); return;
+        }
+        show("บันทึก" + summary + "ของ " + (u.email || "") + " เรียบร้อย (บันทึกประวัติการแก้ไขแล้ว)", true);
+        load();
+      });
+      actions.appendChild(save); actions.appendChild(cancel);
+      box.appendChild(actions);
+      td.appendChild(box); row.appendChild(td);
+      tr.insertAdjacentElement("afterend", row);
+      nameIn.focus();
     }
 
     function renderSummary(users) {
@@ -222,21 +334,25 @@
       const me = await getMyProfile();
       const pendingEl = document.getElementById("pending");
       const gate = document.getElementById("gate");
-      if (!me || me.status !== "active" || me.role !== "admin") {
+      if (!me || me.status !== "active" || (me.role !== "admin" && me.role !== "super_admin")) {
         gate.textContent = "หน้านี้สำหรับ Admin เท่านั้น";
         return;   // เนื้อหาหน้า Admin ยังคงซ่อนอยู่
       }
+      isSuper = me.role === "super_admin";
       gate.hidden = true;
       document.getElementById("adminarea").hidden = false;
       pendingEl.replaceChildren();
-      const [pl, dp, us] = await Promise.all([
+      const [pl, dp, us, up] = await Promise.all([
         sb.from("plants").select("id, code, name").eq("active", true).order("code"),
         sb.from("departments").select("id, name").eq("active", true).order("name"),
-        sb.from("profiles").select("id, full_name, email, role, status, reject_reason, created_at").order("created_at", { ascending: false })
+        sb.from("profiles").select("id, full_name, email, employee_code, department_id, role, status, reject_reason, created_at").order("created_at", { ascending: false }),
+        sb.from("user_plants").select("user_id, plant_id")
       ]);
-      const err = pl.error || dp.error || us.error;
+      const err = pl.error || dp.error || us.error || up.error;
       if (err) { show("โหลดข้อมูลไม่สำเร็จ: " + err.message, false); return; }
       plants = pl.data; depts = dp.data;
+      userPlants = {};
+      up.data.forEach(r => { (userPlants[r.user_id] = userPlants[r.user_id] || []).push(r.plant_id); });
       renderSummary(us.data);
       const pend = us.data.filter(u => u.status === "pending");
       if (pend.length === 0) pendingEl.textContent = "ไม่มีผู้สมัครที่รออนุมัติ";
