@@ -97,6 +97,10 @@ async function setupNav() {
       a.href = "admin-users.html";
       a.textContent = "จัดการผู้ใช้";
       link.insertAdjacentElement("beforebegin", a);
+      const m = document.createElement("a");
+      m.href = "admin-master.html";
+      m.textContent = "ข้อมูลหลัก";
+      link.insertAdjacentElement("beforebegin", m);
       markCurrentNav();
     }
     showAccountNotice(p);

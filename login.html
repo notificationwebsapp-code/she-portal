@@ -49,6 +49,14 @@
         <label for="employee_code">รหัสพนักงาน</label><br>
         <input type="text" id="employee_code" name="employee_code" autocomplete="off" maxlength="30">
       </p>
+      <p id="dept-row" hidden>
+        <label for="department_text">แผนก</label><br>
+        <input type="text" id="department_text" name="department_text" autocomplete="off" maxlength="100">
+      </p>
+      <fieldset id="plant-row" hidden>
+        <legend>Plant ที่ทำงาน <small>(เลือกได้มากกว่า 1)</small></legend>
+        <div id="plant-list" class="plantlist"></div>
+      </fieldset>
       <p>
         <label for="password">รหัสผ่าน <small>(อย่างน้อย 8 ตัวอักษร)</small></label><br>
         <input type="password" id="password" name="password" autocomplete="current-password" minlength="8" required>
@@ -70,6 +78,28 @@
     const msg = document.getElementById("msg");
     const form = document.getElementById("login-form");
     let mode = "login";
+    let plantsOk = false, plantsLoaded = false;
+
+    // รายการ Plant สำหรับหน้าสมัคร: ดึงผ่านฟังก์ชัน signup_options (เฉพาะ Plant ที่ active)
+    // ค่าที่เลือกเป็นเพียง "คำขอ" Admin เป็นผู้ให้สิทธิ์จริงตอนอนุมัติ
+    async function loadPlants() {
+      if (plantsLoaded) return;
+      plantsLoaded = true;
+      const { data, error } = await sb.rpc("signup_options");
+      const box = document.getElementById("plant-list");
+      box.replaceChildren();
+      if (error || !data || data.length === 0) { plantsOk = false; return; }
+      plantsOk = true;
+      data.forEach((p) => {
+        const lb = document.createElement("label");
+        const cb = document.createElement("input");
+        cb.type = "checkbox"; cb.value = p.id; cb.name = "plant";
+        lb.appendChild(cb);
+        lb.appendChild(document.createTextNode(" " + p.code + " " + p.name));   // textContent/TextNode กัน XSS
+        box.appendChild(lb);
+      });
+      document.getElementById("plant-row").hidden = mode !== "signup";
+    }
 
     function show(text, isError) {
       msg.textContent = text;          // textContent ปลอดภัยจาก XSS (ไม่แปลงเป็น HTML)
@@ -84,6 +114,9 @@
       document.getElementById("btn-mode").textContent = signup ? "← กลับไปเข้าสู่ระบบ" : "สมัครสมาชิก";
       document.getElementById("name-row").hidden = !signup;
       document.getElementById("code-row").hidden = !signup;
+      document.getElementById("dept-row").hidden = !signup;
+      document.getElementById("plant-row").hidden = !signup || !plantsOk;
+      if (signup) loadPlants();
       document.getElementById("full_name").required = signup;
       document.getElementById("remember-row").hidden = signup;
       document.getElementById("btn-forgot").hidden = signup;
@@ -117,11 +150,14 @@
         } else {
           const fullName = form.full_name.value.trim();
           if (fullName.length < 2) return show("กรุณากรอกชื่อ-นามสกุลก่อนสมัครสมาชิก", true);
+          const plantIds = Array.from(document.querySelectorAll("#plant-list input:checked")).map((c) => c.value);
+          if (plantsOk && plantIds.length === 0) return show("กรุณาเลือก Plant ที่ทำงานอย่างน้อย 1 แห่ง", true);
           const { data, error } = await sb.auth.signUp({
             email: form.email.value.trim(),
             password: form.password.value,
             // full_name ถูกเก็บลง profiles โดย trigger handle_new_user (ฝั่งฐานข้อมูล)
-            options: { data: { full_name: fullName, employee_code: form.employee_code.value.trim() }, emailRedirectTo: new URL("login.html", window.location.href).href }
+            options: { data: { full_name: fullName, employee_code: form.employee_code.value.trim(),
+                              department_text: form.department_text.value.trim(), plant_ids: plantIds }, emailRedirectTo: new URL("login.html", window.location.href).href }
           });
           if (error) return show("สมัครไม่สำเร็จ: " + error.message, true);
           if (data.session) window.location.href = "incident.html";

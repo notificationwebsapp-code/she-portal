@@ -91,6 +91,10 @@
       const box = el("div", undefined, "userbox");
       box.appendChild(el("h4", (u.full_name || "(ไม่ระบุชื่อ)") + " — " + (u.email || "")));
       box.appendChild(el("p", "รหัสพนักงาน: " + (u.employee_code || "ไม่ได้ระบุ") + " · สมัครเมื่อ " + fmt(u.created_at), "meta"));
+      const reqPlants = u.requested_plant_ids || [];
+      const reqNames = plants.filter(p => reqPlants.includes(p.id)).map(p => p.code).join(", ");
+      box.appendChild(el("p", "ผู้สมัครขอ — แผนก: " + (u.requested_department_text || "ไม่ได้ระบุ") +
+        " · Plant: " + (reqNames || "ไม่ได้ระบุ") + " (เป็นเพียงคำขอ กรุณาตรวจสอบก่อนอนุมัติ)", "meta"));
 
       const grid = el("div", undefined, "grid");
       const roleSel = document.createElement("select");
@@ -99,6 +103,9 @@
       const deptSel = document.createElement("select");
       const o0 = el("option", "(ไม่ระบุ)"); o0.value = ""; deptSel.appendChild(o0);
       depts.forEach(d => { const o = el("option", d.name); o.value = d.id; deptSel.appendChild(o); });
+      const reqDept = (u.requested_department_text || "").trim().toLowerCase();
+      const matchDept = reqDept && depts.find(d => d.name.trim().toLowerCase() === reqDept);
+      if (matchDept) deptSel.value = matchDept.id;
       grid.appendChild(field("แผนก", deptSel));
       box.appendChild(grid);
 
@@ -110,7 +117,7 @@
       plants.forEach(p => {
         const lb = el("label");
         const cb = document.createElement("input");
-        cb.type = "checkbox"; cb.value = p.id; boxes.push(cb);
+        cb.type = "checkbox"; cb.value = p.id; cb.checked = reqPlants.includes(p.id); boxes.push(cb);
         lb.appendChild(cb); lb.appendChild(document.createTextNode(p.code + " " + p.name));
         list.appendChild(lb);
       });
@@ -345,7 +352,7 @@
       const [pl, dp, us, up] = await Promise.all([
         sb.from("plants").select("id, code, name").eq("active", true).order("code"),
         sb.from("departments").select("id, name").eq("active", true).order("name"),
-        sb.from("profiles").select("id, full_name, email, employee_code, department_id, role, status, reject_reason, created_at").order("created_at", { ascending: false }),
+        sb.from("profiles").select("id, full_name, email, employee_code, department_id, role, status, reject_reason, created_at, requested_plant_ids, requested_department_text").order("created_at", { ascending: false }),
         sb.from("user_plants").select("user_id, plant_id")
       ]);
       const err = pl.error || dp.error || us.error || up.error;

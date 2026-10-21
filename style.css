@@ -190,3 +190,9 @@ main.authsplit{flex:1;max-width:none;width:100%;margin:0;padding:0;border:0;bord
   .authhero ul,.authhero p{display:none}
   .authform{padding:1.5rem}
 }
+
+/* ฟอร์มเพิ่มข้อมูลหลัก (หน้า admin-master) */
+.addform{max-width:none;margin:0 0 1.5rem;padding:1rem 1.1rem;border:1px dashed var(--line);border-radius:10px;background:#fafbfe}
+.addform .grid2{display:grid;grid-template-columns:1fr 2fr;gap:.75rem 1rem}
+@media (max-width:640px){.addform .grid2{grid-template-columns:1fr}}
+fieldset#plant-row{padding:.6rem 1rem 1rem}

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ข้อมูลหลัก | SHE Portal</title>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- ซ่อนจนกว่าจะยืนยันว่าเป็น Admin (ซ่อนหน้าจอเท่านั้น สิทธิ์จริงอยู่ที่ RLS ของตาราง plants/departments) -->
+    <div id="adminarea" hidden>
+      <h2>ข้อมูลหลัก: Plant และแผนก</h2>
+      <p>เพิ่ม แก้ไข หรือปิดการใช้งาน Plant ที่ผู้สมัครเลือกได้ในหน้าสมัครสมาชิก (ไม่มีการลบ เพื่อรักษาประวัติ)</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <h3>Plant</h3>
+      <div class="tablewrap"><table id="t-plants">
+        <thead><tr><th>รหัส</th><th>ชื่อ</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <form id="f-plants" class="addform" autocomplete="off">
+        <div class="grid2">
+          <div><label for="plants-code">รหัส Plant <small>(ไม่เกิน 20 ตัวอักษร)</small></label><br><input type="text" id="plants-code" maxlength="20" required></div>
+          <div><label for="plants-name">ชื่อ Plant</label><br><input type="text" id="plants-name" maxlength="100" required></div>
+        </div>
+        <div class="actions"><button type="submit" class="btn-ok">+ เพิ่ม Plant</button></div>
+      </form>
+
+      <h3>แผนก (มาตรฐาน)</h3>
+      <p class="helper">ใช้จับคู่กับแผนกที่ผู้สมัครพิมพ์เอง และใช้สรุป KPI รายแผนก</p>
+      <div class="tablewrap"><table id="t-departments">
+        <thead><tr><th>รหัส</th><th>ชื่อ</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <form id="f-departments" class="addform" autocomplete="off">
+        <div class="grid2">
+          <div><label for="departments-code">รหัสแผนก <small>(ไม่เกิน 20 ตัวอักษร)</small></label><br><input type="text" id="departments-code" maxlength="20" required></div>
+          <div><label for="departments-name">ชื่อแผนก</label><br><input type="text" id="departments-name" maxlength="100" required></div>
+        </div>
+        <div class="actions"><button type="submit" class="btn-ok">+ เพิ่มแผนก</button></div>
+      </form>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // หมายเหตุ: หน้านี้เป็นเพียงหน้าจอ สิทธิ์จริงอยู่ที่ RLS (เฉพาะ Admin เพิ่ม/แก้ได้) และ CHECK constraint ของตาราง
+    // ไม่มีการลบ: ปิดการใช้งานแทน เพื่อให้ข้อมูลเดิมที่อ้างอิงอยู่ยังครบ และทุกการเปลี่ยนแปลงถูกบันทึกใน audit_log
+    const msgEl = document.getElementById("msg");
+    const KINDS = { plants: "Plant", departments: "แผนก" };
+    function show(text, ok) {
+      msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error");
+      msgEl.textContent = text; msgEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    function el(tag, text, cls) {
+      const e = document.createElement(tag);
+      if (text !== undefined) e.textContent = text;
+      if (cls) e.className = cls;
+      return e;
+    }
+    function thaiError(error) {
+      if (error.code === "23505") return "รหัสนี้ถูกใช้แล้ว";
+      if (error.code === "23514") return "รูปแบบข้อมูลไม่ถูกต้อง (ไม่เว้นว่าง ไม่มีช่องว่างหัว-ท้าย รหัส ≤ 20 ตัว ชื่อ ≤ 100 ตัว)";
+      if (error.code === "42501") return "ไม่มีสิทธิ์ทำรายการนี้";
+      return error.message;
+    }
+    // เขียนข้อมูลแล้วตรวจว่าแถวถูกบันทึกจริง (ถ้า RLS ปฏิเสธ ฐานข้อมูลจะคืน 0 แถวโดยไม่มี error)
+    async function write(promise, okText) {
+      const { data, error } = await promise;
+      if (error) { show("บันทึกไม่สำเร็จ: " + thaiError(error), false); return false; }
+      if (!data || data.length === 0) { show("บันทึกไม่สำเร็จ: ไม่มีสิทธิ์หรือไม่พบข้อมูล", false); return false; }
+      show(okText, true);
+      return true;
+    }
+
+    function buildRow(kind, r) {
+      const tr = document.createElement("tr");
+      tr.appendChild(el("td", r.code));
+      tr.appendChild(el("td", r.name));
+      const st = el("td"); st.appendChild(el("span", r.active ? "ใช้งานอยู่" : "ปิดใช้งาน", "badge " + (r.active ? "active" : "suspended")));
+      tr.appendChild(st);
+      const act = el("td");
+      const edit = el("button", "แก้ไข", "small secondary"); edit.type = "button";
+      const tog = el("button", r.active ? "ปิดใช้งาน" : "เปิดใช้งาน", "small " + (r.active ? "btn-danger-outline" : "btn-ok-outline")); tog.type = "button";
+      edit.addEventListener("click", () => openEdit(kind, r, tr));
+      tog.addEventListener("click", async () => {
+        if (r.active && !confirm("ปิดใช้งาน " + r.code + " ?\nผู้สมัครใหม่จะไม่เห็นรายการนี้ ข้อมูลและสิทธิ์เดิมไม่ถูกลบ")) return;
+        tog.disabled = true;
+        if (await write(sb.from(kind).update({ active: !r.active }).eq("id", r.id).select("id"),
+            (r.active ? "ปิดใช้งาน " : "เปิดใช้งาน ") + r.code + " เรียบร้อย")) await load(); else tog.disabled = false;
+      });
+      act.appendChild(edit); act.appendChild(tog); tr.appendChild(act);
+      return tr;
+    }
+
+    function openEdit(kind, r, tr) {
+      const next = tr.nextElementSibling;
+      if (next && next.classList.contains("editrow")) { next.remove(); return; }
+      const row = document.createElement("tr"); row.className = "editrow";
+      const td = el("td"); td.colSpan = 4;
+      const box = el("div", undefined, "userbox editbox");
+      box.appendChild(el("h4", "แก้ไข " + KINDS[kind] + ": " + r.code));
+      const grid = el("div", undefined, "grid");
+      const mk = (labelText, value, max) => {
+        const w = document.createElement("div");
+        w.appendChild(el("label", labelText)); w.appendChild(document.createElement("br"));
+        const i = document.createElement("input"); i.type = "text"; i.maxLength = max; i.value = value;
+        w.appendChild(i); grid.appendChild(w); return i;
+      };
+      const codeIn = mk("รหัส", r.code, 20), nameIn = mk("ชื่อ", r.name, 100);
+      box.appendChild(grid);
+      const actions = el("div", undefined, "actions");
+      const save = el("button", "✓ บันทึกการแก้ไข", "btn-ok"); save.type = "button";
+      const cancel = el("button", "ยกเลิก", "secondary"); cancel.type = "button";
+      cancel.addEventListener("click", () => row.remove());
+      save.addEventListener("click", async () => {
+        save.disabled = true;
+        const ok = await write(sb.from(kind).update({ code: codeIn.value.trim(), name: nameIn.value.trim() }).eq("id", r.id).select("id"),
+          "บันทึกการแก้ไข " + KINDS[kind] + " เรียบร้อย");
+        if (ok) await load(); else save.disabled = false;
+      });
+      actions.appendChild(save); actions.appendChild(cancel); box.appendChild(actions);
+      td.appendChild(box); row.appendChild(td); tr.after(row);
+    }
+
+    async function renderKind(kind) {
+      const { data, error } = await sb.from(kind).select("id, code, name, active").order("code");
+      if (error) { show("โหลดข้อมูลไม่สำเร็จ: " + error.message, false); return; }
+      const tb = document.querySelector("#t-" + kind + " tbody");
+      tb.replaceChildren();
+      if (data.length === 0) {
+        const tr = document.createElement("tr"); const td = el("td", "ยังไม่มีรายการ"); td.colSpan = 4;
+        tr.appendChild(td); tb.appendChild(tr);
+      }
+      data.forEach(r => tb.appendChild(buildRow(kind, r)));
+    }
+    async function load() { await renderKind("plants"); await renderKind("departments"); }
+
+    ["plants", "departments"].forEach((kind) => {
+      document.getElementById("f-" + kind).addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const code = document.getElementById(kind + "-code"), name = document.getElementById(kind + "-name");
+        const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+        try {
+          if (await write(sb.from(kind).insert({ code: code.value.trim(), name: name.value.trim() }).select("id"),
+              "เพิ่ม" + KINDS[kind] + " " + code.value.trim() + " เรียบร้อย")) { code.value = ""; name.value = ""; await load(); }
+        } finally { btn.disabled = false; }
+      });
+    });
+
+    (async function init() {
+      const session = await requireLogin();
+      if (!session) return;
+      const me = await getMyProfile();
+      const gate = document.getElementById("gate");
+      if (!me || me.status !== "active" || (me.role !== "admin" && me.role !== "super_admin")) {
+        gate.textContent = "หน้านี้สำหรับ Admin เท่านั้น";
+        return;
+      }
+      gate.hidden = true;
+      document.getElementById("adminarea").hidden = false;
+      await load();
+    })();
+  </script>
+</body>
+</html>
