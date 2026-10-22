@@ -121,6 +121,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="auth.js"></script>
+  <script src="draft.js"></script>
   <script>requireLogin();</script>
   <script>
     const $ = (id) => document.getElementById(id);
@@ -227,7 +228,7 @@
       options.forEach(([v, t]) => s.appendChild(opt(v, t)));
       return s;
     }
-    function addPerson() {
+    function addPerson(data) {
       const box = $("persons");
       if (box.children.length >= MAX_PERSONS) return;
       const div = document.createElement("div"); div.className = "personbox";
@@ -235,7 +236,7 @@
       const title = document.createElement("span");
       const rm = document.createElement("button");
       rm.type = "button"; rm.className = "btn-danger-outline small"; rm.textContent = "ลบ";
-      rm.addEventListener("click", () => { div.remove(); renumber(); });
+      rm.addEventListener("click", () => { div.remove(); renumber(); SheDraft.markDirty(); });
       head.appendChild(title); head.appendChild(rm); div.appendChild(head);
 
       const f = {};
@@ -254,6 +255,11 @@
       const r3 = document.createElement("div"); r3.className = "row3";
       r3.appendChild(field("สัญชาติ", f.nat)); r3.appendChild(field("ตำแหน่ง", f.pos)); r3.appendChild(field("ประเภทบุคลากร", f.ptype));
       div.appendChild(r1); div.appendChild(r2); div.appendChild(r3);
+      if (data && typeof data === "object") {
+        f.role.value = data.role || "injured"; f.name.value = data.name || ""; f.code.value = data.code || "";
+        f.gender.value = data.gender || ""; f.age.value = data.age ?? ""; f.tenure.value = data.tenure ?? "";
+        f.nat.value = data.nat || ""; f.pos.value = data.pos || ""; f.ptype.value = data.ptype || "";
+      }
       div._f = f; div._title = title;
       box.appendChild(div); renumber();
     }
@@ -282,7 +288,7 @@
     }
 
     // ---------- เหตุการณ์ในหน้า ----------
-    $("btn-add-person").addEventListener("click", addPerson);
+    $("btn-add-person").addEventListener("click", () => { addPerson(); SheDraft.markDirty(); });
     $("plant").addEventListener("change", () => { lsSet("she_last_plant", $("plant").value); loadShifts(); });
     $("type").addEventListener("change", () => {
       const o = $("type").selectedOptions[0];
@@ -339,6 +345,7 @@
         const { error: ce } = await sb.from("contacts").insert({ full_name: row.responsible_name, email: row.responsible_email });
         if (!ce) { contacts.push({ full_name: row.responsible_name, email: row.responsible_email }); }
       }
+      await SheDraft.clear();
       lsSet("she_last_dept", val("department"));
       if (myPlants.length > 1) lsSet("she_last_plant", pid);
 
@@ -351,6 +358,43 @@
       loadShifts();
       show("บันทึก Flash Report เรียบร้อยแล้ว" + warn, warn ? "error" : "ok");
     });
+
+    // ---------- ร่าง (Save draft) ----------
+    function getState() {
+      return {
+        plant: $("plant").value, date: $("date").value, time: $("time").value, shift: $("shift").value,
+        department: $("department").value, location: $("location").value, type: $("type").value,
+        description: $("description").value, how: $("how").value, why: $("why").value,
+        immediate: $("immediate").value, respName: $("resp-name").value, respEmail: $("resp-email").value,
+        persons: Array.from($("persons").children).map((d) => {
+          const f = d._f;
+          return { role: f.role.value, name: f.name.value, code: f.code.value, gender: f.gender.value, age: f.age.value,
+                   tenure: f.tenure.value, nat: f.nat.value, pos: f.pos.value, ptype: f.ptype.value };
+        })
+      };
+    }
+    function hasOption(sel, v) { return Array.from(sel.options).some((o) => o.value === v); }
+    async function setState(st) {
+      if (st.plant && hasOption($("plant"), st.plant)) { $("plant").value = st.plant; }
+      await loadShifts();
+      if (st.shift && hasOption($("shift"), st.shift)) $("shift").value = st.shift;
+      $("date").value = st.date || todayLocal(); $("time").value = st.time || "";
+      $("department").value = st.department || ""; $("location").value = st.location || "";
+      $("type").value = (st.type && hasOption($("type"), st.type)) ? st.type : "";
+      const o = $("type").selectedOptions[0]; $("serious-note").hidden = !(o && o.dataset.serious);
+      $("description").value = st.description || ""; $("how").value = st.how || ""; $("why").value = st.why || "";
+      $("immediate").value = st.immediate || ""; $("resp-name").value = st.respName || ""; $("resp-email").value = st.respEmail || "";
+      $("persons").replaceChildren();
+      (Array.isArray(st.persons) ? st.persons.slice(0, MAX_PERSONS) : []).forEach((p) => addPerson(p));
+      renumber();
+    }
+    function draftTitle() {
+      const t = $("type").selectedOptions[0];
+      const parts = [t && t.value ? t.textContent.split(" / ")[0] : "", val("location") || val("description").slice(0, 40)].filter(Boolean);
+      return parts.join(" · ");
+    }
+    SheDraft.init({ formType: "incident", form: form, getState: getState, setState: setState,
+                    getTitle: draftTitle, getPlantId: currentPlantId });
 
     $("date").value = todayLocal();
     loadTypes(); loadDepartments(); loadContacts(); loadMyPlants();
