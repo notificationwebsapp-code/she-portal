@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <title>เช็กลิสต์ตรวจ | SHE Portal</title>
+  <style>
+    .plantline{margin:0 0 1.1rem;padding:.5rem .8rem;background:#eef2f9;border-radius:8px}
+    form .formactions{margin:1.2rem 0 .5rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+  </style>
 </head>
 <body>
   <header>
@@ -23,6 +27,11 @@
     <h2>เช็กลิสต์ตรวจ</h2>
     <p id="msg" role="status" class="msg" hidden></p>
     <form id="main-form">
+      <p id="plant-single" class="plantline" hidden></p>
+      <p id="plant-row" hidden>
+        <label for="plant">Plant ที่ตรวจ</label><br>
+        <select id="plant"><option value="">-- เลือก --</option></select>
+      </p>
       <p>
         <label for="date">วันที่ตรวจ</label><br>
         <input type="date" id="date" name="date" required>
@@ -42,13 +51,17 @@
         <label for="note">หมายเหตุ</label><br>
         <textarea id="note" name="note" rows="3" cols="40"></textarea>
       </p>
-      <button type="submit" id="btn-save">บันทึกผลตรวจ</button>
+      <div class="formactions">
+        <button type="submit" id="btn-save">บันทึกผลตรวจ</button>
+      </div>
     </form>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="auth.js"></script>
+  <script src="draft.js"></script>
+  <script src="plant.js"></script>
   <script>requireLogin();</script>
   <script>
     const form = document.getElementById("main-form");
@@ -59,9 +72,35 @@
       msg.className = "msg " + (isError ? "error" : "ok");
       msg.hidden = false;
     }
+    function todayLocal() {
+      const d = new Date(), p = (n) => String(n).padStart(2, "0");
+      return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+    }
+
+    // ---- Save draft (หลักการข้อ 11: ทุกฟอร์มต้องมีบันทึกร่าง) ----
+    function getState() {
+      return {
+        plant: ShePlant.current(), date: form.date.value, area: form.area.value,
+        c1: form.c1.checked, c2: form.c2.checked, c3: form.c3.checked, c4: form.c4.checked,
+        note: form.note.value
+      };
+    }
+    async function setState(s) {
+      ShePlant.set(s.plant);
+      form.date.value = s.date || "";
+      form.area.value = s.area || "";
+      form.c1.checked = !!s.c1; form.c2.checked = !!s.c2; form.c3.checked = !!s.c3; form.c4.checked = !!s.c4;
+      form.note.value = s.note || "";
+    }
+    function draftTitle() {
+      const a = form.area.value.trim();
+      return "เช็กลิสต์ตรวจ" + (a ? " · " + a : "") + (form.date.value ? " · " + form.date.value : "");
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const pid = ShePlant.current();
+      if (!pid) return show("ไม่พบ Plant ที่ได้รับสิทธิ์ กรุณาเลือก Plant หรือติดต่อ Admin", true);
       btn.disabled = true;
       // เก็บผลตรวจเป็นออบเจ็กต์ true/false เช่น {"c1": true, "c2": false}
       const items = {
@@ -69,16 +108,30 @@
         c3: form.c3.checked, c4: form.c4.checked
       };
       const { error } = await sb.from("checklist_inspections").insert({
+        plant_id: pid,
         inspected_on: form.date.value,
         area: form.area.value.trim(),
         items: items,
         note: form.note.value.trim() || null
       });
       btn.disabled = false;
-      if (error) return show("บันทึกไม่สำเร็จ: " + error.message, true);
+      if (error) {
+        if (error.code === "42501") return show("ไม่มีสิทธิ์บันทึก (ต้องเป็น SHE/Admin ของ Plant ที่เลือก)", true);
+        return show("บันทึกไม่สำเร็จ: " + error.message, true);
+      }
+      const keep = ShePlant.current();
       form.reset();
+      ShePlant.set(keep);
+      await SheDraft.clear();
       show("บันทึกผลตรวจเรียบร้อยแล้ว", false);
     });
+
+    ShePlant.init({ select: document.getElementById("plant"),
+                    single: document.getElementById("plant-single"),
+                    row: document.getElementById("plant-row") });
+    SheDraft.init({ formType: "checklist", form: form, getState: getState, setState: setState,
+                    getTitle: draftTitle, getPlantId: ShePlant.current,
+                    actionsEl: document.querySelector(".formactions") });
   </script>
 </body>
 </html>
