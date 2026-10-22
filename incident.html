@@ -4,7 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
-  <title>รายงานอุบัติเหตุ | SHE Portal</title>
+  <title>รายงานอุบัติเหตุ (Flash Report) | SHE Portal</title>
+  <style>
+    /* สไตล์เฉพาะหน้านี้ (ใช้ตัวแปรสีเดิมจาก style.css) */
+    input[type=time]{width:100%;max-width:100%;padding:.6rem .75rem;margin-top:.3rem;border:1px solid #9aa6bb;border-radius:8px;font:inherit;background:#fff;color:inherit}
+    input[type=time]:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(11,61,145,.18)}
+    main.flash{max-width:860px}
+    main.flash form{max-width:none}
+    .stepcard{border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem 0.4rem;margin:0 0 1.1rem;background:#fff}
+    .stepcard>h3{margin:0 0 .8rem;font-size:1.05rem;color:var(--brand);display:flex;align-items:center;gap:.5rem}
+    .stepcard>h3 .no{display:inline-flex;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--brand);color:#fff;
+      align-items:center;justify-content:center;font-size:.9rem}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 1rem}
+    @media (max-width:700px){.row2,.row3{grid-template-columns:1fr}}
+    .alertbox{border-left:5px solid var(--danger);background:#fdecea;color:#8c1d18;padding:.7rem .9rem;border-radius:8px;margin:0 0 1.1rem}
+    .infobox{border-left:5px solid var(--brand);background:var(--accent);color:var(--ink);padding:.6rem .9rem;border-radius:8px;margin:0 0 1rem;font-size:.93rem}
+    .personbox{border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:10px;padding:.8rem 1rem .2rem;margin:0 0 .9rem;background:#fafbfe}
+    .personbox .phead{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;font-weight:700}
+    .plantline{margin:0 0 1.1rem;padding:.5rem .8rem;background:#eef2f9;border-radius:8px}
+    form .formactions{margin:1.2rem 0 .5rem}
+  </style>
 </head>
 <body>
   <header>
@@ -19,42 +39,82 @@
     </nav>
   </header>
 
-  <main>
-    <h2>รายงานอุบัติเหตุ</h2>
+  <main class="flash">
+    <h2>รายงานอุบัติเหตุ (Flash Report)</h2>
+    <p class="lead" style="text-align:left">รายงานเบื้องต้นให้เร็วที่สุด ส่วนการหาสาเหตุ (Root cause) และ Action จะเพิ่มในขั้นตอนถัดไป</p>
     <p id="msg" role="status" class="msg" hidden></p>
-    <form id="incident-form">
-      <p>
-        <label for="date">วันที่เกิดเหตุ</label><br>
-        <input type="date" id="date" name="date" required>
-      </p>
-      <p>
-        <label for="location">สถานที่</label><br>
-        <input type="text" id="location" name="location" required>
-      </p>
-      <p>
-        <label for="type">ประเภทเหตุ</label><br>
-        <select id="type" name="type" required>
-          <option value="">-- เลือก --</option>
-          <option value="near-miss">เหตุเกือบเกิดอุบัติเหตุ (Near miss)</option>
-          <option value="first-aid">ปฐมพยาบาล</option>
-          <option value="lost-time">หยุดงาน (Lost time)</option>
-          <option value="property">ทรัพย์สินเสียหาย</option>
-        </select>
-      </p>
-      <p>
-        <label for="severity">ความรุนแรง</label><br>
-        <select id="severity" name="severity" required>
-          <option value="">-- เลือก --</option>
-          <option value="low">ต่ำ</option>
-          <option value="medium">กลาง</option>
-          <option value="high">สูง</option>
-        </select>
-      </p>
-      <p>
-        <label for="description">รายละเอียดเหตุการณ์</label><br>
-        <textarea id="description" name="description" rows="5" cols="40" required></textarea>
-      </p>
-      <button type="submit" id="btn-save">บันทึกรายงาน</button>
+
+    <form id="incident-form" autocomplete="off">
+
+      <section class="stepcard">
+        <h3><span class="no">1</span> เกิดอะไรขึ้น ที่ไหน เมื่อไร (What / Where / When)</h3>
+
+        <div id="plant-wrap">
+          <p id="plant-single" class="plantline" hidden></p>
+          <p id="plant-row" hidden>
+            <label for="plant" class="required">Plant ที่เกิดเหตุ</label><br>
+            <select id="plant"><option value="">-- เลือก --</option></select>
+          </p>
+        </div>
+
+        <div class="row3">
+          <p><label for="date" class="required">วันที่เกิดเหตุ</label><br><input type="date" id="date" required></p>
+          <p><label for="time" class="required">เวลา</label><br><input type="time" id="time" required></p>
+          <p id="shift-row" hidden><label for="shift">กะ (Shift)</label><br>
+            <select id="shift"><option value="">-- ไม่ระบุ --</option></select></p>
+        </div>
+
+        <div class="row2">
+          <p><label for="department">แผนก</label><br>
+            <input type="text" id="department" maxlength="100" list="dl-dept" placeholder="พิมพ์หรือเลือกจากรายการ">
+            <datalist id="dl-dept"></datalist></p>
+          <p><label for="location" class="required">จุดเกิดเหตุ</label><br>
+            <input type="text" id="location" maxlength="200" required placeholder="เช่น Line 2, คลังสินค้า"></p>
+        </div>
+
+        <p><label for="type" class="required">ประเภทเหตุการณ์</label><br>
+          <select id="type" required><option value="">-- เลือก --</option></select></p>
+
+        <div id="serious-note" class="alertbox" role="alert" hidden>
+          <b>เหตุร้ายแรง</b> — ประเภทนี้ถูกกำหนดเป็นเหตุร้ายแรง ปุ่มส่งอีเมลแจ้งเหตุจะเปิดใช้ในขั้นตอนพัฒนาถัดไป
+          ระหว่างนี้กรุณาแจ้งผู้เกี่ยวข้องตามขั้นตอนขององค์กรไปก่อน
+        </div>
+
+        <p><label for="description" class="required">เกิดอะไรขึ้น (What)</label><br>
+          <textarea id="description" rows="3" maxlength="4000" required></textarea></p>
+        <p><label for="how">เกิดขึ้นอย่างไร (How)</label><br>
+          <textarea id="how" rows="3" maxlength="4000"></textarea></p>
+        <p><label for="why">สาเหตุเบื้องต้นที่สันนิษฐาน (Why)</label><br>
+          <textarea id="why" rows="2" maxlength="4000"></textarea>
+          <span class="helper">เป็นเพียงข้อสันนิษฐานเบื้องต้น การวิเคราะห์ Root cause (5 Why) ทำในขั้นตอนถัดไป</span></p>
+      </section>
+
+      <section class="stepcard">
+        <h3><span class="no">2</span> ใครเกี่ยวข้อง (Who)</h3>
+        <div class="infobox">ข้อมูลผู้เกี่ยวข้องเห็นได้เฉพาะผู้รายงานและ SHE/Admin ของ Plant ช่วงนี้ใช้ข้อมูลทดสอบเท่านั้น (ห้ามใช้ข้อมูลจริงจนกว่าจะได้รับอนุมัติ)</div>
+        <div id="persons"></div>
+        <p><button type="button" id="btn-add-person" class="secondary" style="margin-left:0">+ เพิ่มผู้เกี่ยวข้อง</button>
+          <span class="helper">ไม่บังคับ เพิ่มได้สูงสุด 10 คน</span></p>
+      </section>
+
+      <section class="stepcard">
+        <h3><span class="no">3</span> ดำเนินการไปแล้ว และผู้รับผิดชอบหลัก</h3>
+        <p><label for="immediate">การดำเนินการทันที (Immediate action)</label><br>
+          <textarea id="immediate" rows="2" maxlength="4000" placeholder="เช่น ปฐมพยาบาล หยุดเครื่องจักร กั้นพื้นที่"></textarea></p>
+        <div class="row2">
+          <p><label for="resp-name">ผู้รับผิดชอบหลัก (ชื่อ)</label><br>
+            <input type="text" id="resp-name" maxlength="100" list="dl-cname">
+            <datalist id="dl-cname"></datalist></p>
+          <p><label for="resp-email">อีเมลผู้รับผิดชอบ</label><br>
+            <input type="email" id="resp-email" maxlength="254" list="dl-cemail">
+            <datalist id="dl-cemail"></datalist></p>
+        </div>
+        <p class="helper" style="margin-top:-.5rem">ระบบจำชื่อและอีเมลที่เคยกรอกไว้ในสมุดรายชื่อส่วนตัวของคุณ (เห็นเฉพาะคุณ) คลิกช่องเพื่อเลือกจากรายการ</p>
+      </section>
+
+      <div class="formactions">
+        <button type="submit" id="btn-save">บันทึก Flash Report</button>
+      </div>
     </form>
   </main>
 
@@ -63,34 +123,237 @@
   <script src="auth.js"></script>
   <script>requireLogin();</script>
   <script>
-    const form = document.getElementById("incident-form");
-    const msg = document.getElementById("msg");
-    const btn = document.getElementById("btn-save");
+    const $ = (id) => document.getElementById(id);
+    const form = $("incident-form"), msg = $("msg"), btn = $("btn-save");
+    let myPlants = [];        // [{plant_id, plants:{code,name}}]
+    let contacts = [];        // [{full_name,email}]
+    const MAX_PERSONS = 10;
 
-    function show(text, isError) {
+    function show(text, kind) {
       msg.textContent = text;
-      msg.className = "msg " + (isError ? "error" : "ok");
+      msg.className = "msg " + (kind === "ok" ? "ok" : "error");
       msg.hidden = false;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    function lsGet(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ใช้ไม่ได้ก็ข้าม */ } }
+    function opt(value, text) { const o = document.createElement("option"); o.value = value; o.textContent = text; return o; }
+    function val(id) { return $(id).value.trim(); }
+    function orNull(v) { return v === "" ? null : v; }
+    function todayLocal() {
+      const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 10);
+    }
+    function hhmm(t) { return (t || "").slice(0, 5); }
+
+    // ---------- ข้อมูลอ้างอิง (ทุกอย่างกรองสิทธิ์โดย RLS ที่ฐานข้อมูล) ----------
+    async function loadTypes() {
+      const { data } = await sb.from("incident_types")
+        .select("id, code, name_th, name_en, is_serious").eq("active", true).order("sort_order");
+      const sel = $("type");
+      (data || []).forEach((t) => {
+        const o = opt(t.id, t.name_th === t.name_en ? t.name_th : t.name_th + " / " + t.name_en);
+        o.dataset.serious = t.is_serious ? "1" : "";
+        sel.appendChild(o);
+      });
+    }
+    async function loadDepartments() {
+      const { data } = await sb.from("departments").select("name").eq("active", true).order("name");
+      const dl = $("dl-dept");
+      (data || []).forEach((d) => { const o = document.createElement("option"); o.value = d.name; dl.appendChild(o); });
+      if (!$("department").value) $("department").value = lsGet("she_last_dept");
+    }
+    async function loadContacts() {
+      const { data } = await sb.from("contacts").select("full_name, email").order("full_name");
+      contacts = data || [];
+      const dn = $("dl-cname"), de = $("dl-cemail");
+      contacts.forEach((c) => {
+        const a = document.createElement("option"); a.value = c.full_name; a.label = c.email; dn.appendChild(a);
+        const b = document.createElement("option"); b.value = c.email; b.label = c.full_name; de.appendChild(b);
+      });
+    }
+    async function loadMyPlants() {
+      const { data: u } = await sb.auth.getUser();
+      if (!u || !u.user) return;
+      const { data } = await sb.from("user_plants")
+        .select("plant_id, plants(code, name)").eq("user_id", u.user.id);
+      myPlants = data || [];
+      const label = (r) => (r.plants ? r.plants.code + " — " + r.plants.name : r.plant_id);
+      if (myPlants.length === 1) {
+        $("plant-single").textContent = "Plant: " + label(myPlants[0]);
+        $("plant-single").hidden = false;
+      } else if (myPlants.length > 1) {
+        const sel = $("plant");
+        myPlants.forEach((r) => sel.appendChild(opt(r.plant_id, label(r))));
+        $("plant-row").hidden = false;
+        $("plant").required = true;
+        const last = lsGet("she_last_plant");
+        if (myPlants.some((r) => r.plant_id === last)) sel.value = last;
+      }
+      loadShifts();
+    }
+    function currentPlantId() {
+      if (myPlants.length === 1) return myPlants[0].plant_id;
+      return $("plant").value || "";
+    }
+    async function loadShifts() {
+      const sel = $("shift");
+      sel.replaceChildren(opt("", "-- ไม่ระบุ --"));
+      $("shift-row").hidden = true;
+      const pid = currentPlantId();
+      if (!pid) return;
+      const { data } = await sb.from("plant_shifts").select("id, name, start_time, end_time")
+        .eq("plant_id", pid).eq("active", true).order("sort_order");
+      if (!data || !data.length) return;
+      data.forEach((s) => sel.appendChild(opt(s.id, s.name + " (" + hhmm(s.start_time) + "–" + hhmm(s.end_time) + ")")));
+      $("shift-row").hidden = false;
+    }
+
+    // ---------- ผู้เกี่ยวข้อง ----------
+    function field(labelText, inputEl) {
+      const p = document.createElement("p");
+      const l = document.createElement("label"); l.textContent = labelText;
+      p.appendChild(l); p.appendChild(document.createElement("br")); p.appendChild(inputEl);
+      return p;
+    }
+    function input(type, max, extra) {
+      const i = document.createElement("input"); i.type = type;
+      if (max) i.maxLength = max;
+      if (extra) Object.assign(i, extra);
+      return i;
+    }
+    function select(options) {
+      const s = document.createElement("select");
+      options.forEach(([v, t]) => s.appendChild(opt(v, t)));
+      return s;
+    }
+    function addPerson() {
+      const box = $("persons");
+      if (box.children.length >= MAX_PERSONS) return;
+      const div = document.createElement("div"); div.className = "personbox";
+      const head = document.createElement("div"); head.className = "phead";
+      const title = document.createElement("span");
+      const rm = document.createElement("button");
+      rm.type = "button"; rm.className = "btn-danger-outline small"; rm.textContent = "ลบ";
+      rm.addEventListener("click", () => { div.remove(); renumber(); });
+      head.appendChild(title); head.appendChild(rm); div.appendChild(head);
+
+      const f = {};
+      f.role = select([["injured", "ผู้บาดเจ็บ/ผู้ได้รับผลกระทบ"], ["witness", "พยาน"], ["other", "อื่น ๆ"]]);
+      f.name = input("text", 100); f.code = input("text", 30);
+      f.gender = select([["", "-- ไม่ระบุ --"], ["male", "ชาย"], ["female", "หญิง"], ["other", "อื่น ๆ"]]);
+      f.age = input("number", 0, { min: 0, max: 120, step: 1, inputMode: "numeric" });
+      f.tenure = input("number", 0, { min: 0, max: 80, step: 0.5, inputMode: "decimal" });
+      f.nat = input("text", 50); f.pos = input("text", 100);
+      f.ptype = select([["", "-- ไม่ระบุ --"], ["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]]);
+
+      const r1 = document.createElement("div"); r1.className = "row3";
+      r1.appendChild(field("บทบาทในเหตุการณ์", f.role)); r1.appendChild(field("ชื่อ-นามสกุล", f.name)); r1.appendChild(field("รหัสพนักงาน", f.code));
+      const r2 = document.createElement("div"); r2.className = "row3";
+      r2.appendChild(field("เพศ", f.gender)); r2.appendChild(field("อายุ (ปี)", f.age)); r2.appendChild(field("อายุงาน (ปี)", f.tenure));
+      const r3 = document.createElement("div"); r3.className = "row3";
+      r3.appendChild(field("สัญชาติ", f.nat)); r3.appendChild(field("ตำแหน่ง", f.pos)); r3.appendChild(field("ประเภทบุคลากร", f.ptype));
+      div.appendChild(r1); div.appendChild(r2); div.appendChild(r3);
+      div._f = f; div._title = title;
+      box.appendChild(div); renumber();
+    }
+    function renumber() {
+      Array.from($("persons").children).forEach((d, i) => { d._title.textContent = "ผู้เกี่ยวข้องคนที่ " + (i + 1); });
+      $("btn-add-person").disabled = $("persons").children.length >= MAX_PERSONS;
+    }
+    function collectPersons(incidentId) {
+      const out = [];
+      Array.from($("persons").children).forEach((d) => {
+        const f = d._f;
+        const row = {
+          incident_id: incidentId, role_in_case: f.role.value,
+          full_name: orNull(f.name.value.trim()), employee_code: orNull(f.code.value.trim()),
+          gender: orNull(f.gender.value),
+          age_years: f.age.value === "" ? null : parseInt(f.age.value, 10),
+          tenure_years: f.tenure.value === "" ? null : parseFloat(f.tenure.value),
+          nationality: orNull(f.nat.value.trim()), position_title: orNull(f.pos.value.trim()),
+          person_type: orNull(f.ptype.value)
+        };
+        const hasData = row.full_name || row.employee_code || row.gender || row.age_years !== null ||
+          row.tenure_years !== null || row.nationality || row.position_title || row.person_type;
+        if (hasData) out.push(row);
+      });
+      return out;
+    }
+
+    // ---------- เหตุการณ์ในหน้า ----------
+    $("btn-add-person").addEventListener("click", addPerson);
+    $("plant").addEventListener("change", () => { lsSet("she_last_plant", $("plant").value); loadShifts(); });
+    $("type").addEventListener("change", () => {
+      const o = $("type").selectedOptions[0];
+      $("serious-note").hidden = !(o && o.dataset.serious);
+    });
+    $("resp-name").addEventListener("change", () => {
+      const c = contacts.find((x) => x.full_name.toLowerCase() === val("resp-name").toLowerCase());
+      if (c && !val("resp-email")) $("resp-email").value = c.email;
+    });
+    $("resp-email").addEventListener("change", () => {
+      const c = contacts.find((x) => x.email.toLowerCase() === val("resp-email").toLowerCase());
+      if (c && !val("resp-name")) $("resp-name").value = c.full_name;
+    });
+
+    function thaiError(error) {
+      const c = error.code || "";
+      if (c === "42501") return "ไม่มีสิทธิ์บันทึก กรุณาตรวจสอบ Plant ประเภท และกะที่เลือก (หรือสิทธิ์บัญชีของคุณ)";
+      if (c === "23514") return "ข้อมูลบางช่องไม่ถูกต้อง (เช่น อีเมล ความยาวข้อความ หรือกะไม่ตรงกับ Plant)";
+      return "บันทึกไม่สำเร็จ: " + error.message;
     }
 
     form.addEventListener("submit", async (e) => {
-      e.preventDefault();          // กันไม่ให้เบราว์เซอร์โหลดหน้าใหม่
-      btn.disabled = true;         // กันกดซ้ำจนข้อมูลซ้ำ
+      e.preventDefault();
+      msg.hidden = true;
+      const pid = currentPlantId();
+      if (!pid) return show("ไม่พบ Plant ที่ได้รับสิทธิ์ กรุณาติดต่อ Admin", "error");
+      btn.disabled = true;
 
-      // ไม่ส่ง reporter_id เอง: ฐานข้อมูลใส่ auth.uid() ให้ (กันปลอมตัวเป็นคนอื่น)
-      const { error } = await sb.from("incident_reports").insert({
-        occurred_on: form.date.value,
-        location: form.location.value.trim(),
-        type: form.type.value,
-        severity: form.severity.value,
-        description: form.description.value.trim()
-      });
+      // ไม่ส่ง reporter_id: ฐานข้อมูลใส่ auth.uid() ให้ (กันปลอมตัวเป็นคนอื่น)
+      const row = {
+        plant_id: pid,
+        occurred_on: $("date").value,
+        occurred_time: $("time").value,
+        location: val("location"),
+        incident_type_id: $("type").value,
+        description: val("description"),
+        how_text: orNull(val("how")), why_text: orNull(val("why")),
+        immediate_action: orNull(val("immediate")),
+        department_text: orNull(val("department")),
+        responsible_name: orNull(val("resp-name")), responsible_email: orNull(val("resp-email")),
+        shift_id: orNull($("shift").value)
+      };
+      const { data: inc, error } = await sb.from("incident_reports").insert(row).select("id").single();
+      if (error || !inc) { btn.disabled = false; return show(thaiError(error || {}), "error"); }
+
+      let warn = "";
+      const persons = collectPersons(inc.id);
+      if (persons.length) {
+        const { error: pe } = await sb.from("incident_persons").insert(persons);
+        if (pe) warn = " (แต่บันทึกข้อมูลผู้เกี่ยวข้องไม่สำเร็จ: " + thaiError(pe) + ")";
+      }
+      // จำผู้รับผิดชอบไว้ในสมุดรายชื่อส่วนตัว (ซ้ำ/ไม่ผ่านก็ข้ามเงียบ ๆ)
+      if (row.responsible_name && row.responsible_email) {
+        const { error: ce } = await sb.from("contacts").insert({ full_name: row.responsible_name, email: row.responsible_email });
+        if (!ce) { contacts.push({ full_name: row.responsible_name, email: row.responsible_email }); }
+      }
+      lsSet("she_last_dept", val("department"));
+      if (myPlants.length > 1) lsSet("she_last_plant", pid);
 
       btn.disabled = false;
-      if (error) return show("บันทึกไม่สำเร็จ: " + error.message, true);
+      const keepPlant = $("plant").value, keepDept = val("department");
       form.reset();
-      show("บันทึกรายงานเรียบร้อยแล้ว", false);
+      $("persons").replaceChildren(); renumber();
+      $("plant").value = keepPlant; $("department").value = keepDept; $("date").value = todayLocal();
+      $("serious-note").hidden = true;
+      loadShifts();
+      show("บันทึก Flash Report เรียบร้อยแล้ว" + warn, warn ? "error" : "ok");
     });
+
+    $("date").value = todayLocal();
+    loadTypes(); loadDepartments(); loadContacts(); loadMyPlants();
   </script>
 </body>
 </html>
