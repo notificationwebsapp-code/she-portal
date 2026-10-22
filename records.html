@@ -22,7 +22,7 @@
   <main>
     <h2>ดูข้อมูลที่บันทึกแล้ว</h2>
     <p id="msg" role="status" class="msg" hidden></p>
-    <p><small>ระบบแสดงเฉพาะข้อมูลที่สิทธิ์ของคุณเข้าถึงได้ (กรองโดยฐานข้อมูลด้วย RLS) พนักงานทั่วไปเห็นเฉพาะรายงานของตัวเอง</small></p>
+    <p><small>ระบบแสดงเฉพาะข้อมูลที่คุณมีสิทธิ์ดู พนักงานทั่วไปเห็นเฉพาะรายงานของตัวเอง</small></p>
 
     <h3>รายงานอุบัติเหตุ</h3>
     <div class="tablewrap"><table id="t-incident"></table></div>
@@ -64,11 +64,11 @@
       });
     }
 
-    // แสดงเวลาที่บันทึก (DB เก็บเป็น UTC) เป็นเวลาไทย
+    // แสดงเวลาที่บันทึก (DB เก็บเป็น UTC) ตามเขตเวลาของอุปกรณ์ผู้ใช้ (รองรับหลายประเทศ ไม่ฝังเวลาไทย)
     function fmtTime(v) {
       if (!v) return "";
       return new Date(v).toLocaleString("en-GB", {
-        timeZone: "Asia/Bangkok", hour12: false,
+        hour12: false,
         year: "numeric", month: "2-digit", day: "2-digit",
         hour: "2-digit", minute: "2-digit"
       });
@@ -87,9 +87,13 @@
     }
 
     load("incident_reports", "occurred_on",
-      "occurred_on, location, type, severity, description, created_at",
-      "t-incident", ["วันที่", "สถานที่", "ประเภท", "ความรุนแรง", "รายละเอียด", "บันทึกเมื่อ"],
-      (r) => [r.occurred_on, r.location, r.type, r.severity, r.description, fmtTime(r.created_at)]);
+      "occurred_on, occurred_time, location, type, description, created_at, plants(code), incident_types(name_th)",
+      "t-incident", ["วันที่-เวลาเกิดเหตุ", "Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "บันทึกเมื่อ"],
+      (r) => [
+        r.occurred_on + (r.occurred_time ? " " + r.occurred_time.slice(0, 5) : ""),
+        r.plants ? r.plants.code : "",
+        r.incident_types ? r.incident_types.name_th : r.type,   // รายงานเก่ามีเฉพาะ type เดิม
+        r.location, r.description, fmtTime(r.created_at)]);
 
     load("checklist_inspections", "inspected_on",
       "inspected_on, area, items, note, created_at",
