@@ -394,7 +394,8 @@
       return parts.join(" · ");
     }
     SheDraft.init({ formType: "incident", form: form, getState: getState, setState: setState,
-                    getTitle: draftTitle, getPlantId: currentPlantId });
+                    getTitle: draftTitle, getPlantId: currentPlantId,
+                    actionsEl: document.querySelector(".formactions") });
 
     $("date").value = todayLocal();
     loadTypes(); loadDepartments(); loadContacts(); loadMyPlants();

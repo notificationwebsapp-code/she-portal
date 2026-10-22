@@ -8,7 +8,8 @@
  *     getState: () => ({...}),         // อ่านค่าทั้งฟอร์มเป็น object (JSON)
  *     setState: async (obj) => {...},  // เติมค่ากลับเข้าฟอร์ม
  *     getTitle: () => "ข้อความสั้น ๆ", // ชื่อร่างที่เห็นในรายการ (ไม่เกิน 100 ตัวอักษร)
- *     getPlantId: () => "uuid หรือ ''"
+ *     getPlantId: () => "uuid หรือ ''",
+ *     actionsEl: element           // (ไม่บังคับ) แถวปุ่มท้ายฟอร์ม: ปุ่ม "บันทึกร่าง" + สถานะจะวางข้างปุ่มส่ง
  *   });
  *   หลังส่งฟอร์มสำเร็จ: await SheDraft.clear();
  *   ถ้าเปลี่ยนค่าฟอร์มด้วยโค้ด (เช่น เพิ่ม/ลบแถว): SheDraft.markDirty();
@@ -32,7 +33,9 @@ const SheDraft = (function () {
       ".draftlist{list-style:none;padding:0;margin:.5rem 0 0;display:grid;gap:.4rem}",
       ".draftlist li{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .8rem;background:#fff;border:1px solid var(--line);border-radius:8px;padding:.4rem .7rem}",
       ".draftlist .dt{flex:1;min-width:10rem} .draftlist .dm{color:var(--muted);font-size:.85rem}",
-      ".draftbar button.secondary{margin-left:0}"
+      ".draftbar button.secondary{margin-left:0}",
+      ".formactions .dstatus{flex-basis:100%;margin:0}",
+      ".formactions button.secondary{margin-left:0}"
     ].join("\n");
     const s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
   }
@@ -146,12 +149,15 @@ const SheDraft = (function () {
     bar.setAttribute("aria-label", "ร่างของฉัน");
     const row = mk("div", "drow");
     el.btn = mk("button", "secondary", "บันทึกร่าง");
-    el.btn.type = "button";
+    el.btn.type = "button"; el.btn.id = "btn-draft";
     el.btn.addEventListener("click", () => save(true));
     el.status = mk("span", "dstatus", "ยังไม่ได้บันทึกร่าง");
     el.status.setAttribute("role", "status");
-    row.appendChild(el.btn); row.appendChild(el.status);
-    bar.appendChild(row);
+    if (cfg.actionsEl) {                       // วางปุ่ม+สถานะไว้ข้างปุ่มส่งรายงาน (ท้ายฟอร์ม)
+      cfg.actionsEl.appendChild(el.btn); cfg.actionsEl.appendChild(el.status);
+    } else {
+      row.appendChild(el.btn); row.appendChild(el.status); bar.appendChild(row);
+    }
     bar.appendChild(mk("p", "dnote", "ร่างยังไม่ใช่การรายงาน — SHE จะยังไม่เห็นข้อมูลจนกว่าคุณจะกด “ส่งรายงาน” ระบบบันทึกร่างให้อัตโนมัติทุก 30 วินาทีเมื่อมีการแก้ไข ร่างเก็บไว้ 30 วันและเห็นได้เฉพาะคุณ"));
     const det = mk("details");
     const sum = mk("summary");
