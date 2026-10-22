@@ -14,20 +14,10 @@ const ShePlant = (function () {
   async function init(cfg) {
     sel = cfg.select; single = cfg.single; row = cfg.row;
     list = [];
-    const { data: u } = await sb.auth.getUser();
-    if (u && u.user) {
-      const r = await sb.from("user_plants").select("plant_id, plants(code, name)").eq("user_id", u.user.id);
-      list = (r.data || []).map((x) => ({
-        id: x.plant_id,
-        code: x.plants ? x.plants.code : x.plant_id,
-        name: x.plants ? x.plants.name : ""
-      }));
-    }
-    if (!list.length) {
-      // ผู้ใช้ที่ไม่มีแถวใน user_plants (เช่น Admin) — ให้ RLS ของตาราง plants กำหนดว่าเห็น Plant ใดบ้าง
-      const r = await sb.from("plants").select("id, code, name").order("code");
-      list = (r.data || []).map((x) => ({ id: x.id, code: x.code, name: x.name || "" }));
-    }
+    // อ่านจากตาราง plants ตรง ๆ: RLS (has_plant) คืนเฉพาะ Plant ที่มีสิทธิ์
+    // (admin/super_admin = ทุก Plant, role อื่น = ตาม user_plants) จึงไม่ต้องเดาสิทธิ์ฝั่งหน้าเว็บ
+    const r = await sb.from("plants").select("id, code, name").eq("active", true).order("code");
+    list = (r.data || []).map((x) => ({ id: x.id, code: x.code, name: x.name || "" }));
     if (list.length === 1) {
       single.textContent = "Plant: " + label(list[0]);
       single.hidden = false; row.hidden = true; sel.required = false;

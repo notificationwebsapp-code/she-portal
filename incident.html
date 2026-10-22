@@ -174,11 +174,10 @@
       });
     }
     async function loadMyPlants() {
-      const { data: u } = await sb.auth.getUser();
-      if (!u || !u.user) return;
-      const { data } = await sb.from("user_plants")
-        .select("plant_id, plants(code, name)").eq("user_id", u.user.id);
-      myPlants = data || [];
+      // อ่านจากตาราง plants ตรง ๆ: RLS (has_plant) คืนเฉพาะ Plant ที่มีสิทธิ์
+      // (admin/super_admin = ทุก Plant, role อื่น = ตาม user_plants) จึงไม่ต้องเดาสิทธิ์ฝั่งหน้าเว็บ
+      const { data } = await sb.from("plants").select("id, code, name").eq("active", true).order("code");
+      myPlants = (data || []).map((p) => ({ plant_id: p.id, plants: { code: p.code, name: p.name } }));
       const label = (r) => (r.plants ? r.plants.code + " — " + r.plants.name : r.plant_id);
       if (myPlants.length === 1) {
         $("plant-single").textContent = "Plant: " + label(myPlants[0]);
