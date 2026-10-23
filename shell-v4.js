@@ -10,7 +10,7 @@
   function icon(n){var s=document.createElementNS(NS,"svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.setAttribute("focusable","false");var p=document.createElementNS(NS,"path");p.setAttribute("d",ICONS[n]);s.appendChild(p);return s}
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
   var tools=el("div","tools");tools.setAttribute("role","group");tools.setAttribute("aria-label","เครื่องมือ");
-  var open=null;
+  var open=null,adminBox=null;
   function close(){if(open){open.btn.setAttribute("aria-expanded","false");open.pop.hidden=true;open=null}}
   function make(name,label,short,build){
     var w=el("div","toolwrap"),b=el("button","toolbtn");b.type="button";b.setAttribute("aria-label",label);b.setAttribute("aria-haspopup","true");b.setAttribute("aria-expanded","false");b.title=label;
@@ -48,7 +48,8 @@
       x.addEventListener("click",function(){apply(o[0]);try{localStorage.setItem("she-fs",o[0])}catch(e){}
         row.querySelectorAll("button").forEach(function(y){y.setAttribute("aria-pressed","false")});x.setAttribute("aria-pressed","true")});
       row.appendChild(x)});
-    p.appendChild(row)});
+    p.appendChild(row);
+    adminBox=el("div","tpadmin");adminBox.hidden=true;adminBox.appendChild(el("p","tpnote small","ผู้ดูแลระบบ"));p.appendChild(adminBox)});
   function apply(v){document.documentElement.style.fontSize=v==="l"?"112.5%":v==="xl"?"125%":""}
   try{apply(localStorage.getItem("she-fs")||"n")}catch(e){}
   document.addEventListener("click",function(e){if(open&&!open.pop.contains(e.target))close()});
@@ -75,6 +76,10 @@
     if(by["index.html"])n.appendChild(soon);
     var isAdmin=!!(by[ADM[0]]||by[ADM[1]]||by[ADM[2]]);
     ADM.slice(1).forEach(function(k){if(by[k]&&by[k].parentNode)by[k].parentNode.removeChild(by[k])});
+    if(adminBox){var labs={"admin-users.html":"จัดการผู้ใช้","admin-master.html":"ข้อมูลหลัก","admin-permissions.html":"สิทธิ์การใช้งาน"};
+      adminBox.querySelectorAll("a").forEach(function(x){x.remove()});
+      ADM.forEach(function(k){if(by[k]||isAdmin){var l=el("a","tplink",labs[k]);l.href=k;if(k===f)l.setAttribute("aria-current","page");adminBox.appendChild(l)}});
+      adminBox.hidden=!isAdmin}
     if(by[ADM[0]]){var a=by[ADM[0]];a.textContent="ผู้ดูแลระบบ";n.appendChild(a)}
     n.querySelectorAll("a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();
       var cur=(k===f)||(ADM.indexOf(f)>-1&&k===ADM[0]);if(cur)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
