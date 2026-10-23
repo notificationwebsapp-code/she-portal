@@ -69,7 +69,7 @@
   var obs=null;
   function normalizeNav(){var n=document.querySelector("header nav");if(!n)return;if(obs)obs.disconnect();
     var f=(location.pathname.split("/").pop()||"index.html");var by={};
-    n.querySelectorAll("a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();by[k]=by[k]||a});
+    document.querySelectorAll("header a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();if(n.contains(a)||ADM.indexOf(k)>-1)by[k]=by[k]||a});
     ORDER.forEach(function(k){if(by[k])n.appendChild(by[k])});
     var soon=n.querySelector(".navsoon");if(!soon){soon=el("span","navsoon","Executive Dashboard");soon.setAttribute("aria-disabled","true");soon.title="เร็ว ๆ นี้ (อยู่ในแผนพัฒนา)"}
     if(by["index.html"])n.appendChild(soon);
@@ -79,9 +79,9 @@
     n.querySelectorAll("a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();
       var cur=(k===f)||(ADM.indexOf(f)>-1&&k===ADM[0]);if(cur)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
     decorateNav();relocate();
-    if(obs)obs.observe(n,{childList:true,subtree:true})}
+    if(obs)obs.observe(document.querySelector("header"),{childList:true,subtree:true})}
   decorateNav();
-  var nv=document.querySelector("header nav");if(nv){obs=new MutationObserver(normalizeNav);obs.observe(nv,{childList:true,subtree:true});normalizeNav()}
+  var nv=document.querySelector("header nav");if(nv){obs=new MutationObserver(normalizeNav);normalizeNav()}
   if(!document.querySelector(".sitefoot")){
     var f=el("footer","sitefoot"),l=el("span");var b=el("b",null,"SHE Portal");l.appendChild(b);l.appendChild(document.createTextNode(" · ระบบบันทึกข้อมูลความปลอดภัย อาชีวอนามัย และสิ่งแวดล้อม"));
     var r=el("span");var d=el("span","dot");d.setAttribute("aria-hidden","true");r.appendChild(d);r.appendChild(document.createTextNode("ระยะทดสอบ — ใช้ข้อมูลทดสอบเท่านั้น"));
