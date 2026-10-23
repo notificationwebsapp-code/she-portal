@@ -53,6 +53,24 @@
         </div>
         <div class="actions"><button type="submit" class="btn-ok">+ เพิ่มแผนก</button></div>
       </form>
+
+      <h3>รายการตัวเลือกในฟอร์ม (Dropdown)</h3>
+      <p class="helper">ใช้ในฟอร์มรายงานอุบัติเหตุและ Dashboard — เพิ่ม แก้ชื่อ เรียงลำดับ หรือปิดใช้งานได้ ส่วนรหัสแก้และลบไม่ได้ เพื่อให้ข้อมูลเดิมยังอ้างอิงถูกต้อง</p>
+      <label for="lk-kind">เลือกรายการ</label><br>
+      <select id="lk-kind"></select>
+      <div class="tablewrap"><table id="t-lookup">
+        <thead><tr><th>รหัส</th><th>ชื่อไทย</th><th>ชื่ออังกฤษ</th><th>ลำดับ</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <form id="f-lookup" class="addform" autocomplete="off">
+        <div class="grid2">
+          <div><label for="lk-code">รหัส <small>(A–Z, 0–9, _ , - ไม่เกิน 30 ตัว)</small></label><br><input type="text" id="lk-code" maxlength="30" required></div>
+          <div><label for="lk-sort">ลำดับ <small>(0–9999)</small></label><br><input type="number" id="lk-sort" min="0" max="9999" value="100" required></div>
+          <div><label for="lk-th">ชื่อภาษาไทย</label><br><input type="text" id="lk-th" maxlength="100" required></div>
+          <div><label for="lk-en">ชื่อภาษาอังกฤษ</label><br><input type="text" id="lk-en" maxlength="100" required></div>
+        </div>
+        <div class="actions"><button type="submit" class="btn-ok">+ เพิ่มรายการ</button></div>
+      </form>
     </div>
   </main>
 
@@ -124,6 +142,15 @@
         w.appendChild(i); grid.appendChild(w); return i;
       };
       const codeIn = mk("รหัส", r.code, 20), nameIn = mk("ชื่อ", r.name, 100);
+      let orgIns = null;
+      if (kind === "plants") {
+        orgIns = {
+          company_name: mk("บริษัท (Company)", r.company_name || "", 100),
+          business_unit: mk("Business Unit", r.business_unit || "", 100),
+          country_code: mk("ประเทศ (รหัส 2 ตัวอักษร เช่น TH)", r.country_code || "", 2),
+          site_type: mk("ประเภทไซต์ (Site type)", r.site_type || "", 50)
+        };
+      }
       box.appendChild(grid);
       const actions = el("div", undefined, "actions");
       const save = el("button", "✓ บันทึกการแก้ไข", "btn-ok"); save.type = "button";
@@ -131,7 +158,12 @@
       cancel.addEventListener("click", () => row.remove());
       save.addEventListener("click", async () => {
         save.disabled = true;
-        const ok = await write(sb.from(kind).update({ code: codeIn.value.trim(), name: nameIn.value.trim() }).eq("id", r.id).select("id"),
+        const payload = { code: codeIn.value.trim(), name: nameIn.value.trim() };
+        if (orgIns) {
+          Object.keys(orgIns).forEach((k) => { payload[k] = orgIns[k].value.trim() || null; });
+          if (payload.country_code) payload.country_code = payload.country_code.toUpperCase();
+        }
+        const ok = await write(sb.from(kind).update(payload).eq("id", r.id).select("id"),
           "บันทึกการแก้ไข " + KINDS[kind] + " เรียบร้อย");
         if (ok) await load(); else save.disabled = false;
       });
@@ -140,7 +172,8 @@
     }
 
     async function renderKind(kind) {
-      const { data, error } = await sb.from(kind).select("id, code, name, active").order("code");
+      const cols = kind === "plants" ? "id, code, name, active, company_name, business_unit, country_code, site_type" : "id, code, name, active";
+      const { data, error } = await sb.from(kind).select(cols).order("code");
       if (error) { show("โหลดข้อมูลไม่สำเร็จ: " + error.message, false); return; }
       const tb = document.querySelector("#t-" + kind + " tbody");
       tb.replaceChildren();
@@ -150,7 +183,101 @@
       }
       data.forEach(r => tb.appendChild(buildRow(kind, r)));
     }
-    async function load() { await renderKind("plants"); await renderKind("departments"); }
+    // ----- รายการตัวเลือก (lookup_values) -----
+    const LK_KINDS = {
+      injury_type: "ชนิดการบาดเจ็บ (Injury type)",
+      body_part: "ตำแหน่งร่างกาย (Body part)",
+      root_cause: "สาเหตุหลัก (Root cause)",
+      high_hazard: "งานอันตรายสูง (High hazard task)",
+      system_failure: "ความล้มเหลวของระบบ/โปรแกรม (System/Program failure)"
+    };
+    const lkSel = document.getElementById("lk-kind");
+    Object.keys(LK_KINDS).forEach((k) => { const o = document.createElement("option"); o.value = k; o.textContent = LK_KINDS[k]; lkSel.appendChild(o); });
+    function lkError(error) {
+      if (error.code === "23505") return "รหัสนี้ถูกใช้แล้วในรายการนี้";
+      if (error.code === "23514") return "รูปแบบไม่ถูกต้อง (รหัส A–Z 0–9 _ - ไม่เกิน 30 ตัว ชื่อไม่เว้นว่างและ ≤ 100 ตัว ลำดับ 0–9999)";
+      if (error.code === "54000") return "รายการนี้มีครบ 200 ค่าแล้ว";
+      if (error.code === "42501") return "ไม่มีสิทธิ์ทำรายการนี้";
+      return error.message;
+    }
+    async function lkWrite(promise, okText) {
+      const { data, error } = await promise;
+      if (error) { show("บันทึกไม่สำเร็จ: " + lkError(error), false); return false; }
+      if (!data || data.length === 0) { show("บันทึกไม่สำเร็จ: ไม่มีสิทธิ์หรือไม่พบข้อมูล", false); return false; }
+      show(okText, true); return true;
+    }
+    function lkRow(r) {
+      const tr = document.createElement("tr");
+      tr.appendChild(el("td", r.code)); tr.appendChild(el("td", r.name_th)); tr.appendChild(el("td", r.name_en));
+      tr.appendChild(el("td", String(r.sort_order)));
+      const st = el("td"); st.appendChild(el("span", r.active ? "ใช้งานอยู่" : "ปิดใช้งาน", "badge " + (r.active ? "active" : "suspended"))); tr.appendChild(st);
+      const act = el("td");
+      const edit = el("button", "แก้ไข", "small secondary"); edit.type = "button";
+      const tog = el("button", r.active ? "ปิดใช้งาน" : "เปิดใช้งาน", "small " + (r.active ? "btn-danger-outline" : "btn-ok-outline")); tog.type = "button";
+      edit.addEventListener("click", () => lkEdit(r, tr));
+      tog.addEventListener("click", async () => {
+        if (r.active && !confirm("ปิดใช้งาน " + r.code + " ?\nฟอร์มใหม่จะไม่แสดงตัวเลือกนี้ ข้อมูลเดิมไม่ถูกลบ")) return;
+        tog.disabled = true;
+        if (await lkWrite(sb.from("lookup_values").update({ active: !r.active }).eq("id", r.id).select("id"),
+            (r.active ? "ปิดใช้งาน " : "เปิดใช้งาน ") + r.code + " เรียบร้อย")) await renderLookup(); else tog.disabled = false;
+      });
+      act.appendChild(edit); act.appendChild(tog); tr.appendChild(act);
+      return tr;
+    }
+    function lkEdit(r, tr) {
+      const next = tr.nextElementSibling;
+      if (next && next.classList.contains("editrow")) { next.remove(); return; }
+      const row = document.createElement("tr"); row.className = "editrow";
+      const td = el("td"); td.colSpan = 6;
+      const box = el("div", undefined, "userbox editbox");
+      box.appendChild(el("h4", "แก้ไข: " + r.code));
+      const grid = el("div", undefined, "grid");
+      const mk = (labelText, value, type, max) => {
+        const w = document.createElement("div");
+        w.appendChild(el("label", labelText)); w.appendChild(document.createElement("br"));
+        const i = document.createElement("input"); i.type = type;
+        if (type === "number") { i.min = 0; i.max = 9999; } else { i.maxLength = max; }
+        i.value = value; w.appendChild(i); grid.appendChild(w); return i;
+      };
+      const th = mk("ชื่อภาษาไทย", r.name_th, "text", 100), en = mk("ชื่อภาษาอังกฤษ", r.name_en, "text", 100), so = mk("ลำดับ", r.sort_order, "number");
+      box.appendChild(grid);
+      const actions = el("div", undefined, "actions");
+      const save = el("button", "✓ บันทึกการแก้ไข", "btn-ok"); save.type = "button";
+      const cancel = el("button", "ยกเลิก", "secondary"); cancel.type = "button";
+      cancel.addEventListener("click", () => row.remove());
+      save.addEventListener("click", async () => {
+        save.disabled = true;
+        const ok = await lkWrite(sb.from("lookup_values").update({ name_th: th.value.trim(), name_en: en.value.trim(), sort_order: parseInt(so.value, 10) }).eq("id", r.id).select("id"),
+          "บันทึกการแก้ไข " + r.code + " เรียบร้อย");
+        if (ok) await renderLookup(); else save.disabled = false;
+      });
+      actions.appendChild(save); actions.appendChild(cancel); box.appendChild(actions);
+      td.appendChild(box); row.appendChild(td); tr.after(row);
+    }
+    async function renderLookup() {
+      const { data, error } = await sb.from("lookup_values").select("id, code, name_th, name_en, sort_order, active")
+        .eq("kind", lkSel.value).order("sort_order").order("code");
+      if (error) { show("โหลดรายการตัวเลือกไม่สำเร็จ: " + error.message, false); return; }
+      const tb = document.querySelector("#t-lookup tbody");
+      tb.replaceChildren();
+      if (data.length === 0) {
+        const tr = document.createElement("tr"); const td = el("td", "ยังไม่มีรายการ — เพิ่มได้ที่แบบฟอร์มด้านล่าง"); td.colSpan = 6;
+        tr.appendChild(td); tb.appendChild(tr);
+      }
+      data.forEach((r) => tb.appendChild(lkRow(r)));
+    }
+    lkSel.addEventListener("change", renderLookup);
+    document.getElementById("f-lookup").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const c = document.getElementById("lk-code"), th = document.getElementById("lk-th"), en = document.getElementById("lk-en"), so = document.getElementById("lk-sort");
+      const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+      try {
+        if (await lkWrite(sb.from("lookup_values").insert({ kind: lkSel.value, code: c.value.trim(), name_th: th.value.trim(), name_en: en.value.trim(), sort_order: parseInt(so.value, 10) }).select("id"),
+            "เพิ่ม " + c.value.trim() + " เรียบร้อย")) { c.value = ""; th.value = ""; en.value = ""; await renderLookup(); }
+      } finally { btn.disabled = false; }
+    });
+
+    async function load() { await renderKind("plants"); await renderKind("departments"); await renderLookup(); }
 
     ["plants", "departments"].forEach((kind) => {
       document.getElementById("f-" + kind).addEventListener("submit", async (e) => {
