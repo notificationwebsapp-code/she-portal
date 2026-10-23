@@ -49,14 +49,28 @@
     .rowbtns{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;align-items:center}
     .badge{display:inline-block;padding:.12rem .65rem;border-radius:999px;border:1px solid var(--line);font-size:.85rem;font-weight:600}
     .badge.closed{background:#eee}.badge.pend{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
-    .badge.review{background:#e8f0ff;border-color:#9db8ea;color:#082c69}.badge.invest{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
+    .badge.review{background:#e8f1fc;border-color:#8fb8e8;color:#004c99}.badge.invest{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
     .badge.done{background:#e6f4ea;border-color:#8cc5a0;color:#14532d}
-    .filterbar{display:flex;flex-wrap:wrap;gap:.6rem .9rem;align-items:flex-end;padding:.7rem .9rem;margin:0 0 .8rem;border:1px solid var(--line);border-radius:10px;background:#f7f9fd}
-    .filterbar label{display:flex;flex-direction:column;font-size:.85rem;font-weight:600;gap:.15rem}
-    .filterbar input,.filterbar select{padding:.45rem .6rem;border:1px solid #9aa6bb;border-radius:8px;font:inherit;background:#fff;min-width:9rem;max-width:100%}
-    .filterbar input[type=search]{min-width:14rem}
+    /* แถบค้นหา/กรอง: ช่องค้นหาใหญ่ + ปุ่มเลือกขั้นตอน (กดแล้วกรองทันที) + ตัวกรองละเอียดจัดเป็นตาราง */
+    .filterbar{display:grid;gap:.85rem;padding:1rem 1.1rem;margin:0 0 1rem;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#f8faff,#f1f5fc);max-width:none!important}
+    .fb-search{display:flex;gap:.6rem;align-items:stretch}
+    .fb-search .sbox{position:relative;flex:1}
+    .fb-search .sbox svg{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:1.7;stroke-linecap:round;pointer-events:none}
+    .filterbar input[type=search]{width:100%;min-height:46px;margin:0;padding:.55rem .9rem .55rem 2.6rem;border:1px solid #b6c3da;border-radius:12px;background:#fff;font:inherit}
+    .fb-chips{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
+    .fb-chips .lbl{font-size:.85rem;font-weight:700;color:var(--muted);margin-right:.2rem}
+    .fb-chips .sep{width:1px;height:1.6rem;background:var(--line);margin:0 .4rem}
+    .filterbar button.chip{min-height:38px;padding:.25rem .95rem;border-radius:999px;background:#fff;color:var(--navy);border:1.5px solid #b6c3da;font-weight:600;font-size:.92rem;margin:0}
+    .filterbar button.chip:hover{border-color:var(--brand);background:var(--accent);color:var(--brand)}
+    .filterbar button.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+    .filterbar button.chip.warn[aria-pressed="true"]{background:#8a5a00;border-color:#8a5a00}
+    .fb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem .9rem;align-items:end}
+    .filterbar label{display:flex;flex-direction:column;font-size:.82rem;font-weight:700;color:var(--muted);gap:.2rem}
+    .filterbar .fb-grid input,.filterbar .fb-grid select{width:100%;min-height:42px;margin:0;padding:.4rem .6rem;border:1px solid #b6c3da;border-radius:10px;font:inherit;font-weight:400;color:var(--navy);background:#fff}
+    .fb-actions{display:flex;gap:.5rem;align-items:center;justify-content:flex-end}
+    @media (max-width:640px){.fb-search{flex-direction:column}.fb-chips .sep{display:none}}
     .pager{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:-.9rem 0 1.5rem}
-    .pager .info{color:#444;font-size:.9rem}
+    .pager .info{color:var(--muted);font-size:.9rem}
     #t-incident td.desc{max-width:18rem}
     #t-incident td.desc>div{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
     #t-incident td small.sub{display:block;color:#555;margin-top:.15rem}
@@ -358,29 +372,44 @@
     const flt = { from: "", to: "", plant: "", type: "", stage: "", req: "", q: "", page: 0 };
     let PLANTS = [], totalRows = 0;
     const STAGE_OPTS = [["", "ทุกขั้นตอน"], ["flash", "รอ SHE ตรวจสอบ"], ["investigation", "กำลังสอบสวน"], ["closed", "ปิดเคสแล้ว"]];
+    const SVG_SEARCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>';
     function buildFilterBar() {
       const f = document.getElementById("filterbar"); f.replaceChildren();
+      const apply = () => { flt.page = 0; loadIncidents(); };
+      const lab = (id, label, ctl) => h("label", { for: id }, label, ctl);
       const sel = (id, label, opts, key) => {
         const s = h("select", { id }); opts.forEach(([v, t]) => s.append(h("option", { value: v, text: t }))); s.value = flt[key];
-        return h("label", { for: id }, label, s);
+        s.addEventListener("change", () => { flt[key] = s.value; apply(); });          // เลือกแล้วกรองทันที
+        return lab(id, label, s);
       };
-      const inp = (id, label, type, key) => { const i = h("input", { id, type }); i.value = flt[key]; return h("label", { for: id }, label, i); };
-      f.append(
-        inp("f-from", "วันที่เกิดเหตุ ตั้งแต่", "date", "from"), inp("f-to", "ถึง", "date", "to"),
+      const dt = (id, label, key) => { const i = h("input", { id, type: "date" }); i.value = flt[key];
+        i.addEventListener("change", () => { flt[key] = i.value; apply(); }); return lab(id, label, i); };
+      // แถวที่ 1: ค้นหา
+      const q = h("input", { id: "f-q", type: "search", placeholder: "ค้นหาจากจุดเกิดเหตุหรือรายละเอียด…", "aria-label": "ค้นหาจากจุดเกิดเหตุหรือรายละเอียด", maxlength: "100" });
+      q.value = flt.q;
+      const box = h("div", { class: "sbox" }, q); box.insertAdjacentHTML("afterbegin", SVG_SEARCH);   // SVG คงที่ ไม่มีข้อมูลผู้ใช้
+      f.append(h("div", { class: "fb-search" }, box, h("button", { type: "submit", text: "ค้นหา" })));
+      // แถวที่ 2: ปุ่มเลือกขั้นตอน (+ คำขอรอพิจารณา สำหรับ SHE/Admin)
+      const chips = h("div", { class: "fb-chips", role: "group", "aria-label": "กรองตามขั้นตอน" }, h("span", { class: "lbl", text: "ขั้นตอน:" }));
+      STAGE_OPTS.forEach(([v, t]) => {
+        const c = h("button", { type: "button", class: "chip", text: t === "ทุกขั้นตอน" ? "ทั้งหมด" : t, "aria-pressed": String(flt.stage === v) });
+        c.addEventListener("click", () => { flt.stage = v; chips.querySelectorAll("button[data-st]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.st === v))); apply(); });
+        c.dataset.st = v; chips.append(c);
+      });
+      if (isMgrRole()) {
+        const w = h("button", { type: "button", class: "chip warn", text: "มีคำขอแก้ไขรอพิจารณา", "aria-pressed": String(flt.req === "pending") });
+        w.addEventListener("click", () => { flt.req = flt.req === "pending" ? "" : "pending"; w.setAttribute("aria-pressed", String(flt.req === "pending")); apply(); });
+        chips.append(h("span", { class: "sep" }), w);
+      }
+      f.append(chips);
+      // แถวที่ 3: ตัวกรองละเอียด
+      f.append(h("div", { class: "fb-grid" },
+        dt("f-from", "วันที่เกิดเหตุ ตั้งแต่", "from"), dt("f-to", "ถึงวันที่", "to"),
         sel("f-plant", "Plant", [["", "ทุก Plant"]].concat(PLANTS.map((p) => [p.id, p.code])), "plant"),
-        sel("f-type", "ประเภท", [["", "ทุกประเภท"]].concat(TYPES.map((t) => [t.id, t.name_th])), "type"),
-        sel("f-stage", "ขั้นตอน", STAGE_OPTS, "stage"),
-        isMgrRole() ? sel("f-req", "คำขอแก้ไข", [["", "ทั้งหมด"], ["pending", "เฉพาะที่รอพิจารณา"]], "req") : null,
-        inp("f-q", "ค้นหา (จุดเกิดเหตุ / รายละเอียด)", "search", "q"),
-        h("button", { type: "submit", class: "small", text: "ค้นหา" }),
-        h("button", { type: "button", class: "secondary small", text: "ล้างตัวกรอง", onclick: () => {
-          Object.assign(flt, { from: "", to: "", plant: "", type: "", stage: "", req: "", q: "", page: 0 }); buildFilterBar(); loadIncidents(); } }));
-      f.onsubmit = (e) => {
-        e.preventDefault();
-        const g = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
-        Object.assign(flt, { from: g("f-from"), to: g("f-to"), plant: g("f-plant"), type: g("f-type"), stage: g("f-stage"), req: g("f-req"), q: g("f-q").trim(), page: 0 });
-        loadIncidents();
-      };
+        sel("f-type", "ประเภทเหตุการณ์", [["", "ทุกประเภท"]].concat(TYPES.map((t) => [t.id, t.name_th])), "type"),
+        h("div", { class: "fb-actions" }, h("button", { type: "button", class: "secondary small", text: "ล้างตัวกรอง", onclick: () => {
+          Object.assign(flt, { from: "", to: "", plant: "", type: "", stage: "", req: "", q: "", page: 0 }); buildFilterBar(); loadIncidents(); } }))));
+      f.onsubmit = (e) => { e.preventDefault(); flt.q = q.value.trim(); apply(); };
     }
     function renderPager() {
       const nav = document.getElementById("pager"); nav.replaceChildren();
