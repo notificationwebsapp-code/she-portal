@@ -22,6 +22,10 @@
     .reqbox,.logbox{border-left:4px solid var(--line);padding:.4rem .8rem;margin:.5rem 0}
     .reqbox.pending{border-left-color:var(--brand)}
     .logbox small,.reqbox small{color:#555}
+    dialog#reqdlg{width:min(720px,94vw);max-height:88vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem}
+    dialog#reqdlg::backdrop{background:rgba(0,0,0,.45)}
+    button.badge.pend{cursor:pointer;font-family:inherit}
+    .pendsum{display:block;font-size:.8rem;color:#555;margin-top:.25rem;max-width:16rem}
     .rowbtns{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;align-items:center}
     .badge{display:inline-block;padding:.12rem .65rem;border-radius:999px;border:1px solid var(--line);font-size:.85rem;font-weight:600}
     .badge.closed{background:#eee}.badge.pend{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
@@ -85,6 +89,7 @@
     <h3>รายงานอุบัติเหตุ</h3>
     <div class="tablewrap"><table id="t-incident"></table></div>
     <section id="detail" aria-live="polite" hidden></section>
+    <dialog id="reqdlg" aria-labelledby="reqdlg-t"></dialog>
 
     <h3>เช็กลิสต์ตรวจ</h3>
     <div class="tablewrap"><table id="t-checklist"></table></div>
@@ -312,7 +317,7 @@
     }
 
     // ---------- รายงานอุบัติเหตุ: ตาราง + แผงรายละเอียด ----------
-    let me = null, pendingCount = {};
+    let me = null, pendingCount = {}, pendingSum = {}, detailId = null, dlgInc = null;
     const state = { inc: null, persons: [], log: [], reqs: [] };
     const isMgrRole = () => me && me.status === "active" && ["she", "admin", "super_admin"].includes(me.role);
     const isAdminRole = () => me && me.status === "active" && ["admin", "super_admin"].includes(me.role);
@@ -322,9 +327,14 @@
         .select("id, reporter_id, phase, deleted_at, occurred_on, occurred_time, location, type, description, created_at, plants(code), incident_types(name_th)")
         .order("occurred_on", { ascending: false }).order("created_at", { ascending: false }).limit(50);
       if (error) { showMsg("โหลดข้อมูลไม่สำเร็จ: " + error.message, false); return; }
-      const rq = await sb.from("incident_edit_requests").select("incident_id").eq("status", "pending");
-      pendingCount = {};
-      (rq.data || []).forEach((r) => { pendingCount[r.incident_id] = (pendingCount[r.incident_id] || 0) + 1; });
+      const rq = await sb.from("incident_edit_requests").select("incident_id, changes").eq("status", "pending");
+      pendingCount = {}; pendingSum = {};
+      (rq.data || []).forEach((r) => {
+        pendingCount[r.incident_id] = (pendingCount[r.incident_id] || 0) + 1;
+        const set = (pendingSum[r.incident_id] = pendingSum[r.incident_id] || new Set());
+        Object.keys((r.changes || {}).report || {}).forEach((k) => set.add(LBL[k] || k));
+        if (Object.keys((r.changes || {}).persons || {}).length) set.add("ข้อมูลผู้เกี่ยวข้อง");
+      });
       render("t-incident",
         ["วันที่-เวลาเกิดเหตุ", "Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "ตอนนี้อยู่ขั้นตอน", "คำขอแก้ไข", "ส่งเมื่อ", ""],
         data.map((r) => [
@@ -333,23 +343,71 @@
           r.incident_types ? r.incident_types.name_th : r.type,
           r.location, r.description,
           statusBadge(r),
-          pendingCount[r.id] ? h("span", { class: "badge pend", text: "รอพิจารณา " + pendingCount[r.id] }) : "",
+          pendCell(r),
           fmtTime(r.created_at),
           h("button", { type: "button", class: "small", text: "เปิดดู", "aria-label": "เปิดดูรายงาน " + r.occurred_on + " " + r.location, onclick: () => openDetail(r.id) })
         ]));
     }
 
-    async function openDetail(id) {
-      const box = document.getElementById("detail");
-      const inc = await sb.from("incident_reports")
-        .select("*, plants(code), incident_types(name_th)").eq("id", id).single();
-      if (inc.error || !inc.data) { showMsg("เปิดรายงานไม่สำเร็จ: " + ((inc.error && inc.error.message) || ""), false); return; }
+    // คอลัมน์ "คำขอแก้ไข": SHE/Admin เห็นสรุปว่าขอแก้อะไร และกดเพื่อพิจารณาได้ทันทีโดยไม่ต้องเปิดรายงาน
+    function pendCell(r) {
+      const n = pendingCount[r.id]; if (!n) return "";
+      const sum = pendingSum[r.id] ? [...pendingSum[r.id]].join(", ") : "";
+      if (!isMgrRole()) return h("span", { class: "badge pend", text: "รอพิจารณา " + n });
+      return h("div", {},
+        h("button", { type: "button", class: "badge pend", text: "รอพิจารณา " + n + " · กดเพื่อพิจารณา", title: "ขอแก้: " + sum,
+          "aria-label": "พิจารณาคำขอแก้ไข " + n + " รายการ ของรายงาน " + r.occurred_on + " " + r.location, onclick: () => openReqDialog(r.id) }),
+        sum ? h("small", { class: "pendsum", text: "ขอแก้: " + sum }) : null);
+    }
+    // แสดงข้อความ: ถ้า popup เปิดอยู่ (modal บังหน้าเพจ) ให้แสดงใน popup
+    function say(text, ok) {
+      const d = document.getElementById("reqdlg");
+      if (!d.open) { showMsg(text, ok); return; }
+      d.querySelectorAll(".dlgmsg").forEach((e) => e.remove());
+      const m = h("div", { class: "dlgmsg " + (ok ? "ok" : "error"), role: "alert", text });
+      m.style.cssText = "padding:.5rem .8rem;margin:.5rem 0;border-left:4px solid " + (ok ? "#1b7a3d" : "#b3261e") + ";background:" + (ok ? "#e6f4ea" : "#fdeceb");
+      d.querySelector("h3").after(m);
+    }
+    async function fetchState(id) {
+      const inc = await sb.from("incident_reports").select("*, plants(code), incident_types(name_th)").eq("id", id).single();
+      if (inc.error || !inc.data) { showMsg("เปิดรายงานไม่สำเร็จ: " + ((inc.error && inc.error.message) || ""), false); return false; }
       const [ps, lg, rq] = await Promise.all([
         sb.from("incident_persons").select("*").eq("incident_id", id).order("created_at"),
         sb.from("incident_edit_log").select("*").eq("incident_id", id).order("created_at", { ascending: false }),
         sb.from("incident_edit_requests").select("*").eq("incident_id", id).order("created_at", { ascending: false })
       ]);
       state.inc = inc.data; state.persons = ps.data || []; state.log = lg.data || []; state.reqs = rq.data || [];
+      return true;
+    }
+    async function openReqDialog(id) {
+      dlgInc = id;
+      if (!(await fetchState(id))) return;
+      renderReqDialog();
+      const d = document.getElementById("reqdlg");
+      if (!d.open) d.showModal();
+    }
+    function renderReqDialog() {
+      const d = document.getElementById("reqdlg"), inc = state.inc;
+      const pend = state.reqs.filter((q) => q.status === "pending");
+      d.replaceChildren(h("h3", { id: "reqdlg-t", text: "พิจารณาคำขอแก้ไข · " + inc.occurred_on + " · " + (inc.plants ? inc.plants.code : "") }),
+        h("p", { text: "รายงาน: " + inc.location + " — " + inc.description }));
+      if (!pend.length) d.append(h("p", { text: "ไม่มีคำขอที่รอพิจารณาแล้ว" }));
+      pend.forEach((q) => d.append(reqBox(q, true)));
+      d.append(h("div", { class: "rowbtns" },
+        h("button", { type: "button", class: "secondary small", text: "เปิดรายงานฉบับเต็ม", onclick: () => { closeReqDialog(); openDetail(inc.id); } }),
+        h("button", { type: "button", class: "secondary small", text: "ปิด", onclick: closeReqDialog })));
+    }
+    function closeReqDialog() { const d = document.getElementById("reqdlg"); if (d.open) d.close(); }
+    document.getElementById("reqdlg").addEventListener("close", async () => {
+      dlgInc = null;
+      // คืน state ให้ตรงกับแผงรายละเอียดที่เปิดอยู่ (ถ้ามี)
+      if (detailId && state.inc && state.inc.id !== detailId) { if (await fetchState(detailId)) renderDetail(document.getElementById("detail")); }
+    });
+
+    async function openDetail(id) {
+      detailId = id;
+      const box = document.getElementById("detail");
+      if (!(await fetchState(id))) return;
       renderDetail(box);
       box.hidden = false; box.scrollIntoView({ block: "start" });
     }
@@ -475,7 +533,7 @@
             note,
             h("button", { type: "button", class: "small btn-danger-outline", text: "ไม่อนุมัติ",
               onclick: () => {
-                if (note.value.trim().length < 3) { showMsg("การไม่อนุมัติต้องระบุหมายเหตุ (อย่างน้อย 3 ตัวอักษร)", false); note.focus(); return; }
+                if (note.value.trim().length < 3) { say("การไม่อนุมัติต้องระบุหมายเหตุ (อย่างน้อย 3 ตัวอักษร)", false); note.focus(); return; }
                 act(sb.rpc("decide_incident_edit", { req: q.id, approve: false, note: note.value.trim() }), "บันทึกการไม่อนุมัติแล้ว");
               } }));
         }
@@ -564,11 +622,20 @@
 
     // เรียก RPC -> แจ้งผล -> โหลดตารางและแผงใหม่ (สิทธิ์จริงตัดสินที่ฐานข้อมูล ไม่ใช่หน้านี้)
     async function act(promise, okText) {
-      document.querySelectorAll("#detail button").forEach((b) => { b.disabled = true; });
+      const sel = "#detail button, #reqdlg button";
+      document.querySelectorAll(sel).forEach((b) => { b.disabled = true; });
       const { error } = await promise;
-      if (error) { showMsg(errTh(error), false); document.querySelectorAll("#detail button").forEach((b) => { b.disabled = false; }); return; }
+      if (error) { say(errTh(error), false); document.querySelectorAll(sel).forEach((b) => { b.disabled = false; }); return; }
       showMsg(okText, true);
       await loadIncidents();
+      if (dlgInc) {            // ทำจาก popup ในหน้ารายการ: โหลดใหม่ ถ้าไม่มีคำขอค้างแล้วให้ปิด popup
+        const id = dlgInc;
+        if (await fetchState(id)) {
+          if (state.reqs.some((q) => q.status === "pending")) { renderReqDialog(); say(okText, true); } else closeReqDialog();
+        }
+        if (detailId === id && !document.getElementById("detail").hidden) { await openDetail(id); }
+        return;
+      }
       await openDetail(state.inc.id);
     }
 
