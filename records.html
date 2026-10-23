@@ -51,28 +51,6 @@
     .badge.closed{background:#eee}.badge.pend{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
     .badge.review{background:#e8f0ff;border-color:#9db8ea;color:#082c69}.badge.invest{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
     .badge.done{background:#e6f4ea;border-color:#8cc5a0;color:#14532d}
-    /* กรอบแยกสีตามหมวด: อ่านง่าย แยกแยะได้เร็ว (ไม่ใช้สีอย่างเดียว: มีหัวข้อและไอคอนกำกับ) */
-    .group{border-width:1px 1px 1px 6px}
-    .group h4{font-size:1.05rem}
-    .group.g-what{border-color:#9db8ea #9db8ea #9db8ea #1f5fc4;background:#f5f8ff}.g-what h4{color:#143f8a}
-    .group.g-people{border-color:#c9b6ea #c9b6ea #c9b6ea #6d3fb8;background:#f8f4ff}.g-people h4{color:#4b2587}
-    .group.g-she{border-color:#f0c58a #f0c58a #f0c58a #d9730d;background:#fff7ec}.g-she h4{color:#8a4300}
-    #detail details.editdet{border-color:#9ccfae;border-left:6px solid #1b7a3d;background:#f1faf4}
-    #detail details.editdet>summary{color:#14532d}
-    #detail details.histdet{border-color:#c9ced8;border-left:6px solid #6b7385;background:#f4f5f8}
-    #detail details.histdet>summary{color:#3d4454}
-    #detail>h4{padding:.3rem .7rem;border-radius:6px;background:#eef1f7;border-left:6px solid #e0a100}
-    /* ตารางแต่ละหมวดมีสีหัวตารางต่างกัน + แถวสลับสี */
-    #t-incident thead th{background:#dbe7fb;color:#0d3478;border-bottom:3px solid #1f5fc4}
-    #t-checklist thead th{background:#d9f0ee;color:#0b5a54;border-bottom:3px solid #14897f}
-    #t-training thead th{background:#ece3fa;color:#4b2587;border-bottom:3px solid #6d3fb8}
-    .tablewrap tbody tr:nth-child(even) td{background:#f7f9fc}
-    #t-incident tbody tr:hover td{background:#eef4ff}
-    #t-incident tbody tr.needs-action td{background:#fff3cd}
-    h3.sec-incident,h3.sec-check,h3.sec-train{padding:.35rem .8rem;border-radius:6px;margin-top:1.5rem}
-    h3.sec-incident{background:#dbe7fb;border-left:6px solid #1f5fc4;color:#0d3478}
-    h3.sec-check{background:#d9f0ee;border-left:6px solid #14897f;color:#0b5a54}
-    h3.sec-train{background:#ece3fa;border-left:6px solid #6d3fb8;color:#4b2587}
     .sr{position:absolute;left:-9999px}
     #t-incident td button{white-space:nowrap}
     /* แถบ Flow 4 ขั้นตอน */
@@ -128,15 +106,15 @@
     <p id="msg" role="status" class="msg" hidden></p>
     <p><small>ระบบแสดงเฉพาะข้อมูลที่คุณมีสิทธิ์ดู พนักงานทั่วไปเห็นเฉพาะรายงานของตัวเอง</small></p>
 
-    <h3 class="sec-incident">รายงานอุบัติเหตุ</h3>
+    <h3>รายงานอุบัติเหตุ</h3>
     <div class="tablewrap"><table id="t-incident"></table></div>
     <section id="detail" aria-live="polite" hidden></section>
     <dialog id="reqdlg" aria-labelledby="reqdlg-t"></dialog>
 
-    <h3 class="sec-check">เช็กลิสต์ตรวจ</h3>
+    <h3>เช็กลิสต์ตรวจ</h3>
     <div class="tablewrap"><table id="t-checklist"></table></div>
 
-    <h3 class="sec-train">บันทึกการอบรม</h3>
+    <h3>บันทึกการอบรม</h3>
     <div class="tablewrap"><table id="t-training"></table></div>
   </main>
 
@@ -505,10 +483,10 @@
       else { now = "รอ SHE ตรวจสอบรายงานของคุณ"; next = "ขั้นต่อไป: SHE จะตรวจสอบและจัดประเภทเหตุการณ์ คุณไม่ต้องทำอะไรเพิ่ม" + (reporter ? " (หากข้อมูลผิด กดปุ่ม \"ข้อมูลไม่ถูกต้อง? ขอแก้ไข\" ด้านล่าง)" : ""); }
       return h("div", { class: "nextbox", role: "status" }, h("div", { class: "now", text: "ตอนนี้: " + now }), h("div", { text: next }));
     }
-    function groupOf(title, keys, cls) {
+    function groupOf(title, keys) {
       const dl = h("dl");
       keys.forEach((k) => dl.append(h("dt", { text: LBL[k] }), h("dd", { text: fmtVal(k, state.inc[k]) })));
-      return h("div", { class: "group " + (cls || "") }, h("h4", { text: title }), dl);
+      return h("div", { class: "group" }, h("h4", { text: title }), dl);
     }
 
     function renderDetail(box) {
@@ -528,15 +506,15 @@
         mgr ? "มีคำขอแก้ไข " + pend.length + " รายการรอคุณพิจารณา (ดูด้านล่าง)" : "คุณมีคำขอแก้ไขที่รอ SHE พิจารณาอยู่ ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" }));
 
       // ข้อมูลปัจจุบัน แบ่งกลุ่มให้อ่านง่าย
-      box.append(groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"], "g-what"));
-      const pg = h("div", { class: "group g-people" }, h("h4", { text: "ผู้เกี่ยวข้อง" }));
+      box.append(groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"]));
+      const pg = h("div", { class: "group" }, h("h4", { text: "ผู้เกี่ยวข้อง" }));
       if (!state.persons.length) pg.append(h("p", { text: "ไม่มีข้อมูลผู้เกี่ยวข้อง" }));
       state.persons.forEach((p, i) => pg.append(h("p", {}, h("strong", { text: "คนที่ " + (i + 1) + ": " }),
         fmtVal("role_in_case", p.role_in_case) + " | ชนิดการบาดเจ็บ: " + fmtVal("injury_type_code", p.injury_type_code) +
         " | ตำแหน่ง: " + fmtVal("body_part_codes", p.body_part_codes))));
       box.append(pg);
       const cls = ["high_hazard_code", "system_failure_code", "root_cause_code", "is_recordable", "is_serious_potential"];
-      const cg = groupOf("การจัดประเภทโดย SHE", cls, "g-she");
+      const cg = groupOf("การจัดประเภทโดย SHE", cls);
       if (cls.every((k) => inc[k] === null || inc[k] === undefined)) cg.append(h("small", { text: "SHE ยังไม่ได้จัดประเภท (ปกติจะทำในขั้น \"SHE ตรวจสอบ\")" }));
       box.append(cg);
 
