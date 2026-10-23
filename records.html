@@ -153,6 +153,7 @@
     .expsum{color:var(--muted)}
     @media(max-width:600px){.modes{grid-template-columns:1fr}.exprow{grid-template-columns:1fr}}
   </style>
+  <link rel="stylesheet" href="style-v4.css">
 </head>
 <body>
   <header>
@@ -190,6 +191,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="auth.js"></script>
+  <script src="shell-v4.js"></script>
   <script>
     requireLogin();
     const msg = document.getElementById("msg");
@@ -263,8 +265,12 @@
       why_text: "ทำไมจึงเกิด (Why)", immediate_action: "การดำเนินการทันที", high_hazard_code: "High hazard",
       system_failure_code: "System / Program failure", root_cause_code: "Root cause", is_recordable: "Recordable",
       is_serious_potential: "Serious / Potentially serious", role_in_case: "บทบาท", injury_type_code: "ชนิดการบาดเจ็บ",
-      body_part_codes: "ตำแหน่งที่บาดเจ็บ", phase: "สถานะ"
+      body_part_codes: "ตำแหน่งที่บาดเจ็บ", phase: "สถานะ",
+      full_name: "ชื่อ-นามสกุล", employee_code: "รหัสพนักงาน", gender: "เพศ", age_years: "อายุ (ปี)", tenure_years: "อายุงาน (ปี)",
+      nationality: "สัญชาติ", position_title: "ตำแหน่งงาน", person_type: "ประเภทบุคคล"
     };
+    const GENDER_OPTS = [["male", "ชาย"], ["female", "หญิง"], ["other", "อื่น ๆ"]];
+    const PTYPE_OPTS = [["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]];
     const ROLE_TH = { injured: "ผู้บาดเจ็บ", witness: "พยาน", other: "อื่น ๆ" };
     // mgr = เฉพาะ SHE/Admin ของ Plant (ตรงกับ incident_classify_guard) ; req = จำเป็นต้องมีค่า (คอลัมน์ NOT NULL)
     const REPORT_FIELDS = [
@@ -281,6 +287,15 @@
       { k: "role_in_case", t: "role", req: true }, { k: "injury_type_code", t: "lk", kind: "injury_type" },
       { k: "body_part_codes", t: "multi", kind: "body_part" }
     ];
+    // ผู้เกี่ยวข้องที่เพิ่มใหม่ (ต้องตรงกับ incident_addable_person_fields ของฐานข้อมูล) ครบเท่าฟอร์มส่งเคสครั้งแรก
+    const ADD_FIELDS = [
+      { k: "role_in_case", t: "role", req: true }, { k: "full_name", t: "text", max: 100 }, { k: "employee_code", t: "text", max: 30 },
+      { k: "gender", t: "sel", opts: GENDER_OPTS }, { k: "age_years", t: "num", min: 0, max: 120, step: 1 },
+      { k: "tenure_years", t: "num", min: 0, max: 80, step: 0.1 }, { k: "nationality", t: "text", max: 50 },
+      { k: "position_title", t: "text", max: 100 }, { k: "person_type", t: "sel", opts: PTYPE_OPTS },
+      { k: "injury_type_code", t: "lk", kind: "injury_type" }, { k: "body_part_codes", t: "multi", kind: "body_part" }
+    ];
+    const MAX_ADD = 20, MAX_PERSONS = 50;
 
     // คำอธิบายใต้ช่อง (ภาษาง่าย) สำหรับผู้ใช้ที่ไม่คุ้นเคย
     const HINT = {
@@ -309,6 +324,8 @@
       if (k === "incident_type_id") return typeName(v);
       if (k === "occurred_time") return String(v).slice(0, 5);
       if (k === "role_in_case") return ROLE_TH[v] || v;
+      if (k === "gender") { const g = GENDER_OPTS.find((x) => x[0] === v); return g ? g[1] : v; }
+      if (k === "person_type") { const g = PTYPE_OPTS.find((x) => x[0] === v); return g ? g[1] : v; }
       if (k === "phase") return v === "closed" ? "Closed" : "Open";
       if (k === "body_part_codes") return v.map((c) => lkName("body_part", c)).join(", ");
       const f = REPORT_FIELDS.concat(PERSON_FIELDS).find((x) => x.k === k);
@@ -335,8 +352,17 @@
       };
       if (f.t === "date" || f.t === "time" || f.t === "text") {
         control = h("input", { id, type: f.t });
+        if (f.max) control.setAttribute("maxlength", String(f.max));
         control.value = f.t === "time" ? (cur ? String(cur).slice(0, 5) : "") : (cur ?? "");
         get = () => (control.value.trim() === "" ? null : control.value.trim());
+      } else if (f.t === "num") {
+        control = h("input", { id, type: "number", min: String(f.min), max: String(f.max), step: String(f.step) });
+        control.value = cur ?? "";
+        get = () => (control.value.trim() === "" ? null : Number(control.value));
+      } else if (f.t === "sel") {
+        control = h("select", { id }); control.append(h("option", { value: "", text: "— ไม่ระบุ —" }));
+        f.opts.forEach(([v, t]) => control.append(h("option", { value: v, text: t })));
+        control.value = cur || ""; get = () => control.value || null;
       } else if (f.t === "area") {
         control = h("textarea", { id }); control.value = cur ?? "";
         get = () => (control.value.trim() === "" ? null : control.value.trim());
@@ -383,6 +409,12 @@
         out.push(label + ": " + (old === undefined ? "" : fmtVal(k, old) + " → ") + fmtVal(k, nw));
       };
       Object.entries(changes.report || {}).forEach(([k, v]) => line(LBL[k] || k, k, v, "report"));
+      // เพิ่มผู้เกี่ยวข้อง: คำขอใช้ add_persons, ประวัติใช้ added_persons (มี id)
+      (changes.add_persons || changes.added_persons || []).forEach((o) => {
+        const parts = ADD_FIELDS.filter((f) => o[f.k] !== undefined && o[f.k] !== null && o[f.k] !== "" && !(Array.isArray(o[f.k]) && !o[f.k].length))
+          .map((f) => LBL[f.k] + ": " + fmtVal(f.k, o[f.k]));
+        out.push("เพิ่มผู้เกี่ยวข้อง — " + parts.join(" | "));
+      });
       Object.entries(changes.persons || {}).forEach(([pid, fs]) => {
         const n = (state.persons.findIndex((p) => p.id === pid) + 1) || "?";
         Object.entries(fs).forEach(([k, v]) => line("ผู้เกี่ยวข้อง #" + n + " · " + (LBL[k] || k), k, v, "person", pid));
@@ -394,6 +426,9 @@
     function errTh(e) {
       const m = (e && e.message) || "";
       const map = [
+        [/Too many persons/i, "จำนวนผู้เกี่ยวข้องเกินกำหนด (สูงสุด 50 คนต่อเคส และ 20 คนต่อคำขอ)"],
+        [/role_in_case is required/i, "ต้องเลือกบทบาทของผู้เกี่ยวข้องทุกคน"],
+        [/Field not addable/i, "มีฟิลด์ที่ไม่อนุญาตให้เพิ่ม"],
         [/Reason must be/i, "เหตุผลต้องมีอย่างน้อย 10 ตัวอักษร"], [/note is required/i, "การปฏิเสธต้องระบุหมายเหตุ"],
         [/closed/i, "รายงานถูกปิดแล้ว ต้องให้ Admin เปิดใหม่ (Reopen) ก่อนจึงจะแก้ได้"], [/No changes/i, "ไม่มีการเปลี่ยนแปลงจากค่าเดิม"],
         [/Cannot decide your own/i, "ไม่สามารถอนุมัติ/ปฏิเสธคำขอของตัวเองได้"], [/duplicate key/i, "คุณมีคำขอที่รอดำเนินการของรายงานนี้อยู่แล้ว"],
@@ -406,6 +441,7 @@
     }
 
     // ---------- รายงานอุบัติเหตุ: ตาราง + แผงรายละเอียด ----------
+    let MYPERMS = [];
     let me = null, pendingCount = {}, pendingSum = {}, lastReq = {}, detailId = null, dlgInc = null;
     const state = { inc: null, persons: [], log: [], reqs: [] };
     const isMgrRole = () => me && me.status === "active" && ["she", "admin", "super_admin"].includes(me.role);
@@ -838,6 +874,7 @@
         const set = (pendingSum[r.incident_id] = pendingSum[r.incident_id] || new Set());
         Object.keys((r.changes || {}).report || {}).forEach((k) => set.add(LBL[k] || k));
         if (Object.keys((r.changes || {}).persons || {}).length) set.add("ข้อมูลผู้เกี่ยวข้อง");
+        if (((r.changes || {}).add_persons || []).length) set.add("เพิ่มผู้เกี่ยวข้อง");
       });
       render("t-incident",
         ["วันที่-เวลาเกิดเหตุ / Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "ตอนนี้อยู่ขั้นตอน", "คำขอแก้ไข", "ส่งเมื่อ", ""],
@@ -1013,10 +1050,11 @@
       // แก้ไข / ขอแก้ไข
       if (deleted) { /* ไม่มีการแก้ไข */ }
       else if (closed) { if (isAdminRole()) box.append(reopenForm()); }
-      else if (mgr || reporter) {
+      else if (mgr || reporter || MYPERMS.includes("incident.person_add")) {
+        const addOnly = !mgr && !reporter;
         const det = h("details", { class: "editdet" },
-          h("summary", { text: mgr ? "แก้ไขข้อมูลรายงาน (ต้องระบุเหตุผล)" : "ข้อมูลไม่ถูกต้อง? ขอแก้ไขได้ที่นี่" }),
-          h("div", {}, editForm(mgr)));
+          h("summary", { text: addOnly ? "เพิ่มผู้เกี่ยวข้อง (ต้องระบุเหตุผล)" : mgr ? "แก้ไขข้อมูลรายงาน (ต้องระบุเหตุผล)" : "ข้อมูลไม่ถูกต้อง? ขอแก้ไข/เพิ่มผู้เกี่ยวข้องได้ที่นี่" }),
+          h("div", {}, editForm(mgr, addOnly)));
         if (pend.length && !mgr) det.open = false;
         box.append(det);
         if (mgr) box.append(closeForm());
@@ -1066,7 +1104,7 @@
       return div;
     }
 
-    function editForm(mgr) {
+    function editForm(mgr, addOnly) {
       const inc = state.inc;
       const wrap = h("div", { class: "editgrid" });
       wrap.append(h("p", {}, h("strong", { text: "วิธีใช้ (3 ขั้นตอน)" })),
@@ -1074,14 +1112,37 @@
           h("li", { text: "แก้เฉพาะช่องที่ต้องการเปลี่ยน (ช่องที่แก้จะมีกรอบสีน้ำเงิน)" }),
           h("li", { text: "ตรวจ \"สรุปสิ่งที่จะเปลี่ยน\" และพิมพ์เหตุผล" }),
           h("li", { text: mgr ? "กด \"บันทึกการแก้ไข\" ข้อมูลเปลี่ยนทันทีและมีประวัติเก็บไว้" : "กด \"ส่งคำขอแก้ไข\" ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" })));
-      const rf = REPORT_FIELDS.filter((f) => mgr || !f.mgr).map((f) => ({ f, i: makeInput(f, inc[f.k], "e-") }));
+      const rf = (addOnly ? [] : REPORT_FIELDS.filter((f) => mgr || !f.mgr)).map((f) => ({ f, i: makeInput(f, inc[f.k], "e-") }));
       rf.forEach(({ i }) => wrap.append(i.label, i.control, i.hint));
-      const pf = state.persons.map((p, n) => {
+      const pf = (addOnly ? [] : state.persons).map((p, n) => {
         const box = h("div", { class: "personedit" }, h("strong", { text: "ผู้เกี่ยวข้องคนที่ " + (n + 1) }));
         const items = PERSON_FIELDS.map((f) => ({ f, i: makeInput(f, p[f.k], "p" + n + "-") }));
         items.forEach(({ i }) => box.append(i.label, i.control, i.hint));
         wrap.append(box); return { p, items };
       });
+
+      // ---- เพิ่มผู้เกี่ยวข้องใหม่ (B13b) ----
+      const adds = []; let addSeq = 0;
+      const addBox = h("div", { class: "addpersons" });
+      const addBtn = h("button", { type: "button", class: "secondary small", text: "+ เพิ่มผู้เกี่ยวข้อง" });
+      const addHint = h("small", { class: "hint", text: "ข้อมูลระบุตัวตน (PII): กรอกเท่าที่จำเป็น (ISO/IEC 27001:2022 A.5.34) · เพิ่มได้ครั้งละไม่เกิน " + MAX_ADD + " คน" });
+      function syncAddBtn() { addBtn.disabled = adds.length >= MAX_ADD || state.persons.length + adds.length >= MAX_PERSONS; }
+      addBtn.addEventListener("click", () => {
+        const seq = ++addSeq;
+        const box = h("div", { class: "personedit addedbox" });
+        const title = h("strong", { text: "ผู้เกี่ยวข้องใหม่" });
+        const rm = h("button", { type: "button", class: "small btn-danger-outline", text: "นำออก" });
+        box.append(h("div", { class: "rowbtns" }, title, rm));
+        const items = ADD_FIELDS.map((f) => ({ f, i: makeInput(f, null, "a" + seq + "-") }));
+        items.forEach(({ i }) => box.append(i.label, i.control, i.hint));
+        const rec = { box, items, title };
+        rm.addEventListener("click", () => { adds.splice(adds.indexOf(rec), 1); box.remove(); renumber(); syncAddBtn(); refresh(); });
+        adds.push(rec); addBox.append(box); renumber(); syncAddBtn(); refresh();
+        const first = items.find((x) => x.f.k === "full_name"); if (first) first.i.control.focus();
+      });
+      function renumber() { adds.forEach((a, n) => { a.title.textContent = "ผู้เกี่ยวข้องใหม่ คนที่ " + (n + 1); }); }
+      wrap.append(h("h4", { text: "เพิ่มผู้เกี่ยวข้อง" }), addBox, h("div", { class: "rowbtns" }, addBtn), addHint);
+      syncAddBtn();
 
       const preview = h("div", { class: "previewbox", "aria-live": "polite" });
       const reason = h("textarea", { id: "e-reason", required: true, maxlength: "1000", "aria-describedby": "e-reason-help",
@@ -1101,10 +1162,19 @@
           items.forEach(({ f, i }) => { const v = i.get(); const ch = !same(f.k, p[f.k], v); i.control.classList.toggle("changed", ch); if (ch) d[f.k] = v; });
           if (Object.keys(d).length) changes.persons[p.id] = d;
         });
-        return { changes, missing, count: Object.keys(changes.report).length + Object.keys(changes.persons).length };
+        const addList = adds.map((a) => {
+          const o = {};
+          a.items.forEach(({ f, i }) => { const v = i.get(); if (v !== null && v !== undefined && !(typeof v === "number" && Number.isNaN(v))) o[f.k] = v; });
+          return o;
+        });
+        if (addList.length) changes.add_persons = addList;
+        return { changes, missing, count: Object.keys(changes.report).length + Object.keys(changes.persons).length + addList.length };
       }
+      // แก้ตรงได้เมื่อเป็น SHE/Admin หรือเป็นการเพิ่มผู้เกี่ยวข้องอย่างเดียวและมีสิทธิ์ incident.person_add (ฐานข้อมูลตรวจสิทธิ์จริงอีกครั้ง)
+      const isDirect = (ch) => mgr || (!Object.keys(ch.report).length && !Object.keys(ch.persons).length && MYPERMS.includes("incident.person_add"));
       function refresh() {
         const { changes, count } = collect();
+        btn.textContent = isDirect(changes) ? "บันทึกการแก้ไข" : "ส่งคำขอแก้ไข";
         preview.replaceChildren(h("div", { class: "t", text: "สรุปสิ่งที่จะเปลี่ยน" }));
         if (!count) { preview.append(h("div", { text: "ยังไม่มีการเปลี่ยนแปลง (ลองแก้ช่องด้านบน)" })); return; }
         const old = (scope, pid, k) => scope === "report" ? inc[k] : (state.persons.find((p) => p.id === pid) || {})[k];
@@ -1122,7 +1192,7 @@
         if (!count) { showMsg("ยังไม่มีการเปลี่ยนแปลงจากค่าเดิม", false); return; }
         const rs = reason.value.trim();
         if (rs.length < 10) { showMsg("กรุณาระบุเหตุผลอย่างน้อย 10 ตัวอักษร", false); reason.focus(); return; }
-        if (mgr) act(sb.rpc("edit_incident", { inc: inc.id, changes, reason: rs }), "บันทึกการแก้ไขเรียบร้อย");
+        if (isDirect(changes)) act(sb.rpc("edit_incident", { inc: inc.id, changes, reason: rs }), "บันทึกการแก้ไขเรียบร้อย");
         else act(sb.rpc("request_incident_edit", { inc: inc.id, changes, reason: rs }), "ส่งคำขอแก้ไขเรียบร้อย รอ SHE/Admin พิจารณา");
       });
       wrap.append(h("div", { class: "rowbtns" }, btn));
@@ -1165,6 +1235,7 @@
 
     (async () => {
       me = await getMyProfile();
+      try { const mp = await sb.rpc("my_permissions"); MYPERMS = Array.isArray(mp.data) ? mp.data : []; } catch (e) { MYPERMS = []; }
       await loadMasters();
       const pl = await sb.from("plants").select("id, code").order("code");
       PLANTS = pl.data || [];

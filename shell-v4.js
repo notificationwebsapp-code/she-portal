@@ -1,0 +1,42 @@
+/* shell-v4.js — ปุ่มแจ้งเตือน / ภาษา / ตั้งค่า ในแถบหัว (ตามแบบ Stitch). ใช้ DOM + textContent เท่านั้น
+   สถานะ: กระดิ่ง = ยังไม่มีระบบแจ้งเตือน (backlog), ภาษา = เลือก EN ยังไม่ได้ (รอแปลทั้งระบบ), ตั้งค่า = ขนาดตัวอักษร (ใช้งานได้จริง) */
+(function(){
+  var NS="http://www.w3.org/2000/svg";
+  var ICONS={
+    bell:"M12 22a2 2 0 002-2h-4a2 2 0 002 2zm6-6V11a6 6 0 10-12 0v5l-2 2v1h16v-1l-2-2z",
+    globe:"M12 2a10 10 0 100 20 10 10 0 000-20zm6.9 9h-3a15 15 0 00-1.2-5A8 8 0 0118.9 11zM12 4c.8 1 1.6 3 1.9 7h-3.8C10.4 7 11.2 5 12 4zM4.1 13h3a15 15 0 001.2 5A8 8 0 014.1 13zm3-2h-3A8 8 0 018.3 6a15 15 0 00-1.2 5zM12 20c-.8-1-1.6-3-1.9-7h3.8c-.3 4-1.1 6-1.9 7zm3.7-2a15 15 0 001.2-5h3a8 8 0 01-4.2 5z",
+    gear:"M19.4 13a7.7 7.7 0 000-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 00-1.7-1L15 3.3h-4L10.7 6a7.6 7.6 0 00-1.7 1l-2.5-1-2 3.5L6.6 11a7.7 7.7 0 000 2l-2.1 1.6 2 3.5 2.5-1a7.6 7.6 0 001.7 1l.3 2.7h4l.3-2.7a7.6 7.6 0 001.7-1l2.5 1 2-3.5L19.4 13zM12.5 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"
+  };
+  function icon(n){var s=document.createElementNS(NS,"svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.setAttribute("focusable","false");var p=document.createElementNS(NS,"path");p.setAttribute("d",ICONS[n]);s.appendChild(p);return s}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  var tools=el("div","tools");tools.setAttribute("role","group");tools.setAttribute("aria-label","เครื่องมือ");
+  var open=null;
+  function close(){if(open){open.btn.setAttribute("aria-expanded","false");open.pop.hidden=true;open=null}}
+  function make(name,label,short,build){
+    var w=el("div","toolwrap"),b=el("button","toolbtn");b.type="button";b.setAttribute("aria-label",label);b.setAttribute("aria-haspopup","true");b.setAttribute("aria-expanded","false");b.title=label;
+    b.appendChild(icon(name));if(short)b.appendChild(el("span","tl",short));
+    var pop=el("div","toolpop");pop.hidden=true;build(pop);w.appendChild(b);w.appendChild(pop);
+    b.addEventListener("click",function(e){e.stopPropagation();var was=open&&open.btn===b;close();if(!was){pop.hidden=false;b.setAttribute("aria-expanded","true");open={btn:b,pop:pop}}});
+    tools.appendChild(w);return b;
+  }
+  make("bell","การแจ้งเตือน","",function(p){p.appendChild(el("strong",null,"การแจ้งเตือน"));p.appendChild(el("p","tpnote","ยังไม่มีการแจ้งเตือน"));p.appendChild(el("p","tpnote small","ระบบแจ้งเตือน (เช่น คำขอแก้ไขที่รออนุมัติ) อยู่ระหว่างพัฒนา"))});
+  make("globe","เปลี่ยนภาษา","TH",function(p){
+    p.appendChild(el("strong",null,"ภาษา / Language"));
+    var a=el("div","tpitem on","✓ ไทย (Thai)");a.setAttribute("aria-current","true");p.appendChild(a);
+    var b=el("div","tpitem off","English — เร็ว ๆ นี้ (coming soon)");b.setAttribute("aria-disabled","true");p.appendChild(b)});
+  make("gear","ตั้งค่า","",function(p){
+    p.appendChild(el("strong",null,"ตั้งค่าการแสดงผล"));
+    p.appendChild(el("p","tpnote small","ขนาดตัวอักษร"));
+    var row=el("div","tprow"),cur="n";try{cur=localStorage.getItem("she-fs")||"n"}catch(e){}
+    [["n","ปกติ"],["l","ใหญ่"],["xl","ใหญ่มาก"]].forEach(function(o){
+      var x=el("button","tpbtn",o[1]);x.type="button";x.setAttribute("aria-pressed",String(cur===o[0]));
+      x.addEventListener("click",function(){apply(o[0]);try{localStorage.setItem("she-fs",o[0])}catch(e){}
+        row.querySelectorAll("button").forEach(function(y){y.setAttribute("aria-pressed","false")});x.setAttribute("aria-pressed","true")});
+      row.appendChild(x)});
+    p.appendChild(row)});
+  function apply(v){document.documentElement.style.fontSize=v==="l"?"112.5%":v==="xl"?"125%":""}
+  try{apply(localStorage.getItem("she-fs")||"n")}catch(e){}
+  document.addEventListener("click",function(e){if(open&&!open.pop.contains(e.target))close()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&open){var b=open.btn;close();b.focus()}});
+  var h=document.querySelector("header");if(h)h.appendChild(tools);
+})();
