@@ -33,10 +33,12 @@
     if(!rc&&!oc)bellBox.appendChild(el("p","tpnote","ไม่มีรายการค้าง"));
     if(rc){var d=el("span","belldot",rc>99?"99+":String(rc));d.setAttribute("aria-hidden","true");bellBtn.appendChild(d);bellBtn.setAttribute("aria-label","การแจ้งเตือน มี "+rc+" รายการรอดำเนินการ")}
   }catch(e){if(bellBox)bellBox.replaceChildren(el("p","tpnote","ไม่มีข้อมูลการแจ้งเตือน"))}})();
-  make("globe","เปลี่ยนภาษา","TH",function(p){
-    p.appendChild(el("strong",null,"ภาษา / Language"));
-    var a=el("div","tpitem on","✓ ไทย (Thai)");a.setAttribute("aria-current","true");p.appendChild(a);
-    var b=el("div","tpitem off","English — เร็ว ๆ นี้ (coming soon)");b.setAttribute("aria-disabled","true");p.appendChild(b)});
+  /* ตัวสลับภาษาแบบ segmented (ตามแบบ Stitch): ไทย ใช้งานได้ / EN, မြန်မာ ยังไม่เปิด (รอแปลทั้งระบบ) */
+  (function(){var g=el("div","langseg");g.setAttribute("role","group");g.setAttribute("aria-label","ภาษา / Language");
+    [["ไทย",true,"ภาษาไทย (ใช้งานอยู่)"],["EN",false,"English — เร็ว ๆ นี้"],["မြန်မာ",false,"မြန်မာ — เร็ว ๆ นี้"]].forEach(function(o){
+      var b=el("button",o[1]?"on":"off",o[0]);b.type="button";b.title=o[2];b.setAttribute("aria-label",o[2]);
+      if(o[1])b.setAttribute("aria-pressed","true");else{b.setAttribute("aria-disabled","true");b.addEventListener("click",function(e){e.preventDefault()})}
+      g.appendChild(b)});tools.appendChild(g)})();
   make("gear","ตั้งค่า","",function(p){
     p.appendChild(el("strong",null,"ตั้งค่าการแสดงผล"));
     p.appendChild(el("p","tpnote small","ขนาดตัวอักษร"));
@@ -61,11 +63,36 @@
   function relocate(){var n=document.querySelector("header nav");if(!n)return;
     var b=document.getElementById("role-badge");if(b&&b.parentNode!==tools)tools.insertBefore(b,tools.firstChild);
     var u=n.querySelector('a[href="#"],a[href="login.html"]');if(u&&u.parentNode!==tools){u.classList.add("userlink");tools.appendChild(u)}}
+  /* เมนูหลักชุดเดียวกันทุกหน้า (ตามแบบ Stitch): หน้าแรก · รายงาน · เช็กลิสต์ · อบรม · ดูข้อมูล · Executive Dashboard (เร็ว ๆ นี้) · ผู้ดูแลระบบ (เฉพาะ Admin) */
+  var ORDER=["index.html","incident.html","checklist.html","training.html","records.html"];
+  var ADM=["admin-users.html","admin-master.html","admin-permissions.html"];
+  var obs=null;
+  function normalizeNav(){var n=document.querySelector("header nav");if(!n)return;if(obs)obs.disconnect();
+    var f=(location.pathname.split("/").pop()||"index.html");var by={};
+    n.querySelectorAll("a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();by[k]=by[k]||a});
+    ORDER.forEach(function(k){if(by[k])n.appendChild(by[k])});
+    var soon=n.querySelector(".navsoon");if(!soon){soon=el("span","navsoon","Executive Dashboard");soon.setAttribute("aria-disabled","true");soon.title="เร็ว ๆ นี้ (อยู่ในแผนพัฒนา)"}
+    if(by["index.html"])n.appendChild(soon);
+    var isAdmin=!!(by[ADM[0]]||by[ADM[1]]||by[ADM[2]]);
+    ADM.slice(1).forEach(function(k){if(by[k]&&by[k].parentNode)by[k].parentNode.removeChild(by[k])});
+    if(by[ADM[0]]){var a=by[ADM[0]];a.textContent="ผู้ดูแลระบบ";n.appendChild(a)}
+    n.querySelectorAll("a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();
+      var cur=(k===f)||(ADM.indexOf(f)>-1&&k===ADM[0]);if(cur)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+    decorateNav();relocate();
+    if(obs)obs.observe(n,{childList:true,subtree:true})}
   decorateNav();
-  var nv=document.querySelector("header nav");if(nv)new MutationObserver(function(){decorateNav();relocate()}).observe(nv,{childList:true,subtree:true});
+  var nv=document.querySelector("header nav");if(nv){obs=new MutationObserver(normalizeNav);obs.observe(nv,{childList:true,subtree:true});normalizeNav()}
   if(!document.querySelector(".sitefoot")){
     var f=el("footer","sitefoot"),l=el("span");var b=el("b",null,"SHE Portal");l.appendChild(b);l.appendChild(document.createTextNode(" · ระบบบันทึกข้อมูลความปลอดภัย อาชีวอนามัย และสิ่งแวดล้อม"));
     var r=el("span");var d=el("span","dot");d.setAttribute("aria-hidden","true");r.appendChild(d);r.appendChild(document.createTextNode("ระยะทดสอบ — ใช้ข้อมูลทดสอบเท่านั้น"));
     f.appendChild(l);f.appendChild(r);document.body.appendChild(f)}
+
+  /* แถบเมนูย่อยของส่วนผู้ดูแล (ตามแบบ Stitch: Pending Users / Master Lists / Permissions) */
+  (function(){var f=(location.pathname.split("/").pop()||"");var T=[["admin-users.html","ผู้ใช้รออนุมัติ"],["admin-master.html","ข้อมูลหลัก"],["admin-permissions.html","สิทธิ์การใช้งาน"]];
+    if(!T.some(function(t){return t[0]===f}))return;var m=document.querySelector("main");if(!m)return;
+    var n=el("nav","subtabs");n.setAttribute("aria-label","เมนูผู้ดูแลระบบ");
+    T.forEach(function(t){var a=el("a",null,t[1]);a.href=t[0];if(t[0]===f)a.setAttribute("aria-current","page");n.appendChild(a)});m.insertBefore(n,m.firstChild)})();
+  (function(){var f=(location.pathname.split("/").pop()||""),m=document.querySelector("main");
+    if(m&&["checklist.html","training.html","reset.html"].indexOf(f)>-1&&!m.classList.contains("narrow")&&!m.classList.contains("authsplit"))m.classList.add("formcard")})();
   var h=document.querySelector("header");if(h)h.appendChild(tools);relocate();
 })();

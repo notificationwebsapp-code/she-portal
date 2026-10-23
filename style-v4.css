@@ -191,3 +191,50 @@ body.authpage .sitefoot{margin-top:0}
 #pending{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:1rem;align-items:start}
 #pending>.userbox{margin:0}
 @media(max-width:520px){#pending{grid-template-columns:1fr}}
+
+/* ===== v4.1 — ปรับให้ใกล้ Stitch: segmented language, subtabs, การ์ดอนุมัติ, แผงแจ้งเตือน, Export dialog ===== */
+.langseg{display:inline-flex;background:var(--grey);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.langseg button{min-height:38px;min-width:44px;padding:.2rem .7rem;border:0;border-radius:8px;background:transparent;color:var(--muted);font-weight:700;font-size:.85rem;box-shadow:none;cursor:pointer}
+.langseg button.on{background:#fff;color:var(--brand);box-shadow:0 1px 3px rgba(11,59,96,.18)}
+.langseg button.off{cursor:not-allowed;opacity:.75}
+.subtabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--line)}
+.subtabs a{display:inline-flex;align-items:center;min-height:48px;padding:.4rem 1.1rem;border-radius:8px;color:var(--navy);text-decoration:none;font-weight:600;border:1px solid transparent}
+.subtabs a:hover{background:var(--accent);color:var(--brand)}
+.subtabs a[aria-current="page"]{background:var(--brand);color:#fff}
+main.wide>#adminarea>h2,main h2{letter-spacing:-.01em}
+#pending{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:1rem;align-items:start}
+#pending .userbox h4{font-size:1.1rem;margin:.1rem 0 .2rem}
+#pending .userbox .actions{display:block;margin-top:.8rem}
+#pending .userbox .actions .btn-ok{width:100%;min-height:52px;font-size:1.05rem;background:#16803c;border-radius:8px}
+#pending .userbox .actions .btn-ok:hover{background:var(--ok)}
+#pending .userbox details.reject{border-top:0;margin-top:.5rem;text-align:center}
+#pending .userbox details.reject>summary{display:flex;justify-content:center;align-items:center;min-height:48px;color:var(--danger);font-weight:700;border-radius:8px;list-style:none}
+#pending .userbox details.reject>summary:hover{background:#fdecea}
+.twocol{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:1.5rem;align-items:start}
+@media(max-width:900px){.twocol{grid-template-columns:1fr}}
+.syncchip{background:#e6f4ea;color:var(--ok);border-radius:999px;padding:.15rem .7rem;font-size:.8rem;font-weight:700;text-transform:none!important;letter-spacing:0!important}
+.alertlist{display:grid;gap:.8rem}
+.alertcard{display:block;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:.9rem 1rem;text-decoration:none;color:var(--ink,#14213d);box-shadow:var(--shadow)}
+.alertcard:hover{border-color:var(--brand)}
+.alertcard .ac-top{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-bottom:.4rem}
+.alertcard time{color:var(--muted);font-size:.85rem}
+.alertcard .tt{margin:.1rem 0 .4rem;font-weight:600}
+.alertcard .go{color:var(--brand);font-weight:700;font-size:.9rem}
+/* Export dialog */
+dialog#expdlg{border-radius:16px;border:1px solid var(--line);box-shadow:0 24px 60px rgba(11,59,96,.3)}
+dialog#expdlg::backdrop{background:rgba(11,59,96,.45);backdrop-filter:blur(3px)}
+.expcols{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+@media(max-width:640px){.expcols{grid-template-columns:1fr!important}}
+details.grp{border-radius:12px;background:#fff}
+.modecard{border-radius:12px}
+
+nav .navsoon{display:inline-flex;align-items:center;min-height:48px;padding:.7rem .15rem;color:#64748b;font-weight:500;cursor:not-allowed;border-bottom:3px solid transparent}
+nav .navsoon::after{content:"เร็ว ๆ นี้";margin-left:.4rem;font-size:.7rem;background:var(--grey);color:var(--muted);border-radius:999px;padding:.05rem .5rem;font-weight:600}
+nav a[aria-current="page"]::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--brand);margin-left:.45rem;flex:none}
+/* ===== v4.2 — โครงหน้าเดียวกันทุกหน้า: หัวเว็บและเนื้อหากว้างเท่ากัน (1240px) ===== */
+header{padding-left:max(2rem,calc((100% - 1240px)/2 + 2rem));padding-right:max(2rem,calc((100% - 1240px)/2 + 2rem))}
+@media(max-width:640px){header{padding-left:1rem;padding-right:1rem}}
+main.wide{max-width:1240px}
+main.formcard,main.flash{max-width:880px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:2rem;margin:1.5rem auto}
+main.formcard form,main.flash form{max-width:none}
+@media(max-width:640px){main.formcard,main.flash{padding:1.1rem;margin:.75rem}}

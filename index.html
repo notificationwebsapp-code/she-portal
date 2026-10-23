@@ -37,8 +37,16 @@
       <div class="kpi"><b id="k-open">–</b><span>รายงานอุบัติเหตุที่ยังไม่ปิดเคส</span><br><a href="records.html">ดูรายการ</a></div>
       <div class="kpi warn"><b id="k-req">–</b><span>คำขอแก้ไขที่รออนุมัติ</span><br><a href="records.html">ตรวจคำขอ</a></div>
     </div>
-    <div class="secthead" id="taskhead" hidden><h3>งานค้างล่าสุด</h3><span>For you today</span></div>
-    <div class="tasklist" id="tasks" hidden></div>
+    <div class="twocol">
+      <section aria-labelledby="taskhead-t">
+        <div class="secthead" id="taskhead" hidden><h3 id="taskhead-t">งานค้างล่าสุด</h3><span>For you today</span></div>
+        <div class="tasklist" id="tasks" hidden></div>
+      </section>
+      <aside aria-labelledby="alerthead-t">
+        <div class="secthead" id="alerthead" hidden><h3 id="alerthead-t">การแจ้งเตือนล่าสุด</h3><span class="syncchip">ข้อมูลล่าสุด</span></div>
+        <div class="alertlist" id="alerts" hidden></div>
+      </aside>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -86,6 +94,29 @@
         if (!box.children.length) { const e = document.createElement("div"); e.className = "taskempty"; e.textContent = "ไม่มีรายงานที่ค้างอยู่"; box.appendChild(e); }
         document.getElementById("taskhead").hidden = false; box.hidden = false;
       } catch (e) { /* ไม่แสดงรายการ */ }
+    })();
+  </script>
+  <script>
+    /* แผง "การแจ้งเตือนล่าสุด": คำขอแก้ไขที่รออนุมัติ 4 รายการล่าสุด (ตามสิทธิ์ RLS) สร้างด้วย textContent ทั้งหมด */
+    (async function () {
+      try {
+        if (typeof sb === "undefined") return;
+        const ses = await sb.auth.getSession(); if (!ses.data.session) return;
+        const r = await sb.from("incident_edit_requests").select("id, created_at, reason, status").eq("status", "pending").order("created_at", { ascending: false }).limit(4);
+        if (r.error) return;
+        const box = document.getElementById("alerts"); box.replaceChildren();
+        (r.data || []).forEach(function (x) {
+          const a = document.createElement("a"); a.className = "alertcard"; a.href = "records.html";
+          const b = document.createElement("span"); b.className = "badge pend"; b.textContent = "คำขอแก้ไขรออนุมัติ";
+          const d = document.createElement("time"); d.textContent = x.created_at ? new Date(x.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+          const top = document.createElement("div"); top.className = "ac-top"; top.appendChild(b); top.appendChild(d);
+          const t = document.createElement("p"); t.className = "tt"; t.textContent = (x.reason || "(ไม่ระบุเหตุผล)").slice(0, 100);
+          const g = document.createElement("span"); g.className = "go"; g.textContent = "ตรวจคำขอ →";
+          a.appendChild(top); a.appendChild(t); a.appendChild(g); box.appendChild(a);
+        });
+        if (!box.children.length) { const e = document.createElement("div"); e.className = "taskempty"; e.textContent = "ไม่มีการแจ้งเตือนใหม่"; box.appendChild(e); }
+        document.getElementById("alerthead").hidden = false; box.hidden = false;
+      } catch (e) { /* ไม่แสดงแผง */ }
     })();
   </script>
   <script src="shell-v4.js"></script>
