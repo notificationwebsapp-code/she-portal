@@ -29,7 +29,7 @@
 
       <h3>Plant</h3>
       <div class="tablewrap"><table id="t-plants">
-        <thead><tr><th>รหัส</th><th>ชื่อ</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+        <thead><tr><th>รหัส</th><th>ชื่อ</th><th>ประเทศ</th><th>บริษัท / Business Unit</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
         <tbody></tbody>
       </table></div>
       <form id="f-plants" class="addform" autocomplete="off">
@@ -107,10 +107,20 @@
       return true;
     }
 
+    // แสดงรหัสประเทศพร้อมชื่อภาษาไทย (ใช้ข้อมูลของเบราว์เซอร์ ไม่ฝังรายชื่อประเทศในโค้ด)
+    function countryLabel(code) {
+      if (!code) return "—";
+      try { const n = new Intl.DisplayNames(["th"], { type: "region" }).of(code); return n && n !== code ? code + " · " + n : code; }
+      catch (e) { return code; }
+    }
     function buildRow(kind, r) {
       const tr = document.createElement("tr");
       tr.appendChild(el("td", r.code));
       tr.appendChild(el("td", r.name));
+      if (kind === "plants") {
+        tr.appendChild(el("td", countryLabel(r.country_code)));
+        tr.appendChild(el("td", [r.company_name, r.business_unit].filter(Boolean).join(" / ") || "—"));
+      }
       const st = el("td"); st.appendChild(el("span", r.active ? "ใช้งานอยู่" : "ปิดใช้งาน", "badge " + (r.active ? "active" : "suspended")));
       tr.appendChild(st);
       const act = el("td");
@@ -131,7 +141,7 @@
       const next = tr.nextElementSibling;
       if (next && next.classList.contains("editrow")) { next.remove(); return; }
       const row = document.createElement("tr"); row.className = "editrow";
-      const td = el("td"); td.colSpan = 4;
+      const td = el("td"); td.colSpan = kind === "plants" ? 6 : 4;
       const box = el("div", undefined, "userbox editbox");
       box.appendChild(el("h4", "แก้ไข " + KINDS[kind] + ": " + r.code));
       const grid = el("div", undefined, "grid");
@@ -178,7 +188,7 @@
       const tb = document.querySelector("#t-" + kind + " tbody");
       tb.replaceChildren();
       if (data.length === 0) {
-        const tr = document.createElement("tr"); const td = el("td", "ยังไม่มีรายการ"); td.colSpan = 4;
+        const tr = document.createElement("tr"); const td = el("td", "ยังไม่มีรายการ"); td.colSpan = kind === "plants" ? 6 : 4;
         tr.appendChild(td); tb.appendChild(tr);
       }
       data.forEach(r => tb.appendChild(buildRow(kind, r)));
