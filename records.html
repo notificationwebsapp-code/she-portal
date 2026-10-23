@@ -23,8 +23,45 @@
     .reqbox.pending{border-left-color:var(--brand)}
     .logbox small,.reqbox small{color:#555}
     .rowbtns{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;align-items:center}
-    .badge{display:inline-block;padding:.05rem .5rem;border-radius:999px;border:1px solid var(--line);font-size:.85rem}
-    .badge.closed{background:#eee}.badge.pend{background:#fff4d6;border-color:#e0b43a}
+    .badge{display:inline-block;padding:.12rem .65rem;border-radius:999px;border:1px solid var(--line);font-size:.85rem;font-weight:600}
+    .badge.closed{background:#eee}.badge.pend{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
+    .badge.review{background:#e8f0ff;border-color:#9db8ea;color:#082c69}.badge.invest{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
+    .badge.done{background:#e6f4ea;border-color:#8cc5a0;color:#14532d}
+    .sr{position:absolute;left:-9999px}
+    #t-incident td button{white-space:nowrap}
+    /* แถบ Flow 4 ขั้นตอน */
+    ol.flow{display:flex;list-style:none;padding:0;margin:.6rem 0 1rem}
+    ol.flow li.step{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.1rem;padding:0 .25rem}
+    ol.flow li.step::before{content:"";position:absolute;top:17px;right:50%;width:100%;height:4px;background:var(--line);z-index:0}
+    ol.flow li.step:first-child::before{display:none}
+    ol.flow li.step.done::before,ol.flow li.step.current::before{background:var(--ok)}
+    ol.flow .dot{position:relative;z-index:1;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:#fff;border:3px solid #9aa6bb;color:var(--muted)}
+    ol.flow .done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+    ol.flow .current .dot{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 0 0 5px var(--accent)}
+    ol.flow .lbl{font-weight:700}
+    ol.flow .todo .lbl{color:var(--muted);font-weight:600}
+    ol.flow small{color:var(--muted);font-size:.82rem}
+    @media (max-width:640px){
+      ol.flow{flex-direction:column;gap:.2rem}
+      ol.flow li.step{flex-direction:row;align-items:center;text-align:left;gap:.2rem .7rem;padding:.3rem 0;flex-wrap:wrap}
+      ol.flow li.step::before{display:none}
+    }
+    @media (max-width:640px){#detail dl{grid-template-columns:1fr}#detail dt{margin-top:.5rem;color:var(--muted);font-size:.9rem}}
+    .nextbox{background:var(--accent);border-left:5px solid var(--brand);border-radius:8px;padding:.7rem 1rem;margin:0 0 1rem}
+    .nextbox .now{font-size:1.1rem;font-weight:700;color:var(--brand)}
+    .nextbox div{margin-top:.2rem}
+    .alertbox{background:#fff4d6;border-left:5px solid #e0b43a;border-radius:8px;padding:.6rem 1rem;margin:0 0 1rem}
+    .group{border:1px solid var(--line);border-radius:10px;padding:.2rem 1rem .9rem;margin:.8rem 0}
+    .group h4{margin:.7rem 0 .4rem;color:var(--brand)}
+    .editgrid small.hint{display:block;color:var(--muted);font-size:.88rem;margin:.15rem 0 0}
+    details.editdet,details.histdet{border:1px solid var(--line);border-radius:10px;margin:1rem 0;background:#fafbfe}
+    details.editdet>summary,details.histdet>summary{cursor:pointer;padding:.8rem 1rem;font-weight:700;color:var(--brand);list-style:none;min-height:44px;display:flex;align-items:center}
+    details.editdet>summary::before,details.histdet>summary::before{content:"▸";margin-right:.6rem;transition:transform .15s}
+    details[open]>summary::before{transform:rotate(90deg)}
+    details.editdet>div,details.histdet>div{padding:0 1rem 1rem}
+    .steps123{margin:.2rem 0 .6rem;padding-left:1.3rem}
+    .previewbox{background:#fff;border:2px dashed var(--brand);border-radius:8px;padding:.5rem .9rem;margin:1rem 0}
+    .previewbox .t{font-weight:700;color:var(--brand)}
   </style>
 </head>
 <body>
@@ -151,6 +188,27 @@
       { k: "body_part_codes", t: "multi", kind: "body_part" }
     ];
 
+    // คำอธิบายใต้ช่อง (ภาษาง่าย) สำหรับผู้ใช้ที่ไม่คุ้นเคย
+    const HINT = {
+      occurred_on: "วันที่เกิดเหตุจริง (ไม่ใช่วันที่กรอกข้อมูล)",
+      occurred_time: "เวลาที่เกิดเหตุ ถ้าไม่แน่ใจให้ใส่เวลาโดยประมาณ",
+      location: "เช่น ไลน์ผลิต 2, โกดังสินค้า, ลานจอดรถ",
+      description: "เล่าสั้น ๆ ว่าเกิดอะไรขึ้น กับใคร ที่ไหน",
+      incident_type_id: "เลือกประเภทที่ใกล้เคียงที่สุด SHE จะตรวจสอบอีกครั้ง",
+      department_text: "แผนกที่เกี่ยวข้องกับเหตุการณ์",
+      how_text: "ลำดับเหตุการณ์ว่าเกิดขึ้นได้อย่างไร",
+      why_text: "คุณคิดว่าเกิดจากอะไร (ถ้าทราบ)",
+      immediate_action: "สิ่งที่ทำทันทีหลังเกิดเหตุ เช่น ปฐมพยาบาล หยุดเครื่องจักร",
+      high_hazard_code: "ถ้าเกี่ยวกับงานเสี่ยงสูง (High hazard) ให้เลือก ถ้าไม่เกี่ยวให้เว้นไว้",
+      system_failure_code: "ระบบหรือโปรแกรมความปลอดภัยที่ขาดหายหรือใช้ไม่ได้ผล (SHE เป็นผู้ระบุ)",
+      root_cause_code: "สาเหตุที่แท้จริงหลังตรวจสอบ (SHE เป็นผู้ระบุ)",
+      is_recordable: "เหตุที่ต้องบันทึกตามเกณฑ์ของกฎหมาย/มาตรฐานที่ Plant ใช้ (เช่น OSHA 29 CFR 1904) SHE เป็นผู้ตัดสิน",
+      is_serious_potential: "เหตุร้ายแรง หรืออาจร้ายแรงได้ถ้าเกิดซ้ำ (SHE เป็นผู้ตัดสิน)",
+      role_in_case: "ผู้บาดเจ็บ = ได้รับบาดเจ็บ, พยาน = เห็นเหตุการณ์",
+      injury_type_code: "ลักษณะการบาดเจ็บ เช่น บาดแผล กระดูกหัก",
+      body_part_codes: "ติ๊กได้หลายตำแหน่ง"
+    };
+
     function fmtVal(k, v) {
       if (v === null || v === undefined || v === "" || (Array.isArray(v) && !v.length)) return "—";
       if (typeof v === "boolean") return v ? "ใช่" : "ไม่ใช่";
@@ -215,7 +273,9 @@
         });
         get = () => { const v = boxes.filter((b) => b.checked).map((b) => b.value); return v.length ? v : null; };
       }
-      return { control, get, label: h("label", { for: id, text: LBL[f.k] + (f.req ? " *" : "") }) };
+      const hint = HINT[f.k] ? h("small", { class: "hint", id: id + "-h", text: HINT[f.k] }) : null;
+      if (hint) control.setAttribute("aria-describedby", id + "-h");
+      return { control, get, hint, label: h("label", { for: id, text: LBL[f.k] + (f.req ? " *" : "") }) };
     }
 
     // ---------- สรุปการเปลี่ยนแปลง ----------
@@ -266,16 +326,16 @@
       pendingCount = {};
       (rq.data || []).forEach((r) => { pendingCount[r.incident_id] = (pendingCount[r.incident_id] || 0) + 1; });
       render("t-incident",
-        ["วันที่-เวลาเกิดเหตุ", "Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "สถานะ", "คำขอแก้ไข", "บันทึกเมื่อ", ""],
+        ["วันที่-เวลาเกิดเหตุ", "Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "ตอนนี้อยู่ขั้นตอน", "คำขอแก้ไข", "ส่งเมื่อ", ""],
         data.map((r) => [
           r.occurred_on + (r.occurred_time ? " " + r.occurred_time.slice(0, 5) : ""),
           r.plants ? r.plants.code : "",
           r.incident_types ? r.incident_types.name_th : r.type,
           r.location, r.description,
-          h("span", { class: "badge " + (r.phase === "closed" ? "closed" : ""), text: r.phase === "closed" ? "Closed" : "Open" }),
-          pendingCount[r.id] ? h("span", { class: "badge pend", text: "รอ " + pendingCount[r.id] }) : "",
+          statusBadge(r),
+          pendingCount[r.id] ? h("span", { class: "badge pend", text: "รอพิจารณา " + pendingCount[r.id] }) : "",
           fmtTime(r.created_at),
-          h("button", { type: "button", class: "small secondary", text: "รายละเอียด / แก้ไข", onclick: () => openDetail(r.id) })
+          h("button", { type: "button", class: "small", text: "เปิดดู", "aria-label": "เปิดดูรายงาน " + r.occurred_on + " " + r.location, onclick: () => openDetail(r.id) })
         ]));
     }
 
@@ -294,50 +354,104 @@
       box.hidden = false; box.scrollIntoView({ block: "start" });
     }
 
+    // ---------- แถบ Flow 4 ขั้นตอน (ผูกกับสถานะจริง flash / investigation / closed) ----------
+    const STEPS = [
+      { t: "ส่งรายงาน", who: "ผู้รายงาน" },
+      { t: "SHE ตรวจสอบ", who: "SHE ของ Plant" },
+      { t: "สอบสวน", who: "SHE (ระบบกำลังพัฒนา)" },
+      { t: "ปิดเคส", who: "SHE ของ Plant" }
+    ];
+    const stageOf = (inc) => (inc.phase === "closed" ? 4 : inc.phase === "investigation" ? 2 : 1);
+    const fmtDate = (v) => (v ? new Date(v).toLocaleDateString("en-GB") : "");
+    function statusBadge(r) {
+      if (r.deleted_at) return h("span", { class: "badge closed", text: "ถูกลบ" });
+      const st = stageOf(r);
+      return st === 4 ? h("span", { class: "badge done", text: "ปิดเคสแล้ว" })
+        : st === 2 ? h("span", { class: "badge invest", text: "กำลังสอบสวน" })
+        : h("span", { class: "badge review", text: "รอ SHE ตรวจสอบ" });
+    }
+    function stepper(inc) {
+      const cur = stageOf(inc);
+      const ol = h("ol", { class: "flow", "aria-label": "ขั้นตอนของรายงาน" });
+      STEPS.forEach((s, i) => {
+        const st = i < cur ? "done" : i === cur ? "current" : "todo";
+        const extra = i === 0 ? fmtDate(inc.created_at) : (i === 3 && inc.closed_at ? fmtDate(inc.closed_at) : "");
+        ol.append(h("li", { class: "step " + st, "aria-current": st === "current" ? "step" : false },
+          h("span", { class: "dot", "aria-hidden": "true", text: st === "done" ? "✓" : String(i + 1) }),
+          h("span", { class: "lbl" }, s.t, h("span", { class: "sr", text: st === "done" ? " (เสร็จแล้ว)" : st === "current" ? " (ขั้นตอนปัจจุบัน)" : " (ยังไม่ถึง)" })),
+          h("small", { text: s.who }), extra ? h("small", { text: extra }) : null));
+      });
+      return ol;
+    }
+    function nextBox(inc, mgr, reporter) {
+      const st = stageOf(inc);
+      let now, next;
+      if (inc.deleted_at) { now = "รายงานนี้ถูกลบแล้ว"; next = "ไม่ต้องดำเนินการใด ๆ"; }
+      else if (st === 4) { now = "ปิดเคสแล้ว"; next = "ไม่ต้องทำอะไรเพิ่ม หากพบว่าข้อมูลผิด ต้องให้ Admin เปิดเคสใหม่ (Reopen) ก่อนจึงจะแก้ไขได้"; }
+      else if (st === 2) { now = "SHE กำลังสอบสวน"; next = mgr ? "ขั้นต่อไป: สอบสวนให้เสร็จ แล้วกด \"ปิดเคส\" ด้านล่าง" : "ขั้นต่อไป: SHE จะสอบสวนและปิดเคส คุณไม่ต้องทำอะไรเพิ่ม"; }
+      else if (mgr) { now = "รอคุณ (SHE) ตรวจสอบรายงานนี้"; next = "ขั้นต่อไป: ตรวจข้อมูล จัดประเภท (เช่น Recordable) พิจารณาคำขอแก้ไข (ถ้ามี) แล้วดำเนินการต่อจนปิดเคส"; }
+      else { now = "รอ SHE ตรวจสอบรายงานของคุณ"; next = "ขั้นต่อไป: SHE จะตรวจสอบและจัดประเภทเหตุการณ์ คุณไม่ต้องทำอะไรเพิ่ม" + (reporter ? " (หากข้อมูลผิด กดปุ่ม \"ข้อมูลไม่ถูกต้อง? ขอแก้ไข\" ด้านล่าง)" : ""); }
+      return h("div", { class: "nextbox", role: "status" }, h("div", { class: "now", text: "ตอนนี้: " + now }), h("div", { text: next }));
+    }
+    function groupOf(title, keys) {
+      const dl = h("dl");
+      keys.forEach((k) => dl.append(h("dt", { text: LBL[k] }), h("dd", { text: fmtVal(k, state.inc[k]) })));
+      return h("div", { class: "group" }, h("h4", { text: title }), dl);
+    }
+
     function renderDetail(box) {
       const inc = state.inc, closed = inc.phase === "closed", deleted = !!inc.deleted_at;
       const mgr = isMgrRole(), reporter = me && inc.reporter_id === me.id;
       box.replaceChildren();
-      box.append(h("h3", { text: "รายงาน " + inc.occurred_on + " · " + (inc.plants ? inc.plants.code : "") }));
+      box.append(h("h3", { text: "รายงานเหตุการณ์ " + inc.occurred_on + " · " + (inc.plants ? inc.plants.code : "") }),
+        stepper(inc), nextBox(inc, mgr, reporter));
+      const pend = state.reqs.filter((q) => q.status === "pending");
+      if (pend.length) box.append(h("div", { class: "alertbox", role: "status", text:
+        mgr ? "มีคำขอแก้ไข " + pend.length + " รายการรอคุณพิจารณา (ดูด้านล่าง)" : "คุณมีคำขอแก้ไขที่รอ SHE พิจารณาอยู่ ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" }));
 
-      // 1) ข้อมูลปัจจุบัน
-      const dl = h("dl");
-      REPORT_FIELDS.forEach((f) => { dl.append(h("dt", { text: LBL[f.k] }), h("dd", { text: fmtVal(f.k, inc[f.k]) })); });
-      dl.append(h("dt", { text: "สถานะ" }), h("dd", { text: fmtVal("phase", inc.phase) + (inc.closed_at ? " (" + fmtTime(inc.closed_at) + ")" : "") }));
-      box.append(h("h4", { text: "ข้อมูลปัจจุบัน" }), dl);
-      state.persons.forEach((p, i) => {
-        box.append(h("p", {}, h("strong", { text: "ผู้เกี่ยวข้อง #" + (i + 1) + ": " }),
-          fmtVal("role_in_case", p.role_in_case) + " | ชนิดการบาดเจ็บ: " + fmtVal("injury_type_code", p.injury_type_code) +
-          " | ตำแหน่ง: " + fmtVal("body_part_codes", p.body_part_codes)));
-      });
+      // ข้อมูลปัจจุบัน แบ่งกลุ่มให้อ่านง่าย
+      box.append(groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"]));
+      const pg = h("div", { class: "group" }, h("h4", { text: "ผู้เกี่ยวข้อง" }));
+      if (!state.persons.length) pg.append(h("p", { text: "ไม่มีข้อมูลผู้เกี่ยวข้อง" }));
+      state.persons.forEach((p, i) => pg.append(h("p", {}, h("strong", { text: "คนที่ " + (i + 1) + ": " }),
+        fmtVal("role_in_case", p.role_in_case) + " | ชนิดการบาดเจ็บ: " + fmtVal("injury_type_code", p.injury_type_code) +
+        " | ตำแหน่ง: " + fmtVal("body_part_codes", p.body_part_codes))));
+      box.append(pg);
+      const cls = ["high_hazard_code", "system_failure_code", "root_cause_code", "is_recordable", "is_serious_potential"];
+      const cg = groupOf("การจัดประเภทโดย SHE", cls);
+      if (cls.every((k) => inc[k] === null || inc[k] === undefined)) cg.append(h("small", { text: "SHE ยังไม่ได้จัดประเภท (ปกติจะทำในขั้น \"SHE ตรวจสอบ\")" }));
+      box.append(cg);
 
-      // 2) คำขอแก้ไข
+      // คำขอแก้ไข
       if (state.reqs.length) {
         box.append(h("h4", { text: "คำขอแก้ไข" }));
         state.reqs.forEach((q) => box.append(reqBox(q, mgr)));
       }
 
-      // 3) ฟอร์มแก้ไข / ขอแก้ไข
-      if (deleted) box.append(h("p", { class: "msg error", text: "รายงานนี้ถูกลบแล้ว" }));
-      else if (closed) {
-        box.append(h("p", { class: "msg error", text: "รายงานนี้ปิดแล้ว (Closed) แก้ไขไม่ได้ ต้องให้ Admin เปิดใหม่ (Reopen) พร้อมเหตุผลก่อน" }));
-        if (isAdminRole()) box.append(reopenForm());
-      } else if (mgr || reporter) {
-        box.append(editForm(mgr));
+      // แก้ไข / ขอแก้ไข
+      if (deleted) { /* ไม่มีการแก้ไข */ }
+      else if (closed) { if (isAdminRole()) box.append(reopenForm()); }
+      else if (mgr || reporter) {
+        const det = h("details", { class: "editdet" },
+          h("summary", { text: mgr ? "แก้ไขข้อมูลรายงาน (ต้องระบุเหตุผล)" : "ข้อมูลไม่ถูกต้อง? ขอแก้ไขได้ที่นี่" }),
+          h("div", {}, editForm(mgr)));
+        if (pend.length && !mgr) det.open = false;
+        box.append(det);
         if (mgr) box.append(closeForm());
       }
 
-      // 4) ประวัติ
-      box.append(h("h4", { text: "ประวัติการแก้ไข" }));
-      if (!state.log.length) box.append(h("p", { text: "ยังไม่มีประวัติการแก้ไข" }));
-      const ACT = { edit: "แก้ไขโดย SHE/Admin", approve_edit: "แก้ไขตามคำขอ (อนุมัติแล้ว)", close: "ปิดรายงาน (Close)", reopen: "เปิดรายงานใหม่ (Reopen)" };
+      // ประวัติ
+      const ACT = { edit: "แก้ไขโดย SHE/Admin", approve_edit: "แก้ไขตามคำขอ (อนุมัติแล้ว)", close: "ปิดเคส (Close)", reopen: "เปิดเคสใหม่ (Reopen)" };
+      const hist = h("div");
+      if (!state.log.length) hist.append(h("p", { text: "ยังไม่มีประวัติการแก้ไข" }));
       state.log.forEach((l) => {
         const lines = describeChanges(l.changes || {});
-        box.append(h("div", { class: "logbox" }, h("strong", { text: ACT[l.action] || l.action }),
+        hist.append(h("div", { class: "logbox" }, h("strong", { text: ACT[l.action] || l.action }),
           h("small", { text: "  " + fmtTime(l.created_at) }), h("div", { text: "เหตุผล: " + l.reason }),
           lines.map((t) => h("div", { text: "• " + t }))));
       });
-      box.append(h("div", { class: "rowbtns" }, h("button", { type: "button", class: "secondary small", text: "ปิดแผงนี้", onclick: () => { box.hidden = true; } })));
+      box.append(h("details", { class: "histdet" }, h("summary", { text: "ประวัติการแก้ไข (" + state.log.length + ")" }), hist));
+      box.append(h("div", { class: "rowbtns" }, h("button", { type: "button", class: "secondary small", text: "ปิดหน้านี้", onclick: () => { box.hidden = true; } })));
     }
 
     function reqBox(q, mgr) {
@@ -373,50 +487,72 @@
     function editForm(mgr) {
       const inc = state.inc;
       const wrap = h("div", { class: "editgrid" });
-      wrap.append(h("h4", { text: mgr ? "แก้ไขรายงาน (SHE/Admin) — ต้องระบุเหตุผล" : "ขอแก้ไขรายงาน — SHE/Admin จะพิจารณา" }));
-      wrap.append(h("p", { text: mgr
-        ? "การแก้ไขมีผลทันทีและบันทึกประวัติ (ค่าเดิม → ค่าใหม่ ผู้แก้ เหตุผล)"
-        : "แก้เฉพาะช่องที่ต้องการ แล้วระบุเหตุผล ข้อมูลจะเปลี่ยนต่อเมื่อ SHE/Admin อนุมัติ" }));
+      wrap.append(h("p", {}, h("strong", { text: "วิธีใช้ (3 ขั้นตอน)" })),
+        h("ol", { class: "steps123" },
+          h("li", { text: "แก้เฉพาะช่องที่ต้องการเปลี่ยน (ช่องที่แก้จะมีกรอบสีน้ำเงิน)" }),
+          h("li", { text: "ตรวจ \"สรุปสิ่งที่จะเปลี่ยน\" และพิมพ์เหตุผล" }),
+          h("li", { text: mgr ? "กด \"บันทึกการแก้ไข\" ข้อมูลเปลี่ยนทันทีและมีประวัติเก็บไว้" : "กด \"ส่งคำขอแก้ไข\" ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" })));
       const rf = REPORT_FIELDS.filter((f) => mgr || !f.mgr).map((f) => ({ f, i: makeInput(f, inc[f.k], "e-") }));
-      rf.forEach(({ i }) => wrap.append(i.label, i.control));
+      rf.forEach(({ i }) => wrap.append(i.label, i.control, i.hint));
       const pf = state.persons.map((p, n) => {
-        const box = h("div", { class: "personedit" }, h("strong", { text: "ผู้เกี่ยวข้อง #" + (n + 1) }));
+        const box = h("div", { class: "personedit" }, h("strong", { text: "ผู้เกี่ยวข้องคนที่ " + (n + 1) }));
         const items = PERSON_FIELDS.map((f) => ({ f, i: makeInput(f, p[f.k], "p" + n + "-") }));
-        items.forEach(({ i }) => box.append(i.label, i.control));
+        items.forEach(({ i }) => box.append(i.label, i.control, i.hint));
         wrap.append(box); return { p, items };
       });
-      const reason = h("textarea", { id: "e-reason", required: true, maxlength: "1000", "aria-describedby": "e-reason-help" });
-      wrap.append(h("label", { for: "e-reason", text: "เหตุผลที่แก้ไข * (อย่างน้อย 10 ตัวอักษร)" }), reason,
-        h("small", { id: "e-reason-help", text: "ตัวอย่าง: ระบุตำแหน่งบาดเจ็บผิด ตรวจสอบกับใบรายงานแพทย์แล้ว" }));
+
+      const preview = h("div", { class: "previewbox", "aria-live": "polite" });
+      const reason = h("textarea", { id: "e-reason", required: true, maxlength: "1000", "aria-describedby": "e-reason-help",
+        placeholder: "เช่น ระบุตำแหน่งที่บาดเจ็บผิด ตรวจสอบกับใบรายงานแพทย์แล้ว" });
+
+      // รวบรวมสิ่งที่เปลี่ยน (ใช้ทั้งแสดงตัวอย่างและตอนส่ง)
+      function collect() {
+        const changes = { report: {}, persons: {} }; let missing = null;
+        rf.forEach(({ f, i }) => {
+          const v = i.get(); const ch = !same(f.k, inc[f.k], v);
+          i.control.classList.toggle("changed", ch);
+          if (f.req && v === null) { missing = missing || { f, i }; }
+          if (ch) changes.report[f.k] = v;
+        });
+        pf.forEach(({ p, items }) => {
+          const d = {};
+          items.forEach(({ f, i }) => { const v = i.get(); const ch = !same(f.k, p[f.k], v); i.control.classList.toggle("changed", ch); if (ch) d[f.k] = v; });
+          if (Object.keys(d).length) changes.persons[p.id] = d;
+        });
+        return { changes, missing, count: Object.keys(changes.report).length + Object.keys(changes.persons).length };
+      }
+      function refresh() {
+        const { changes, count } = collect();
+        preview.replaceChildren(h("div", { class: "t", text: "สรุปสิ่งที่จะเปลี่ยน" }));
+        if (!count) { preview.append(h("div", { text: "ยังไม่มีการเปลี่ยนแปลง (ลองแก้ช่องด้านบน)" })); return; }
+        const old = (scope, pid, k) => scope === "report" ? inc[k] : (state.persons.find((p) => p.id === pid) || {})[k];
+        describeChanges(changes, old).forEach((t) => preview.append(h("div", { text: "• " + t })));
+      }
+      wrap.addEventListener("input", refresh); wrap.addEventListener("change", refresh);
+
+      wrap.append(preview, h("label", { for: "e-reason", text: "เหตุผลที่แก้ไข * (อย่างน้อย 10 ตัวอักษร)" }), reason,
+        h("small", { class: "hint", id: "e-reason-help", text: "บอกสั้น ๆ ว่าทำไมต้องแก้ เพื่อให้ผู้ตรวจสอบเข้าใจ" }));
 
       const btn = h("button", { type: "button", class: "btn-ok", text: mgr ? "บันทึกการแก้ไข" : "ส่งคำขอแก้ไข" });
       btn.addEventListener("click", () => {
-        const changes = { report: {}, persons: {} };
-        for (const { f, i } of rf) {
-          const v = i.get();
-          if (f.req && v === null) { showMsg("ช่อง \"" + LBL[f.k] + "\" ห้ามเว้นว่าง", false); i.control.focus(); return; }
-          if (!same(f.k, inc[f.k], v)) changes.report[f.k] = v;
-        }
-        pf.forEach(({ p, items }) => {
-          const d = {};
-          items.forEach(({ f, i }) => { const v = i.get(); if (!same(f.k, p[f.k], v)) d[f.k] = v; });
-          if (Object.keys(d).length) changes.persons[p.id] = d;
-        });
-        if (!Object.keys(changes.report).length && !Object.keys(changes.persons).length) { showMsg("ยังไม่มีการเปลี่ยนแปลงจากค่าเดิม", false); return; }
+        const { changes, missing, count } = collect();
+        if (missing) { showMsg("ช่อง \"" + LBL[missing.f.k] + "\" ห้ามเว้นว่าง", false); missing.i.control.focus(); return; }
+        if (!count) { showMsg("ยังไม่มีการเปลี่ยนแปลงจากค่าเดิม", false); return; }
         const rs = reason.value.trim();
         if (rs.length < 10) { showMsg("กรุณาระบุเหตุผลอย่างน้อย 10 ตัวอักษร", false); reason.focus(); return; }
         if (mgr) act(sb.rpc("edit_incident", { inc: inc.id, changes, reason: rs }), "บันทึกการแก้ไขเรียบร้อย");
         else act(sb.rpc("request_incident_edit", { inc: inc.id, changes, reason: rs }), "ส่งคำขอแก้ไขเรียบร้อย รอ SHE/Admin พิจารณา");
       });
       wrap.append(h("div", { class: "rowbtns" }, btn));
+      refresh();
       return wrap;
     }
 
     function closeForm() {
       const r = h("input", { type: "text", placeholder: "หมายเหตุการปิด (ไม่บังคับ)", maxlength: "500", "aria-label": "หมายเหตุการปิด" });
-      return h("div", {}, h("h4", { text: "ปิดรายงาน (Close)" }),
-        h("p", { text: "เมื่อปิดแล้วจะแก้ไขไม่ได้ ต้องให้ Admin เปิดใหม่ (Reopen) พร้อมเหตุผล" }),
-        h("div", { class: "rowbtns" }, r, h("button", { type: "button", class: "btn-danger-outline", text: "ปิดรายงาน (Close)",
+      return h("div", {}, h("h4", { text: "ปิดเคส (Close)" }),
+        h("p", { text: "กดเมื่อตรวจสอบและจัดประเภทครบแล้ว เมื่อปิดเคสแล้วจะแก้ไขไม่ได้ ต้องให้ Admin เปิดใหม่ (Reopen) พร้อมเหตุผล" }),
+        h("div", { class: "rowbtns" }, r, h("button", { type: "button", class: "btn-danger-outline", text: "ปิดเคส (Close)",
           onclick: () => act(sb.rpc("close_incident", { inc: state.inc.id, reason: r.value.trim() || null }), "ปิดรายงานแล้ว") })));
     }
 
