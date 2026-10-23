@@ -740,7 +740,7 @@
         });
         const n = orderedCols().length;
         count.textContent = "เลือกแล้ว " + n + " จาก " + COLS.filter(colAvail).length;
-        sum.textContent = n + " คอลัมน์ · " + (EXP.mode === "person" ? "1 แถวต่อผู้เกี่ยวข้อง" : "1 แถวต่อเคส");
+        sum.style.color = ""; sum.textContent = n + " คอลัมน์ · " + (EXP.mode === "person" ? "1 แถวต่อผู้เกี่ยวข้อง" : "1 แถวต่อเคส");
         dlg.querySelectorAll('input[name="exp-mode"]').forEach((i) => { i.checked = i.value === EXP.mode; });
         if (EXP.id && cur() && (!EXP.base || EXP.base.id !== EXP.id)) EXP.base = { id: EXP.id, snap: presetSnapshot(cur()) };
         const dirty = !!cur() && !!EXP.base && expSnapshot() !== EXP.base.snap;
@@ -815,7 +815,7 @@
         document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
         const m = "ส่งออก " + nrows + " แถว จาก " + cases.length + " เคส เรียบร้อย" + (cases.length >= EXPORT_MAX ? " (จำกัดสูงสุด " + EXPORT_MAX + " เคส กรุณาแคบตัวกรองแล้วส่งออกใหม่)" : "");
         showMsg(m, true);
-        const ps = document.getElementById("exp-pstat"); ps.textContent = m; ps.className = "expstat good";
+        const sm = document.getElementById("exp-sum"); if (sm) { sm.textContent = "✓ " + m; sm.style.color = "#1b6e2f"; }   // แสดงผลข้างปุ่มดาวน์โหลด
       } catch (e) { fail("ส่งออกไม่สำเร็จ: " + (e && e.message ? e.message : e)); }
       finally { btn.disabled = false; btn.textContent = old; }
     }
