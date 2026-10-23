@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>สิทธิ์การใช้งาน | SHE Portal</title>
+  <style>
+    .pm-wrap{overflow-x:auto}
+    table.pm{min-width:1040px}table.pm td:first-child,table.pm th:first-child{min-width:19rem}
+    table.pm th.role,table.pm td.cell{text-align:center}
+    table.pm td.cell{vertical-align:middle}
+    table.pm td.fixed{color:var(--muted);font-weight:600;white-space:nowrap}
+    .pm .plabel{font-weight:700;color:var(--navy)}
+    .pm .pdesc{display:block;color:var(--muted);font-size:.88rem;font-weight:400;margin-top:.15rem}
+    .pm .sens{display:inline-flex;align-items:center;gap:.3rem;margin-top:.3rem;font-size:.8rem;font-weight:700;color:#7a4300;background:#fff4d6;border-radius:999px;padding:.1rem .6rem}
+    .pm input[type=checkbox]{width:1.5rem;height:1.5rem;margin:0}
+    .pm td.cell label{display:inline-flex;min-width:48px;min-height:48px;align-items:center;justify-content:center;cursor:pointer}
+    .pm input:disabled{cursor:not-allowed}
+    .pm tr.cat td{background:var(--grey);font-weight:700;color:var(--muted);font-size:.85rem;letter-spacing:.04em}
+    dialog#cfm{width:min(480px,92vw);border:1px solid var(--line);border-radius:16px;padding:1.2rem 1.4rem}
+    dialog#cfm::backdrop{background:rgba(11,59,96,.5)}
+    .legend{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;color:var(--muted);font-size:.9rem;margin:.5rem 0 1rem}
+  </style>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- ซ่อนจนกว่าจะยืนยันว่าเป็น Admin (ซ่อนหน้าจอเท่านั้น สิทธิ์จริงอยู่ที่ RLS / RPC set_role_permission ซึ่งอนุญาตเฉพาะ Super admin) -->
+    <div id="area" hidden>
+      <h2>สิทธิ์การใช้งานตาม Role</h2>
+      <p id="intro">กำหนดว่าแต่ละ Role ทำอะไรกับรายงานอุบัติเหตุและการส่งออกข้อมูลได้บ้าง Admin และ SHE ทำได้ทุกอย่างเสมอ (SHE เฉพาะ Plant ของตน) การเปลี่ยนสิทธิ์มีผลทันที และสิทธิ์แบบ Plant-scoped ยังจำกัดตาม Plant ที่ผู้ใช้เข้าถึงเสมอ</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+      <div class="legend">
+        <span>✓ = ได้รับสิทธิ์</span><span>▢ = ไม่ได้รับสิทธิ์</span><span>● = ล็อกถาวร (ปรับไม่ได้)</span>
+      </div>
+      <div class="tablewrap pm-wrap"><table class="pm" id="pm"></table></div>
+    </div>
+  </main>
+  <dialog id="cfm" aria-labelledby="cfm-t">
+    <h3 id="cfm-t" style="margin-top:0">ยืนยันการให้สิทธิ์ที่อ่อนไหว</h3>
+    <p id="cfm-p"></p>
+    <div class="actions"><button type="button" id="cfm-ok" class="btn-ok">ยืนยัน</button><button type="button" id="cfm-no" class="secondary">ยกเลิก</button></div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* หน้านี้เป็นเพียงหน้าจอ: ความปลอดภัยจริงอยู่ที่ DB
+       - อ่าน role_permissions ได้เฉพาะ Admin/Super admin (RLS)
+       - เปลี่ยนสิทธิ์ได้เฉพาะ Super admin ผ่าน RPC set_role_permission (ตรวจ is_super_admin() ในฐานข้อมูล) */
+    const CFG_ROLES = [
+      ["employee", "employee (พนักงาน)"], ["contractor", "contractor (ผู้รับเหมา)"], ["supplier", "supplier (ซัพพลายเออร์)"],
+      ["plant_director", "plant_director"], ["director", "director"], ["md", "md"], ["ceo", "ceo"]
+    ];
+    const CAT_TH = { incident: "รายงานอุบัติเหตุ", export: "การส่งออกข้อมูล (Export)" };
+    const msgEl = document.getElementById("msg");
+    function show(t, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t; msgEl.scrollIntoView({ block: "nearest" }); }
+    function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+    let isSuper = false, perms = [], grants = {};   // grants["role|code"] = true/false
+
+    function confirmDlg(text) {
+      return new Promise((res) => {
+        const d = document.getElementById("cfm"); document.getElementById("cfm-p").textContent = text;
+        const ok = document.getElementById("cfm-ok"), no = document.getElementById("cfm-no");
+        const done = (v) => { ok.onclick = no.onclick = null; d.close(); res(v); };
+        ok.onclick = () => done(true); no.onclick = () => done(false); d.addEventListener("cancel", () => res(false), { once: true });
+        d.showModal(); no.focus();
+      });
+    }
+
+    function render() {
+      const t = document.getElementById("pm"); t.replaceChildren();
+      const thead = el("thead"), hr = el("tr");
+      hr.appendChild(el("th", null, "สิทธิ์"));
+      ["SHE", "Admin"].forEach((n) => hr.appendChild(el("th", "role", n)));
+      CFG_ROLES.forEach((r) => hr.appendChild(el("th", "role", r[1])));
+      thead.appendChild(hr); t.appendChild(thead);
+      const tb = el("tbody"); let lastCat = null;
+      perms.forEach((p) => {
+        if (p.category !== lastCat) {
+          lastCat = p.category; const cr = el("tr", "cat"); const c = el("td", null, CAT_TH[p.category] || p.category); c.colSpan = 2 + CFG_ROLES.length + 1; cr.appendChild(c); tb.appendChild(cr);
+        }
+        const tr = el("tr"), first = el("td");
+        first.appendChild(el("span", "plabel", p.label_th)); first.appendChild(el("span", "pdesc", p.description_th));
+        if (p.sensitive) first.appendChild(el("span", "sens", "⚠ ข้อมูลระบุตัวตน (PII) — ให้สิทธิ์อย่างระมัดระวัง"));
+        if (p.plant_scoped) first.appendChild(el("span", "pdesc", "จำกัดตาม Plant ที่ผู้ใช้เข้าถึง"));
+        first.appendChild(el("span", "pdesc", p.category === "export" ? "ควบคุมที่หน้าจอ (ข้อมูลจริงยังถูกจำกัดด้วย RLS ตาม Plant/Role)" : "บังคับที่ฐานข้อมูล (RPC/RLS)"));
+        tr.appendChild(first);
+        tr.appendChild(el("td", "cell fixed", p.code === "incident.reopen" ? "✕ ไม่ได้ (Admin เท่านั้น)" : "● ได้เสมอ"));   // กฎเดิม: SHE เปิดเคสใหม่ไม่ได้
+        tr.appendChild(el("td", "cell fixed", "● ได้เสมอ"));
+        CFG_ROLES.forEach((r) => {
+          const td = el("td", "cell"), lab = el("label"), cb = el("input"); cb.type = "checkbox";
+          cb.checked = !!grants[r[0] + "|" + p.code]; cb.disabled = !isSuper;
+          cb.setAttribute("aria-label", r[0] + ": " + p.label_th + (cb.checked ? " (ได้รับสิทธิ์)" : " (ไม่ได้รับสิทธิ์)"));
+          cb.addEventListener("change", () => change(r[0], p, cb));
+          lab.appendChild(cb); td.appendChild(lab); tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb);
+    }
+
+    async function change(role, p, cb) {
+      const want = cb.checked;
+      if (want && p.sensitive && !(await confirmDlg("ให้สิทธิ์ \"" + p.label_th + "\" แก่ role " + role + " ? สิทธิ์นี้เกี่ยวข้องกับข้อมูลระบุตัวตน (PII) ต้องได้รับอนุมัติจาก IT/Security และ Legal/DPO ก่อนใช้กับข้อมูลจริง"))) { cb.checked = false; return; }
+      cb.disabled = true;
+      try {
+        const { error } = await sb.rpc("set_role_permission", { target_role: role, perm_code: p.code, is_granted: want });
+        if (error) { cb.checked = !want; show("บันทึกไม่สำเร็จ: " + error.message, false); return; }
+        grants[role + "|" + p.code] = want;
+        show((want ? "ให้สิทธิ์ " : "ถอนสิทธิ์ ") + "\"" + p.label_th + "\" " + (want ? "แก่ " : "จาก ") + role + " เรียบร้อย", true);
+      } finally { cb.disabled = !isSuper; }
+    }
+
+    async function load() {
+      const [pp, rp] = await Promise.all([
+        sb.from("permissions").select("code, label_th, description_th, category, plant_scoped, sensitive, sort_order").order("sort_order"),
+        sb.from("role_permissions").select("role, permission_code, granted")
+      ]);
+      if (pp.error || rp.error) { show("โหลดข้อมูลไม่สำเร็จ: " + (pp.error || rp.error).message, false); return; }
+      perms = pp.data || []; grants = {};
+      (rp.data || []).forEach((r) => { grants[r.role + "|" + r.permission_code] = !!r.granted; });
+      render();
+    }
+
+    (async function init() {
+      const session = await requireLogin(); if (!session) return;
+      const me = await getMyProfile(); const gate = document.getElementById("gate");
+      if (!me || me.status !== "active" || (me.role !== "admin" && me.role !== "super_admin")) { gate.textContent = "หน้านี้สำหรับ Admin เท่านั้น"; return; }
+      isSuper = me.role === "super_admin";
+      gate.hidden = true; document.getElementById("area").hidden = false;
+      if (!isSuper) document.getElementById("intro").textContent += " (คุณเป็น Admin: ดูได้อย่างเดียว เฉพาะ Super admin เท่านั้นที่เปลี่ยนสิทธิ์ได้)";
+      await load();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>

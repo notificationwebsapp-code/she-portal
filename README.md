@@ -72,3 +72,22 @@ Live demo: [https://shewebapp.com](https://shewebapp.com) (ใช้บัญช
 ## Screenshots
 
 หน้า login และหน้าตั้งรหัสผ่านใหม่อยู่ในโฟลเดอร์ `screenshots/` (ยังเป็นเวอร์ชันก่อนเปลี่ยน CI) ภาพหน้าดูข้อมูลและ Export จะเพิ่มภายหลัง
+
+
+## อัปเดต 2026-10-23 (UI v4 สไตล์ Stitch + Permission Matrix มีผลจริง)
+
+### ไฟล์ที่ต้องอัปโหลดขึ้น GitHub (root ของ repo)
+- หน้าเว็บ: `index.html`, `login.html`, `reset.html`, `incident.html`, `checklist.html`, `training.html`, `records.html`, `admin-users.html`, `admin-master.html`, `admin-permissions.html` (ใหม่)
+- สคริปต์/สไตล์: `auth.js` (เพิ่มเมนู "สิทธิ์การใช้งาน"), `style-v4.css` (ใหม่), `shell-v4.js` (ใหม่)
+- ฟอนต์: โฟลเดอร์ `fonts/` (Inter ภายใต้ SIL OFL 1.1 พร้อม `LICENSE-Inter.txt`) — ตัวอักษรไทยใช้ฟอนต์ของเครื่อง (Leelawadee UI / Noto Sans Thai / Sarabun / Thonburi)
+- ห้ามอัปโหลด: โฟลเดอร์ `sql/` (เป็นไฟล์สำหรับ Supabase เท่านั้น) และ `_done`
+
+### Supabase (รันตามลำดับ ใน SQL Editor)
+1. `sql/migration-B13c-enforce-matrix.sql`
+2. `sql/test-phase-B13c-enforce-matrix.sql` → ต้องได้ "ผ่าน 58 จาก 58 | ไม่ผ่าน 0" (error สีแดง = รายงานผล ข้อมูลถูก rollback)
+
+### พฤติกรรมสิทธิ์ (หลัง B13c)
+- Admin/Super admin: ทุกสิทธิ์ทุก Plant | SHE: ทุกสิทธิ์ใน Plant ตน ยกเว้นเปิดเคสใหม่ (Reopen) ที่เป็นของ Admin เท่านั้น
+- Role อื่น: ตามที่ Super admin ติ๊กในหน้า "สิทธิ์การใช้งาน" และจำกัดตาม Plant
+- บังคับที่ DB: incident.edit_direct, approve_edit, person_add, close, reopen | Export (export.run / export.pii) ควบคุมที่หน้าจอ ส่วนข้อมูลจริงถูกจำกัดด้วย RLS เสมอ
+- ฟิลด์จัดประเภท (Root cause, Recordable ฯลฯ) ยังแก้ได้เฉพาะ SHE/Admin (incident_classify_guard)

@@ -445,7 +445,8 @@
     let me = null, pendingCount = {}, pendingSum = {}, lastReq = {}, detailId = null, dlgInc = null;
     const state = { inc: null, persons: [], log: [], reqs: [] };
     const isMgrRole = () => me && me.status === "active" && ["she", "admin", "super_admin"].includes(me.role);
-    const canExport = () => me && me.status === "active" && ["she", "admin", "super_admin", "md"].includes(me.role);   // สิทธิ์ส่งออก: SHE, Admin, Super admin, MD
+    const hasP = (c) => MYPERMS.includes(c);   // สิทธิ์จาก Permission Matrix (my_permissions) — ใช้ซ่อน/แสดงปุ่มเท่านั้น การบังคับจริงอยู่ที่ฐานข้อมูล
+    const canExport = () => me && me.status === "active" && hasP("export.run");   // Admin/SHE ได้ทุกสิทธิ์; Role อื่นตามที่ Super admin ติ๊ก (MD = export.run ตามค่าเริ่มต้น)
     const isAdminRole = () => me && me.status === "active" && ["admin", "super_admin"].includes(me.role);
 
     // ---------- ตัวกรอง + แบ่งหน้า (กรองที่ฐานข้อมูล ไม่ดึงทั้งหมดมากรองในเบราว์เซอร์) ----------
@@ -591,7 +592,7 @@
     ];
     const COLMAP = Object.fromEntries(COLS.map((c) => [c.k, c]));
     const isPersonCol = (c) => c.g === "person" && !!c.p;
-    const colAvail = (c) => !c.pii || isMgrRole();
+    const colAvail = (c) => !c.pii || hasP("export.pii");
     const DEFAULT_COLS = ["occurred_on", "occurred_time", "plant_code", "type", "location", "description", "stage"];
     let SHIFTS = {};
     const EXP = { presets: [], id: "", mode: "case", cols: new Set(DEFAULT_COLS), pmsg: "", pmsg2: "", base: null, openSave: false };
@@ -607,7 +608,7 @@
         plant: PLANTS.some((p) => p.id === s("plant")) ? s("plant") : "",
         type: TYPES.some((t) => t.id === s("type")) ? s("type") : "",
         stage: STAGE_OPTS.some((o) => o[0] === s("stage")) ? s("stage") : "",
-        req: s("req") === "pending" && isMgrRole() ? "pending" : "",
+        req: s("req") === "pending" && hasP("export.pii") ? "pending" : "",
         q: s("q").slice(0, 100)
       };
     }
@@ -677,7 +678,7 @@
       const count = h("span", { class: "expcount", id: "exp-count", "aria-live": "polite" });
       dlg.append(step("3", "คอลัมน์ที่ต้องการ", count),
         h("div", { class: "quick" },
-          h("button", { type: "button", class: "link", text: "เลือกทั้งหมด" + (isMgrRole() ? " (ยกเว้น 🔒)" : ""), onclick: () => { COLS.forEach((c) => { if (colAvail(c) && !c.pii) EXP.cols.add(c.k); }); sync(); } }),
+          h("button", { type: "button", class: "link", text: "เลือกทั้งหมด" + (hasP("export.pii") ? " (ยกเว้น 🔒)" : ""), onclick: () => { COLS.forEach((c) => { if (colAvail(c) && !c.pii) EXP.cols.add(c.k); }); sync(); } }),
           h("button", { type: "button", class: "link", text: "ค่าเริ่มต้น", onclick: () => { EXP.cols = new Set(DEFAULT_COLS); sync(); } }),
           h("button", { type: "button", class: "link", text: "ล้างทั้งหมด", onclick: () => { EXP.cols = new Set(); sync(); } })));
       EX_GROUPS.forEach(([g, gl], gi) => {
@@ -691,7 +692,7 @@
           if (!colAvail(c)) cb.disabled = true;
           cb.addEventListener("change", () => { if (cb.checked) EXP.cols.add(c.k); else EXP.cols.delete(c.k); sync(); });
           grid.append(h("label", { class: "expcol" + (c.pii ? " pii" : ""), for: "exp-c-" + c.k }, cb,
-            c.l + (c.pii ? " 🔒" : "") + (c.pii && !isMgrRole() ? " (เฉพาะ SHE/Admin)" : "")));
+            c.l + (c.pii ? " 🔒" : "") + (c.pii && !hasP("export.pii") ? " (ต้องมีสิทธิ์ PII)" : "")));
         });
         const det = h("details", { class: "grp" }, h("summary", {}, h("span", { class: "gname", text: gl }), badge),
           h("div", { class: "grpbody" },
@@ -1014,7 +1015,11 @@
 
     function renderDetail(box) {
       const inc = state.inc, closed = inc.phase === "closed", deleted = !!inc.deleted_at;
-      const mgr = isMgrRole(), reporter = me && inc.reporter_id === me.id;
+      const sheLike = isMgrRole(), reporter = me && inc.reporter_id === me.id;
+      const mgr = sheLike || hasP("incident.edit_direct");            // แก้ตรง
+      const canAp = sheLike || hasP("incident.approve_edit");        // อนุมัติคำขอ
+      const canCl = sheLike || hasP("incident.close");               // ปิดเคส
+      const canRe = isAdminRole() || (me && me.role !== "she" && hasP("incident.reopen"));   // เปิดใหม่ (SHE ไม่มีสิทธิ์ตามกฎเดิม)
       box.replaceChildren();
       box.append(h("h3", { text: "รายงานเหตุการณ์ " + inc.occurred_on + " · " + (inc.plants ? inc.plants.code : "") }),
         stepper(inc), nextBox(inc, mgr, reporter));
@@ -1026,7 +1031,7 @@
           lastDone.decision_note ? h("small", { text: "หมายเหตุจาก SHE: " + lastDone.decision_note }) : null));
       }
       if (pend.length) box.append(h("div", { class: "alertbox", role: "status", text:
-        mgr ? "มีคำขอแก้ไข " + pend.length + " รายการรอคุณพิจารณา (ดูด้านล่าง)" : "คุณมีคำขอแก้ไขที่รอ SHE พิจารณาอยู่ ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" }));
+        canAp ? "มีคำขอแก้ไข " + pend.length + " รายการรอคุณพิจารณา (ดูด้านล่าง)" : "คุณมีคำขอแก้ไขที่รอ SHE พิจารณาอยู่ ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" }));
 
       // ข้อมูลปัจจุบัน แบ่งกลุ่มให้อ่านง่าย
       box.append(groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"]));
@@ -1044,21 +1049,21 @@
       // คำขอแก้ไข
       if (state.reqs.length) {
         box.append(h("h4", { text: "คำขอแก้ไข" }));
-        state.reqs.forEach((q) => box.append(reqBox(q, mgr)));
+        state.reqs.forEach((q) => box.append(reqBox(q, canAp)));
       }
 
       // แก้ไข / ขอแก้ไข
       if (deleted) { /* ไม่มีการแก้ไข */ }
-      else if (closed) { if (isAdminRole()) box.append(reopenForm()); }
+      else if (closed) { if (canRe) box.append(reopenForm()); }
       else if (mgr || reporter || MYPERMS.includes("incident.person_add")) {
         const addOnly = !mgr && !reporter;
         const det = h("details", { class: "editdet" },
           h("summary", { text: addOnly ? "เพิ่มผู้เกี่ยวข้อง (ต้องระบุเหตุผล)" : mgr ? "แก้ไขข้อมูลรายงาน (ต้องระบุเหตุผล)" : "ข้อมูลไม่ถูกต้อง? ขอแก้ไข/เพิ่มผู้เกี่ยวข้องได้ที่นี่" }),
-          h("div", {}, editForm(mgr, addOnly)));
+          h("div", {}, editForm(mgr, addOnly, sheLike)));
         if (pend.length && !mgr) det.open = false;
         box.append(det);
-        if (mgr) box.append(closeForm());
       }
+      if (!deleted && !closed && canCl) box.append(closeForm());
 
       // ประวัติ
       const ACT = { edit: "แก้ไขโดย SHE/Admin", approve_edit: "แก้ไขตามคำขอ (อนุมัติแล้ว)", close: "ปิดเคส (Close)", reopen: "เปิดเคสใหม่ (Reopen)" };
@@ -1104,7 +1109,7 @@
       return div;
     }
 
-    function editForm(mgr, addOnly) {
+    function editForm(mgr, addOnly, sheLike) {
       const inc = state.inc;
       const wrap = h("div", { class: "editgrid" });
       wrap.append(h("p", {}, h("strong", { text: "วิธีใช้ (3 ขั้นตอน)" })),
@@ -1112,7 +1117,7 @@
           h("li", { text: "แก้เฉพาะช่องที่ต้องการเปลี่ยน (ช่องที่แก้จะมีกรอบสีน้ำเงิน)" }),
           h("li", { text: "ตรวจ \"สรุปสิ่งที่จะเปลี่ยน\" และพิมพ์เหตุผล" }),
           h("li", { text: mgr ? "กด \"บันทึกการแก้ไข\" ข้อมูลเปลี่ยนทันทีและมีประวัติเก็บไว้" : "กด \"ส่งคำขอแก้ไข\" ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" })));
-      const rf = (addOnly ? [] : REPORT_FIELDS.filter((f) => mgr || !f.mgr)).map((f) => ({ f, i: makeInput(f, inc[f.k], "e-") }));
+      const rf = (addOnly ? [] : REPORT_FIELDS.filter((f) => sheLike || !f.mgr)).map((f) => ({ f, i: makeInput(f, inc[f.k], "e-") }));
       rf.forEach(({ i }) => wrap.append(i.label, i.control, i.hint));
       const pf = (addOnly ? [] : state.persons).map((p, n) => {
         const box = h("div", { class: "personedit" }, h("strong", { text: "ผู้เกี่ยวข้องคนที่ " + (n + 1) }));

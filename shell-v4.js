@@ -19,7 +19,20 @@
     b.addEventListener("click",function(e){e.stopPropagation();var was=open&&open.btn===b;close();if(!was){pop.hidden=false;b.setAttribute("aria-expanded","true");open={btn:b,pop:pop}}});
     tools.appendChild(w);return b;
   }
-  make("bell","การแจ้งเตือน","",function(p){p.appendChild(el("strong",null,"การแจ้งเตือน"));p.appendChild(el("p","tpnote","ยังไม่มีการแจ้งเตือน"));p.appendChild(el("p","tpnote small","ระบบแจ้งเตือน (เช่น คำขอแก้ไขที่รออนุมัติ) อยู่ระหว่างพัฒนา"))});
+  var bellBox;
+  var bellBtn=make("bell","การแจ้งเตือน","",function(p){p.appendChild(el("strong",null,"การแจ้งเตือน"));bellBox=el("div","bellbox");bellBox.appendChild(el("p","tpnote","กำลังโหลด…"));p.appendChild(bellBox);p.appendChild(el("p","tpnote small","นับจากข้อมูลที่คุณมีสิทธิ์เห็นเท่านั้น (ระบบแจ้งเตือนทางอีเมล/มือถืออยู่ระหว่างพัฒนา)"))});
+  function bellItem(n,t,href){var a=el("a","bellitem");a.href=href;var b=el("b",null,String(n));a.appendChild(b);a.appendChild(el("span",null,t));return a}
+  (async function(){try{
+    if(typeof sb==="undefined"||!bellBox)return;var ss=await sb.auth.getSession();if(!ss.data.session){bellBox.replaceChildren(el("p","tpnote","เข้าสู่ระบบเพื่อดูการแจ้งเตือน"));return}
+    var r=await sb.from("incident_edit_requests").select("id",{count:"exact",head:true}).eq("status","pending");
+    var o=await sb.from("incident_reports").select("id",{count:"exact",head:true}).neq("phase","closed").is("deleted_at",null);
+    if(r.error||o.error){bellBox.replaceChildren(el("p","tpnote","โหลดการแจ้งเตือนไม่สำเร็จ"));return}
+    bellBox.replaceChildren();var rc=r.count||0,oc=o.count||0;
+    if(rc)bellBox.appendChild(bellItem(rc,"คำขอแก้ไขที่รอดำเนินการ","records.html"));
+    if(oc)bellBox.appendChild(bellItem(oc,"รายงานอุบัติเหตุที่ยังไม่ปิดเคส","records.html"));
+    if(!rc&&!oc)bellBox.appendChild(el("p","tpnote","ไม่มีรายการค้าง"));
+    if(rc){var d=el("span","belldot",rc>99?"99+":String(rc));d.setAttribute("aria-hidden","true");bellBtn.appendChild(d);bellBtn.setAttribute("aria-label","การแจ้งเตือน มี "+rc+" รายการรอดำเนินการ")}
+  }catch(e){if(bellBox)bellBox.replaceChildren(el("p","tpnote","ไม่มีข้อมูลการแจ้งเตือน"))}})();
   make("globe","เปลี่ยนภาษา","TH",function(p){
     p.appendChild(el("strong",null,"ภาษา / Language"));
     var a=el("div","tpitem on","✓ ไทย (Thai)");a.setAttribute("aria-current","true");p.appendChild(a);
@@ -38,5 +51,21 @@
   try{apply(localStorage.getItem("she-fs")||"n")}catch(e){}
   document.addEventListener("click",function(e){if(open&&!open.pop.contains(e.target))close()});
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&open){var b=open.btn;close();b.focus()}});
-  var h=document.querySelector("header");if(h)h.appendChild(tools);
+
+  /* ไอคอนเมนู (inline SVG เส้นบาง) + Footer */
+  var NAVIC={"index.html":"M3 11l9-8 9 8v10a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z","incident.html":"M12 3 2.5 20h19L12 3zM12 10v4.5M12 17.2v.1","checklist.html":"M5 4h14v16H5zM8.5 9l1.6 1.6L13 7.7M9 15h6","training.html":"M2.5 9.5 12 4.5l9.5 5-9.5 5zM6.5 12v4.5c0 1.2 2.5 2.5 5.5 2.5s5.5-1.3 5.5-2.5V12","records.html":"M4 5h16v14H4zM4 10h16M9.5 10v9","admin-users.html":"M16 11a4 4 0 10-8 0M4 21a8 8 0 0116 0","admin-permissions.html":"M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5zM9 12l2 2 4-4","admin-master.html":"M4 6h16M4 12h16M4 18h10"};
+  function decorateNav(){document.querySelectorAll("header nav a").forEach(function(a){
+    if(a.querySelector("svg.ni"))return;var k=(a.getAttribute("href")||"").split("/").pop();var d=NAVIC[k];if(!d)return;
+    var s=document.createElementNS(NS,"svg");s.setAttribute("class","ni");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");
+    var p=document.createElementNS(NS,"path");p.setAttribute("d",d.replace(/(\d)\.500/g,"$1.5"));s.appendChild(p);a.insertBefore(s,a.firstChild)})}
+  function relocate(){var n=document.querySelector("header nav");if(!n)return;
+    var b=document.getElementById("role-badge");if(b&&b.parentNode!==tools)tools.insertBefore(b,tools.firstChild);
+    var u=n.querySelector('a[href="#"],a[href="login.html"]');if(u&&u.parentNode!==tools){u.classList.add("userlink");tools.appendChild(u)}}
+  decorateNav();
+  var nv=document.querySelector("header nav");if(nv)new MutationObserver(function(){decorateNav();relocate()}).observe(nv,{childList:true,subtree:true});
+  if(!document.querySelector(".sitefoot")){
+    var f=el("footer","sitefoot"),l=el("span");var b=el("b",null,"SHE Portal");l.appendChild(b);l.appendChild(document.createTextNode(" · ระบบบันทึกข้อมูลความปลอดภัย อาชีวอนามัย และสิ่งแวดล้อม"));
+    var r=el("span");var d=el("span","dot");d.setAttribute("aria-hidden","true");r.appendChild(d);r.appendChild(document.createTextNode("ระยะทดสอบ — ใช้ข้อมูลทดสอบเท่านั้น"));
+    f.appendChild(l);f.appendChild(r);document.body.appendChild(f)}
+  var h=document.querySelector("header");if(h)h.appendChild(tools);relocate();
 })();

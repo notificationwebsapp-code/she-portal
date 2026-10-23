@@ -101,6 +101,10 @@ async function setupNav() {
       m.href = "admin-master.html";
       m.textContent = "ข้อมูลหลัก";
       link.insertAdjacentElement("beforebegin", m);
+      const pm = document.createElement("a");
+      pm.href = "admin-permissions.html";
+      pm.textContent = "สิทธิ์การใช้งาน";
+      link.insertAdjacentElement("beforebegin", pm);
       markCurrentNav();
     }
     showRoleBadge(p, data.session.user.id, link);

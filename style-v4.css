@@ -1,7 +1,10 @@
 /* SHE Portal — style-v4.css (Stitch design system pilot; โหลดหลัง style.css เฉพาะหน้าที่ทดลอง)
    โทเคนจาก Stitch DESIGN.md: primary #005A9C, navy #0B3B60, teal #00A3AD (ตกแต่งเท่านั้น: contrast 3.07), canvas #F4F6F9, border #E2E8F0
    WCAG 2.2: ข้อความ >= 4.5:1, ขอบช่องกรอก #64748B (4.76:1), ปุ่ม/ช่อง สูง >= 48px, ทุกสถานะมี icon + ข้อความ (ไม่พึ่งสีอย่างเดียว)
-   ฟอนต์: Inter ไม่โหลดจากเว็บ (ไม่ใช้ external font) -> ใช้ถ้าติดตั้งในเครื่อง แล้ว fallback เป็น Noto Sans Thai / Sarabun */
+   ฟอนต์: Inter (SIL OFL 1.1, host เองใน fonts/ พร้อมไฟล์ license) สำหรับตัวอักษรละติน + ตัวไทยใช้ฟอนต์ระบบ (Leelawadee UI / Noto Sans Thai / Sarabun / Thonburi) ไม่มี external font */
+@font-face{font-family:"Inter";font-weight:400 500;font-style:normal;font-display:swap;src:url("fonts/Inter-Regular.woff") format("woff")}
+@font-face{font-family:"Inter";font-weight:600;font-style:normal;font-display:swap;src:url("fonts/Inter-SemiBold.woff") format("woff")}
+@font-face{font-family:"Inter";font-weight:700 900;font-style:normal;font-display:swap;src:url("fonts/Inter-Bold.woff") format("woff")}
 :root{
   --bg:#f4f6f9; --card:#fff; --ink:#0b3b60; --muted:#475569;
   --brand:#005a9c; --brand-dark:#0b3b60; --brand-ink:#fff; --accent:#e6f0f8; --line:#e2e8f0; --ctl:#64748b;
@@ -11,7 +14,7 @@
   --shadow:0 1px 2px rgba(11,59,96,.05),0 4px 12px rgba(11,59,96,.06);
   --grad:none;
 }
-body{background:var(--bg);color:var(--ink);font-family:Inter,"Noto Sans Thai","Sarabun","Leelawadee UI","Segoe UI",system-ui,sans-serif;line-height:1.6}
+body{background:var(--bg);color:var(--ink);font-family:"Inter","Leelawadee UI","Noto Sans Thai","Sarabun","Thonburi","Segoe UI",system-ui,sans-serif;line-height:1.6}
 /* Header: แถบขาว + โลโก้สี่เหลี่ยม primary + เมนูขีดเส้นใต้ (ตาม Stitch) */
 header{background:#fff;color:var(--ink);padding:.7rem 2rem 0;box-shadow:none;border-bottom:1px solid var(--line);overflow:visible;gap:0 1.5rem;align-items:center}
 header::before{display:none}
@@ -22,7 +25,6 @@ nav{border-top:0;margin:.4rem 0 0;padding:0;gap:.2rem 1.4rem}
 nav a{color:var(--muted);border-radius:0;padding:.7rem .15rem;font-weight:500;border-bottom:3px solid transparent;min-height:48px;display:inline-flex;align-items:center}
 nav a:hover{background:none;color:var(--brand);border-bottom-color:var(--line)}
 nav a[aria-current="page"]{background:none;color:var(--brand);font-weight:700;border-bottom-color:var(--brand)}
-nav a[href="records.html"]{color:var(--brand);font-weight:700;border-bottom-color:var(--brand)}
 nav a:focus-visible,header button:focus-visible{outline-color:var(--brand)}
 /* Content */
 main{max-width:1240px;background:transparent;border:0;box-shadow:none;padding:1.5rem 2rem;margin:0 auto}
@@ -101,3 +103,91 @@ header h1{order:1}header .tools{order:2;margin-left:auto}header nav{order:3}
 .tprow{display:flex;gap:.4rem;margin-top:.4rem}
 .tpbtn{min-height:44px;flex:1;padding:.2rem .4rem;background:#fff;color:var(--navy);border:1px solid var(--ctl);box-shadow:none}
 .tpbtn[aria-pressed="true"]{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+/* ===== ส่วนที่ใช้ร่วมทุกหน้า (v4 รอบทุกหน้า) ===== */
+main.wide{max-width:1360px}
+main.flash,main.narrow{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+main.narrow{max-width:480px}
+main form{max-width:760px}
+main h2{margin-bottom:.4rem}
+main>h2+p,main>.lead{color:var(--muted)}
+/* ผู้ใช้ / Role chip (auth.js สร้างให้ ปรับหน้าตาให้เป็นการ์ดผู้ใช้แบบ Stitch) */
+nav a[href="login.html"],nav a[href="#"]{margin-left:0}
+.tools .role-badge{margin-left:0;display:inline-flex;align-items:center;gap:.4rem;background:var(--accent);color:var(--brand);border:1px solid #b9d3e8;border-radius:999px;padding:.25rem .8rem;font-size:.8rem;font-weight:700;letter-spacing:.02em;min-height:36px}
+nav .role-badge::before{content:"";width:14px;height:14px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5l-8-3z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5l-8-3z'/%3E%3C/svg%3E") center/contain no-repeat}
+.tools .userlink{display:inline-flex;align-items:center;border:1px solid var(--ctl);border-radius:8px;padding:.3rem .9rem;min-height:44px;color:var(--navy);font-size:.88rem;text-decoration:none;max-width:15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;line-height:2}
+.tools .userlink:hover{background:var(--accent);border-color:var(--brand);color:var(--brand)}
+nav a svg.ni{width:18px;height:18px;margin-right:.4rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* หน้าแรก: แบนเนอร์น้ำเงินเข้ม + การ์ด action */
+.hero{margin:0 0 1.5rem;padding:2rem 2rem 2.2rem;border-radius:var(--radius);color:#fff;position:relative;overflow:hidden;background:linear-gradient(120deg,#0b3b60 0%,#005a9c 100%);box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;right:2rem;top:50%;width:150px;height:170px;transform:translateY(-50%);opacity:.12;pointer-events:none;background:#fff;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5l-8-3zm-1.5 14.500L6.500 12.500l1.400-1.400 2.600 2.600 5.600-5.600 1.400 1.400-7 7z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5l-8-3zm-1.5 14.500L6.500 12.500l1.400-1.400 2.600 2.600 5.600-5.600 1.400 1.400-7 7z'/%3E%3C/svg%3E") center/contain no-repeat}
+.hero h2{color:#fff;font-size:2rem;margin:0 0 .4rem}
+.hero p{color:#e6f0f8;opacity:1;max-width:44rem;margin:0}
+.secthead{display:flex;justify-content:space-between;align-items:baseline;margin:1.6rem 0 .8rem;padding:0}
+.secthead h3{margin:0;font-size:1.25rem;color:var(--navy)}
+.secthead span{font-size:.78rem;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.cards{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+a.card{position:relative;padding:1.25rem;border:1px solid var(--line);border-top:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);min-height:180px}
+a.card:hover{border-color:var(--brand);transform:none;box-shadow:0 4px 14px rgba(0,90,156,.16)}
+a.card::after{content:"→";position:absolute;right:1.1rem;top:1rem;color:var(--muted);font-size:1.2rem}
+a.card .icon{width:48px;height:48px;border-radius:12px;background:var(--accent)}
+a.card .icon svg{stroke:var(--brand);width:26px;height:26px}
+a.card:nth-child(2) .icon{background:#e6f6f7}a.card:nth-child(2) .icon svg{stroke:var(--teal-ink)}
+a.card:nth-child(3) .icon{background:#fff4d6}a.card:nth-child(3) .icon svg{stroke:var(--warn)}
+a.card:nth-child(4) .icon{background:#eef2f6}a.card:nth-child(4) .icon svg{stroke:var(--navy)}
+a.card strong{margin:.9rem 0 .25rem}
+.todaypanel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1rem 1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+.todaypanel .kpi{border-left:4px solid var(--brand);padding:.3rem .9rem}
+.todaypanel .kpi.warn{border-left-color:var(--warn)}
+.todaypanel .kpi b{display:block;font-size:2rem;line-height:1.2;color:var(--navy)}
+.todaypanel .kpi span{color:var(--muted);font-size:.92rem}
+.todaypanel .kpi a{display:inline-block;margin-top:.2rem;font-weight:600;color:var(--brand)}
+/* หน้า Admin: การ์ดผู้ใช้ + แท็บ */
+.userbox{background:#fff;border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:12px;box-shadow:var(--shadow)}
+.userbox.editbox{border-left-color:var(--brand)}
+.summary .chip{background:#fff;border:1px solid var(--line);color:var(--navy);font-weight:600;min-height:40px}
+.tabs{background:var(--grey);border-radius:12px}
+.tabs button{border-radius:8px;box-shadow:none;color:var(--muted);min-height:48px}
+.tabs button[aria-selected="true"]{background:var(--brand);color:#fff}
+.tabs button:hover{background:#fff;color:var(--brand)}
+.tabs button[aria-selected="true"]:hover{background:var(--brand-dark);color:#fff}
+.plantlist label{border-radius:8px}
+.msg{border-radius:8px}
+.msg.ok{background:#e6f4ea;color:#14602d;border-left-color:var(--ok)}
+.msg.error{background:#fdecea;color:#8c1d18}
+.plantline{background:var(--accent)!important;color:var(--navy);border-radius:8px!important;border-left:4px solid var(--brand)}
+fieldset{border-color:var(--line);border-radius:12px}
+.group{background:#fff}
+/* หน้า Login */
+main.authsplit{background:transparent;border:0;box-shadow:none;max-width:none}
+.authhero{background:linear-gradient(150deg,#0b3b60 0%,#005a9c 100%)}
+.authform{background:var(--bg)}
+.authform .inner{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:2rem}
+/* Footer แบบ Stitch */
+.sitefoot{margin-top:2rem;border-top:1px solid var(--line);background:#fff;color:var(--muted);font-size:.85rem;padding:.9rem 2rem;display:flex;flex-wrap:wrap;gap:.4rem 1.5rem;justify-content:space-between}
+.sitefoot b{color:var(--brand)}
+.sitefoot .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:.4rem}
+body.authpage .sitefoot{margin-top:0}
+@media(max-width:640px){.hero{padding:1.25rem}.hero h2{font-size:1.5rem}.sitefoot{padding:.8rem 1rem}nav .role-badge{margin-left:0}.authform .inner{padding:1.25rem}}
+
+.sitefoot{max-width:none;width:100%;margin:2rem 0 0;padding:.9rem 2rem}
+.tools{flex-wrap:wrap}
+@media(max-width:640px){.tools .userlink{max-width:11rem}}
+
+.toolbtn{position:relative}
+.belldot{position:absolute;top:2px;right:0;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--danger);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
+.bellitem{display:flex;align-items:center;gap:.7rem;min-height:48px;padding:.4rem .5rem;border-radius:8px;text-decoration:none;color:var(--ink)}
+.bellitem:hover{background:var(--accent)}.bellitem b{font-size:1.4rem;color:var(--brand);min-width:2rem}
+/* หน้าแรก: รายการงานค้าง (For You Today) */
+.tasklist{display:grid;gap:.8rem}
+.taskcard{display:grid;grid-template-columns:1fr auto;gap:.5rem 1rem;align-items:center;background:#fff;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:12px;padding:1rem 1.2rem;box-shadow:var(--shadow);text-decoration:none;color:var(--ink)}
+.taskcard.warn{border-left-color:var(--warn)}
+.taskcard:hover{border-color:var(--brand)}
+.taskcard .tt{font-weight:700;color:var(--navy);margin:.25rem 0 0;overflow-wrap:anywhere}
+.taskcard .tm{color:var(--muted);font-size:.9rem}
+.taskcard .go{font-weight:700;color:var(--brand);white-space:nowrap}
+.taskempty{background:#fff;border:1px dashed var(--ctl);border-radius:12px;padding:1rem 1.2rem;color:var(--muted)}
+/* Admin: การ์ดรออนุมัติเรียงเป็นคอลัมน์บนจอกว้าง */
+#pending{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:1rem;align-items:start}
+#pending>.userbox{margin:0}
+@media(max-width:520px){#pending{grid-template-columns:1fr}}

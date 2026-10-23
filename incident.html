@@ -9,25 +9,6 @@
     /* สไตล์เฉพาะหน้านี้ (ใช้ตัวแปรสีเดิมจาก style.css) */
     input[type=time]{width:100%;max-width:100%;padding:.6rem .75rem;margin-top:.3rem;border:1px solid #9aa6bb;border-radius:8px;font:inherit;background:#fff;color:inherit}
     input[type=time]:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(11,61,145,.18)}
-    /* แถบเส้นทางของรายงาน (Flow) */
-    .flowwrap{margin:0 0 1rem;padding:.6rem 1rem 0;border:1px solid var(--line);border-radius:10px;background:#fafbfe}
-    .flowwrap .ft{font-weight:700;color:var(--brand);margin:0}
-    .flowwrap .fn{margin:.2rem 0 .6rem;color:var(--muted);font-size:.92rem}
-    .sr{position:absolute;left:-9999px}
-    ol.flow{display:flex;list-style:none;padding:0;margin:.4rem 0 .8rem}
-    ol.flow li.step{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.1rem;padding:0 .25rem}
-    ol.flow li.step::before{content:"";position:absolute;top:17px;right:50%;width:100%;height:4px;background:var(--line);z-index:0}
-    ol.flow li.step:first-child::before{display:none}
-    ol.flow .dot{position:relative;z-index:1;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:#fff;border:3px solid #9aa6bb;color:var(--muted)}
-    ol.flow .current .dot{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 0 0 5px var(--accent)}
-    ol.flow .lbl{font-weight:700}
-    ol.flow .todo .lbl{color:var(--muted);font-weight:600}
-    ol.flow small{color:var(--muted);font-size:.82rem}
-    @media (max-width:640px){
-      ol.flow{flex-direction:column;gap:.2rem}
-      ol.flow li.step{flex-direction:row;align-items:center;text-align:left;gap:.2rem .7rem;padding:.3rem 0;flex-wrap:wrap}
-      ol.flow li.step::before{display:none}
-    }
     main.flash{max-width:860px}
     main.flash form{max-width:none}
     .stepcard{border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem 0.4rem;margin:0 0 1.1rem;background:#fff}
@@ -44,6 +25,7 @@
     .plantline{margin:0 0 1.1rem;padding:.5rem .8rem;background:#eef2f9;border-radius:8px}
     form .formactions{margin:1.2rem 0 .5rem}
   </style>
+  <link rel="stylesheet" href="style-v4.css">
 </head>
 <body>
   <header>
@@ -61,16 +43,6 @@
   <main class="flash">
     <h2>รายงานอุบัติเหตุ (Flash Report)</h2>
     <p class="lead" style="text-align:left">รายงานเบื้องต้นให้เร็วที่สุด ส่วนการหาสาเหตุ (Root cause) และ Action จะเพิ่มในขั้นตอนถัดไป</p>
-    <div class="flowwrap">
-      <p class="ft">เส้นทางของรายงานนี้</p>
-      <ol class="flow" aria-label="ขั้นตอนของรายงาน">
-        <li class="step current" aria-current="step"><span class="dot" aria-hidden="true">1</span><span class="lbl">ส่งรายงาน<span class="sr"> (ขั้นตอนปัจจุบัน)</span></span><small>คุณอยู่ที่นี่</small></li>
-        <li class="step todo"><span class="dot" aria-hidden="true">2</span><span class="lbl">SHE ตรวจสอบ<span class="sr"> (ยังไม่ถึง)</span></span><small>SHE ของ Plant</small></li>
-        <li class="step todo"><span class="dot" aria-hidden="true">3</span><span class="lbl">สอบสวน<span class="sr"> (ยังไม่ถึง)</span></span><small>SHE (ระบบกำลังพัฒนา)</small></li>
-        <li class="step todo"><span class="dot" aria-hidden="true">4</span><span class="lbl">ปิดเคส<span class="sr"> (ยังไม่ถึง)</span></span><small>SHE ของ Plant</small></li>
-      </ol>
-      <p class="fn">กรอกข้อมูล 3 ส่วนด้านล่าง แล้วกด "ส่งรายงาน" หลังส่งแล้วติดตามสถานะได้ที่เมนู "ดูข้อมูล"</p>
-    </div>
     <p id="msg" role="status" class="msg" hidden></p>
 
     <form id="incident-form" autocomplete="off">
@@ -435,7 +407,7 @@
       $("plant").value = keepPlant; $("department").value = keepDept; $("date").value = todayLocal();
       $("serious-note").hidden = true;
       loadShifts();
-      show("บันทึก Flash Report เรียบร้อยแล้ว" + (warn ? warn : " — ขั้นต่อไป: SHE ของ Plant จะตรวจสอบ ติดตามสถานะได้ที่เมนู \"ดูข้อมูล\""), warn ? "error" : "ok");
+      show("บันทึก Flash Report เรียบร้อยแล้ว" + warn, warn ? "error" : "ok");
     });
 
     // ---------- ร่าง (Save draft) ----------
@@ -483,5 +455,6 @@
     $("date").value = todayLocal();
     loadTypes(); loadDepartments(); loadContacts(); loadMyPlants();
   </script>
+  <script src="shell-v4.js"></script>
 </body>
 </html>

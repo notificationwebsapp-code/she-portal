@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <title>SHE Portal</title>
+  <link rel="stylesheet" href="style-v4.css">
 </head>
 <body>
   <header>
@@ -24,16 +25,69 @@
       <h2>ระบบบันทึกข้อมูล SHE</h2>
       <p>บันทึกและตรวจดูข้อมูลด้านความปลอดภัย อาชีวอนามัย และสิ่งแวดล้อม</p>
     </div>
+    <div class="secthead"><h3>เมนูหลัก</h3><span>Quick actions</span></div>
     <div class="cards">
       <a class="card" href="incident.html"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4.5"/><path d="M12 17.2v.1"/></svg></span><strong>รายงานอุบัติเหตุ</strong><span class="d">แจ้งเหตุ Near miss และอุบัติเหตุ</span></a>
       <a class="card" href="checklist.html"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="m8 9 1.6 1.6L12.5 7.7"/><path d="M8 15h8"/></svg></span><strong>เช็กลิสต์ตรวจ</strong><span class="d">บันทึกผลการตรวจพื้นที่</span></a>
       <a class="card" href="training.html"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m2.5 9.5 9.5-5 9.5 5-9.5 5-9.5-5Z"/><path d="M6.5 12v4.5c0 1.2 2.5 2.5 5.5 2.5s5.5-1.3 5.5-2.5V12"/></svg></span><strong>บันทึกการอบรม</strong><span class="d">ลงทะเบียนหลักสูตรและผู้เข้าอบรม</span></a>
       <a class="card" href="records.html"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17"/><path d="M9.5 10v9.5"/></svg></span><strong>ดูข้อมูล</strong><span class="d">ตรวจดูข้อมูลตามสิทธิ์ของคุณ</span></a>
     </div>
+    <div class="secthead" id="todayhead" hidden><h3>สรุปสำหรับคุณ</h3><span>ตามสิทธิ์ของบัญชี</span></div>
+    <div class="todaypanel" id="today" hidden>
+      <div class="kpi"><b id="k-open">–</b><span>รายงานอุบัติเหตุที่ยังไม่ปิดเคส</span><br><a href="records.html">ดูรายการ</a></div>
+      <div class="kpi warn"><b id="k-req">–</b><span>คำขอแก้ไขที่รออนุมัติ</span><br><a href="records.html">ตรวจคำขอ</a></div>
+    </div>
+    <div class="secthead" id="taskhead" hidden><h3>งานค้างล่าสุด</h3><span>For you today</span></div>
+    <div class="tasklist" id="tasks" hidden></div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="auth.js"></script>
+  <script>
+    /* ตัวเลขสรุป: นับตามสิทธิ์ (RLS) ของผู้ใช้เอง; ถ้าไม่ได้ล็อกอินหรือ query ไม่สำเร็จ จะไม่แสดงแผงนี้ (ไม่มีตัวเลขสมมติ) */
+    (async function () {
+      try {
+        if (typeof sb === "undefined") return;
+        const ses = await sb.auth.getSession();
+        if (!ses.data.session) return;
+        const a = await sb.from("incident_reports").select("id", { count: "exact", head: true }).neq("phase", "closed").is("deleted_at", null);
+        const b = await sb.from("incident_edit_requests").select("id", { count: "exact", head: true }).eq("status", "pending");
+        if (a.error || b.error) return;
+        document.getElementById("k-open").textContent = String(a.count ?? 0);
+        document.getElementById("k-req").textContent = String(b.count ?? 0);
+        document.getElementById("todayhead").hidden = false;
+        document.getElementById("today").hidden = false;
+      } catch (e) { /* ไม่แสดงแผง */ }
+    })();
+  </script>
+  <script>
+    /* รายการเคสที่ยังไม่ปิด 5 รายการล่าสุด (ตามสิทธิ์ RLS) สร้างด้วย textContent ทั้งหมด */
+    (async function () {
+      try {
+        if (typeof sb === "undefined") return;
+        const ses = await sb.auth.getSession(); if (!ses.data.session) return;
+        const r = await sb.from("incident_reports").select("id, occurred_on, location, description, phase, plants(code), incident_types(name_th)")
+          .neq("phase", "closed").is("deleted_at", null).order("created_at", { ascending: false }).limit(5);
+        if (r.error) return;
+        const box = document.getElementById("tasks"); box.replaceChildren();
+        const STAGE = { flash: ["รอ SHE ตรวจสอบ", "badge review"], investigation: ["กำลังสอบสวน", "badge invest"] };
+        (r.data || []).forEach(function (x) {
+          const a = document.createElement("a"); a.className = "taskcard"; a.href = "records.html";
+          const l = document.createElement("div");
+          const st = STAGE[x.phase] || [String(x.phase || ""), "badge"];
+          const b = document.createElement("span"); b.className = st[1]; b.textContent = st[0]; l.appendChild(b);
+          const t = document.createElement("p"); t.className = "tt"; t.textContent = (x.description || "(ไม่มีรายละเอียด)").slice(0, 120); l.appendChild(t);
+          const m = document.createElement("p"); m.className = "tm"; m.style.margin = ".2rem 0 0";
+          m.textContent = [x.occurred_on, x.plants && x.plants.code, x.incident_types && x.incident_types.name_th, x.location].filter(Boolean).join(" · "); l.appendChild(m);
+          const g = document.createElement("span"); g.className = "go"; g.textContent = "เปิดดู →";
+          a.appendChild(l); a.appendChild(g); box.appendChild(a);
+        });
+        if (!box.children.length) { const e = document.createElement("div"); e.className = "taskempty"; e.textContent = "ไม่มีรายงานที่ค้างอยู่"; box.appendChild(e); }
+        document.getElementById("taskhead").hidden = false; box.hidden = false;
+      } catch (e) { /* ไม่แสดงรายการ */ }
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
 </body>
 </html>
