@@ -21,9 +21,18 @@
   </header>
 
   <main>
+    <section id="annsec" aria-label="ประกาศสำคัญ" hidden>
+      <div class="annlist" id="annlist"></div>
+      <p class="annmgr" id="annmgr" hidden><a href="admin-announcements.html">จัดการประกาศสำคัญ →</a></p>
+    </section>
     <div class="hero">
       <h2>ระบบบันทึกข้อมูล SHE</h2>
       <p>บันทึกและตรวจดูข้อมูลด้านความปลอดภัย อาชีวอนามัย และสิ่งแวดล้อม</p>
+      <div class="herometric" id="herometric" hidden aria-live="polite">
+        <div><div class="big" id="hm-big">–</div><p class="bigsub" id="hm-sub"></p></div>
+        <p class="facts" id="hm-facts"></p>
+        <p class="hnote" id="hm-note">นับจากข้อมูลที่บันทึกในระบบนี้เท่านั้น (เคสประเภท LTI และเสียชีวิต) ตามสิทธิ์และ Plant ที่เลือก</p>
+      </div>
     </div>
     <div class="secthead"><h3>เมนูหลัก</h3><span>Quick actions</span></div>
     <div class="cards">
@@ -53,70 +62,122 @@
   <script src="config.js"></script>
   <script src="auth.js"></script>
   <script>
-    /* ตัวเลขสรุป: นับตามสิทธิ์ (RLS) ของผู้ใช้เอง; ถ้าไม่ได้ล็อกอินหรือ query ไม่สำเร็จ จะไม่แสดงแผงนี้ (ไม่มีตัวเลขสมมติ) */
-    (async function () {
-      try {
-        if (typeof sb === "undefined") return;
-        const ses = await sb.auth.getSession();
-        if (!ses.data.session) return;
-        const a = await sb.from("incident_reports").select("id", { count: "exact", head: true }).neq("phase", "closed").is("deleted_at", null);
-        const b = await sb.from("incident_edit_requests").select("id", { count: "exact", head: true }).eq("status", "pending");
+    /* หน้าแรก: ประกาศสำคัญ + ตัวชี้วัด LTI + สรุป + งานค้าง + การแจ้งเตือน
+       ทุกอย่างอ่านตามสิทธิ์ (RLS) ของผู้ใช้เอง สร้าง DOM ด้วย textContent เท่านั้น
+       ตัวกรอง Plant (ShePlantFilter) เป็นเพียงตัวกรองหน้าจอ ไม่ใช่การให้สิทธิ์ */
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const mk = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+      const plantId = () => (window.ShePlantFilter ? window.ShePlantFilter.get() : null);
+      const scope = (q) => { const p = plantId(); return p ? q.eq("plant_id", p) : q; };
+      const ACK = "she-ann-ack";
+      const acked = () => { try { return JSON.parse(localStorage.getItem(ACK) || "[]"); } catch (e) { return []; } };
+      const ack = (id) => { try { const a = acked(); if (!a.includes(id)) { a.push(id); localStorage.setItem(ACK, JSON.stringify(a.slice(-100))); } } catch (e) { /* ไม่เป็นไร */ } };
+      const SEV = { info: ["ข้อมูล", "info"], moderate: ["ปานกลาง", "moderate"], critical: ["วิกฤต", "critical"] };
+      const ORDER = { critical: 0, moderate: 1, info: 2 };
+      let session = null;
+
+      async function loadAnnouncements() {
+        const sec = $("annsec"), box = $("annlist"); box.replaceChildren(); sec.hidden = true;
+        const r = await sb.from("announcements").select("id, plant_id, severity, title, body, starts_at, ends_at, active, plants(code)")
+          .eq("active", true).lte("starts_at", new Date().toISOString()).order("starts_at", { ascending: false }).limit(20);
+        if (r.error) return;
+        const now = Date.now(), p = plantId(), done = acked();
+        const rows = (r.data || []).filter((x) => (!x.ends_at || Date.parse(x.ends_at) > now) && !done.includes(x.id) && (!p || !x.plant_id || x.plant_id === p))
+          .sort((a, b) => (ORDER[a.severity] - ORDER[b.severity])).slice(0, 3);
+        rows.forEach((x) => {
+          const sv = SEV[x.severity] || SEV.info;
+          const a = mk("div", "ann " + sv[1]); a.setAttribute("role", x.severity === "critical" ? "alert" : "status");
+          const main = mk("div", "annmain"), head = mk("div", "annhead");
+          head.appendChild(mk("span", "annchip", "ระดับ: " + sv[0])); head.appendChild(mk("p", "anntitle", x.title));
+          main.appendChild(head); if (x.body) main.appendChild(mk("p", "annbody", x.body));
+          main.appendChild(mk("p", "annmeta", "ขอบเขต: " + (x.plants && x.plants.code ? x.plants.code : "ทุก Plant") + (x.ends_at ? " · ถึง " + new Date(x.ends_at).toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", day: "numeric", month: "short", year: "numeric" }) : "")));
+          const b = mk("button", "ackbtn", "รับทราบ"); b.type = "button";
+          b.addEventListener("click", () => { ack(x.id); a.remove(); if (!box.children.length) sec.hidden = true; });
+          a.appendChild(main); a.appendChild(b); box.appendChild(a);
+        });
+        if (rows.length) sec.hidden = false;
+      }
+
+      async function loadManagerLink() {
+        try { if (typeof getMyProfile !== "function") return; const p = await getMyProfile();
+          if (p && p.status === "active" && ["she", "admin", "super_admin"].includes(p.role)) { $("annmgr").hidden = false; $("annsec").hidden = false; } } catch (e) { /* ไม่แสดงลิงก์ */ }
+      }
+
+      async function loadLti() {
+        const hm = $("herometric"); hm.hidden = true;
+        let q = sb.from("incident_reports").select("occurred_on, plants(code), incident_types!inner(code)").in("incident_types.code", ["LTI", "FAT"]).is("deleted_at", null).order("occurred_on", { ascending: false }).limit(1);
+        q = scope(q); const r = await q; if (r.error) return;
+        const row = (r.data || [])[0];
+        const open = await scope(sb.from("incident_reports").select("id", { count: "exact", head: true }).neq("phase", "closed").is("deleted_at", null));
+        $("hm-facts").replaceChildren();
+        if (row) {
+          const today = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" })); today.setHours(0, 0, 0, 0);
+          const d = new Date(row.occurred_on + "T00:00:00"); const days = Math.max(0, Math.round((today - d) / 86400000));
+          $("hm-big").textContent = days.toLocaleString("th-TH") + " วัน";
+          $("hm-sub").textContent = "ปลอดอุบัติเหตุถึงขั้นหยุดงาน (LTI) ติดต่อกัน";
+          $("hm-facts").appendChild(mk("span", "fact", "เคสล่าสุด: " + d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) + (row.plants && row.plants.code ? " · " + row.plants.code : "")));
+        } else {
+          $("hm-big").textContent = "ไม่มีเคส LTI";
+          $("hm-sub").textContent = "ยังไม่มีเคส LTI หรือเสียชีวิตที่บันทึกในระบบ (ตามสิทธิ์และ Plant ที่เลือก)";
+        }
+        if (!open.error) $("hm-facts").appendChild(mk("span", "fact", "เคสที่ยังไม่ปิด: " + (open.count || 0)));
+        hm.hidden = false;
+      }
+
+      async function loadKpi() {
+        $("todayhead").hidden = true; $("today").hidden = true;
+        const a = await scope(sb.from("incident_reports").select("id", { count: "exact", head: true }).neq("phase", "closed").is("deleted_at", null));
+        const b = await scope(sb.from("incident_edit_requests").select("id", { count: "exact", head: true }).eq("status", "pending"));
         if (a.error || b.error) return;
-        document.getElementById("k-open").textContent = String(a.count ?? 0);
-        document.getElementById("k-req").textContent = String(b.count ?? 0);
-        document.getElementById("todayhead").hidden = false;
-        document.getElementById("today").hidden = false;
-      } catch (e) { /* ไม่แสดงแผง */ }
-    })();
-  </script>
-  <script>
-    /* รายการเคสที่ยังไม่ปิด 5 รายการล่าสุด (ตามสิทธิ์ RLS) สร้างด้วย textContent ทั้งหมด */
-    (async function () {
-      try {
-        if (typeof sb === "undefined") return;
-        const ses = await sb.auth.getSession(); if (!ses.data.session) return;
-        const r = await sb.from("incident_reports").select("id, occurred_on, location, description, phase, plants(code), incident_types(name_th)")
-          .neq("phase", "closed").is("deleted_at", null).order("created_at", { ascending: false }).limit(5);
+        $("k-open").textContent = String(a.count ?? 0); $("k-req").textContent = String(b.count ?? 0);
+        $("todayhead").hidden = false; $("today").hidden = false;
+      }
+
+      async function loadTasks() {
+        $("taskhead").hidden = true; $("tasks").hidden = true;
+        const r = await scope(sb.from("incident_reports").select("id, occurred_on, location, description, phase, plants(code), incident_types(name_th)").neq("phase", "closed").is("deleted_at", null)).order("created_at", { ascending: false }).limit(5);
         if (r.error) return;
-        const box = document.getElementById("tasks"); box.replaceChildren();
+        const box = $("tasks"); box.replaceChildren();
         const STAGE = { flash: ["รอ SHE ตรวจสอบ", "badge review"], investigation: ["กำลังสอบสวน", "badge invest"] };
-        (r.data || []).forEach(function (x) {
-          const a = document.createElement("a"); a.className = "taskcard"; a.href = "records.html";
-          const l = document.createElement("div");
-          const st = STAGE[x.phase] || [String(x.phase || ""), "badge"];
-          const b = document.createElement("span"); b.className = st[1]; b.textContent = st[0]; l.appendChild(b);
-          const t = document.createElement("p"); t.className = "tt"; t.textContent = (x.description || "(ไม่มีรายละเอียด)").slice(0, 120); l.appendChild(t);
-          const m = document.createElement("p"); m.className = "tm"; m.style.margin = ".2rem 0 0";
-          m.textContent = [x.occurred_on, x.plants && x.plants.code, x.incident_types && x.incident_types.name_th, x.location].filter(Boolean).join(" · "); l.appendChild(m);
-          const g = document.createElement("span"); g.className = "go"; g.textContent = "เปิดดู →";
-          a.appendChild(l); a.appendChild(g); box.appendChild(a);
+        (r.data || []).forEach((x) => {
+          const a = mk("a", "taskcard"); a.href = "records.html"; const l = mk("div");
+          const st = STAGE[x.phase] || [String(x.phase || ""), "badge"]; l.appendChild(mk("span", st[1], st[0]));
+          l.appendChild(mk("p", "tt", (x.description || "(ไม่มีรายละเอียด)").slice(0, 120)));
+          const m = mk("p", "tm", [x.occurred_on, x.plants && x.plants.code, x.incident_types && x.incident_types.name_th, x.location].filter(Boolean).join(" · ")); m.style.margin = ".2rem 0 0"; l.appendChild(m);
+          a.appendChild(l); a.appendChild(mk("span", "go", "เปิดดู →")); box.appendChild(a);
         });
-        if (!box.children.length) { const e = document.createElement("div"); e.className = "taskempty"; e.textContent = "ไม่มีรายงานที่ค้างอยู่"; box.appendChild(e); }
-        document.getElementById("taskhead").hidden = false; box.hidden = false;
-      } catch (e) { /* ไม่แสดงรายการ */ }
-    })();
-  </script>
-  <script>
-    /* แผง "การแจ้งเตือนล่าสุด": คำขอแก้ไขที่รออนุมัติ 4 รายการล่าสุด (ตามสิทธิ์ RLS) สร้างด้วย textContent ทั้งหมด */
-    (async function () {
-      try {
-        if (typeof sb === "undefined") return;
-        const ses = await sb.auth.getSession(); if (!ses.data.session) return;
-        const r = await sb.from("incident_edit_requests").select("id, created_at, reason, status").eq("status", "pending").order("created_at", { ascending: false }).limit(4);
+        if (!box.children.length) box.appendChild(mk("div", "taskempty", "ไม่มีรายงานที่ค้างอยู่"));
+        $("taskhead").hidden = false; box.hidden = false;
+      }
+
+      async function loadAlerts() {
+        $("alerthead").hidden = true; $("alerts").hidden = true;
+        const r = await scope(sb.from("incident_edit_requests").select("id, created_at, reason, status").eq("status", "pending")).order("created_at", { ascending: false }).limit(4);
         if (r.error) return;
-        const box = document.getElementById("alerts"); box.replaceChildren();
-        (r.data || []).forEach(function (x) {
-          const a = document.createElement("a"); a.className = "alertcard"; a.href = "records.html";
-          const b = document.createElement("span"); b.className = "badge pend"; b.textContent = "คำขอแก้ไขรออนุมัติ";
-          const d = document.createElement("time"); d.textContent = x.created_at ? new Date(x.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
-          const top = document.createElement("div"); top.className = "ac-top"; top.appendChild(b); top.appendChild(d);
-          const t = document.createElement("p"); t.className = "tt"; t.textContent = (x.reason || "(ไม่ระบุเหตุผล)").slice(0, 100);
-          const g = document.createElement("span"); g.className = "go"; g.textContent = "ตรวจคำขอ →";
-          a.appendChild(top); a.appendChild(t); a.appendChild(g); box.appendChild(a);
+        const box = $("alerts"); box.replaceChildren();
+        (r.data || []).forEach((x) => {
+          const a = mk("a", "alertcard"); a.href = "records.html"; const top = mk("div", "ac-top");
+          top.appendChild(mk("span", "badge pend", "คำขอแก้ไขรออนุมัติ"));
+          top.appendChild(mk("time", null, x.created_at ? new Date(x.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""));
+          a.appendChild(top); a.appendChild(mk("p", "tt", (x.reason || "(ไม่ระบุเหตุผล)").slice(0, 100))); a.appendChild(mk("span", "go", "ตรวจคำขอ →")); box.appendChild(a);
         });
-        if (!box.children.length) { const e = document.createElement("div"); e.className = "taskempty"; e.textContent = "ไม่มีการแจ้งเตือนใหม่"; box.appendChild(e); }
-        document.getElementById("alerthead").hidden = false; box.hidden = false;
-      } catch (e) { /* ไม่แสดงแผง */ }
+        if (!box.children.length) box.appendChild(mk("div", "taskempty", "ไม่มีการแจ้งเตือนใหม่"));
+        $("alerthead").hidden = false; box.hidden = false;
+      }
+
+      async function loadAll() {
+        try {
+          if (typeof sb === "undefined") return;
+          const ses = await sb.auth.getSession(); session = ses.data.session; if (!session) return;
+          await Promise.all([loadAnnouncements(), loadLti(), loadKpi(), loadTasks(), loadAlerts()].map((p) => p.catch(() => {})));
+          loadManagerLink();
+        } catch (e) { /* ไม่แสดงแผง */ }
+      }
+      let t0 = null; const again = () => { clearTimeout(t0); t0 = setTimeout(loadAll, 50); };
+      document.addEventListener("she-plant-change", again);
+      document.addEventListener("she-plant-ready", again);
+      loadAll();
     })();
   </script>
   <script src="shell-v4.js"></script>
