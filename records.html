@@ -109,26 +109,49 @@
     .steps123{margin:.2rem 0 .6rem;padding-left:1.3rem}
     .previewbox{background:#fff;border:2px dashed var(--brand);border-radius:8px;padding:.5rem .9rem;margin:1rem 0}
     .previewbox .t{font-weight:700;color:var(--brand)}
-    dialog#expdlg{width:min(900px,96vw);max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem}
+    dialog#expdlg{width:min(860px,96vw);max-height:92vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:0 1.2rem}
     dialog#expdlg::backdrop{background:rgba(0,0,0,.45)}
-    .exphead{display:flex;justify-content:space-between;align-items:center;gap:1rem}
-    .exphead h3{margin:.2rem 0}
-    .expbox{margin:.8rem 0}
-    .exprow{display:grid;grid-template-columns:7rem 1fr;gap:.6rem;align-items:center;margin:.4rem 0}
-    .expcols{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.1rem .8rem}
+    .exphead{display:flex;justify-content:space-between;align-items:center;gap:1rem;position:sticky;top:0;background:#fff;padding:.8rem 0;border-bottom:1px solid var(--line);z-index:2}
+    .exphead h3{margin:0}
+    .presetbar{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;background:#f4f7fb;border-radius:10px;padding:.5rem .9rem;margin:.9rem 0 .3rem}
+    .presetbar label{font-weight:600;color:var(--muted);white-space:nowrap}
+    .presetbar select{flex:1;min-width:200px;margin:0}
+    .stephead{display:flex;align-items:center;gap:.6rem;margin:1.3rem 0 .5rem}
+    .stephead h4{margin:0;font-size:1.05rem;color:var(--ink,#14213d)}
+    .stepno{display:inline-flex;align-items:center;justify-content:center;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;font-size:.9rem;flex:none}
+    .filsum{background:#eef4fc;border-left:5px solid var(--brand);border-radius:8px;padding:.55rem .9rem;font-weight:600}
+    .filsum small{display:block;font-weight:400;color:var(--muted);margin-top:.2rem}
+    .modes{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+    .modecard{display:flex;gap:.6rem;align-items:flex-start;font-weight:400;border:2px solid var(--line);border-radius:10px;padding:.7rem .8rem;cursor:pointer;background:#fff}
+    .modecard:has(input:checked){border-color:var(--brand);background:#eef4fc}
+    .modecard input{margin-top:.2rem}
+    .modecard span{display:flex;flex-direction:column;gap:.15rem}
+    .modecard small{color:var(--muted)}
+    .expcount{color:var(--muted);font-weight:400;font-size:.92rem}
+    .quick{display:flex;gap:1rem;flex-wrap:wrap;margin:0 0 .3rem}
+    details.grp{border:1px solid var(--line);border-radius:10px;margin:.5rem 0;background:#fff}
+    details.grp>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.8rem;padding:.55rem .9rem;min-height:44px;font-weight:700}
+    details.grp>summary::before{content:"▸";margin-right:.5rem;color:var(--brand);transition:transform .15s}
+    details.grp[open]>summary::before{transform:rotate(90deg)}
+    details.grp>summary .gname{flex:1}
+    .gbadge{font-weight:600;font-size:.82rem;color:var(--muted);background:#eef1f6;border-radius:999px;padding:.05rem .6rem}
+    .gbadge.on{background:#dbeafe;color:#0b3d91}
+    .grpbody{padding:0 .9rem .8rem}
+    .expcols{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.05rem .8rem}
     .expcol{display:flex;align-items:center;min-height:34px;font-weight:400}
+    .expcol.allrow{font-weight:600;color:var(--brand)}
     .expcol.pii{color:#8a4b00}
-    .modeopt{display:flex;gap:.6rem;align-items:flex-start;font-weight:400;padding:.4rem 0}
-    .modeopt input{margin-top:.25rem}
-    .modeopt span{display:flex;flex-direction:column}
-    .modeopt small{color:var(--muted)}
-    .expcount{color:var(--muted);margin-right:.5rem}
-    .expfoot{position:sticky;bottom:-1rem;background:#fff;padding:.7rem 0 .4rem;border-top:1px solid var(--line);margin-top:1rem}
-    .expstat{margin:.5rem 0;font-weight:600}
+    details.savebox{background:#fafbfd;border-style:dashed;margin-top:1.3rem}
+    details.savebox>summary{font-weight:600;color:var(--muted)}
+    .exprow{display:grid;grid-template-columns:6rem 1fr;gap:.6rem;align-items:center;margin:.4rem 0}
+    .expstat{margin:.4rem 0;font-weight:600}
+    .expstat:empty{display:none}
     .expstat.good{color:#1b6e2f}.expstat.bad{color:#b3261e}
-    .dirty{color:#8a4b00;font-weight:600;margin:.4rem 0}
-    .filsum{background:#eef4fc;border-left:5px solid var(--brand);border-radius:8px;padding:.5rem .9rem;margin:.6rem 0}
-    @media(max-width:560px){.exprow{grid-template-columns:1fr}}
+    .dirty{color:#8a4b00;font-weight:600;font-size:.85rem}
+    .expfoot{position:sticky;bottom:0;background:#fff;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:.8rem 0;margin-top:1rem;border-top:1px solid var(--line)}
+    .expfoot button{min-width:13rem}
+    .expsum{color:var(--muted)}
+    @media(max-width:600px){.modes{grid-template-columns:1fr}.exprow{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -535,7 +558,7 @@
     const colAvail = (c) => !c.pii || isMgrRole();
     const DEFAULT_COLS = ["occurred_on", "occurred_time", "plant_code", "type", "location", "description", "stage"];
     let SHIFTS = {};
-    const EXP = { presets: [], id: "", mode: "case", cols: new Set(DEFAULT_COLS), pmsg: "" };
+    const EXP = { presets: [], id: "", mode: "case", cols: new Set(DEFAULT_COLS), pmsg: "", pmsg2: "", base: null, openSave: false };
     const EXP_FKEYS = ["from", "to", "plant", "type", "stage", "req", "q"];
 
     function expFilters() { const o = {}; EXP_FKEYS.forEach((k) => { o[k] = flt[k] || ""; }); return o; }
@@ -585,90 +608,46 @@
 
     function renderExport() {
       const dlg = document.getElementById("expdlg"); dlg.replaceChildren();
-      const pstat = h("p", { class: "expstat", id: "exp-pstat", role: "status", "aria-live": "polite" });
-      const setP = (t, ok) => { pstat.textContent = t; pstat.className = "expstat " + (ok === false ? "bad" : ok ? "good" : ""); };
-      // ---- preset ----
-      const sel = h("select", { id: "exp-preset" }, h("option", { value: "", text: "— ไม่ใช้ preset (ตั้งค่าเอง) —" }));
+      const cur = () => EXP.presets.find((p) => p.id === EXP.id);
+      const pTop = h("p", { class: "expstat", id: "exp-pstat", role: "status", "aria-live": "polite" });
+      const pSave = h("p", { class: "expstat", id: "exp-pstat2", role: "status", "aria-live": "polite" });
+      const setP = (el, t, ok) => { el.textContent = t; el.className = "expstat " + (ok === false ? "bad" : ok ? "good" : ""); };
+      const errText = (e) => e.code === "23505" ? "มี preset ชื่อนี้อยู่แล้ว กรุณาใช้ชื่ออื่น" : e.code === "54000" ? "บันทึก preset ได้ไม่เกิน 20 ชุดต่อคน กรุณาลบชุดที่ไม่ใช้ก่อน" : e.code === "23514" ? "ข้อมูล preset ไม่ถูกต้อง (ชื่อ 1–60 ตัวอักษร และเลือกคอลัมน์อย่างน้อย 1 รายการ)" : "ไม่สำเร็จ: " + e.message;
+      const step = (n, title, ...rest) => h("div", { class: "stephead" }, h("span", { class: "stepno", text: n }), h("h4", { text: title }), ...rest);
+
+      // ===== หัว =====
+      dlg.append(h("div", { class: "exphead" }, h("h3", { id: "expdlg-t", text: "ส่งออก CSV" }),
+        h("button", { type: "button", class: "secondary small", "aria-label": "ปิดหน้าต่างส่งออก", text: "ปิด", onclick: () => dlg.close() })));
+
+      // ===== เริ่มจากชุดที่บันทึกไว้ (ไม่บังคับ) =====
+      const sel = h("select", { id: "exp-preset", "aria-label": "ใช้ชุดที่บันทึกไว้" }, h("option", { value: "", text: "ตั้งค่าเอง (ไม่ใช้ชุดที่บันทึก)" }));
       EXP.presets.forEach((p) => sel.append(h("option", { value: p.id, text: p.name })));
       sel.value = EXP.id;
-      const nameIn = h("input", { type: "text", id: "exp-name", maxlength: "60", placeholder: "ชื่อ preset เช่น รายงานประจำเดือน" });
-      const cur = () => EXP.presets.find((p) => p.id === EXP.id);
-      nameIn.value = cur() ? cur().name : "";
-      const payload = (name) => ({ name, mode: EXP.mode, columns: orderedCols(), filters: expFilters() });
-      const errText = (e) => e.code === "23505" ? "มี preset ชื่อนี้อยู่แล้ว กรุณาใช้ชื่ออื่น" : e.code === "54000" ? "บันทึก preset ได้ไม่เกิน 20 ชุดต่อคน กรุณาลบชุดที่ไม่ใช้ก่อน" : e.code === "23514" ? "ข้อมูล preset ไม่ถูกต้อง (ชื่อ 1–60 ตัวอักษร และเลือกคอลัมน์อย่างน้อย 1 รายการ)" : "ไม่สำเร็จ: " + e.message;
-      const reload = (id) => { EXP.id = id; renderExport(); };
-      const btnSave = h("button", { type: "button", class: "secondary small", text: "บันทึก (ทับชุดนี้)", onclick: async () => {
-        if (!EXP.id) return;
-        if (!orderedCols().length) { setP("กรุณาเลือกคอลัมน์อย่างน้อย 1 รายการ", false); return; }
-        const name = nameIn.value.trim() || cur().name;
-        const { data, error } = await sb.from("export_presets").update(payload(name)).eq("id", EXP.id).select("id, name, mode, columns, filters, updated_at").single();
-        if (error) { setP(errText(error), false); return; }
-        EXP.presets = EXP.presets.map((p) => (p.id === data.id ? data : p)).sort((a, b) => a.name.localeCompare(b.name, "th"));
-        EXP.pmsg = "บันทึกการตั้งค่าลงชุด “" + data.name + "” แล้ว"; reload(data.id);
-      } });
-      const btnAs = h("button", { type: "button", class: "secondary small", text: "บันทึกเป็นชุดใหม่", onclick: async () => {
-        const name = nameIn.value.trim();
-        if (!name) { setP("กรุณาตั้งชื่อ preset ก่อน", false); nameIn.focus(); return; }
-        if (!orderedCols().length) { setP("กรุณาเลือกคอลัมน์อย่างน้อย 1 รายการ", false); return; }
-        const { data, error } = await sb.from("export_presets").insert(payload(name)).select("id, name, mode, columns, filters, updated_at").single();
-        if (error) { setP(errText(error), false); return; }
-        EXP.presets = EXP.presets.concat(data).sort((a, b) => a.name.localeCompare(b.name, "th"));
-        EXP.pmsg = "สร้างชุดใหม่ “" + data.name + "” แล้ว (ชุดเดิมยังอยู่)"; reload(data.id);
-      } });
-      let delArmed = 0;
-      const btnDel = h("button", { type: "button", class: "btn-danger-outline small", text: "ลบชุดนี้", onclick: async () => {
-        if (!EXP.id) return;
-        if (!delArmed) { delArmed = setTimeout(() => { delArmed = 0; btnDel.textContent = "ลบชุดนี้"; }, 4000); btnDel.textContent = "กดอีกครั้งเพื่อยืนยันลบ"; return; }
-        clearTimeout(delArmed);
-        const nm = cur() ? cur().name : "";
-        const { error } = await sb.from("export_presets").delete().eq("id", EXP.id);
-        if (error) { setP(errText(error), false); return; }
-        EXP.presets = EXP.presets.filter((p) => p.id !== EXP.id); EXP.pmsg = "ลบชุด “" + nm + "” แล้ว"; reload("");
-      } });
-      sel.addEventListener("change", () => {
-        const p = EXP.presets.find((x) => x.id === sel.value);
-        if (!p) { EXP.id = ""; nameIn.value = ""; sync(); return; }
-        EXP.id = p.id; EXP.mode = p.mode === "person" ? "person" : "case";
-        const keys = Array.isArray(p.columns) ? p.columns : [];
-        const ok = keys.filter((k) => COLMAP[k] && colAvail(COLMAP[k]));
-        EXP.cols = new Set(ok);
-        Object.assign(flt, sanitizeFilters(p.filters), { page: 0 });
-        buildFilterBar(); loadIncidents();                                   // ตารางด้านหลังปรับตามตัวกรองของ preset ด้วย
-        nameIn.value = p.name;
-        const skipped = keys.length - ok.length;
-        EXP.pmsg = "โหลดชุด “" + p.name + "” แล้ว" + (skipped ? " (ข้าม " + skipped + " คอลัมน์ที่ไม่มีหรือไม่มีสิทธิ์ใช้)" : "");
-        renderExport();
-      });
-      dlg.append(
-        h("div", { class: "exphead" }, h("h3", { id: "expdlg-t", text: "ส่งออก CSV" }),
-          h("button", { type: "button", class: "secondary small", "aria-label": "ปิดหน้าต่างส่งออก", text: "ปิด", onclick: () => dlg.close() })),
-        h("p", { class: "hint", text: "ข้อมูลที่ส่งออกจำกัดตามสิทธิ์ของท่านเสมอ (RLS) ส่วน preset เก็บเฉพาะการตั้งค่า ไม่เก็บข้อมูลเคส และเห็นได้เฉพาะเจ้าของ" }),
-        h("fieldset", { class: "expbox" }, h("legend", { text: "ชุดที่บันทึกไว้ (Saved presets)" }),
-          h("div", { class: "exprow" }, h("label", { for: "exp-preset", text: "เลือกชุด" }), sel),
-          h("div", { class: "exprow" }, h("label", { for: "exp-name", text: "ชื่อชุด" }), nameIn),
-          h("div", { class: "rowbtns" }, btnSave, btnAs, btnDel),
-          h("p", { class: "hint", text: "“บันทึก” ทับชุดที่เลือกอยู่ (ใช้ช่องชื่อเปลี่ยนชื่อได้) · “บันทึกเป็นชุดใหม่” สร้างชุดเพิ่มโดยชุดเดิมยังอยู่ สลับกลับมาเลือกได้ตลอด · ชุดเก็บ: คอลัมน์ + โหมดไฟล์ + ตัวกรอง" }),
-          h("p", { class: "dirty", id: "exp-dirty", hidden: true, text: "● มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึกลงชุดนี้" }), pstat),
-        h("p", { class: "filsum" }, h("strong", { text: "ตัวกรองที่จะใช้: " }), filterSummary()),
-        h("p", { class: "hint", text: "ต้องการเปลี่ยนตัวกรอง ให้ปิดหน้าต่างนี้แล้วปรับที่แถบตัวกรองด้านบน จากนั้นเปิดหน้าต่างส่งออกอีกครั้ง" })
-      );
-      // ---- โหมดไฟล์ ----
+      dlg.append(h("div", { class: "presetbar" }, h("label", { for: "exp-preset", text: "ใช้ชุดที่บันทึกไว้" }), sel), pTop);
+
+      // ===== ① ตัวกรอง =====
+      dlg.append(step("1", "ข้อมูลที่จะส่งออก"),
+        h("div", { class: "filsum" }, filterSummary(), h("small", { text: "ปรับตัวกรองที่แถบด้านบนของหน้า แล้วเปิดหน้าต่างนี้ใหม่ · ข้อมูลจำกัดตามสิทธิ์ของท่านเสมอ" })));
+
+      // ===== ② โหมดไฟล์ =====
       const mk = (v, t, d) => { const i = h("input", { type: "radio", name: "exp-mode", value: v, id: "exp-mode-" + v }); i.checked = EXP.mode === v;
         i.addEventListener("change", () => { EXP.mode = v; sync(); });
-        return h("label", { class: "modeopt", for: "exp-mode-" + v }, i, h("span", {}, h("strong", { text: t }), h("small", { text: d }))); };
-      dlg.append(h("fieldset", { class: "expbox" }, h("legend", { text: "โหมดไฟล์" }),
-        mk("case", "A · 1 แถวต่อ 1 เคส", "ผู้เกี่ยวข้องหลายคนถูกรวมในช่องเดียว คั่นด้วย “ ; ” (ลำดับตรงกันทุกคอลัมน์) เหมาะกับรายงานภาพรวม"),
-        mk("person", "B · 1 แถวต่อ 1 ผู้เกี่ยวข้อง", "ข้อมูลเคสซ้ำทุกแถว เหมาะกับ Pivot / Power BI เช่น นับตามตำแหน่งร่างกายที่บาดเจ็บ (ต้องเลือกคอลัมน์กลุ่มผู้เกี่ยวข้องอย่างน้อย 1 รายการ)")));
-      // ---- เลือกคอลัมน์ ----
+        return h("label", { class: "modecard", for: "exp-mode-" + v }, i, h("span", {}, h("strong", { text: t }), h("small", { text: d }))); };
+      dlg.append(step("2", "รูปแบบไฟล์"), h("div", { class: "modes", role: "radiogroup", "aria-label": "รูปแบบไฟล์" },
+        mk("case", "1 แถวต่อ 1 เคส", "ภาพรวม อ่านง่าย · ผู้เกี่ยวข้องหลายคนรวมในช่องเดียว คั่นด้วย “ ; ”"),
+        mk("person", "1 แถวต่อ 1 ผู้เกี่ยวข้อง", "สำหรับ Pivot / Power BI เช่น นับตามตำแหน่งร่างกาย · ต้องเลือกคอลัมน์กลุ่ม “ผู้เกี่ยวข้อง”")));
+
+      // ===== ③ คอลัมน์ (กลุ่มพับเก็บได้) =====
       const count = h("span", { class: "expcount", id: "exp-count", "aria-live": "polite" });
-      const quick = h("div", { class: "rowbtns" }, h("strong", { text: "เลือกคอลัมน์ " }), count,
-        h("button", { type: "button", class: "link", text: "เลือกทั้งหมด" + (isMgrRole() ? "" : " (ที่ท่านมีสิทธิ์)"), onclick: () => { COLS.forEach((c) => { if (colAvail(c) && !c.pii) EXP.cols.add(c.k); }); sync(); } }),
-        h("button", { type: "button", class: "link", text: "ค่าเริ่มต้น", onclick: () => { EXP.cols = new Set(DEFAULT_COLS); sync(); } }),
-        h("button", { type: "button", class: "link", text: "ล้างทั้งหมด", onclick: () => { EXP.cols = new Set(); sync(); } }));
-      dlg.append(quick);
-      EX_GROUPS.forEach(([g, gl]) => {
+      dlg.append(step("3", "คอลัมน์ที่ต้องการ", count),
+        h("div", { class: "quick" },
+          h("button", { type: "button", class: "link", text: "เลือกทั้งหมด" + (isMgrRole() ? " (ยกเว้น 🔒)" : ""), onclick: () => { COLS.forEach((c) => { if (colAvail(c) && !c.pii) EXP.cols.add(c.k); }); sync(); } }),
+          h("button", { type: "button", class: "link", text: "ค่าเริ่มต้น", onclick: () => { EXP.cols = new Set(DEFAULT_COLS); sync(); } }),
+          h("button", { type: "button", class: "link", text: "ล้างทั้งหมด", onclick: () => { EXP.cols = new Set(); sync(); } })));
+      EX_GROUPS.forEach(([g, gl], gi) => {
         const items = COLS.filter((c) => c.g === g);
-        const all = h("input", { type: "checkbox", "data-grp": g, "aria-label": "เลือกทั้งกลุ่ม " + gl });
+        const badge = h("span", { class: "gbadge", "data-gb": g });
+        const all = h("input", { type: "checkbox", "data-grp": g, id: "exp-all-" + g });
         all.addEventListener("change", () => { items.forEach((c) => { if (colAvail(c) && !c.pii) { if (all.checked) EXP.cols.add(c.k); else EXP.cols.delete(c.k); } }); sync(); });
         const grid = h("div", { class: "expcols" });
         items.forEach((c) => {
@@ -678,24 +657,101 @@
           grid.append(h("label", { class: "expcol" + (c.pii ? " pii" : ""), for: "exp-c-" + c.k }, cb,
             c.l + (c.pii ? " 🔒" : "") + (c.pii && !isMgrRole() ? " (เฉพาะ SHE/Admin)" : "")));
         });
-        dlg.append(h("fieldset", { class: "expbox" }, h("legend", {}, all, " " + gl), grid,
-          g === "person" ? h("p", { class: "hint", text: "🔒 = ข้อมูลระบุตัวตน ไม่ถูกเลือกโดย “เลือกทั้งหมด” ต้องติ๊กเอง ใช้เท่าที่จำเป็น (ISO/IEC 27001:2022 A.5.34) และต้องผ่าน DPO ก่อนใช้ข้อมูลจริง · ท่านเห็นเฉพาะผู้เกี่ยวข้องของเคสที่ท่านมีสิทธิ์" }) : null));
+        const det = h("details", { class: "grp" }, h("summary", {}, h("span", { class: "gname", text: gl }), badge),
+          h("div", { class: "grpbody" },
+            h("label", { class: "expcol allrow", for: "exp-all-" + g }, all, "เลือกทั้งกลุ่ม" + (items.some((c) => c.pii) ? " (ยกเว้น 🔒)" : "")), grid,
+            g === "person" ? h("p", { class: "hint", text: "🔒 = ข้อมูลระบุตัวตน ต้องติ๊กเอง ใช้เท่าที่จำเป็น (ISO/IEC 27001:2022 A.5.34) · ท่านเห็นเฉพาะผู้เกี่ยวข้องของเคสที่มีสิทธิ์" }) : null));
+        if (gi === 0) det.open = true;
+        dlg.append(det);
       });
+
+      // ===== ④ บันทึกการตั้งค่า (รอง, พับเก็บ, อยู่ท้ายสุดหลังเลือกครบ) =====
+      const nameIn = h("input", { type: "text", id: "exp-name", maxlength: "60", placeholder: "ตั้งชื่อชุด เช่น รายงานประจำเดือน", "aria-label": "ชื่อชุด" });
+      nameIn.value = cur() ? cur().name : "";
+      const payload = (name) => ({ name, mode: EXP.mode, columns: orderedCols(), filters: expFilters() });
+      const done = (id, msg) => { EXP.pmsg2 = msg; EXP.id = id; EXP.openSave = true; renderExport(); };
+      const btnSave = h("button", { type: "button", class: "secondary small", text: "บันทึก (ทับชุดนี้)", onclick: async () => {
+        if (!EXP.id) return;
+        if (!orderedCols().length) { setP(pSave, "กรุณาเลือกคอลัมน์อย่างน้อย 1 รายการ", false); return; }
+        const name = nameIn.value.trim() || cur().name;
+        const { data, error } = await sb.from("export_presets").update(payload(name)).eq("id", EXP.id).select("id, name, mode, columns, filters, updated_at").single();
+        if (error) { setP(pSave, errText(error), false); return; }
+        EXP.presets = EXP.presets.map((p) => (p.id === data.id ? data : p)).sort((a, b) => a.name.localeCompare(b.name, "th"));
+        EXP.base = { id: data.id, snap: expSnapshot() };
+        done(data.id, "บันทึกการตั้งค่าลงชุด “" + data.name + "” แล้ว");
+      } });
+      const btnAs = h("button", { type: "button", class: "small", text: "บันทึกเป็นชุดใหม่", onclick: async () => {
+        const name = nameIn.value.trim();
+        if (!name) { setP(pSave, "กรุณาตั้งชื่อชุดก่อน", false); nameIn.focus(); return; }
+        if (!orderedCols().length) { setP(pSave, "กรุณาเลือกคอลัมน์อย่างน้อย 1 รายการ", false); return; }
+        const { data, error } = await sb.from("export_presets").insert(payload(name)).select("id, name, mode, columns, filters, updated_at").single();
+        if (error) { setP(pSave, errText(error), false); return; }
+        EXP.presets = EXP.presets.concat(data).sort((a, b) => a.name.localeCompare(b.name, "th"));
+        EXP.base = { id: data.id, snap: expSnapshot() };
+        done(data.id, "สร้างชุดใหม่ “" + data.name + "” แล้ว (ชุดเดิมยังอยู่)");
+      } });
+      let delArmed = 0;
+      const btnDel = h("button", { type: "button", class: "btn-danger-outline small", text: "ลบชุดนี้", onclick: async () => {
+        if (!EXP.id) return;
+        if (!delArmed) { delArmed = setTimeout(() => { delArmed = 0; btnDel.textContent = "ลบชุดนี้"; }, 4000); btnDel.textContent = "กดอีกครั้งเพื่อยืนยันลบ"; return; }
+        clearTimeout(delArmed);
+        const nm = cur() ? cur().name : "";
+        const { error } = await sb.from("export_presets").delete().eq("id", EXP.id);
+        if (error) { setP(pSave, errText(error), false); return; }
+        EXP.presets = EXP.presets.filter((p) => p.id !== EXP.id); EXP.base = null; done("", "ลบชุด “" + nm + "” แล้ว");
+      } });
+      const dirtyBadge = h("span", { class: "dirty", id: "exp-dirty", hidden: true, text: "● มีการเปลี่ยนแปลงที่ยังไม่บันทึก" });
+      const saveDet = h("details", { class: "grp savebox" }, h("summary", {}, h("span", { class: "gname", text: "💾 บันทึกการตั้งค่านี้ไว้ใช้ครั้งหน้า (ไม่บังคับ)" }), dirtyBadge),
+        h("div", { class: "grpbody" },
+          h("p", { class: "hint", id: "exp-curname" }),
+          h("div", { class: "exprow" }, h("label", { for: "exp-name", text: "ชื่อชุด" }), nameIn),
+          h("div", { class: "rowbtns" }, btnAs, btnSave, btnDel),
+          h("p", { class: "hint", text: "ชุดจะจำ: ตัวกรองด้านบน + รูปแบบไฟล์ + คอลัมน์ที่เลือก · เห็นเฉพาะท่าน · เลือกสลับกลับมาใช้ชุดไหนก็ได้" }), pSave));
+      if (EXP.openSave) saveDet.open = true;
+      dlg.append(saveDet);
+
+      // ===== ท้าย: ปุ่มหลัก (sticky) =====
       const err = h("p", { class: "expstat bad", id: "exp-err", role: "alert", hidden: true });
       const go = h("button", { type: "button", id: "exp-go", text: "⭳ ดาวน์โหลด CSV", onclick: runExport });
-      dlg.append(err, h("div", { class: "rowbtns expfoot" }, go, h("button", { type: "button", class: "secondary", text: "ปิด", onclick: () => dlg.close() })));
+      const sum = h("span", { class: "expsum", id: "exp-sum" });
+      dlg.append(err, h("div", { class: "expfoot" }, go, sum));
+
+      sel.addEventListener("change", () => {
+        const p = EXP.presets.find((x) => x.id === sel.value);
+        if (!p) { EXP.id = ""; EXP.base = null; nameIn.value = ""; sync(); return; }
+        EXP.id = p.id; EXP.mode = p.mode === "person" ? "person" : "case";
+        const keys = Array.isArray(p.columns) ? p.columns : [];
+        const ok = keys.filter((k) => COLMAP[k] && colAvail(COLMAP[k]));
+        EXP.cols = new Set(ok);
+        Object.assign(flt, sanitizeFilters(p.filters), { page: 0 });
+        buildFilterBar(); loadIncidents();                                   // ตารางด้านหลังปรับตามตัวกรองของ preset ด้วย
+        EXP.base = { id: p.id, snap: expSnapshot() };
+        const skipped = keys.length - ok.length;
+        EXP.pmsg = "โหลดชุด “" + p.name + "” แล้ว" + (skipped ? " (ข้าม " + skipped + " คอลัมน์ที่ไม่มีหรือไม่มีสิทธิ์ใช้)" : "");
+        EXP.openSave = false; renderExport();
+      });
       function sync() {
         COLS.forEach((c) => { const cb = document.getElementById("exp-c-" + c.k); if (cb) cb.checked = EXP.cols.has(c.k) && colAvail(c); });
-        EX_GROUPS.forEach(([g]) => { const a = dlg.querySelector('input[data-grp="' + g + '"]'); const its = COLS.filter((c) => c.g === g && colAvail(c) && !c.pii);
-          a.checked = its.length > 0 && its.every((c) => EXP.cols.has(c.k)); });
-        count.textContent = "(เลือกแล้ว " + orderedCols().length + " จาก " + COLS.filter(colAvail).length + ")";
+        EX_GROUPS.forEach(([g]) => {
+          const its = COLS.filter((c) => c.g === g && colAvail(c) && !c.pii), all = COLS.filter((c) => c.g === g && colAvail(c));
+          dlg.querySelector('input[data-grp="' + g + '"]').checked = its.length > 0 && its.every((c) => EXP.cols.has(c.k));
+          const n = all.filter((c) => EXP.cols.has(c.k)).length, b = dlg.querySelector('[data-gb="' + g + '"]');
+          b.textContent = n + " / " + all.length; b.classList.toggle("on", n > 0);
+        });
+        const n = orderedCols().length;
+        count.textContent = "เลือกแล้ว " + n + " จาก " + COLS.filter(colAvail).length;
+        sum.textContent = n + " คอลัมน์ · " + (EXP.mode === "person" ? "1 แถวต่อผู้เกี่ยวข้อง" : "1 แถวต่อเคส");
         dlg.querySelectorAll('input[name="exp-mode"]').forEach((i) => { i.checked = i.value === EXP.mode; });
-        const dirty = !!cur() && expSnapshot() !== presetSnapshot(cur());
-        document.getElementById("exp-dirty").hidden = !dirty;
+        if (EXP.id && cur() && (!EXP.base || EXP.base.id !== EXP.id)) EXP.base = { id: EXP.id, snap: presetSnapshot(cur()) };
+        const dirty = !!cur() && !!EXP.base && expSnapshot() !== EXP.base.snap;
+        dirtyBadge.hidden = !dirty;
+        document.getElementById("exp-curname").textContent = cur() ? "ชุดที่กำลังใช้: “" + cur().name + "” — “บันทึก” จะทับชุดนี้ ส่วน “บันทึกเป็นชุดใหม่” จะสร้างชุดเพิ่ม" : "ยังไม่ได้เลือกชุด — ตั้งชื่อแล้วกด “บันทึกเป็นชุดใหม่”";
         btnSave.disabled = !EXP.id; btnDel.disabled = !EXP.id;
         err.hidden = true;
       }
-      if (EXP.pmsg) { setP(EXP.pmsg, true); EXP.pmsg = ""; }
+      if (EXP.pmsg) { setP(pTop, EXP.pmsg, true); EXP.pmsg = ""; }
+      if (EXP.pmsg2) { setP(pSave, EXP.pmsg2, true); EXP.pmsg2 = ""; }
+      EXP.openSave = false;
       sync();
     }
 
