@@ -31,7 +31,7 @@
       <form id="f" class="addform" autocomplete="off">
         <h3 id="f-title" style="margin-top:0">สร้างประกาศใหม่</h3>
         <div class="grid2">
-          <div><label for="a-plant">ขอบเขต (Plant)</label><br><select id="a-plant" required></select></div>
+          <div><label for="a-plant">ขอบเขต (Plant)</label><br><select id="a-plant"></select></div>
           <div><label for="a-sev">ระดับ</label><br>
             <select id="a-sev"><option value="info">ทั่วไป (General)</option><option value="moderate">สำคัญ (Important)</option><option value="critical">เร่งด่วน (Urgent)</option></select></div>
         </div>
@@ -120,6 +120,7 @@
       e.preventDefault();
       const title = $("a-title").value.trim(); if (!title) { msg("กรุณากรอกหัวข้อ", false); return; }
       const start = $("a-start").value ? new Date($("a-start").value).toISOString() : new Date().toISOString();
+      if (!isAdmin() && !$("a-plant").value) { msg("กรุณาเลือก Plant", false); return; }
       const end = $("a-end").value ? new Date($("a-end").value).toISOString() : null;
       if (end && Date.parse(end) <= Date.parse(start)) { msg("เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มแสดง", false); return; }
       const row = { plant_id: $("a-plant").value || null, severity: $("a-sev").value, title, body: $("a-body").value.trim(), starts_at: start, ends_at: end, active: $("a-active").checked };
