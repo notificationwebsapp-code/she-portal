@@ -551,7 +551,7 @@
       { k: "p_pos", g: "person", l: "ตำแหน่ง", pf: ["position_title"], p: (p) => p.position_title },
       { k: "p_type", g: "person", l: "ประเภทบุคคล", pf: ["person_type"], p: (p) => PTYPE[p.person_type] || "" },
       { k: "p_injury", g: "person", l: "ชนิดการบาดเจ็บ", pf: ["injury_type_code"], p: (p) => (p.injury_type_code ? lkName("injury_type", p.injury_type_code) : "") },
-      { k: "p_body", g: "person", l: "ตำแหน่งร่างกายที่บาดเจ็บ", pf: ["body_part_codes"], p: (p) => (p.body_part_codes || []).map((c) => lkName("body_part", c)).join(" / ") }
+      { k: "p_body", g: "person", l: "ตำแหน่งร่างกายที่บาดเจ็บ", pf: ["body_part_codes"], p: (p) => (p.body_part_codes || []).map((c) => lkName("body_part", c)).join(" | ") }
     ];
     const COLMAP = Object.fromEntries(COLS.map((c) => [c.k, c]));
     const isPersonCol = (c) => c.g === "person" && !!c.p;
