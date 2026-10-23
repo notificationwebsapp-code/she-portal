@@ -109,6 +109,26 @@
     .steps123{margin:.2rem 0 .6rem;padding-left:1.3rem}
     .previewbox{background:#fff;border:2px dashed var(--brand);border-radius:8px;padding:.5rem .9rem;margin:1rem 0}
     .previewbox .t{font-weight:700;color:var(--brand)}
+    dialog#expdlg{width:min(900px,96vw);max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem}
+    dialog#expdlg::backdrop{background:rgba(0,0,0,.45)}
+    .exphead{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+    .exphead h3{margin:.2rem 0}
+    .expbox{margin:.8rem 0}
+    .exprow{display:grid;grid-template-columns:7rem 1fr;gap:.6rem;align-items:center;margin:.4rem 0}
+    .expcols{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.1rem .8rem}
+    .expcol{display:flex;align-items:center;min-height:34px;font-weight:400}
+    .expcol.pii{color:#8a4b00}
+    .modeopt{display:flex;gap:.6rem;align-items:flex-start;font-weight:400;padding:.4rem 0}
+    .modeopt input{margin-top:.25rem}
+    .modeopt span{display:flex;flex-direction:column}
+    .modeopt small{color:var(--muted)}
+    .expcount{color:var(--muted);margin-right:.5rem}
+    .expfoot{position:sticky;bottom:-1rem;background:#fff;padding:.7rem 0 .4rem;border-top:1px solid var(--line);margin-top:1rem}
+    .expstat{margin:.5rem 0;font-weight:600}
+    .expstat.good{color:#1b6e2f}.expstat.bad{color:#b3261e}
+    .dirty{color:#8a4b00;font-weight:600;margin:.4rem 0}
+    .filsum{background:#eef4fc;border-left:5px solid var(--brand);border-radius:8px;padding:.5rem .9rem;margin:.6rem 0}
+    @media(max-width:560px){.exprow{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -135,6 +155,7 @@
     <nav id="pager" class="pager" aria-label="เปลี่ยนหน้า"></nav>
     <section id="detail" aria-live="polite" hidden></section>
     <dialog id="reqdlg" aria-labelledby="reqdlg-t"></dialog>
+  <dialog id="expdlg" aria-labelledby="expdlg-t"></dialog>
 
     <h3>เช็กลิสต์ตรวจ</h3>
     <div class="tablewrap"><table id="t-checklist"></table></div>
@@ -365,6 +386,7 @@
     let me = null, pendingCount = {}, pendingSum = {}, lastReq = {}, detailId = null, dlgInc = null;
     const state = { inc: null, persons: [], log: [], reqs: [] };
     const isMgrRole = () => me && me.status === "active" && ["she", "admin", "super_admin"].includes(me.role);
+    const canExport = () => me && me.status === "active" && ["she", "admin", "super_admin", "md"].includes(me.role);   // สิทธิ์ส่งออก: SHE, Admin, Super admin, MD
     const isAdminRole = () => me && me.status === "active" && ["admin", "super_admin"].includes(me.role);
 
     // ---------- ตัวกรอง + แบ่งหน้า (กรองที่ฐานข้อมูล ไม่ดึงทั้งหมดมากรองในเบราว์เซอร์) ----------
@@ -415,7 +437,7 @@
       const nav = document.getElementById("pager"); nav.replaceChildren();
       const pages = Math.max(1, Math.ceil(totalRows / PAGE));
       nav.append(h("span", { class: "info", text: totalRows ? "ทั้งหมด " + totalRows + " รายการ · หน้า " + (flt.page + 1) + " / " + pages : "ไม่พบรายการตามเงื่อนไข" }));
-      if (totalRows) nav.append(h("button", { type: "button", class: "secondary small", id: "btn-export", text: "⭳ ส่งออก CSV (ตามตัวกรอง)", onclick: exportCsv }));
+      if (totalRows && canExport()) nav.append(h("button", { type: "button", class: "secondary small", id: "btn-export", text: "⭳ ส่งออก CSV…", onclick: openExport }));
       if (pages > 1) nav.append(
         h("button", { type: "button", class: "secondary small", text: "← ก่อนหน้า", disabled: flt.page <= 0, onclick: () => { flt.page--; loadIncidents(); } }),
         h("button", { type: "button", class: "secondary small", text: "ถัดไป →", disabled: flt.page >= pages - 1, onclick: () => { flt.page++; loadIncidents(); } }));
@@ -441,7 +463,8 @@
       return { q: q.order("occurred_on", { ascending: false }).order("created_at", { ascending: false }) };
     }
 
-    // ---------- Export CSV (ตามตัวกรองและสิทธิ์ของผู้ใช้; ไม่รวมชื่อบุคคล) ----------
+    // ---------- Export builder: เลือกคอลัมน์ + 2 โหมดไฟล์ + Saved presets (ตาราง export_presets, B12) ----------
+    // ข้อมูลที่ส่งออกถูกจำกัดด้วย RLS ของตารางเคส/ผู้เกี่ยวข้องเสมอ — preset เก็บเฉพาะ "การตั้งค่า" ไม่เก็บข้อมูลเคส
     const EXPORT_MAX = 5000;
     // ป้องกัน CSV/Formula injection (OWASP): เซลล์ที่ขึ้นต้นด้วย = + - @ หรืออักขระควบคุม ให้นำหน้าด้วย '
     function csvCell(v) {
@@ -449,34 +472,296 @@
       if (/^[=+\-@\t\r]/.test(t)) t = "'" + t;
       return /[",\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
     }
-    async function exportCsv() {
-      const btn = document.getElementById("btn-export"); btn.disabled = true; const old = btn.textContent; btn.textContent = "กำลังเตรียมไฟล์…";
+    const GENDER = { male: "ชาย", female: "หญิง", other: "อื่น ๆ" };
+    const PTYPE = { employee: "พนักงาน", contractor: "ผู้รับเหมา", visitor: "ผู้มาติดต่อ", other: "อื่น ๆ" };
+    const PROLE = { injured: "ผู้บาดเจ็บ/ผู้ได้รับผลกระทบ", witness: "พยาน", other: "อื่น ๆ" };
+    const REQ_LABEL = { pending: "รอ SHE พิจารณา", approved: "อนุมัติแล้ว", rejected: "ไม่อนุมัติ", cancelled: "ยกเลิกแล้ว" };
+    const yn = (v) => (v === true ? "ใช่" : v === false ? "ไม่ใช่" : "");
+    const two = (n) => String(n).padStart(2, "0");
+    // เวลาแสดงตามเขตเวลาของเครื่องผู้ส่งออก (หลักการ Global-ready: ไม่ฝังเวลาไทย)
+    const fmtLocal = (iso) => { if (!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + " " + two(d.getHours()) + ":" + two(d.getMinutes()); };
+    const PL = "plants(code,name,country_code,company_name,business_unit,site_type)", TY = "incident_types(name_th)";
+    const EX_GROUPS = [
+      ["core", "ข้อมูลเคสและ Plant"], ["detail", "รายละเอียดเหตุการณ์ (5W1H)"], ["cls", "การจำแนกโดย SHE"],
+      ["follow", "ติดตามผล"], ["person", "ผู้เกี่ยวข้อง / ผู้บาดเจ็บ"]
+    ];
+    // c = ค่าระดับเคส, p = ค่าระดับผู้เกี่ยวข้อง, f = ฟิลด์ที่ต้องดึง (ดึงเฉพาะที่เลือก), pii = ข้อมูลระบุตัวตน (เลือกได้เฉพาะ SHE/Admin)
+    const COLS = [
+      { k: "id", g: "core", l: "รหัสเคส (ID)", f: ["id"], c: (r) => r.id },
+      { k: "occurred_on", g: "core", l: "วันที่เกิดเหตุ", f: ["occurred_on"], c: (r) => r.occurred_on },
+      { k: "occurred_time", g: "core", l: "เวลาเกิดเหตุ", f: ["occurred_time"], c: (r) => (r.occurred_time ? r.occurred_time.slice(0, 5) : "") },
+      { k: "plant_code", g: "core", l: "Plant (รหัส)", f: [PL], c: (r) => (r.plants ? r.plants.code : "") },
+      { k: "plant_name", g: "core", l: "Plant (ชื่อ)", f: [PL], c: (r) => (r.plants ? r.plants.name : "") },
+      { k: "country", g: "core", l: "ประเทศ (รหัส ISO)", f: [PL], c: (r) => (r.plants ? r.plants.country_code : "") },
+      { k: "company", g: "core", l: "บริษัท", f: [PL], c: (r) => (r.plants ? r.plants.company_name : "") },
+      { k: "bu", g: "core", l: "Business unit", f: [PL], c: (r) => (r.plants ? r.plants.business_unit : "") },
+      { k: "site_type", g: "core", l: "ประเภทไซต์", f: [PL], c: (r) => (r.plants ? r.plants.site_type : "") },
+      { k: "type", g: "core", l: "ประเภทเหตุการณ์", f: [TY], c: (r) => (r.incident_types ? r.incident_types.name_th : "") },
+      { k: "shift", g: "core", l: "กะ", f: ["shift_id"], c: (r) => SHIFTS[r.shift_id] || "" },
+      { k: "department", g: "core", l: "แผนก", f: ["department_text"], c: (r) => r.department_text },
+      { k: "location", g: "core", l: "จุดเกิดเหตุ", f: ["location"], c: (r) => r.location },
+      { k: "stage", g: "core", l: "ขั้นตอน", f: ["phase", "deleted_at"], c: (r) => (r.deleted_at ? "ถูกลบ" : r.phase === "closed" ? "ปิดเคสแล้ว" : r.phase === "investigation" ? "กำลังสอบสวน" : "รอ SHE ตรวจสอบ") },
+      { k: "description", g: "detail", l: "เกิดอะไรขึ้น", f: ["description"], c: (r) => r.description },
+      { k: "how", g: "detail", l: "เกิดขึ้นอย่างไร (How)", f: ["how_text"], c: (r) => r.how_text },
+      { k: "why", g: "detail", l: "ทำไมจึงเกิด (Why)", f: ["why_text"], c: (r) => r.why_text },
+      { k: "immediate", g: "detail", l: "การดำเนินการทันที", f: ["immediate_action"], c: (r) => r.immediate_action },
+      { k: "high_hazard", g: "detail", l: "งานอันตรายสูง (High hazard)", f: ["high_hazard_code"], c: (r) => (r.high_hazard_code ? lkName("high_hazard", r.high_hazard_code) : "") },
+      { k: "resp_name", g: "detail", l: "ผู้รับผิดชอบหลัก (ชื่อ)", pii: true, f: ["responsible_name"], c: (r) => r.responsible_name },
+      { k: "resp_email", g: "detail", l: "ผู้รับผิดชอบหลัก (อีเมล)", pii: true, f: ["responsible_email"], c: (r) => r.responsible_email },
+      { k: "system_failure", g: "cls", l: "System failure", f: ["system_failure_code"], c: (r) => (r.system_failure_code ? lkName("system_failure", r.system_failure_code) : "") },
+      { k: "root_cause", g: "cls", l: "Root cause", f: ["root_cause_code"], c: (r) => (r.root_cause_code ? lkName("root_cause", r.root_cause_code) : "") },
+      { k: "recordable", g: "cls", l: "Recordable", f: ["is_recordable"], c: (r) => yn(r.is_recordable) },
+      { k: "serious", g: "cls", l: "Serious / Potentially serious", f: ["is_serious_potential"], c: (r) => yn(r.is_serious_potential) },
+      { k: "created_at", g: "follow", l: "ส่งรายงานเมื่อ (เวลาในเครื่องของท่าน)", f: ["created_at"], c: (r) => fmtLocal(r.created_at) },
+      { k: "closed_at", g: "follow", l: "ปิดเคสเมื่อ (เวลาในเครื่องของท่าน)", f: ["closed_at"], c: (r) => fmtLocal(r.closed_at) },
+      { k: "req_status", g: "follow", l: "คำขอแก้ไขล่าสุด (สถานะ)", need: "req", c: (r, x) => (x.req[r.id] ? REQ_LABEL[x.req[r.id].status] || x.req[r.id].status : "") },
+      { k: "req_note", g: "follow", l: "คำขอแก้ไขล่าสุด (หมายเหตุผู้พิจารณา)", need: "req", c: (r, x) => (x.req[r.id] ? x.req[r.id].decision_note : "") },
+      { k: "p_count", g: "person", l: "จำนวนผู้เกี่ยวข้อง", need: "persons", c: (r, x) => (x.per[r.id] || []).length },
+      { k: "p_injured", g: "person", l: "จำนวนผู้บาดเจ็บ", need: "persons", c: (r, x) => (x.per[r.id] || []).filter((p) => p.role_in_case === "injured").length },
+      { k: "p_role", g: "person", l: "บทบาท", pf: ["role_in_case"], p: (p) => PROLE[p.role_in_case] || p.role_in_case },
+      { k: "p_name", g: "person", l: "ชื่อ-นามสกุล", pii: true, pf: ["full_name"], p: (p) => p.full_name },
+      { k: "p_code", g: "person", l: "รหัสพนักงาน", pii: true, pf: ["employee_code"], p: (p) => p.employee_code },
+      { k: "p_gender", g: "person", l: "เพศ", pf: ["gender"], p: (p) => GENDER[p.gender] || "" },
+      { k: "p_age", g: "person", l: "อายุ (ปี)", pf: ["age_years"], p: (p) => p.age_years },
+      { k: "p_tenure", g: "person", l: "อายุงาน (ปี)", pf: ["tenure_years"], p: (p) => p.tenure_years },
+      { k: "p_nat", g: "person", l: "สัญชาติ", pf: ["nationality"], p: (p) => p.nationality },
+      { k: "p_pos", g: "person", l: "ตำแหน่ง", pf: ["position_title"], p: (p) => p.position_title },
+      { k: "p_type", g: "person", l: "ประเภทบุคคล", pf: ["person_type"], p: (p) => PTYPE[p.person_type] || "" },
+      { k: "p_injury", g: "person", l: "ชนิดการบาดเจ็บ", pf: ["injury_type_code"], p: (p) => (p.injury_type_code ? lkName("injury_type", p.injury_type_code) : "") },
+      { k: "p_body", g: "person", l: "ตำแหน่งร่างกายที่บาดเจ็บ", pf: ["body_part_codes"], p: (p) => (p.body_part_codes || []).map((c) => lkName("body_part", c)).join(" / ") }
+    ];
+    const COLMAP = Object.fromEntries(COLS.map((c) => [c.k, c]));
+    const isPersonCol = (c) => c.g === "person" && !!c.p;
+    const colAvail = (c) => !c.pii || isMgrRole();
+    const DEFAULT_COLS = ["occurred_on", "occurred_time", "plant_code", "type", "location", "description", "stage"];
+    let SHIFTS = {};
+    const EXP = { presets: [], id: "", mode: "case", cols: new Set(DEFAULT_COLS), pmsg: "" };
+    const EXP_FKEYS = ["from", "to", "plant", "type", "stage", "req", "q"];
+
+    function expFilters() { const o = {}; EXP_FKEYS.forEach((k) => { o[k] = flt[k] || ""; }); return o; }
+    function sanitizeFilters(f) {
+      f = f && typeof f === "object" ? f : {};
+      const s = (k) => (typeof f[k] === "string" ? f[k] : "");
+      const dateOk = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
+      return {
+        from: dateOk(s("from")), to: dateOk(s("to")),
+        plant: PLANTS.some((p) => p.id === s("plant")) ? s("plant") : "",
+        type: TYPES.some((t) => t.id === s("type")) ? s("type") : "",
+        stage: STAGE_OPTS.some((o) => o[0] === s("stage")) ? s("stage") : "",
+        req: s("req") === "pending" && isMgrRole() ? "pending" : "",
+        q: s("q").slice(0, 100)
+      };
+    }
+    const orderedCols = () => COLS.filter((c) => EXP.cols.has(c.k) && colAvail(c)).map((c) => c.k);
+    const expSnapshot = () => JSON.stringify({ m: EXP.mode, c: orderedCols(), f: expFilters() });
+    // ค่าที่ "บันทึกไว้ในชุด" ในรูปแบบเดียวกับ expSnapshot — ใช้เทียบว่ามีการแก้ที่ยังไม่บันทึกหรือไม่
+    const presetSnapshot = (p) => JSON.stringify({ m: p.mode === "person" ? "person" : "case",
+      c: COLS.filter((c) => (p.columns || []).includes(c.k) && colAvail(c)).map((c) => c.k), f: sanitizeFilters(p.filters) });
+    function filterSummary() {
+      const t = [];
+      if (flt.from || flt.to) t.push("วันที่ " + (flt.from || "…") + " ถึง " + (flt.to || "…"));
+      const pl = PLANTS.find((p) => p.id === flt.plant); if (pl) t.push("Plant " + pl.code);
+      if (flt.type) t.push("ประเภท " + typeName(flt.type));
+      if (flt.stage) t.push("ขั้นตอน " + (STAGE_OPTS.find((o) => o[0] === flt.stage) || ["", flt.stage])[1]);
+      if (flt.req) t.push("มีคำขอแก้ไขรอพิจารณา");
+      if (flt.q) t.push("ค้นหา “" + flt.q + "”");
+      return t.length ? t.join(" · ") : "ไม่มีตัวกรอง (ทุกเคสที่ท่านมีสิทธิ์เห็น)";
+    }
+
+    async function openExport() {
+      if (!canExport()) return;
+      const dlg = document.getElementById("expdlg");
+      EXP.pmsg = "";
+      const r = await sb.from("export_presets").select("id, name, mode, columns, filters, updated_at").order("name");
+      if (r.error) { EXP.presets = []; EXP.pmsg = "ยังโหลด preset ไม่ได้ (" + r.error.message + ") — ยังส่งออกแบบเลือกคอลัมน์เองได้"; }
+      else EXP.presets = r.data || [];
+      if (EXP.id && !EXP.presets.some((p) => p.id === EXP.id)) EXP.id = "";
+      if (!Object.keys(SHIFTS).length) {
+        const s = await sb.from("plant_shifts").select("id, name");
+        SHIFTS = Object.fromEntries((s.data || []).map((x) => [x.id, x.name]));
+      }
+      renderExport(); dlg.showModal();
+    }
+
+    function renderExport() {
+      const dlg = document.getElementById("expdlg"); dlg.replaceChildren();
+      const pstat = h("p", { class: "expstat", id: "exp-pstat", role: "status", "aria-live": "polite" });
+      const setP = (t, ok) => { pstat.textContent = t; pstat.className = "expstat " + (ok === false ? "bad" : ok ? "good" : ""); };
+      // ---- preset ----
+      const sel = h("select", { id: "exp-preset" }, h("option", { value: "", text: "— ไม่ใช้ preset (ตั้งค่าเอง) —" }));
+      EXP.presets.forEach((p) => sel.append(h("option", { value: p.id, text: p.name })));
+      sel.value = EXP.id;
+      const nameIn = h("input", { type: "text", id: "exp-name", maxlength: "60", placeholder: "ชื่อ preset เช่น รายงานประจำเดือน" });
+      const cur = () => EXP.presets.find((p) => p.id === EXP.id);
+      nameIn.value = cur() ? cur().name : "";
+      const payload = (name) => ({ name, mode: EXP.mode, columns: orderedCols(), filters: expFilters() });
+      const errText = (e) => e.code === "23505" ? "มี preset ชื่อนี้อยู่แล้ว กรุณาใช้ชื่ออื่น" : e.code === "54000" ? "บันทึก preset ได้ไม่เกิน 20 ชุดต่อคน กรุณาลบชุดที่ไม่ใช้ก่อน" : e.code === "23514" ? "ข้อมูล preset ไม่ถูกต้อง (ชื่อ 1–60 ตัวอักษร และเลือกคอลัมน์อย่างน้อย 1 รายการ)" : "ไม่สำเร็จ: " + e.message;
+      const reload = (id) => { EXP.id = id; renderExport(); };
+      const btnSave = h("button", { type: "button", class: "secondary small", text: "บันทึก (ทับชุดนี้)", onclick: async () => {
+        if (!EXP.id) return;
+        if (!orderedCols().length) { setP("กรุณาเลือกคอลัมน์อย่างน้อย 1 รายการ", false); return; }
+        const name = nameIn.value.trim() || cur().name;
+        const { data, error } = await sb.from("export_presets").update(payload(name)).eq("id", EXP.id).select("id, name, mode, columns, filters, updated_at").single();
+        if (error) { setP(errText(error), false); return; }
+        EXP.presets = EXP.presets.map((p) => (p.id === data.id ? data : p)).sort((a, b) => a.name.localeCompare(b.name, "th"));
+        EXP.pmsg = "บันทึกการตั้งค่าลงชุด “" + data.name + "” แล้ว"; reload(data.id);
+      } });
+      const btnAs = h("button", { type: "button", class: "secondary small", text: "บันทึกเป็นชุดใหม่", onclick: async () => {
+        const name = nameIn.value.trim();
+        if (!name) { setP("กรุณาตั้งชื่อ preset ก่อน", false); nameIn.focus(); return; }
+        if (!orderedCols().length) { setP("กรุณาเลือกคอลัมน์อย่างน้อย 1 รายการ", false); return; }
+        const { data, error } = await sb.from("export_presets").insert(payload(name)).select("id, name, mode, columns, filters, updated_at").single();
+        if (error) { setP(errText(error), false); return; }
+        EXP.presets = EXP.presets.concat(data).sort((a, b) => a.name.localeCompare(b.name, "th"));
+        EXP.pmsg = "สร้างชุดใหม่ “" + data.name + "” แล้ว (ชุดเดิมยังอยู่)"; reload(data.id);
+      } });
+      let delArmed = 0;
+      const btnDel = h("button", { type: "button", class: "btn-danger-outline small", text: "ลบชุดนี้", onclick: async () => {
+        if (!EXP.id) return;
+        if (!delArmed) { delArmed = setTimeout(() => { delArmed = 0; btnDel.textContent = "ลบชุดนี้"; }, 4000); btnDel.textContent = "กดอีกครั้งเพื่อยืนยันลบ"; return; }
+        clearTimeout(delArmed);
+        const nm = cur() ? cur().name : "";
+        const { error } = await sb.from("export_presets").delete().eq("id", EXP.id);
+        if (error) { setP(errText(error), false); return; }
+        EXP.presets = EXP.presets.filter((p) => p.id !== EXP.id); EXP.pmsg = "ลบชุด “" + nm + "” แล้ว"; reload("");
+      } });
+      sel.addEventListener("change", () => {
+        const p = EXP.presets.find((x) => x.id === sel.value);
+        if (!p) { EXP.id = ""; nameIn.value = ""; sync(); return; }
+        EXP.id = p.id; EXP.mode = p.mode === "person" ? "person" : "case";
+        const keys = Array.isArray(p.columns) ? p.columns : [];
+        const ok = keys.filter((k) => COLMAP[k] && colAvail(COLMAP[k]));
+        EXP.cols = new Set(ok);
+        Object.assign(flt, sanitizeFilters(p.filters), { page: 0 });
+        buildFilterBar(); loadIncidents();                                   // ตารางด้านหลังปรับตามตัวกรองของ preset ด้วย
+        nameIn.value = p.name;
+        const skipped = keys.length - ok.length;
+        EXP.pmsg = "โหลดชุด “" + p.name + "” แล้ว" + (skipped ? " (ข้าม " + skipped + " คอลัมน์ที่ไม่มีหรือไม่มีสิทธิ์ใช้)" : "");
+        renderExport();
+      });
+      dlg.append(
+        h("div", { class: "exphead" }, h("h3", { id: "expdlg-t", text: "ส่งออก CSV" }),
+          h("button", { type: "button", class: "secondary small", "aria-label": "ปิดหน้าต่างส่งออก", text: "ปิด", onclick: () => dlg.close() })),
+        h("p", { class: "hint", text: "ข้อมูลที่ส่งออกจำกัดตามสิทธิ์ของท่านเสมอ (RLS) ส่วน preset เก็บเฉพาะการตั้งค่า ไม่เก็บข้อมูลเคส และเห็นได้เฉพาะเจ้าของ" }),
+        h("fieldset", { class: "expbox" }, h("legend", { text: "ชุดที่บันทึกไว้ (Saved presets)" }),
+          h("div", { class: "exprow" }, h("label", { for: "exp-preset", text: "เลือกชุด" }), sel),
+          h("div", { class: "exprow" }, h("label", { for: "exp-name", text: "ชื่อชุด" }), nameIn),
+          h("div", { class: "rowbtns" }, btnSave, btnAs, btnDel),
+          h("p", { class: "hint", text: "“บันทึก” ทับชุดที่เลือกอยู่ (ใช้ช่องชื่อเปลี่ยนชื่อได้) · “บันทึกเป็นชุดใหม่” สร้างชุดเพิ่มโดยชุดเดิมยังอยู่ สลับกลับมาเลือกได้ตลอด · ชุดเก็บ: คอลัมน์ + โหมดไฟล์ + ตัวกรอง" }),
+          h("p", { class: "dirty", id: "exp-dirty", hidden: true, text: "● มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึกลงชุดนี้" }), pstat),
+        h("p", { class: "filsum" }, h("strong", { text: "ตัวกรองที่จะใช้: " }), filterSummary()),
+        h("p", { class: "hint", text: "ต้องการเปลี่ยนตัวกรอง ให้ปิดหน้าต่างนี้แล้วปรับที่แถบตัวกรองด้านบน จากนั้นเปิดหน้าต่างส่งออกอีกครั้ง" })
+      );
+      // ---- โหมดไฟล์ ----
+      const mk = (v, t, d) => { const i = h("input", { type: "radio", name: "exp-mode", value: v, id: "exp-mode-" + v }); i.checked = EXP.mode === v;
+        i.addEventListener("change", () => { EXP.mode = v; sync(); });
+        return h("label", { class: "modeopt", for: "exp-mode-" + v }, i, h("span", {}, h("strong", { text: t }), h("small", { text: d }))); };
+      dlg.append(h("fieldset", { class: "expbox" }, h("legend", { text: "โหมดไฟล์" }),
+        mk("case", "A · 1 แถวต่อ 1 เคส", "ผู้เกี่ยวข้องหลายคนถูกรวมในช่องเดียว คั่นด้วย “ ; ” (ลำดับตรงกันทุกคอลัมน์) เหมาะกับรายงานภาพรวม"),
+        mk("person", "B · 1 แถวต่อ 1 ผู้เกี่ยวข้อง", "ข้อมูลเคสซ้ำทุกแถว เหมาะกับ Pivot / Power BI เช่น นับตามตำแหน่งร่างกายที่บาดเจ็บ (ต้องเลือกคอลัมน์กลุ่มผู้เกี่ยวข้องอย่างน้อย 1 รายการ)")));
+      // ---- เลือกคอลัมน์ ----
+      const count = h("span", { class: "expcount", id: "exp-count", "aria-live": "polite" });
+      const quick = h("div", { class: "rowbtns" }, h("strong", { text: "เลือกคอลัมน์ " }), count,
+        h("button", { type: "button", class: "link", text: "เลือกทั้งหมด" + (isMgrRole() ? "" : " (ที่ท่านมีสิทธิ์)"), onclick: () => { COLS.forEach((c) => { if (colAvail(c) && !c.pii) EXP.cols.add(c.k); }); sync(); } }),
+        h("button", { type: "button", class: "link", text: "ค่าเริ่มต้น", onclick: () => { EXP.cols = new Set(DEFAULT_COLS); sync(); } }),
+        h("button", { type: "button", class: "link", text: "ล้างทั้งหมด", onclick: () => { EXP.cols = new Set(); sync(); } }));
+      dlg.append(quick);
+      EX_GROUPS.forEach(([g, gl]) => {
+        const items = COLS.filter((c) => c.g === g);
+        const all = h("input", { type: "checkbox", "data-grp": g, "aria-label": "เลือกทั้งกลุ่ม " + gl });
+        all.addEventListener("change", () => { items.forEach((c) => { if (colAvail(c) && !c.pii) { if (all.checked) EXP.cols.add(c.k); else EXP.cols.delete(c.k); } }); sync(); });
+        const grid = h("div", { class: "expcols" });
+        items.forEach((c) => {
+          const cb = h("input", { type: "checkbox", id: "exp-c-" + c.k, "data-k": c.k });
+          if (!colAvail(c)) cb.disabled = true;
+          cb.addEventListener("change", () => { if (cb.checked) EXP.cols.add(c.k); else EXP.cols.delete(c.k); sync(); });
+          grid.append(h("label", { class: "expcol" + (c.pii ? " pii" : ""), for: "exp-c-" + c.k }, cb,
+            c.l + (c.pii ? " 🔒" : "") + (c.pii && !isMgrRole() ? " (เฉพาะ SHE/Admin)" : "")));
+        });
+        dlg.append(h("fieldset", { class: "expbox" }, h("legend", {}, all, " " + gl), grid,
+          g === "person" ? h("p", { class: "hint", text: "🔒 = ข้อมูลระบุตัวตน ไม่ถูกเลือกโดย “เลือกทั้งหมด” ต้องติ๊กเอง ใช้เท่าที่จำเป็น (ISO/IEC 27001:2022 A.5.34) และต้องผ่าน DPO ก่อนใช้ข้อมูลจริง · ท่านเห็นเฉพาะผู้เกี่ยวข้องของเคสที่ท่านมีสิทธิ์" }) : null));
+      });
+      const err = h("p", { class: "expstat bad", id: "exp-err", role: "alert", hidden: true });
+      const go = h("button", { type: "button", id: "exp-go", text: "⭳ ดาวน์โหลด CSV", onclick: runExport });
+      dlg.append(err, h("div", { class: "rowbtns expfoot" }, go, h("button", { type: "button", class: "secondary", text: "ปิด", onclick: () => dlg.close() })));
+      function sync() {
+        COLS.forEach((c) => { const cb = document.getElementById("exp-c-" + c.k); if (cb) cb.checked = EXP.cols.has(c.k) && colAvail(c); });
+        EX_GROUPS.forEach(([g]) => { const a = dlg.querySelector('input[data-grp="' + g + '"]'); const its = COLS.filter((c) => c.g === g && colAvail(c) && !c.pii);
+          a.checked = its.length > 0 && its.every((c) => EXP.cols.has(c.k)); });
+        count.textContent = "(เลือกแล้ว " + orderedCols().length + " จาก " + COLS.filter(colAvail).length + ")";
+        dlg.querySelectorAll('input[name="exp-mode"]').forEach((i) => { i.checked = i.value === EXP.mode; });
+        const dirty = !!cur() && expSnapshot() !== presetSnapshot(cur());
+        document.getElementById("exp-dirty").hidden = !dirty;
+        btnSave.disabled = !EXP.id; btnDel.disabled = !EXP.id;
+        err.hidden = true;
+      }
+      if (EXP.pmsg) { setP(EXP.pmsg, true); EXP.pmsg = ""; }
+      sync();
+    }
+
+    // ดึงข้อมูลเป็นชุด ๆ (ไม่ใส่ id ยาวเกินใน URL)
+    async function inChunks(table, cols, key, ids, orderCol) {
+      const out = [];
+      for (let i = 0; i < ids.length; i += 100) {
+        let q = sb.from(table).select(cols).in(key, ids.slice(i, i + 100));
+        if (orderCol) q = q.order(orderCol);
+        const { data, error } = await q;
+        if (error) throw error;
+        out.push(...(data || []));
+      }
+      return out;
+    }
+
+    async function runExport() {
+      const btn = document.getElementById("exp-go"), err = document.getElementById("exp-err");
+      const fail = (t) => { err.textContent = t; err.hidden = false; };
+      const cols = COLS.filter((c) => EXP.cols.has(c.k) && colAvail(c));
+      err.hidden = true;
+      if (!cols.length) return fail("กรุณาเลือกคอลัมน์อย่างน้อย 1 รายการ");
+      const perCols = cols.filter(isPersonCol);
+      if (EXP.mode === "person" && !perCols.length) return fail("โหมด B ต้องเลือกคอลัมน์กลุ่มผู้เกี่ยวข้องอย่างน้อย 1 รายการ");
+      btn.disabled = true; const old = btn.textContent; btn.textContent = "กำลังเตรียมไฟล์…";
       try {
-        const cols = "occurred_on, occurred_time, location, description, how_text, why_text, immediate_action, phase, deleted_at, created_at, high_hazard_code, system_failure_code, root_cause_code, is_recordable, is_serious_potential, plants(code), incident_types(name_th)";
-        const rows = [];
+        // ดึงเฉพาะฟิลด์ที่เลือก (data minimization): id เสมอ + ฟิลด์ของคอลัมน์ที่เลือก
+        const sel = new Set(["id"]); cols.forEach((c) => (c.f || []).forEach((f) => sel.add(f)));
+        const cases = [];
         for (let from = 0; from < EXPORT_MAX; from += 1000) {
-          const { q } = await filteredQuery(cols, false);
+          const { q } = await filteredQuery(Array.from(sel).join(", "), false);
           const { data, error } = await q.range(from, from + 999);
-          if (error) { showMsg("ส่งออกไม่สำเร็จ: " + error.message, false); return; }
-          rows.push(...(data || []));
+          if (error) return fail("ส่งออกไม่สำเร็จ: " + error.message);
+          cases.push(...(data || []));
           if (!data || data.length < 1000) break;
         }
-        const yn = (v) => (v === true ? "ใช่" : v === false ? "ไม่ใช่" : "");
-        const head = ["วันที่เกิดเหตุ", "เวลา", "Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "เกิดขึ้นอย่างไร (How)", "ทำไมจึงเกิด (Why)", "การดำเนินการทันที",
-          "ขั้นตอน", "High hazard", "System failure", "Root cause", "Recordable", "Serious/Potentially serious", "ส่งเมื่อ (UTC)"];
-        const lines = [head.map(csvCell).join(",")].concat(rows.map((r) => [
-          r.occurred_on, r.occurred_time ? r.occurred_time.slice(0, 5) : "", r.plants ? r.plants.code : "", r.incident_types ? r.incident_types.name_th : "",
-          r.location, r.description, r.how_text, r.why_text, r.immediate_action,
-          r.deleted_at ? "ถูกลบ" : r.phase === "closed" ? "ปิดเคสแล้ว" : r.phase === "investigation" ? "กำลังสอบสวน" : "รอ SHE ตรวจสอบ",
-          r.high_hazard_code ? lkName("high_hazard", r.high_hazard_code) : "", r.system_failure_code ? lkName("system_failure", r.system_failure_code) : "",
-          r.root_cause_code ? lkName("root_cause", r.root_cause_code) : "", yn(r.is_recordable), yn(r.is_serious_potential), r.created_at
-        ].map(csvCell).join(",")));
-        const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });   // BOM ให้ Excel อ่านภาษาไทยถูกต้อง
-        const d = new Date(), z = (n) => String(n).padStart(2, "0");
-        const a = h("a", { href: URL.createObjectURL(blob), download: "she-incidents-" + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + "-" + z(d.getHours()) + z(d.getMinutes()) + ".csv" });
+        const ids = cases.map((r) => r.id);
+        const x = { per: {}, req: {} };
+        const needPersons = cols.some((c) => c.need === "persons" || isPersonCol(c));
+        if (needPersons && ids.length) {
+          const pf = new Set(["incident_id", "role_in_case", "created_at"]); perCols.forEach((c) => c.pf.forEach((f) => pf.add(f)));
+          (await inChunks("incident_persons", Array.from(pf).join(", "), "incident_id", ids, "created_at")).forEach((p) => { (x.per[p.incident_id] = x.per[p.incident_id] || []).push(p); });
+        }
+        if (cols.some((c) => c.need === "req") && ids.length) {
+          (await inChunks("incident_edit_requests", "incident_id, status, decision_note, created_at", "incident_id", ids, "created_at"))
+            .forEach((r) => { x.req[r.incident_id] = r; });   // เรียงเก่า→ใหม่ แล้วเขียนทับ = ล่าสุดชนะ
+        }
+        const lines = [cols.map((c) => csvCell(c.l)).join(",")];
+        let nrows = 0;
+        cases.forEach((r) => {
+          const list = x.per[r.id] || [];
+          const emit = (per) => {
+            lines.push(cols.map((c) => csvCell(isPersonCol(c) ? (EXP.mode === "person" ? (per ? c.p(per) : "") : list.map(c.p).join(" ; ")) : c.c(r, x))).join(","));
+            nrows++;
+          };
+          if (EXP.mode === "person") { if (list.length) list.forEach(emit); else emit(null); } else emit(null);
+        });
+        const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });   // BOM ให้ Excel อ่านภาษาไทยถูกต้อง
+        const d = new Date();
+        const a = h("a", { href: URL.createObjectURL(blob), download: "she-incidents-" + (EXP.mode === "person" ? "per-person-" : "per-case-") + d.getFullYear() + two(d.getMonth() + 1) + two(d.getDate()) + "-" + two(d.getHours()) + two(d.getMinutes()) + ".csv" });
         document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-        showMsg("ส่งออก " + rows.length + " รายการเรียบร้อย" + (rows.length >= EXPORT_MAX ? " (จำกัดสูงสุด " + EXPORT_MAX + " รายการ กรุณาแคบตัวกรองแล้วส่งออกใหม่)" : ""), true);
-      } finally { btn.disabled = false; btn.textContent = old; }
+        const m = "ส่งออก " + nrows + " แถว จาก " + cases.length + " เคส เรียบร้อย" + (cases.length >= EXPORT_MAX ? " (จำกัดสูงสุด " + EXPORT_MAX + " เคส กรุณาแคบตัวกรองแล้วส่งออกใหม่)" : "");
+        showMsg(m, true);
+        const ps = document.getElementById("exp-pstat"); ps.textContent = m; ps.className = "expstat good";
+      } catch (e) { fail("ส่งออกไม่สำเร็จ: " + (e && e.message ? e.message : e)); }
+      finally { btn.disabled = false; btn.textContent = old; }
     }
 
     async function loadIncidents() {
