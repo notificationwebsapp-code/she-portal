@@ -33,7 +33,7 @@
         <div class="grid2">
           <div><label for="a-plant">ขอบเขต (Plant)</label><br><select id="a-plant" required></select></div>
           <div><label for="a-sev">ระดับ</label><br>
-            <select id="a-sev"><option value="info">ข้อมูล (info)</option><option value="moderate">ปานกลาง (moderate)</option><option value="critical">วิกฤต (critical)</option></select></div>
+            <select id="a-sev"><option value="info">ทั่วไป (General)</option><option value="moderate">สำคัญ (Important)</option><option value="critical">เร่งด่วน (Urgent)</option></select></div>
         </div>
         <div style="margin-top:.75rem"><label for="a-title">หัวข้อ <small>(1–120 ตัวอักษร)</small></label><br><input type="text" id="a-title" maxlength="120" required></div>
         <div style="margin-top:.75rem"><label for="a-body">รายละเอียด <small>(ไม่เกิน 1,000 ตัวอักษร)</small></label><br><textarea id="a-body" rows="3" maxlength="1000"></textarea></div>
@@ -64,7 +64,7 @@
     // แสดงข้อมูลด้วย textContent เท่านั้น
     const $ = (id) => document.getElementById(id);
     const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
-    const SEV = { info: "ข้อมูล", moderate: "ปานกลาง", critical: "วิกฤต" };
+    const SEV = { info: "ทั่วไป", moderate: "สำคัญ", critical: "เร่งด่วน" };
     let me = null, plants = [], editing = null;
     const msg = (text, ok) => { const m = $("msg"); m.hidden = false; m.className = "msg " + (ok ? "ok" : "error"); m.textContent = text; m.scrollIntoView({ behavior: "smooth", block: "nearest" }); };
     const isAdmin = () => me && (me.role === "admin" || me.role === "super_admin");

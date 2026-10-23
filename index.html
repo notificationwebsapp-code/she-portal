@@ -73,7 +73,7 @@
       const ACK = "she-ann-ack";
       const acked = () => { try { return JSON.parse(localStorage.getItem(ACK) || "[]"); } catch (e) { return []; } };
       const ack = (id) => { try { const a = acked(); if (!a.includes(id)) { a.push(id); localStorage.setItem(ACK, JSON.stringify(a.slice(-100))); } } catch (e) { /* ไม่เป็นไร */ } };
-      const SEV = { info: ["ข้อมูล", "info"], moderate: ["ปานกลาง", "moderate"], critical: ["วิกฤต", "critical"] };
+      const SEV = { info: ["ทั่วไป", "info"], moderate: ["สำคัญ", "moderate"], critical: ["เร่งด่วน", "critical"] };
       const ORDER = { critical: 0, moderate: 1, info: 2 };
       let session = null;
 
