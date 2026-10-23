@@ -103,8 +103,30 @@ async function setupNav() {
       link.insertAdjacentElement("beforebegin", m);
       markCurrentNav();
     }
+    showRoleBadge(p, data.session.user.id, link);
     showAccountNotice(p);
   }
+}
+
+// ป้ายแสดง Role + Plant ของผู้ที่ล็อกอิน (อำนวยความสะดวกเท่านั้น สิทธิ์จริงมาจาก RLS)
+const ROLE_LABEL = { super_admin: "SUPER ADMIN", admin: "ADMIN", she: "SHE", md: "MD", ceo: "CEO", employee: "EMPLOYEE" };
+async function showRoleBadge(p, uid, link) {
+  if (!p || document.getElementById("role-badge")) return;
+  let text = p.status === "active" ? (ROLE_LABEL[p.role] || String(p.role || "").toUpperCase()) : "บัญชีไม่ active";
+  if (p.status === "active" && p.role !== "super_admin" && p.role !== "admin") {
+    try {
+      const { data } = await sb.from("user_plants").select("plants(code)").eq("user_id", uid);
+      const codes = (data || []).map((r) => r.plants && r.plants.code).filter(Boolean).sort();
+      if (codes.length) text += " · " + codes.join(", ");
+    } catch (e) { /* ไม่มีข้อมูล Plant ก็แสดงเฉพาะ Role */ }
+  } else if (p.status === "active") {
+    text += " · ทุก Plant";
+  }
+  const b = document.createElement("span");
+  b.id = "role-badge";
+  b.className = "role-badge";
+  b.textContent = text;   // textContent เท่านั้น (OWASP A03)
+  link.insertAdjacentElement("beforebegin", b);
 }
 
 // หน้าที่ต้องล็อกอิน: ถ้ายังไม่ล็อกอิน ส่งไปหน้า login

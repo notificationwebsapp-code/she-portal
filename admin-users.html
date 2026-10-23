@@ -33,7 +33,7 @@
 
       <h3>ผู้ใช้ทั้งหมด</h3>
       <div class="tablewrap"><table id="allusers">
-        <thead><tr><th>ชื่อ</th><th>รหัสพนักงาน</th><th>อีเมล</th><th>Role</th><th>สถานะ</th><th>เหตุผล (กรณีไม่อนุมัติ)</th><th>การทำงาน</th></tr></thead>
+        <thead><tr><th>ชื่อ</th><th>รหัสพนักงาน</th><th>อีเมล</th><th>Role</th><th>Plant</th><th>สถานะ</th><th>เหตุผล (กรณีไม่อนุมัติ)</th><th>การทำงาน</th></tr></thead>
         <tbody></tbody>
       </table></div>
     </div>
@@ -180,6 +180,9 @@
       tr.appendChild(el("td", u.employee_code || ""));
       tr.appendChild(el("td", u.email || ""));
       tr.appendChild(el("td", u.role));
+      const pids = userPlants[u.id] || [];
+      const pcodes = plants.filter(p => pids.includes(p.id)).map(p => p.code).join(", ");
+      tr.appendChild(el("td", (u.role === "admin" || u.role === "super_admin") ? "ทุก Plant" : (pcodes || "—")));
       const st = el("td"); st.appendChild(el("span", STATUS_TH[u.status] || u.status, "badge " + u.status)); tr.appendChild(st);
       tr.appendChild(el("td", u.reject_reason || ""));
       const act = el("td");
