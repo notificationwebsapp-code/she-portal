@@ -5,6 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <title>ดูข้อมูล | SHE Portal</title>
+  <style>
+    /* ส่วนจัดการรายงาน (ขอแก้ไข / แก้ไขพร้อมเหตุผล / ประวัติ) */
+    #detail{border:1px solid var(--line);border-radius:8px;padding:1rem;margin:0 0 1.5rem;background:#fff}
+    #detail h4{margin:1.2rem 0 .4rem}
+    #detail dl{display:grid;grid-template-columns:minmax(9rem,14rem) 1fr;gap:.25rem .8rem;margin:0}
+    #detail dt{font-weight:600}
+    #detail dd{margin:0;overflow-wrap:anywhere}
+    .editgrid label{display:block;margin:.6rem 0 .15rem;font-weight:600}
+    .editgrid input[type=text],.editgrid input[type=date],.editgrid input[type=time],.editgrid select,.editgrid textarea{width:100%}
+    .editgrid textarea{min-height:4.5rem}
+    .changed{outline:2px solid var(--brand);outline-offset:1px}
+    .editgrid label.chk{display:inline-flex;align-items:center;gap:.3rem;margin:.2rem .8rem .2rem 0;font-weight:400}
+    .personedit{border:1px dashed var(--line);border-radius:8px;padding:.6rem .8rem;margin:.6rem 0}
+    .reqbox,.logbox{border-left:4px solid var(--line);padding:.4rem .8rem;margin:.5rem 0}
+    .reqbox.pending{border-left-color:var(--brand)}
+    .logbox small,.reqbox small{color:#555}
+    .rowbtns{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;align-items:center}
+    .badge{display:inline-block;padding:.05rem .5rem;border-radius:999px;border:1px solid var(--line);font-size:.85rem}
+    .badge.closed{background:#eee}.badge.pend{background:#fff4d6;border-color:#e0b43a}
+  </style>
 </head>
 <body>
   <header>
@@ -26,6 +46,7 @@
 
     <h3>รายงานอุบัติเหตุ</h3>
     <div class="tablewrap"><table id="t-incident"></table></div>
+    <section id="detail" aria-live="polite" hidden></section>
 
     <h3>เช็กลิสต์ตรวจ</h3>
     <div class="tablewrap"><table id="t-checklist"></table></div>
@@ -40,17 +61,30 @@
   <script>
     requireLogin();
     const msg = document.getElementById("msg");
+    function showMsg(text, ok) {
+      msg.textContent = text; msg.className = "msg " + (ok ? "ok" : "error"); msg.hidden = false;
+      msg.scrollIntoView({ block: "nearest" });
+    }
 
-    // สร้างตารางด้วย createElement + textContent (ไม่ใช้ innerHTML) กัน XSS
+    // สร้าง element ด้วย createElement + textContent (ไม่ใช้ innerHTML) กัน XSS (OWASP A03)
+    function h(tag, attrs, ...kids) {
+      const e = document.createElement(tag);
+      Object.entries(attrs || {}).forEach(([k, v]) => {
+        if (v === false || v == null) return;
+        if (k === "text") e.textContent = v;
+        else if (k === "class") e.className = v;
+        else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+        else e.setAttribute(k, v === true ? "" : v);
+      });
+      kids.flat().forEach((c) => { if (c != null) e.append(c.nodeType ? c : document.createTextNode(String(c))); });
+      return e;
+    }
+
     function render(tableId, headers, rows) {
       const table = document.getElementById(tableId);
       table.replaceChildren();
       const thead = table.createTHead().insertRow();
-      headers.forEach((h) => {
-        const th = document.createElement("th");
-        th.textContent = h;
-        thead.appendChild(th);
-      });
+      headers.forEach((t) => { const th = document.createElement("th"); th.textContent = t; thead.appendChild(th); });
       const tbody = table.createTBody();
       if (rows.length === 0) {
         const td = tbody.insertRow().insertCell();
@@ -60,40 +94,352 @@
       }
       rows.forEach((r) => {
         const tr = tbody.insertRow();
-        r.forEach((v) => { tr.insertCell().textContent = v ?? ""; });
+        r.forEach((v) => { const td = tr.insertCell(); if (v && v.nodeType) td.appendChild(v); else td.textContent = v ?? ""; });
       });
     }
 
     // แสดงเวลาที่บันทึก (DB เก็บเป็น UTC) ตามเขตเวลาของอุปกรณ์ผู้ใช้ (รองรับหลายประเทศ ไม่ฝังเวลาไทย)
     function fmtTime(v) {
       if (!v) return "";
-      return new Date(v).toLocaleString("en-GB", {
-        hour12: false,
-        year: "numeric", month: "2-digit", day: "2-digit",
-        hour: "2-digit", minute: "2-digit"
-      });
+      return new Date(v).toLocaleString("en-GB", { hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
     }
 
     async function load(table, order, cols, tableId, headers, toRow) {
       const { data, error } = await sb.from(table).select(cols)
-        .order(order, { ascending: false })
-        .order("created_at", { ascending: false }).limit(50);
-      if (error) {
-        msg.textContent = "โหลดข้อมูลไม่สำเร็จ: " + error.message;
-        msg.className = "msg error"; msg.hidden = false;
-        return;
-      }
+        .order(order, { ascending: false }).order("created_at", { ascending: false }).limit(50);
+      if (error) { showMsg("โหลดข้อมูลไม่สำเร็จ: " + error.message, false); return; }
       render(tableId, headers, data.map(toRow));
     }
 
-    load("incident_reports", "occurred_on",
-      "occurred_on, occurred_time, location, type, description, created_at, plants(code), incident_types(name_th)",
-      "t-incident", ["วันที่-เวลาเกิดเหตุ", "Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "บันทึกเมื่อ"],
-      (r) => [
-        r.occurred_on + (r.occurred_time ? " " + r.occurred_time.slice(0, 5) : ""),
-        r.plants ? r.plants.code : "",
-        r.incident_types ? r.incident_types.name_th : r.type,   // รายงานเก่ามีเฉพาะ type เดิม
-        r.location, r.description, fmtTime(r.created_at)]);
+    // ---------- รายการตัวเลือก (Master list) ----------
+    let LK = {}, TYPES = [];
+    async function loadMasters() {
+      const a = await sb.from("lookup_values").select("kind, code, name_th, sort_order")
+        .eq("active", true).order("sort_order").order("code");
+      LK = {};
+      (a.data || []).forEach((r) => { (LK[r.kind] = LK[r.kind] || []).push(r); });
+      const t = await sb.from("incident_types").select("id, code, name_th").eq("active", true).order("sort_order");
+      TYPES = t.data || [];
+    }
+    const lkName = (kind, code) => { const f = (LK[kind] || []).find((x) => x.code === code); return f ? f.name_th : code; };
+    const typeName = (id) => { const f = TYPES.find((x) => x.id === id); return f ? f.name_th : id; };
+
+    // ---------- นิยามฟิลด์ที่แก้ได้ (ต้องตรงกับ whitelist ใน incident_editable_fields ของฐานข้อมูล) ----------
+    const LBL = {
+      occurred_on: "วันที่เกิดเหตุ", occurred_time: "เวลาเกิดเหตุ", location: "จุดเกิดเหตุ", description: "เกิดอะไรขึ้น",
+      incident_type_id: "ประเภทเหตุการณ์", department_text: "แผนก", how_text: "เกิดขึ้นอย่างไร (How)",
+      why_text: "ทำไมจึงเกิด (Why)", immediate_action: "การดำเนินการทันที", high_hazard_code: "High hazard",
+      system_failure_code: "System / Program failure", root_cause_code: "Root cause", is_recordable: "Recordable",
+      is_serious_potential: "Serious / Potentially serious", role_in_case: "บทบาท", injury_type_code: "ชนิดการบาดเจ็บ",
+      body_part_codes: "ตำแหน่งที่บาดเจ็บ", phase: "สถานะ"
+    };
+    const ROLE_TH = { injured: "ผู้บาดเจ็บ", witness: "พยาน", other: "อื่น ๆ" };
+    // mgr = เฉพาะ SHE/Admin ของ Plant (ตรงกับ incident_classify_guard) ; req = จำเป็นต้องมีค่า (คอลัมน์ NOT NULL)
+    const REPORT_FIELDS = [
+      { k: "occurred_on", t: "date", req: true }, { k: "occurred_time", t: "time" },
+      { k: "location", t: "text", req: true }, { k: "description", t: "area", req: true },
+      { k: "incident_type_id", t: "type", req: true }, { k: "department_text", t: "text" },
+      { k: "how_text", t: "area" }, { k: "why_text", t: "area" }, { k: "immediate_action", t: "area" },
+      { k: "high_hazard_code", t: "lk", kind: "high_hazard" },
+      { k: "system_failure_code", t: "lk", kind: "system_failure", mgr: true },
+      { k: "root_cause_code", t: "lk", kind: "root_cause", mgr: true },
+      { k: "is_recordable", t: "bool", mgr: true }, { k: "is_serious_potential", t: "bool", mgr: true }
+    ];
+    const PERSON_FIELDS = [
+      { k: "role_in_case", t: "role", req: true }, { k: "injury_type_code", t: "lk", kind: "injury_type" },
+      { k: "body_part_codes", t: "multi", kind: "body_part" }
+    ];
+
+    function fmtVal(k, v) {
+      if (v === null || v === undefined || v === "" || (Array.isArray(v) && !v.length)) return "—";
+      if (typeof v === "boolean") return v ? "ใช่" : "ไม่ใช่";
+      if (k === "incident_type_id") return typeName(v);
+      if (k === "occurred_time") return String(v).slice(0, 5);
+      if (k === "role_in_case") return ROLE_TH[v] || v;
+      if (k === "phase") return v === "closed" ? "Closed" : "Open";
+      if (k === "body_part_codes") return v.map((c) => lkName("body_part", c)).join(", ");
+      const f = REPORT_FIELDS.concat(PERSON_FIELDS).find((x) => x.k === k);
+      if (f && f.t === "lk") return lkName(f.kind, v);
+      return String(v);
+    }
+    const norm = (k, v) => {
+      if (Array.isArray(v)) return v.length ? JSON.stringify([...v].sort()) : null;
+      if (k === "occurred_time" && v) return String(v).slice(0, 5);
+      if (v === "" || v === undefined) return null;
+      return v;
+    };
+    const same = (k, a, b) => norm(k, a) === norm(k, b);
+
+    // ---------- สร้างช่องกรอกของแต่ละฟิลด์ ----------
+    function makeInput(f, cur, idPrefix) {
+      const id = idPrefix + f.k;
+      let control, get;
+      const opts = (list, curVal) => {
+        const s = h("select", { id }); s.append(h("option", { value: "", text: "— ไม่ระบุ —" }));
+        list.forEach((o) => s.append(h("option", { value: o.code, text: o.name_th })));
+        if (curVal && !list.some((o) => o.code === curVal)) s.append(h("option", { value: curVal, text: curVal + " (ไม่ active)" }));
+        s.value = curVal || ""; return s;
+      };
+      if (f.t === "date" || f.t === "time" || f.t === "text") {
+        control = h("input", { id, type: f.t });
+        control.value = f.t === "time" ? (cur ? String(cur).slice(0, 5) : "") : (cur ?? "");
+        get = () => (control.value.trim() === "" ? null : control.value.trim());
+      } else if (f.t === "area") {
+        control = h("textarea", { id }); control.value = cur ?? "";
+        get = () => (control.value.trim() === "" ? null : control.value.trim());
+      } else if (f.t === "type") {
+        control = h("select", { id });
+        TYPES.forEach((o) => control.append(h("option", { value: o.id, text: o.name_th })));
+        if (cur && !TYPES.some((o) => o.id === cur)) control.append(h("option", { value: cur, text: "(ประเภทที่ปิดใช้งาน)" }));
+        control.value = cur || ""; get = () => control.value || null;
+      } else if (f.t === "lk") {
+        control = opts(LK[f.kind] || [], cur); get = () => control.value || null;
+      } else if (f.t === "role") {
+        control = h("select", { id });
+        Object.entries(ROLE_TH).forEach(([v, t]) => control.append(h("option", { value: v, text: t })));
+        control.value = cur || "injured"; get = () => control.value;
+      } else if (f.t === "bool") {
+        control = h("select", { id });
+        [["", "— ไม่ระบุ —"], ["true", "ใช่"], ["false", "ไม่ใช่"]].forEach(([v, t]) => control.append(h("option", { value: v, text: t })));
+        control.value = cur === true ? "true" : cur === false ? "false" : "";
+        get = () => (control.value === "" ? null : control.value === "true");
+      } else if (f.t === "multi") {
+        const list = LK[f.kind] || []; const have = new Set(cur || []);
+        control = h("div", { id, role: "group" });
+        const boxes = [];
+        const all = list.concat([...have].filter((c) => !list.some((o) => o.code === c)).map((c) => ({ code: c, name_th: c + " (ไม่ active)" })));
+        all.forEach((o) => {
+          const cb = h("input", { type: "checkbox", value: o.code }); cb.checked = have.has(o.code); boxes.push(cb);
+          control.append(h("label", { class: "chk" }, cb, o.name_th));
+        });
+        get = () => { const v = boxes.filter((b) => b.checked).map((b) => b.value); return v.length ? v : null; };
+      }
+      return { control, get, label: h("label", { for: id, text: LBL[f.k] + (f.req ? " *" : "") }) };
+    }
+
+    // ---------- สรุปการเปลี่ยนแปลง ----------
+    function describeChanges(changes, mapOld) {
+      // changes: {report:{k:v | {old,new}}, persons:{id:{k:...}}}; mapOld(scope,id,k) คืนค่าเดิมกรณีเป็นคำขอ (ยังไม่มี old)
+      const out = [];
+      const line = (label, k, v, scope, pid) => {
+        const isDiff = v && typeof v === "object" && !Array.isArray(v) && ("old" in v || "new" in v);
+        const nw = isDiff ? v.new : v;
+        const old = isDiff ? v.old : (mapOld ? mapOld(scope, pid, k) : undefined);
+        out.push(label + ": " + (old === undefined ? "" : fmtVal(k, old) + " → ") + fmtVal(k, nw));
+      };
+      Object.entries(changes.report || {}).forEach(([k, v]) => line(LBL[k] || k, k, v, "report"));
+      Object.entries(changes.persons || {}).forEach(([pid, fs]) => {
+        const n = (state.persons.findIndex((p) => p.id === pid) + 1) || "?";
+        Object.entries(fs).forEach(([k, v]) => line("ผู้เกี่ยวข้อง #" + n + " · " + (LBL[k] || k), k, v, "person", pid));
+      });
+      return out;
+    }
+
+    // แปลข้อความ error ของ RPC เป็นภาษาไทย (ข้อความจริงมาจากฐานข้อมูล; สิทธิ์จริงบังคับที่ฐานข้อมูลเสมอ)
+    function errTh(e) {
+      const m = (e && e.message) || "";
+      const map = [
+        [/Reason must be/i, "เหตุผลต้องมีอย่างน้อย 10 ตัวอักษร"], [/note is required/i, "การปฏิเสธต้องระบุหมายเหตุ"],
+        [/closed/i, "รายงานถูกปิดแล้ว ต้องให้ Admin เปิดใหม่ (Reopen) ก่อนจึงจะแก้ได้"], [/No changes/i, "ไม่มีการเปลี่ยนแปลงจากค่าเดิม"],
+        [/Cannot decide your own/i, "ไม่สามารถอนุมัติ/ปฏิเสธคำขอของตัวเองได้"], [/duplicate key/i, "คุณมีคำขอที่รอดำเนินการของรายงานนี้อยู่แล้ว"],
+        [/Only the reporter/i, "เฉพาะผู้รายงานเท่านั้นที่ขอแก้ไขได้"], [/Only SHE|Only Admin|permission|42501/i, "คุณไม่มีสิทธิ์ทำรายการนี้"],
+        [/Invalid .*code|check constraint|violates/i, "ข้อมูลไม่ถูกต้องตามกติกาของระบบ: " + m],
+        [/not editable/i, "ฟิลด์นี้ไม่อนุญาตให้แก้ไข"], [/is deleted/i, "รายงานนี้ถูกลบแล้ว"]
+      ];
+      const hit = map.find(([re]) => re.test(m));
+      return hit ? hit[1] : "ดำเนินการไม่สำเร็จ: " + m;
+    }
+
+    // ---------- รายงานอุบัติเหตุ: ตาราง + แผงรายละเอียด ----------
+    let me = null, pendingCount = {};
+    const state = { inc: null, persons: [], log: [], reqs: [] };
+    const isMgrRole = () => me && me.status === "active" && ["she", "admin", "super_admin"].includes(me.role);
+    const isAdminRole = () => me && me.status === "active" && ["admin", "super_admin"].includes(me.role);
+
+    async function loadIncidents() {
+      const { data, error } = await sb.from("incident_reports")
+        .select("id, reporter_id, phase, deleted_at, occurred_on, occurred_time, location, type, description, created_at, plants(code), incident_types(name_th)")
+        .order("occurred_on", { ascending: false }).order("created_at", { ascending: false }).limit(50);
+      if (error) { showMsg("โหลดข้อมูลไม่สำเร็จ: " + error.message, false); return; }
+      const rq = await sb.from("incident_edit_requests").select("incident_id").eq("status", "pending");
+      pendingCount = {};
+      (rq.data || []).forEach((r) => { pendingCount[r.incident_id] = (pendingCount[r.incident_id] || 0) + 1; });
+      render("t-incident",
+        ["วันที่-เวลาเกิดเหตุ", "Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "สถานะ", "คำขอแก้ไข", "บันทึกเมื่อ", ""],
+        data.map((r) => [
+          r.occurred_on + (r.occurred_time ? " " + r.occurred_time.slice(0, 5) : ""),
+          r.plants ? r.plants.code : "",
+          r.incident_types ? r.incident_types.name_th : r.type,
+          r.location, r.description,
+          h("span", { class: "badge " + (r.phase === "closed" ? "closed" : ""), text: r.phase === "closed" ? "Closed" : "Open" }),
+          pendingCount[r.id] ? h("span", { class: "badge pend", text: "รอ " + pendingCount[r.id] }) : "",
+          fmtTime(r.created_at),
+          h("button", { type: "button", class: "small secondary", text: "รายละเอียด / แก้ไข", onclick: () => openDetail(r.id) })
+        ]));
+    }
+
+    async function openDetail(id) {
+      const box = document.getElementById("detail");
+      const inc = await sb.from("incident_reports")
+        .select("*, plants(code), incident_types(name_th)").eq("id", id).single();
+      if (inc.error || !inc.data) { showMsg("เปิดรายงานไม่สำเร็จ: " + ((inc.error && inc.error.message) || ""), false); return; }
+      const [ps, lg, rq] = await Promise.all([
+        sb.from("incident_persons").select("*").eq("incident_id", id).order("created_at"),
+        sb.from("incident_edit_log").select("*").eq("incident_id", id).order("created_at", { ascending: false }),
+        sb.from("incident_edit_requests").select("*").eq("incident_id", id).order("created_at", { ascending: false })
+      ]);
+      state.inc = inc.data; state.persons = ps.data || []; state.log = lg.data || []; state.reqs = rq.data || [];
+      renderDetail(box);
+      box.hidden = false; box.scrollIntoView({ block: "start" });
+    }
+
+    function renderDetail(box) {
+      const inc = state.inc, closed = inc.phase === "closed", deleted = !!inc.deleted_at;
+      const mgr = isMgrRole(), reporter = me && inc.reporter_id === me.id;
+      box.replaceChildren();
+      box.append(h("h3", { text: "รายงาน " + inc.occurred_on + " · " + (inc.plants ? inc.plants.code : "") }));
+
+      // 1) ข้อมูลปัจจุบัน
+      const dl = h("dl");
+      REPORT_FIELDS.forEach((f) => { dl.append(h("dt", { text: LBL[f.k] }), h("dd", { text: fmtVal(f.k, inc[f.k]) })); });
+      dl.append(h("dt", { text: "สถานะ" }), h("dd", { text: fmtVal("phase", inc.phase) + (inc.closed_at ? " (" + fmtTime(inc.closed_at) + ")" : "") }));
+      box.append(h("h4", { text: "ข้อมูลปัจจุบัน" }), dl);
+      state.persons.forEach((p, i) => {
+        box.append(h("p", {}, h("strong", { text: "ผู้เกี่ยวข้อง #" + (i + 1) + ": " }),
+          fmtVal("role_in_case", p.role_in_case) + " | ชนิดการบาดเจ็บ: " + fmtVal("injury_type_code", p.injury_type_code) +
+          " | ตำแหน่ง: " + fmtVal("body_part_codes", p.body_part_codes)));
+      });
+
+      // 2) คำขอแก้ไข
+      if (state.reqs.length) {
+        box.append(h("h4", { text: "คำขอแก้ไข" }));
+        state.reqs.forEach((q) => box.append(reqBox(q, mgr)));
+      }
+
+      // 3) ฟอร์มแก้ไข / ขอแก้ไข
+      if (deleted) box.append(h("p", { class: "msg error", text: "รายงานนี้ถูกลบแล้ว" }));
+      else if (closed) {
+        box.append(h("p", { class: "msg error", text: "รายงานนี้ปิดแล้ว (Closed) แก้ไขไม่ได้ ต้องให้ Admin เปิดใหม่ (Reopen) พร้อมเหตุผลก่อน" }));
+        if (isAdminRole()) box.append(reopenForm());
+      } else if (mgr || reporter) {
+        box.append(editForm(mgr));
+        if (mgr) box.append(closeForm());
+      }
+
+      // 4) ประวัติ
+      box.append(h("h4", { text: "ประวัติการแก้ไข" }));
+      if (!state.log.length) box.append(h("p", { text: "ยังไม่มีประวัติการแก้ไข" }));
+      const ACT = { edit: "แก้ไขโดย SHE/Admin", approve_edit: "แก้ไขตามคำขอ (อนุมัติแล้ว)", close: "ปิดรายงาน (Close)", reopen: "เปิดรายงานใหม่ (Reopen)" };
+      state.log.forEach((l) => {
+        const lines = describeChanges(l.changes || {});
+        box.append(h("div", { class: "logbox" }, h("strong", { text: ACT[l.action] || l.action }),
+          h("small", { text: "  " + fmtTime(l.created_at) }), h("div", { text: "เหตุผล: " + l.reason }),
+          lines.map((t) => h("div", { text: "• " + t }))));
+      });
+      box.append(h("div", { class: "rowbtns" }, h("button", { type: "button", class: "secondary small", text: "ปิดแผงนี้", onclick: () => { box.hidden = true; } })));
+    }
+
+    function reqBox(q, mgr) {
+      const old = (scope, pid, k) => scope === "report" ? state.inc[k] : (state.persons.find((p) => p.id === pid) || {})[k];
+      const ST = { pending: "รอดำเนินการ", approved: "อนุมัติแล้ว", rejected: "ไม่อนุมัติ", cancelled: "ยกเลิกแล้ว" };
+      const mine = me && q.requested_by === me.id;
+      const div = h("div", { class: "reqbox " + q.status },
+        h("strong", { text: ST[q.status] || q.status }), h("small", { text: "  " + fmtTime(q.created_at) + (mine ? " · คำขอของคุณ" : "") }),
+        h("div", { text: "เหตุผลที่ขอ: " + q.reason }),
+        describeChanges(q.changes || {}, old).map((t) => h("div", { text: "• " + t })));
+      if (q.decision_note) div.append(h("div", { text: "หมายเหตุผู้พิจารณา: " + q.decision_note }));
+      if (q.status === "pending") {
+        const row = h("div", { class: "rowbtns" });
+        if (mine) row.append(h("button", { type: "button", class: "small btn-danger-outline", text: "ยกเลิกคำขอ",
+          onclick: () => act(sb.rpc("cancel_incident_edit", { req: q.id }), "ยกเลิกคำขอแล้ว") }));
+        if (mgr && !mine) {
+          const note = h("input", { type: "text", placeholder: "หมายเหตุ (จำเป็นเมื่อปฏิเสธ)", "aria-label": "หมายเหตุการพิจารณา", maxlength: "500" });
+          row.append(
+            h("button", { type: "button", class: "small btn-ok", text: "อนุมัติ (จะแก้ข้อมูลทันที)",
+              onclick: () => act(sb.rpc("decide_incident_edit", { req: q.id, approve: true, note: note.value.trim() || null }), "อนุมัติและแก้ไขข้อมูลแล้ว") }),
+            note,
+            h("button", { type: "button", class: "small btn-danger-outline", text: "ไม่อนุมัติ",
+              onclick: () => {
+                if (note.value.trim().length < 3) { showMsg("การไม่อนุมัติต้องระบุหมายเหตุ (อย่างน้อย 3 ตัวอักษร)", false); note.focus(); return; }
+                act(sb.rpc("decide_incident_edit", { req: q.id, approve: false, note: note.value.trim() }), "บันทึกการไม่อนุมัติแล้ว");
+              } }));
+        }
+        div.append(row);
+      }
+      return div;
+    }
+
+    function editForm(mgr) {
+      const inc = state.inc;
+      const wrap = h("div", { class: "editgrid" });
+      wrap.append(h("h4", { text: mgr ? "แก้ไขรายงาน (SHE/Admin) — ต้องระบุเหตุผล" : "ขอแก้ไขรายงาน — SHE/Admin จะพิจารณา" }));
+      wrap.append(h("p", { text: mgr
+        ? "การแก้ไขมีผลทันทีและบันทึกประวัติ (ค่าเดิม → ค่าใหม่ ผู้แก้ เหตุผล)"
+        : "แก้เฉพาะช่องที่ต้องการ แล้วระบุเหตุผล ข้อมูลจะเปลี่ยนต่อเมื่อ SHE/Admin อนุมัติ" }));
+      const rf = REPORT_FIELDS.filter((f) => mgr || !f.mgr).map((f) => ({ f, i: makeInput(f, inc[f.k], "e-") }));
+      rf.forEach(({ i }) => wrap.append(i.label, i.control));
+      const pf = state.persons.map((p, n) => {
+        const box = h("div", { class: "personedit" }, h("strong", { text: "ผู้เกี่ยวข้อง #" + (n + 1) }));
+        const items = PERSON_FIELDS.map((f) => ({ f, i: makeInput(f, p[f.k], "p" + n + "-") }));
+        items.forEach(({ i }) => box.append(i.label, i.control));
+        wrap.append(box); return { p, items };
+      });
+      const reason = h("textarea", { id: "e-reason", required: true, maxlength: "1000", "aria-describedby": "e-reason-help" });
+      wrap.append(h("label", { for: "e-reason", text: "เหตุผลที่แก้ไข * (อย่างน้อย 10 ตัวอักษร)" }), reason,
+        h("small", { id: "e-reason-help", text: "ตัวอย่าง: ระบุตำแหน่งบาดเจ็บผิด ตรวจสอบกับใบรายงานแพทย์แล้ว" }));
+
+      const btn = h("button", { type: "button", class: "btn-ok", text: mgr ? "บันทึกการแก้ไข" : "ส่งคำขอแก้ไข" });
+      btn.addEventListener("click", () => {
+        const changes = { report: {}, persons: {} };
+        for (const { f, i } of rf) {
+          const v = i.get();
+          if (f.req && v === null) { showMsg("ช่อง \"" + LBL[f.k] + "\" ห้ามเว้นว่าง", false); i.control.focus(); return; }
+          if (!same(f.k, inc[f.k], v)) changes.report[f.k] = v;
+        }
+        pf.forEach(({ p, items }) => {
+          const d = {};
+          items.forEach(({ f, i }) => { const v = i.get(); if (!same(f.k, p[f.k], v)) d[f.k] = v; });
+          if (Object.keys(d).length) changes.persons[p.id] = d;
+        });
+        if (!Object.keys(changes.report).length && !Object.keys(changes.persons).length) { showMsg("ยังไม่มีการเปลี่ยนแปลงจากค่าเดิม", false); return; }
+        const rs = reason.value.trim();
+        if (rs.length < 10) { showMsg("กรุณาระบุเหตุผลอย่างน้อย 10 ตัวอักษร", false); reason.focus(); return; }
+        if (mgr) act(sb.rpc("edit_incident", { inc: inc.id, changes, reason: rs }), "บันทึกการแก้ไขเรียบร้อย");
+        else act(sb.rpc("request_incident_edit", { inc: inc.id, changes, reason: rs }), "ส่งคำขอแก้ไขเรียบร้อย รอ SHE/Admin พิจารณา");
+      });
+      wrap.append(h("div", { class: "rowbtns" }, btn));
+      return wrap;
+    }
+
+    function closeForm() {
+      const r = h("input", { type: "text", placeholder: "หมายเหตุการปิด (ไม่บังคับ)", maxlength: "500", "aria-label": "หมายเหตุการปิด" });
+      return h("div", {}, h("h4", { text: "ปิดรายงาน (Close)" }),
+        h("p", { text: "เมื่อปิดแล้วจะแก้ไขไม่ได้ ต้องให้ Admin เปิดใหม่ (Reopen) พร้อมเหตุผล" }),
+        h("div", { class: "rowbtns" }, r, h("button", { type: "button", class: "btn-danger-outline", text: "ปิดรายงาน (Close)",
+          onclick: () => act(sb.rpc("close_incident", { inc: state.inc.id, reason: r.value.trim() || null }), "ปิดรายงานแล้ว") })));
+    }
+
+    function reopenForm() {
+      const r = h("input", { type: "text", placeholder: "เหตุผลที่เปิดใหม่ (อย่างน้อย 10 ตัวอักษร)", maxlength: "500", "aria-label": "เหตุผลที่เปิดใหม่" });
+      return h("div", { class: "rowbtns" }, r, h("button", { type: "button", class: "btn-ok", text: "เปิดรายงานใหม่ (Reopen)",
+        onclick: () => act(sb.rpc("reopen_incident", { inc: state.inc.id, reason: r.value.trim() }), "เปิดรายงานใหม่แล้ว") }));
+    }
+
+    // เรียก RPC -> แจ้งผล -> โหลดตารางและแผงใหม่ (สิทธิ์จริงตัดสินที่ฐานข้อมูล ไม่ใช่หน้านี้)
+    async function act(promise, okText) {
+      document.querySelectorAll("#detail button").forEach((b) => { b.disabled = true; });
+      const { error } = await promise;
+      if (error) { showMsg(errTh(error), false); document.querySelectorAll("#detail button").forEach((b) => { b.disabled = false; }); return; }
+      showMsg(okText, true);
+      await loadIncidents();
+      await openDetail(state.inc.id);
+    }
+
+    (async () => {
+      me = await getMyProfile();
+      await loadMasters();
+      await loadIncidents();
+    })();
 
     load("checklist_inspections", "inspected_on",
       "inspected_on, area, items, note, created_at",
