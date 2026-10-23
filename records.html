@@ -20,7 +20,27 @@
     .editgrid label.chk{display:inline-flex;align-items:center;gap:.3rem;margin:.2rem .8rem .2rem 0;font-weight:400}
     .personedit{border:1px dashed var(--line);border-radius:8px;padding:.6rem .8rem;margin:.6rem 0}
     .reqbox,.logbox{border-left:4px solid var(--line);padding:.4rem .8rem;margin:.5rem 0}
-    .reqbox.pending{border-left-color:var(--brand)}
+    /* สีตามสถานะคำขอ: เหลือง=รอ, เขียว=อนุมัติ, แดง=ไม่อนุมัติ, เทา=ยกเลิก */
+    .reqbox{border-radius:0 8px 8px 0;border-left-width:6px}
+    .reqbox.pending{border-left-color:#e0a100;background:#fff8e1}
+    .reqbox.approved{border-left-color:#1b7a3d;background:#eaf6ee}
+    .reqbox.rejected{border-left-color:#c62828;background:#fdecec}
+    .reqbox.cancelled{border-left-color:#8a94a6;background:#f3f4f6}
+    .stchip{display:inline-block;padding:.1rem .7rem;border-radius:999px;font-weight:700;font-size:.9rem;color:#fff;margin-right:.4rem}
+    .stchip.pending{background:#b57a00}.stchip.approved{background:#1b7a3d}.stchip.rejected{background:#c62828}.stchip.cancelled{background:#6b7385}
+    .notebox{margin-top:.3rem;padding:.35rem .6rem;border-radius:6px;background:#fff;border:1px solid #f0b4b4;font-weight:600}
+    .reqbox.approved .notebox{border-color:#a9d7b8}
+    .resultbox{border-left:6px solid;border-radius:0 8px 8px 0;padding:.6rem .9rem;margin:.6rem 0;font-weight:600}
+    .resultbox.rejected{background:#fdecec;border-color:#c62828;color:#8e1b1b}
+    .resultbox.approved{background:#eaf6ee;border-color:#1b7a3d;color:#14532d}
+    .resultbox small{display:block;font-weight:400;color:#333;margin-top:.15rem}
+    .badge.rejected{background:#fdecec;border-color:#e08a8a;color:#8e1b1b}
+    .badge.approved{background:#eaf6ee;border-color:#8cc5a0;color:#14532d}
+    .badge.cancelled{background:#f3f4f6;color:#555}
+    #t-incident tr.needs-action td{background:#fff8e1}
+    #t-incident tr.needs-action td:first-child{box-shadow:inset 5px 0 0 #e0a100}
+    .nextbox{border-left-width:6px}
+    .nextbox .now{font-size:1.1rem}
     .logbox small,.reqbox small{color:#555}
     dialog#reqdlg{width:min(720px,94vw);max-height:88vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem}
     dialog#reqdlg::backdrop{background:rgba(0,0,0,.45)}
@@ -31,6 +51,28 @@
     .badge.closed{background:#eee}.badge.pend{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
     .badge.review{background:#e8f0ff;border-color:#9db8ea;color:#082c69}.badge.invest{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
     .badge.done{background:#e6f4ea;border-color:#8cc5a0;color:#14532d}
+    /* กรอบแยกสีตามหมวด: อ่านง่าย แยกแยะได้เร็ว (ไม่ใช้สีอย่างเดียว: มีหัวข้อและไอคอนกำกับ) */
+    .group{border-width:1px 1px 1px 6px}
+    .group h4{font-size:1.05rem}
+    .group.g-what{border-color:#9db8ea #9db8ea #9db8ea #1f5fc4;background:#f5f8ff}.g-what h4{color:#143f8a}
+    .group.g-people{border-color:#c9b6ea #c9b6ea #c9b6ea #6d3fb8;background:#f8f4ff}.g-people h4{color:#4b2587}
+    .group.g-she{border-color:#f0c58a #f0c58a #f0c58a #d9730d;background:#fff7ec}.g-she h4{color:#8a4300}
+    #detail details.editdet{border-color:#9ccfae;border-left:6px solid #1b7a3d;background:#f1faf4}
+    #detail details.editdet>summary{color:#14532d}
+    #detail details.histdet{border-color:#c9ced8;border-left:6px solid #6b7385;background:#f4f5f8}
+    #detail details.histdet>summary{color:#3d4454}
+    #detail>h4{padding:.3rem .7rem;border-radius:6px;background:#eef1f7;border-left:6px solid #e0a100}
+    /* ตารางแต่ละหมวดมีสีหัวตารางต่างกัน + แถวสลับสี */
+    #t-incident thead th{background:#dbe7fb;color:#0d3478;border-bottom:3px solid #1f5fc4}
+    #t-checklist thead th{background:#d9f0ee;color:#0b5a54;border-bottom:3px solid #14897f}
+    #t-training thead th{background:#ece3fa;color:#4b2587;border-bottom:3px solid #6d3fb8}
+    .tablewrap tbody tr:nth-child(even) td{background:#f7f9fc}
+    #t-incident tbody tr:hover td{background:#eef4ff}
+    #t-incident tbody tr.needs-action td{background:#fff3cd}
+    h3.sec-incident,h3.sec-check,h3.sec-train{padding:.35rem .8rem;border-radius:6px;margin-top:1.5rem}
+    h3.sec-incident{background:#dbe7fb;border-left:6px solid #1f5fc4;color:#0d3478}
+    h3.sec-check{background:#d9f0ee;border-left:6px solid #14897f;color:#0b5a54}
+    h3.sec-train{background:#ece3fa;border-left:6px solid #6d3fb8;color:#4b2587}
     .sr{position:absolute;left:-9999px}
     #t-incident td button{white-space:nowrap}
     /* แถบ Flow 4 ขั้นตอน */
@@ -86,15 +128,15 @@
     <p id="msg" role="status" class="msg" hidden></p>
     <p><small>ระบบแสดงเฉพาะข้อมูลที่คุณมีสิทธิ์ดู พนักงานทั่วไปเห็นเฉพาะรายงานของตัวเอง</small></p>
 
-    <h3>รายงานอุบัติเหตุ</h3>
+    <h3 class="sec-incident">รายงานอุบัติเหตุ</h3>
     <div class="tablewrap"><table id="t-incident"></table></div>
     <section id="detail" aria-live="polite" hidden></section>
     <dialog id="reqdlg" aria-labelledby="reqdlg-t"></dialog>
 
-    <h3>เช็กลิสต์ตรวจ</h3>
+    <h3 class="sec-check">เช็กลิสต์ตรวจ</h3>
     <div class="tablewrap"><table id="t-checklist"></table></div>
 
-    <h3>บันทึกการอบรม</h3>
+    <h3 class="sec-train">บันทึกการอบรม</h3>
     <div class="tablewrap"><table id="t-training"></table></div>
   </main>
 
@@ -317,7 +359,7 @@
     }
 
     // ---------- รายงานอุบัติเหตุ: ตาราง + แผงรายละเอียด ----------
-    let me = null, pendingCount = {}, pendingSum = {}, detailId = null, dlgInc = null;
+    let me = null, pendingCount = {}, pendingSum = {}, lastReq = {}, detailId = null, dlgInc = null;
     const state = { inc: null, persons: [], log: [], reqs: [] };
     const isMgrRole = () => me && me.status === "active" && ["she", "admin", "super_admin"].includes(me.role);
     const isAdminRole = () => me && me.status === "active" && ["admin", "super_admin"].includes(me.role);
@@ -327,9 +369,12 @@
         .select("id, reporter_id, phase, deleted_at, occurred_on, occurred_time, location, type, description, created_at, plants(code), incident_types(name_th)")
         .order("occurred_on", { ascending: false }).order("created_at", { ascending: false }).limit(50);
       if (error) { showMsg("โหลดข้อมูลไม่สำเร็จ: " + error.message, false); return; }
-      const rq = await sb.from("incident_edit_requests").select("incident_id, changes").eq("status", "pending");
-      pendingCount = {}; pendingSum = {};
+      const rq = await sb.from("incident_edit_requests").select("incident_id, status, changes, decision_note, created_at")
+        .order("created_at", { ascending: false }).limit(1000);
+      pendingCount = {}; pendingSum = {}; lastReq = {};
       (rq.data || []).forEach((r) => {
+        if (!lastReq[r.incident_id]) lastReq[r.incident_id] = r;   // เรียงใหม่สุดก่อน → ตัวแรกคือล่าสุด
+        if (r.status !== "pending") return;
         pendingCount[r.incident_id] = (pendingCount[r.incident_id] || 0) + 1;
         const set = (pendingSum[r.incident_id] = pendingSum[r.incident_id] || new Set());
         Object.keys((r.changes || {}).report || {}).forEach((k) => set.add(LBL[k] || k));
@@ -347,11 +392,20 @@
           fmtTime(r.created_at),
           h("button", { type: "button", class: "small", text: "เปิดดู", "aria-label": "เปิดดูรายงาน " + r.occurred_on + " " + r.location, onclick: () => openDetail(r.id) })
         ]));
+      // ไฮไลต์แถวที่ SHE/Admin ต้องลงมือ (มีคำขอรอพิจารณา)
+      if (isMgrRole()) document.querySelectorAll("#t-incident tbody tr").forEach((tr, i) => { if (data[i] && pendingCount[data[i].id]) tr.classList.add("needs-action"); });
     }
 
     // คอลัมน์ "คำขอแก้ไข": SHE/Admin เห็นสรุปว่าขอแก้อะไร และกดเพื่อพิจารณาได้ทันทีโดยไม่ต้องเปิดรายงาน
+    // ถ้าไม่มีคำขอค้าง จะแสดงผลของคำขอล่าสุด (อนุมัติ/ไม่อนุมัติ/ยกเลิก) ด้วยสีที่ต่างกัน
+    const RST = { approved: "อนุมัติแล้ว", rejected: "ไม่อนุมัติ", cancelled: "ยกเลิกแล้ว" };
     function pendCell(r) {
-      const n = pendingCount[r.id]; if (!n) return "";
+      const n = pendingCount[r.id];
+      if (!n) {
+        const l = lastReq[r.id]; if (!l || !RST[l.status]) return "";
+        return h("div", {}, h("span", { class: "badge " + l.status, text: (l.status === "rejected" ? "✕ " : l.status === "approved" ? "✓ " : "") + RST[l.status] }),
+          l.status === "rejected" && l.decision_note ? h("small", { class: "pendsum", text: "เหตุผล: " + l.decision_note }) : null);
+      }
       const sum = pendingSum[r.id] ? [...pendingSum[r.id]].join(", ") : "";
       if (!isMgrRole()) return h("span", { class: "badge pend", text: "รอพิจารณา " + n });
       return h("div", {},
@@ -451,10 +505,10 @@
       else { now = "รอ SHE ตรวจสอบรายงานของคุณ"; next = "ขั้นต่อไป: SHE จะตรวจสอบและจัดประเภทเหตุการณ์ คุณไม่ต้องทำอะไรเพิ่ม" + (reporter ? " (หากข้อมูลผิด กดปุ่ม \"ข้อมูลไม่ถูกต้อง? ขอแก้ไข\" ด้านล่าง)" : ""); }
       return h("div", { class: "nextbox", role: "status" }, h("div", { class: "now", text: "ตอนนี้: " + now }), h("div", { text: next }));
     }
-    function groupOf(title, keys) {
+    function groupOf(title, keys, cls) {
       const dl = h("dl");
       keys.forEach((k) => dl.append(h("dt", { text: LBL[k] }), h("dd", { text: fmtVal(k, state.inc[k]) })));
-      return h("div", { class: "group" }, h("h4", { text: title }), dl);
+      return h("div", { class: "group " + (cls || "") }, h("h4", { text: title }), dl);
     }
 
     function renderDetail(box) {
@@ -464,19 +518,25 @@
       box.append(h("h3", { text: "รายงานเหตุการณ์ " + inc.occurred_on + " · " + (inc.plants ? inc.plants.code : "") }),
         stepper(inc), nextBox(inc, mgr, reporter));
       const pend = state.reqs.filter((q) => q.status === "pending");
+      const lastDone = state.reqs.find((q) => q.status !== "pending" && q.status !== "cancelled");
+      if (!pend.length && lastDone && reporter && lastDone.requested_by === me.id) {
+        box.append(h("div", { class: "resultbox " + lastDone.status, role: "status" },
+          lastDone.status === "rejected" ? "✕ คำขอแก้ไขล่าสุดของคุณ ไม่ได้รับอนุมัติ — ข้อมูลยังเป็นค่าเดิม" : "✓ คำขอแก้ไขล่าสุดของคุณ ได้รับอนุมัติแล้ว — ข้อมูลถูกแก้ไขแล้ว",
+          lastDone.decision_note ? h("small", { text: "หมายเหตุจาก SHE: " + lastDone.decision_note }) : null));
+      }
       if (pend.length) box.append(h("div", { class: "alertbox", role: "status", text:
         mgr ? "มีคำขอแก้ไข " + pend.length + " รายการรอคุณพิจารณา (ดูด้านล่าง)" : "คุณมีคำขอแก้ไขที่รอ SHE พิจารณาอยู่ ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" }));
 
       // ข้อมูลปัจจุบัน แบ่งกลุ่มให้อ่านง่าย
-      box.append(groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"]));
-      const pg = h("div", { class: "group" }, h("h4", { text: "ผู้เกี่ยวข้อง" }));
+      box.append(groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"], "g-what"));
+      const pg = h("div", { class: "group g-people" }, h("h4", { text: "ผู้เกี่ยวข้อง" }));
       if (!state.persons.length) pg.append(h("p", { text: "ไม่มีข้อมูลผู้เกี่ยวข้อง" }));
       state.persons.forEach((p, i) => pg.append(h("p", {}, h("strong", { text: "คนที่ " + (i + 1) + ": " }),
         fmtVal("role_in_case", p.role_in_case) + " | ชนิดการบาดเจ็บ: " + fmtVal("injury_type_code", p.injury_type_code) +
         " | ตำแหน่ง: " + fmtVal("body_part_codes", p.body_part_codes))));
       box.append(pg);
       const cls = ["high_hazard_code", "system_failure_code", "root_cause_code", "is_recordable", "is_serious_potential"];
-      const cg = groupOf("การจัดประเภทโดย SHE", cls);
+      const cg = groupOf("การจัดประเภทโดย SHE", cls, "g-she");
       if (cls.every((k) => inc[k] === null || inc[k] === undefined)) cg.append(h("small", { text: "SHE ยังไม่ได้จัดประเภท (ปกติจะทำในขั้น \"SHE ตรวจสอบ\")" }));
       box.append(cg);
 
@@ -517,10 +577,10 @@
       const ST = { pending: "รอดำเนินการ", approved: "อนุมัติแล้ว", rejected: "ไม่อนุมัติ", cancelled: "ยกเลิกแล้ว" };
       const mine = me && q.requested_by === me.id;
       const div = h("div", { class: "reqbox " + q.status },
-        h("strong", { text: ST[q.status] || q.status }), h("small", { text: "  " + fmtTime(q.created_at) + (mine ? " · คำขอของคุณ" : "") }),
+        h("span", { class: "stchip " + q.status, text: (q.status === "rejected" ? "✕ " : q.status === "approved" ? "✓ " : "") + (ST[q.status] || q.status) }), h("small", { text: "  " + fmtTime(q.created_at) + (mine ? " · คำขอของคุณ" : "") }),
         h("div", { text: "เหตุผลที่ขอ: " + q.reason }),
         describeChanges(q.changes || {}, old).map((t) => h("div", { text: "• " + t })));
-      if (q.decision_note) div.append(h("div", { text: "หมายเหตุผู้พิจารณา: " + q.decision_note }));
+      if (q.decision_note) div.append(h("div", { class: "notebox", text: "หมายเหตุผู้พิจารณา: " + q.decision_note }));
       if (q.status === "pending") {
         const row = h("div", { class: "rowbtns" });
         if (mine) row.append(h("button", { type: "button", class: "small btn-danger-outline", text: "ยกเลิกคำขอ",
