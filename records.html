@@ -51,6 +51,15 @@
     .badge.closed{background:#eee}.badge.pend{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
     .badge.review{background:#e8f0ff;border-color:#9db8ea;color:#082c69}.badge.invest{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
     .badge.done{background:#e6f4ea;border-color:#8cc5a0;color:#14532d}
+    .filterbar{display:flex;flex-wrap:wrap;gap:.6rem .9rem;align-items:flex-end;padding:.7rem .9rem;margin:0 0 .8rem;border:1px solid var(--line);border-radius:10px;background:#f7f9fd}
+    .filterbar label{display:flex;flex-direction:column;font-size:.85rem;font-weight:600;gap:.15rem}
+    .filterbar input,.filterbar select{padding:.45rem .6rem;border:1px solid #9aa6bb;border-radius:8px;font:inherit;background:#fff;min-width:9rem;max-width:100%}
+    .filterbar input[type=search]{min-width:14rem}
+    .pager{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:-.9rem 0 1.5rem}
+    .pager .info{color:#444;font-size:.9rem}
+    #t-incident td.desc{max-width:18rem}
+    #t-incident td.desc>div{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    #t-incident td small.sub{display:block;color:#555;margin-top:.15rem}
     .sr{position:absolute;left:-9999px}
     #t-incident td button{white-space:nowrap}
     /* แถบ Flow 4 ขั้นตอน */
@@ -107,7 +116,9 @@
     <p><small>ระบบแสดงเฉพาะข้อมูลที่คุณมีสิทธิ์ดู พนักงานทั่วไปเห็นเฉพาะรายงานของตัวเอง</small></p>
 
     <h3>รายงานอุบัติเหตุ</h3>
+    <form id="filterbar" class="filterbar" aria-label="ตัวกรองรายงานอุบัติเหตุ"></form>
     <div class="tablewrap"><table id="t-incident"></table></div>
+    <nav id="pager" class="pager" aria-label="เปลี่ยนหน้า"></nav>
     <section id="detail" aria-live="polite" hidden></section>
     <dialog id="reqdlg" aria-labelledby="reqdlg-t"></dialog>
 
@@ -342,13 +353,70 @@
     const isMgrRole = () => me && me.status === "active" && ["she", "admin", "super_admin"].includes(me.role);
     const isAdminRole = () => me && me.status === "active" && ["admin", "super_admin"].includes(me.role);
 
+    // ---------- ตัวกรอง + แบ่งหน้า (กรองที่ฐานข้อมูล ไม่ดึงทั้งหมดมากรองในเบราว์เซอร์) ----------
+    const PAGE = 25;
+    const flt = { from: "", to: "", plant: "", type: "", stage: "", req: "", q: "", page: 0 };
+    let PLANTS = [], totalRows = 0;
+    const STAGE_OPTS = [["", "ทุกขั้นตอน"], ["flash", "รอ SHE ตรวจสอบ"], ["investigation", "กำลังสอบสวน"], ["closed", "ปิดเคสแล้ว"]];
+    function buildFilterBar() {
+      const f = document.getElementById("filterbar"); f.replaceChildren();
+      const sel = (id, label, opts, key) => {
+        const s = h("select", { id }); opts.forEach(([v, t]) => s.append(h("option", { value: v, text: t }))); s.value = flt[key];
+        return h("label", { for: id }, label, s);
+      };
+      const inp = (id, label, type, key) => { const i = h("input", { id, type }); i.value = flt[key]; return h("label", { for: id }, label, i); };
+      f.append(
+        inp("f-from", "วันที่เกิดเหตุ ตั้งแต่", "date", "from"), inp("f-to", "ถึง", "date", "to"),
+        sel("f-plant", "Plant", [["", "ทุก Plant"]].concat(PLANTS.map((p) => [p.id, p.code])), "plant"),
+        sel("f-type", "ประเภท", [["", "ทุกประเภท"]].concat(TYPES.map((t) => [t.id, t.name_th])), "type"),
+        sel("f-stage", "ขั้นตอน", STAGE_OPTS, "stage"),
+        isMgrRole() ? sel("f-req", "คำขอแก้ไข", [["", "ทั้งหมด"], ["pending", "เฉพาะที่รอพิจารณา"]], "req") : null,
+        inp("f-q", "ค้นหา (จุดเกิดเหตุ / รายละเอียด)", "search", "q"),
+        h("button", { type: "submit", class: "small", text: "ค้นหา" }),
+        h("button", { type: "button", class: "secondary small", text: "ล้างตัวกรอง", onclick: () => {
+          Object.assign(flt, { from: "", to: "", plant: "", type: "", stage: "", req: "", q: "", page: 0 }); buildFilterBar(); loadIncidents(); } }));
+      f.onsubmit = (e) => {
+        e.preventDefault();
+        const g = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
+        Object.assign(flt, { from: g("f-from"), to: g("f-to"), plant: g("f-plant"), type: g("f-type"), stage: g("f-stage"), req: g("f-req"), q: g("f-q").trim(), page: 0 });
+        loadIncidents();
+      };
+    }
+    function renderPager() {
+      const nav = document.getElementById("pager"); nav.replaceChildren();
+      const pages = Math.max(1, Math.ceil(totalRows / PAGE));
+      nav.append(h("span", { class: "info", text: totalRows ? "ทั้งหมด " + totalRows + " รายการ · หน้า " + (flt.page + 1) + " / " + pages : "ไม่พบรายการตามเงื่อนไข" }));
+      if (pages > 1) nav.append(
+        h("button", { type: "button", class: "secondary small", text: "← ก่อนหน้า", disabled: flt.page <= 0, onclick: () => { flt.page--; loadIncidents(); } }),
+        h("button", { type: "button", class: "secondary small", text: "ถัดไป →", disabled: flt.page >= pages - 1, onclick: () => { flt.page++; loadIncidents(); } }));
+    }
+
     async function loadIncidents() {
-      const { data, error } = await sb.from("incident_reports")
-        .select("id, reporter_id, phase, deleted_at, occurred_on, occurred_time, location, type, description, created_at, plants(code), incident_types(name_th)")
-        .order("occurred_on", { ascending: false }).order("created_at", { ascending: false }).limit(50);
+      let pendIds = null;
+      if (flt.req === "pending") {
+        const p = await sb.from("incident_edit_requests").select("incident_id").eq("status", "pending").limit(1000);
+        pendIds = [...new Set((p.data || []).map((x) => x.incident_id))];
+      }
+      let q = sb.from("incident_reports")
+        .select("id, reporter_id, phase, deleted_at, occurred_on, occurred_time, location, type, description, created_at, plants(code), incident_types(name_th)", { count: "exact" });
+      if (flt.from) q = q.gte("occurred_on", flt.from);
+      if (flt.to) q = q.lte("occurred_on", flt.to);
+      if (flt.plant) q = q.eq("plant_id", flt.plant);
+      if (flt.type) q = q.eq("incident_type_id", flt.type);
+      if (flt.stage) q = q.eq("phase", flt.stage);
+      if (pendIds) q = pendIds.length ? q.in("id", pendIds) : q.eq("id", "00000000-0000-0000-0000-000000000000");
+      const term = flt.q.replace(/[,()%*\\_]/g, " ").trim();   // ตัดอักขระพิเศษของ PostgREST filter ออก
+      if (term) q = q.or("location.ilike.%" + term + "%,description.ilike.%" + term + "%");
+      q = q.order("occurred_on", { ascending: false }).order("created_at", { ascending: false })
+        .range(flt.page * PAGE, flt.page * PAGE + PAGE - 1);
+      const { data, error, count } = await q;
       if (error) { showMsg("โหลดข้อมูลไม่สำเร็จ: " + error.message, false); return; }
-      const rq = await sb.from("incident_edit_requests").select("incident_id, status, changes, decision_note, created_at")
-        .order("created_at", { ascending: false }).limit(1000);
+      totalRows = typeof count === "number" ? count : (data || []).length;
+      if (!(data || []).length && flt.page > 0) { flt.page = 0; return loadIncidents(); }
+      // ดึงคำขอแก้ไขเฉพาะรายงานที่แสดงอยู่ในหน้านี้
+      const ids = data.map((r) => r.id);
+      const rq = ids.length ? await sb.from("incident_edit_requests").select("incident_id, status, changes, decision_note, created_at")
+        .in("incident_id", ids).order("created_at", { ascending: false }) : { data: [] };
       pendingCount = {}; pendingSum = {}; lastReq = {};
       (rq.data || []).forEach((r) => {
         if (!lastReq[r.incident_id]) lastReq[r.incident_id] = r;   // เรียงใหม่สุดก่อน → ตัวแรกคือล่าสุด
@@ -359,19 +427,24 @@
         if (Object.keys((r.changes || {}).persons || {}).length) set.add("ข้อมูลผู้เกี่ยวข้อง");
       });
       render("t-incident",
-        ["วันที่-เวลาเกิดเหตุ", "Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "ตอนนี้อยู่ขั้นตอน", "คำขอแก้ไข", "ส่งเมื่อ", ""],
+        ["วันที่-เวลาเกิดเหตุ / Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "ตอนนี้อยู่ขั้นตอน", "คำขอแก้ไข", "ส่งเมื่อ", ""],
         data.map((r) => [
-          r.occurred_on + (r.occurred_time ? " " + r.occurred_time.slice(0, 5) : ""),
-          r.plants ? r.plants.code : "",
+          h("div", {}, r.occurred_on + (r.occurred_time ? " " + r.occurred_time.slice(0, 5) : ""),
+            h("small", { class: "sub", text: r.plants ? r.plants.code : "" })),
           r.incident_types ? r.incident_types.name_th : r.type,
-          r.location, r.description,
+          r.location,
+          h("div", { title: r.description || "", text: r.description || "" }),
           statusBadge(r),
           pendCell(r),
           fmtTime(r.created_at),
           h("button", { type: "button", class: "small", text: "เปิดดู", "aria-label": "เปิดดูรายงาน " + r.occurred_on + " " + r.location, onclick: () => openDetail(r.id) })
         ]));
-      // ไฮไลต์แถวที่ SHE/Admin ต้องลงมือ (มีคำขอรอพิจารณา)
-      if (isMgrRole()) document.querySelectorAll("#t-incident tbody tr").forEach((tr, i) => { if (data[i] && pendingCount[data[i].id]) tr.classList.add("needs-action"); });
+      document.querySelectorAll("#t-incident tbody tr").forEach((tr, i) => {
+        if (tr.cells[3]) tr.cells[3].classList.add("desc");
+        // ไฮไลต์แถวที่ SHE/Admin ต้องลงมือ (มีคำขอรอพิจารณา)
+        if (isMgrRole() && data[i] && pendingCount[data[i].id]) tr.classList.add("needs-action");
+      });
+      renderPager();
     }
 
     // คอลัมน์ "คำขอแก้ไข": SHE/Admin เห็นสรุปว่าขอแก้อะไร และกดเพื่อพิจารณาได้ทันทีโดยไม่ต้องเปิดรายงาน
@@ -387,7 +460,7 @@
       const sum = pendingSum[r.id] ? [...pendingSum[r.id]].join(", ") : "";
       if (!isMgrRole()) return h("span", { class: "badge pend", text: "รอพิจารณา " + n });
       return h("div", {},
-        h("button", { type: "button", class: "badge pend", text: "รอพิจารณา " + n + " · กดเพื่อพิจารณา", title: "ขอแก้: " + sum,
+        h("button", { type: "button", class: "badge pend", text: "รอพิจารณา " + n + " ›", title: "ขอแก้: " + sum,
           "aria-label": "พิจารณาคำขอแก้ไข " + n + " รายการ ของรายงาน " + r.occurred_on + " " + r.location, onclick: () => openReqDialog(r.id) }),
         sum ? h("small", { class: "pendsum", text: "ขอแก้: " + sum }) : null);
     }
@@ -680,6 +753,9 @@
     (async () => {
       me = await getMyProfile();
       await loadMasters();
+      const pl = await sb.from("plants").select("id, code").order("code");
+      PLANTS = pl.data || [];
+      buildFilterBar();
       await loadIncidents();
     })();
 
