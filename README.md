@@ -50,7 +50,7 @@ Live demo: [https://shewebapp.com](https://shewebapp.com) (ใช้บัญช
 
 ## How to Run
 
-1. สร้างโปรเจกต์ใน Supabase แล้วรัน `schema.sql` แล้วตามด้วย `migration-A…` ถึง `migration-B14…` (B13a–c = Permission Matrix, B14 = ประกาศสำคัญ) ตามลำดับ ใน SQL Editor (รันแต่ละไฟล์ครั้งเดียว)
+1. สร้างโปรเจกต์ใน Supabase แล้วรัน `schema.sql` แล้วตามด้วย `migration-A…` ถึง `migration-B15…` (B13a–c = Permission Matrix, B14 = ประกาศสำคัญ, B15 = บันทึกผู้รับทราบ) ตามลำดับ ใน SQL Editor (รันแต่ละไฟล์ครั้งเดียว)
 2. ใส่ Project URL และ **publishable key** ใน `config.js`
 3. อัปโหลดขึ้น GitHub Pages
 4. Authentication → URL Configuration: ตั้ง Site URL และ Redirect URL ให้ตรงตัว (ไม่ใช้ wildcard)
@@ -71,7 +71,7 @@ Live demo: [https://shewebapp.com](https://shewebapp.com) (ใช้บัญช
 
 - ไฟล์ CSV ตั้งความกว้างคอลัมน์ไม่ได้ (Excel อาจแสดง `########` ในคอลัมน์วันที่ ให้ AutoFit)
 - ยังไม่มี: ขั้นตอน Investigation (5 Why/Actions), การมอบหมาย Action ให้ทีมอื่น (ต้องมีบัญชีและล็อกอินเสมอ), การแจ้งเตือนทางอีเมล, Executive Dashboard, ไฟล์แนบ, Gap Assessment, ภาษา English/မြန်မာ (ปุ่มปิดไว้)
-- ปุ่ม "รับทราบ" ของประกาศจำไว้ในเบราว์เซอร์ของผู้ใช้เท่านั้น (ไม่มีบันทึกส่วนกลาง); ตัวเลือก Plant เป็นตัวกรองหน้าจอ ไม่ใช่การให้สิทธิ์
+- การรับทราบประกาศบันทึกลงฐานข้อมูล (B15) ผู้ดูแลดูรายชื่อได้; ยังไม่มีการเตือนผู้ที่ยังไม่รับทราบ; ตัวเลือก Plant เป็นตัวกรองหน้าจอ ไม่ใช่การให้สิทธิ์
 - ยังไม่ได้ทดสอบ Export โหมด "1 แถวต่อผู้เกี่ยวข้อง" และสิทธิ์ MD บนระบบจริง
 - เป็น personal project สำหรับเรียนรู้ ยังไม่ผ่านการ security review อย่างเป็นทางการ
 

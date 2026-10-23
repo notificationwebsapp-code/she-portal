@@ -50,9 +50,14 @@
 
       <h3>รายการประกาศ</h3>
       <div class="tablewrap"><table id="t">
-        <thead><tr><th>หัวข้อ</th><th>ระดับ</th><th>ขอบเขต</th><th>ช่วงเวลา</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+        <thead><tr><th>หัวข้อ</th><th>ระดับ</th><th>ขอบเขต</th><th>ช่วงเวลา</th><th>สถานะ</th><th>รับทราบ</th><th>การทำงาน</th></tr></thead>
         <tbody></tbody>
       </table></div>
+      <div id="ackbox" hidden style="margin-top:1.25rem">
+        <h3 id="ack-title">ผู้รับทราบ</h3>
+        <p><small>ข้อมูลนี้เป็นข้อมูลส่วนบุคคล ใช้เพื่อเป็นหลักฐานการสื่อสารด้าน SHE เท่านั้น (ISO 45001 ข้อ 7.4)</small></p>
+        <div class="tablewrap"><table id="ack-t"><thead><tr><th>#</th><th>ชื่อ</th><th>รหัสพนักงาน</th><th>เวลารับทราบ</th></tr></thead><tbody></tbody></table></div>
+      </div>
     </div>
   </main>
 
@@ -91,12 +96,16 @@
       const r = await sb.from("announcements").select("id, plant_id, severity, title, body, starts_at, ends_at, active, plants(code)").order("created_at", { ascending: false }).limit(200);
       const tb = $("t").querySelector("tbody"); tb.replaceChildren();
       if (r.error) { msg("โหลดรายการไม่สำเร็จ: " + r.error.message, false); return; }
-      if (!(r.data || []).length) { const tr = el("tr"); const td = el("td", null, "ยังไม่มีประกาศ"); td.colSpan = 6; tr.appendChild(td); tb.appendChild(tr); return; }
+      if (!(r.data || []).length) { const tr = el("tr"); const td = el("td", null, "ยังไม่มีประกาศ"); td.colSpan = 7; tr.appendChild(td); tb.appendChild(tr); return; }
+      const cr = await sb.rpc("announcement_ack_counts"); const counts = {};
+      if (!cr.error) (cr.data || []).forEach((c) => { counts[c.announcement_id] = Number(c.ack_count); });
       r.data.forEach((x) => {
         const tr = el("tr"); tr.appendChild(el("td", null, x.title)); tr.appendChild(el("td", null, SEV[x.severity] || x.severity));
         tr.appendChild(el("td", null, x.plants && x.plants.code ? x.plants.code : "ทุก Plant"));
         tr.appendChild(el("td", null, fmt(x.starts_at) + " → " + fmt(x.ends_at)));
         const st = status(x), td = el("td"); td.appendChild(el("span", st[1], st[0])); tr.appendChild(td);
+        const ak = el("td"); const kb = el("button", "secondary small", (counts[x.id] || 0) + " คน"); kb.type = "button";
+        kb.addEventListener("click", () => showAcks(x)); ak.appendChild(kb); tr.appendChild(ak);
         const act = el("td");
         const eb = el("button", "secondary small", "แก้ไข"); eb.type = "button"; eb.addEventListener("click", () => startEdit(x)); act.appendChild(eb);
         const tg = el("button", (x.active ? "btn-danger-outline" : "btn-ok-outline") + " small", x.active ? "ปิดใช้งาน" : "เปิดใช้งาน"); tg.type = "button";
@@ -108,6 +117,16 @@
         });
         act.appendChild(tg); tr.appendChild(act); tb.appendChild(tr);
       });
+    }
+    /* รายชื่อผู้รับทราบ (เฉพาะ Admin / SHE ของ Plant นั้น — ฟังก์ชันฝั่งฐานข้อมูลตรวจสิทธิ์อีกชั้น) */
+    async function showAcks(x) {
+      const box = $("ackbox"); box.hidden = false; $("ack-title").textContent = "ผู้รับทราบ: " + x.title;
+      const tb = $("ack-t").querySelector("tbody"); tb.replaceChildren();
+      const r = await sb.rpc("announcement_ack_report", { p_announcement: x.id });
+      if (r.error) { const tr = el("tr"); const td = el("td", null, "โหลดรายชื่อไม่สำเร็จ: " + r.error.message); td.colSpan = 4; tr.appendChild(td); tb.appendChild(tr); return; }
+      if (!(r.data || []).length) { const tr = el("tr"); const td = el("td", null, "ยังไม่มีผู้รับทราบ"); td.colSpan = 4; tr.appendChild(td); tb.appendChild(tr); }
+      (r.data || []).forEach((k, i) => { const tr = el("tr"); tr.appendChild(el("td", null, String(i + 1))); tr.appendChild(el("td", null, k.full_name || "(ไม่ระบุชื่อ)")); tr.appendChild(el("td", null, k.employee_code || "-")); tr.appendChild(el("td", null, fmt(k.acked_at))); tb.appendChild(tr); });
+      box.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
     function startEdit(x) {
       editing = x.id; $("f-title").textContent = "แก้ไขประกาศ"; $("a-save").textContent = "บันทึกการแก้ไข"; $("a-cancel").hidden = false;

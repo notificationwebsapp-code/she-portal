@@ -82,7 +82,10 @@
         const r = await sb.from("announcements").select("id, plant_id, severity, title, body, starts_at, ends_at, active, plants(code)")
           .eq("active", true).lte("starts_at", new Date().toISOString()).order("starts_at", { ascending: false }).limit(20);
         if (r.error) return;
-        const now = Date.now(), p = plantId(), done = acked();
+        const now = Date.now(), p = plantId();
+        /* รวมรายการที่รับทราบแล้วจากเซิร์ฟเวอร์ (B15) กับที่จำในเบราว์เซอร์ */
+        let done = acked();
+        try { const ar = await sb.from("announcement_acks").select("announcement_id"); if (!ar.error) done = done.concat((ar.data || []).map((k) => k.announcement_id)); } catch (e) { /* ใช้เฉพาะค่าในเบราว์เซอร์ */ }
         const rows = (r.data || []).filter((x) => (!x.ends_at || Date.parse(x.ends_at) > now) && !done.includes(x.id) && (!p || !x.plant_id || x.plant_id === p))
           .sort((a, b) => (ORDER[a.severity] - ORDER[b.severity])).slice(0, 3);
         rows.forEach((x) => {
@@ -93,7 +96,16 @@
           main.appendChild(head); if (x.body) main.appendChild(mk("p", "annbody", x.body));
           main.appendChild(mk("p", "annmeta", "ขอบเขต: " + (x.plants && x.plants.code ? x.plants.code : "ทุก Plant") + (x.ends_at ? " · ถึง " + new Date(x.ends_at).toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", day: "numeric", month: "short", year: "numeric" }) : "")));
           const b = mk("button", "ackbtn", "รับทราบ"); b.type = "button";
-          b.addEventListener("click", () => { ack(x.id); a.remove(); if (!box.children.length && $("annmgr").hidden) sec.hidden = true; });
+          b.addEventListener("click", async () => {
+            b.disabled = true; b.textContent = "กำลังบันทึก…";
+            const w = await sb.from("announcement_acks").insert({ announcement_id: x.id });
+            if (w.error && w.error.code !== "23505") { /* 23505 = เคยรับทราบแล้ว ถือว่าสำเร็จ */
+              b.disabled = false; b.textContent = "ลองอีกครั้ง";
+              let em = a.querySelector(".ackerr"); if (!em) { em = mk("p", "annmeta ackerr"); main.appendChild(em); }
+              em.textContent = "บันทึกการรับทราบไม่สำเร็จ กรุณาลองอีกครั้ง"; return;
+            }
+            ack(x.id); a.remove(); if (!box.children.length && $("annmgr").hidden) sec.hidden = true;
+          });
           a.appendChild(main); a.appendChild(b); frag.appendChild(a);
         });
         box.replaceChildren(frag); /* แทนที่ทั้งชุดหลังโหลดเสร็จ กันซ้ำเมื่อเรียกพร้อมกัน */
