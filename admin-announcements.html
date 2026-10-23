@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ประกาศสำคัญ | SHE Portal</title>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- ซ่อนจนกว่าจะยืนยันว่าเป็น SHE/Admin (ซ่อนหน้าจอเท่านั้น สิทธิ์จริงคุมที่ RLS ของตาราง announcements) -->
+    <div id="area" hidden>
+      <h2>ประกาศสำคัญ</h2>
+      <p>สร้าง แก้ไข หรือปิดประกาศที่แสดงเป็นแบนเนอร์บนหน้าแรก · SHE ประกาศได้เฉพาะ Plant ที่ตนดูแล · ประกาศ "ทุก Plant" สร้างได้เฉพาะ Admin · ห้ามใส่ข้อมูลส่วนบุคคลหรือความลับ</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <form id="f" class="addform" autocomplete="off">
+        <h3 id="f-title" style="margin-top:0">สร้างประกาศใหม่</h3>
+        <div class="grid2">
+          <div><label for="a-plant">ขอบเขต (Plant)</label><br><select id="a-plant" required></select></div>
+          <div><label for="a-sev">ระดับ</label><br>
+            <select id="a-sev"><option value="info">ข้อมูล (info)</option><option value="moderate">ปานกลาง (moderate)</option><option value="critical">วิกฤต (critical)</option></select></div>
+        </div>
+        <div style="margin-top:.75rem"><label for="a-title">หัวข้อ <small>(1–120 ตัวอักษร)</small></label><br><input type="text" id="a-title" maxlength="120" required></div>
+        <div style="margin-top:.75rem"><label for="a-body">รายละเอียด <small>(ไม่เกิน 1,000 ตัวอักษร)</small></label><br><textarea id="a-body" rows="3" maxlength="1000"></textarea></div>
+        <div class="grid2" style="margin-top:.75rem">
+          <div><label for="a-start">เริ่มแสดง</label><br><input type="datetime-local" id="a-start" required></div>
+          <div><label for="a-end">สิ้นสุด <small>(เว้นว่าง = ไม่กำหนด)</small></label><br><input type="datetime-local" id="a-end"></div>
+        </div>
+        <div style="margin-top:.75rem"><label><input type="checkbox" id="a-active" checked> เปิดใช้งาน</label></div>
+        <div class="actions" style="margin-top:.9rem">
+          <button type="submit" class="btn-ok" id="a-save">+ สร้างประกาศ</button>
+          <button type="button" class="secondary" id="a-cancel" hidden>ยกเลิกการแก้ไข</button>
+        </div>
+      </form>
+
+      <h3>รายการประกาศ</h3>
+      <div class="tablewrap"><table id="t">
+        <thead><tr><th>หัวข้อ</th><th>ระดับ</th><th>ขอบเขต</th><th>ช่วงเวลา</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // หมายเหตุ: หน้านี้เป็นเพียงหน้าจอ ความปลอดภัยจริงอยู่ที่ RLS ของตาราง announcements (migration B14)
+    // แสดงข้อมูลด้วย textContent เท่านั้น
+    const $ = (id) => document.getElementById(id);
+    const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+    const SEV = { info: "ข้อมูล", moderate: "ปานกลาง", critical: "วิกฤต" };
+    let me = null, plants = [], editing = null;
+    const msg = (text, ok) => { const m = $("msg"); m.hidden = false; m.className = "msg " + (ok ? "ok" : "error"); m.textContent = text; m.scrollIntoView({ behavior: "smooth", block: "nearest" }); };
+    const isAdmin = () => me && (me.role === "admin" || me.role === "super_admin");
+    const toLocal = (iso) => { if (!iso) return ""; const d = new Date(iso); const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes()); };
+    const fmt = (iso) => iso ? new Date(iso).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", day: "2-digit", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "ไม่กำหนด";
+
+    function resetForm() {
+      editing = null; $("f").reset(); $("f-title").textContent = "สร้างประกาศใหม่"; $("a-save").textContent = "+ สร้างประกาศ"; $("a-cancel").hidden = true;
+      $("a-start").value = toLocal(new Date().toISOString()); $("a-active").checked = true;
+    }
+    function fillPlants() {
+      const sel = $("a-plant"); sel.replaceChildren();
+      if (isAdmin()) { const o = el("option", null, "ทุก Plant (ส่วนกลาง)"); o.value = ""; sel.appendChild(o); }
+      plants.forEach((p) => { const o = el("option", null, p.code + " — " + p.name); o.value = p.id; sel.appendChild(o); });
+    }
+    function status(x) {
+      const now = Date.now();
+      if (!x.active) return ["ปิดใช้งาน", "badge cancelled"];
+      if (x.ends_at && Date.parse(x.ends_at) <= now) return ["หมดอายุ", "badge closed"];
+      if (Date.parse(x.starts_at) > now) return ["รอเริ่มแสดง", "badge review"];
+      return ["กำลังแสดง", "badge active"];
+    }
+    async function load() {
+      const r = await sb.from("announcements").select("id, plant_id, severity, title, body, starts_at, ends_at, active, plants(code)").order("created_at", { ascending: false }).limit(200);
+      const tb = $("t").querySelector("tbody"); tb.replaceChildren();
+      if (r.error) { msg("โหลดรายการไม่สำเร็จ: " + r.error.message, false); return; }
+      if (!(r.data || []).length) { const tr = el("tr"); const td = el("td", null, "ยังไม่มีประกาศ"); td.colSpan = 6; tr.appendChild(td); tb.appendChild(tr); return; }
+      r.data.forEach((x) => {
+        const tr = el("tr"); tr.appendChild(el("td", null, x.title)); tr.appendChild(el("td", null, SEV[x.severity] || x.severity));
+        tr.appendChild(el("td", null, x.plants && x.plants.code ? x.plants.code : "ทุก Plant"));
+        tr.appendChild(el("td", null, fmt(x.starts_at) + " → " + fmt(x.ends_at)));
+        const st = status(x), td = el("td"); td.appendChild(el("span", st[1], st[0])); tr.appendChild(td);
+        const act = el("td");
+        const eb = el("button", "secondary small", "แก้ไข"); eb.type = "button"; eb.addEventListener("click", () => startEdit(x)); act.appendChild(eb);
+        const tg = el("button", (x.active ? "btn-danger-outline" : "btn-ok-outline") + " small", x.active ? "ปิดใช้งาน" : "เปิดใช้งาน"); tg.type = "button";
+        tg.addEventListener("click", async () => {
+          if (!confirm((x.active ? "ปิดใช้งาน" : "เปิดใช้งาน") + "ประกาศ \"" + x.title + "\" ?")) return;
+          tg.disabled = true; const u = await sb.from("announcements").update({ active: !x.active }).eq("id", x.id); tg.disabled = false;
+          if (u.error) { msg("ไม่สำเร็จ: " + u.error.message, false); return; }
+          msg("อัปเดตสถานะแล้ว", true); load();
+        });
+        act.appendChild(tg); tr.appendChild(act); tb.appendChild(tr);
+      });
+    }
+    function startEdit(x) {
+      editing = x.id; $("f-title").textContent = "แก้ไขประกาศ"; $("a-save").textContent = "บันทึกการแก้ไข"; $("a-cancel").hidden = false;
+      $("a-plant").value = x.plant_id || ""; $("a-sev").value = x.severity; $("a-title").value = x.title; $("a-body").value = x.body || "";
+      $("a-start").value = toLocal(x.starts_at); $("a-end").value = toLocal(x.ends_at); $("a-active").checked = !!x.active;
+      $("f").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    $("a-cancel").addEventListener("click", resetForm);
+    $("f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const title = $("a-title").value.trim(); if (!title) { msg("กรุณากรอกหัวข้อ", false); return; }
+      const start = $("a-start").value ? new Date($("a-start").value).toISOString() : new Date().toISOString();
+      const end = $("a-end").value ? new Date($("a-end").value).toISOString() : null;
+      if (end && Date.parse(end) <= Date.parse(start)) { msg("เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มแสดง", false); return; }
+      const row = { plant_id: $("a-plant").value || null, severity: $("a-sev").value, title, body: $("a-body").value.trim(), starts_at: start, ends_at: end, active: $("a-active").checked };
+      $("a-save").disabled = true;
+      const r = editing ? await sb.from("announcements").update(row).eq("id", editing) : await sb.from("announcements").insert(row);
+      $("a-save").disabled = false;
+      if (r.error) { msg("บันทึกไม่สำเร็จ: " + (r.error.code === "42501" ? "ไม่มีสิทธิ์ประกาศในขอบเขตนี้" : r.error.message), false); return; }
+      msg(editing ? "บันทึกการแก้ไขแล้ว" : "สร้างประกาศแล้ว", true); resetForm(); load();
+    });
+
+    (async function () {
+      const session = await requireLogin(); if (!session) return;
+      me = await getMyProfile();
+      const gate = $("gate");
+      if (!me || me.status !== "active" || !["she", "admin", "super_admin"].includes(me.role)) { gate.textContent = "หน้านี้สำหรับ SHE และ Admin เท่านั้น"; return; }
+      gate.hidden = true; $("area").hidden = false;
+      const pr = await sb.from("plants").select("id, code, name").eq("active", true).order("code"); plants = pr.data || [];
+      fillPlants(); resetForm(); load();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>

@@ -3,6 +3,7 @@
 (function(){
   var NS="http://www.w3.org/2000/svg";
   var ICONS={
+    pin:"M12 22s7-6.2 7-12a7 7 0 10-14 0c0 5.8 7 12 7 12zm0-9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z",
     bell:"M12 22a2 2 0 002-2h-4a2 2 0 002 2zm6-6V11a6 6 0 10-12 0v5l-2 2v1h16v-1l-2-2z",
     globe:"M12 2a10 10 0 100 20 10 10 0 000-20zm6.9 9h-3a15 15 0 00-1.2-5A8 8 0 0118.9 11zM12 4c.8 1 1.6 3 1.9 7h-3.8C10.4 7 11.2 5 12 4zM4.1 13h3a15 15 0 001.2 5A8 8 0 014.1 13zm3-2h-3A8 8 0 018.3 6a15 15 0 00-1.2 5zM12 20c-.8-1-1.6-3-1.9-7h3.8c-.3 4-1.1 6-1.9 7zm3.7-2a15 15 0 001.2-5h3a8 8 0 01-4.2 5z",
     gear:"M19.4 13a7.7 7.7 0 000-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 00-1.7-1L15 3.3h-4L10.7 6a7.6 7.6 0 00-1.7 1l-2.5-1-2 3.5L6.6 11a7.7 7.7 0 000 2l-2.1 1.6 2 3.5 2.5-1a7.6 7.6 0 001.7 1l.3 2.7h4l.3-2.7a7.6 7.6 0 001.7-1l2.5 1 2-3.5L19.4 13zM12.5 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"
@@ -10,7 +11,7 @@
   function icon(n){var s=document.createElementNS(NS,"svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.setAttribute("focusable","false");var p=document.createElementNS(NS,"path");p.setAttribute("d",ICONS[n]);s.appendChild(p);return s}
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
   var tools=el("div","tools");tools.setAttribute("role","group");tools.setAttribute("aria-label","เครื่องมือ");
-  var open=null,adminBox=null;
+  var open=null,adminBox=null,mgrBox=null;
   function close(){if(open){open.btn.setAttribute("aria-expanded","false");open.pop.hidden=true;open=null}}
   function make(name,label,short,build){
     var w=el("div","toolwrap"),b=el("button","toolbtn");b.type="button";b.setAttribute("aria-label",label);b.setAttribute("aria-haspopup","true");b.setAttribute("aria-expanded","false");b.title=label;
@@ -34,11 +35,42 @@
     if(rc){var d=el("span","belldot",rc>99?"99+":String(rc));d.setAttribute("aria-hidden","true");bellBtn.appendChild(d);bellBtn.setAttribute("aria-label","การแจ้งเตือน มี "+rc+" รายการรอดำเนินการ")}
   }catch(e){if(bellBox)bellBox.replaceChildren(el("p","tpnote","ไม่มีข้อมูลการแจ้งเตือน"))}})();
   /* ตัวสลับภาษาแบบ segmented (ตามแบบ Stitch): ไทย ใช้งานได้ / EN, မြန်မာ ยังไม่เปิด (รอแปลทั้งระบบ) */
-  (function(){var g=el("div","langseg");g.setAttribute("role","group");g.setAttribute("aria-label","ภาษา / Language");
+  var langseg=null;(function(){var g=el("div","langseg");langseg=g;g.setAttribute("role","group");g.setAttribute("aria-label","ภาษา / Language");
     [["ไทย",true,"ภาษาไทย (ใช้งานอยู่)"],["EN",false,"English — เร็ว ๆ นี้"],["မြန်မာ",false,"မြန်မာ — เร็ว ๆ นี้"]].forEach(function(o){
       var b=el("button",o[1]?"on":"off",o[0]);b.type="button";b.title=o[2];b.setAttribute("aria-label",o[2]);
       if(o[1])b.setAttribute("aria-pressed","true");else{b.setAttribute("aria-disabled","true");b.addEventListener("click",function(e){e.preventDefault()})}
       g.appendChild(b)});tools.appendChild(g)})();
+  /* ตัวเลือก Plant ที่หัวเว็บ (ตามแบบ Stitch): เก็บค่าที่เลือกไว้ใน localStorage (แค่ตัวกรองหน้าจอ; สิทธิ์จริงคุมด้วย RLS) */
+  var PKEY="she-plant";
+  function pget(){try{return localStorage.getItem(PKEY)||"all"}catch(e){return "all"}}
+  window.ShePlantFilter={get:function(){return null}};
+  (async function(){try{
+    if(typeof sb==="undefined")return;var ss=await sb.auth.getSession();if(!ss.data.session)return;
+    var r=await sb.from("plants").select("id,code,name").eq("active",true).order("code");
+    var list=r.data||[];if(r.error||!list.length)return;
+    var cur=pget();if(cur!=="all"&&!list.some(function(p){return p.id===cur}))cur="all";
+    window.ShePlantFilter.get=function(){return list.length<2||cur==="all"?null:cur};
+    function lab(){if(list.length===1)return list[0].code;if(cur==="all")return "ทุก Plant";var p=list.filter(function(x){return x.id===cur})[0];return p?p.code:"ทุก Plant"}
+    var btn=make("pin","เลือก Plant","",function(pp){
+      pp.appendChild(el("strong",null,"เลือก Plant"));
+      var box=el("div","plantlist-pop");pp.appendChild(box);
+      function opt(id,text){var b=el("button","tpitem pick",text);b.type="button";b.setAttribute("aria-pressed",String(cur===id));
+        b.addEventListener("click",function(){cur=id;try{localStorage.setItem(PKEY,id)}catch(e){}
+          box.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");
+          tl.textContent=lab();close();document.dispatchEvent(new CustomEvent("she-plant-change",{detail:{plantId:id==="all"?null:id}}))});box.appendChild(b)}
+      if(list.length>1)opt("all","ทุก Plant ที่ฉันเข้าถึงได้");
+      list.forEach(function(p){opt(p.id,p.code+" — "+p.name)});
+      pp.appendChild(el("p","tpnote small","ใช้กรองข้อมูลที่แสดงบนหน้าแรก สิทธิ์การเข้าถึงจริงถูกควบคุมที่ฐานข้อมูล"))});
+    var tl=el("span","tl",lab());btn.appendChild(tl);btn.classList.add("plantbtn");
+    var w=btn.parentNode;if(langseg)tools.insertBefore(w,langseg);
+    if(list.length===1){btn.setAttribute("aria-haspopup","false")}
+    document.dispatchEvent(new CustomEvent("she-plant-ready"));
+  }catch(e){}})();
+  /* ลิงก์จัดการประกาศ (เฉพาะ SHE/Admin): เห็นในเมนูเฟือง */
+  (async function(){try{
+    if(typeof getMyProfile!=="function"||!mgrBox)return;var p=await getMyProfile();
+    if(p&&p.status==="active"&&["she","admin","super_admin"].indexOf(p.role)>-1){var l=el("a","tplink","ประกาศสำคัญ");l.href="admin-announcements.html";if((location.pathname.split("/").pop()||"")==="admin-announcements.html")l.setAttribute("aria-current","page");mgrBox.appendChild(l);mgrBox.hidden=false}
+  }catch(e){}})();
   make("gear","ตั้งค่า","",function(p){
     p.appendChild(el("strong",null,"ตั้งค่าการแสดงผล"));
     p.appendChild(el("p","tpnote small","ขนาดตัวอักษร"));
@@ -49,7 +81,7 @@
         row.querySelectorAll("button").forEach(function(y){y.setAttribute("aria-pressed","false")});x.setAttribute("aria-pressed","true")});
       row.appendChild(x)});
     p.appendChild(row);
-    adminBox=el("div","tpadmin");adminBox.hidden=true;adminBox.appendChild(el("p","tpnote small","ผู้ดูแลระบบ"));p.appendChild(adminBox)});
+    adminBox=el("div","tpadmin");adminBox.hidden=true;adminBox.appendChild(el("p","tpnote small","ผู้ดูแลระบบ"));p.appendChild(adminBox);mgrBox=el("div","tpadmin");mgrBox.hidden=true;mgrBox.appendChild(el("p","tpnote small","การจัดการเนื้อหา"));p.appendChild(mgrBox)});
   function apply(v){document.documentElement.style.fontSize=v==="l"?"112.5%":v==="xl"?"125%":""}
   try{apply(localStorage.getItem("she-fs")||"n")}catch(e){}
   document.addEventListener("click",function(e){if(open&&!open.pop.contains(e.target))close()});

@@ -19,7 +19,10 @@ Live demo: [https://shewebapp.com](https://shewebapp.com) (ใช้บัญช
 - ฟอร์มเช็กลิสต์ตรวจ และบันทึกการอบรม
 - **หน้า "ดูข้อมูล":** แสดงเฉพาะข้อมูลที่ผู้ใช้มีสิทธิ์เห็น (RLS), ตัวกรอง (ค้นหา/ขั้นตอน/วันที่/Plant/ประเภท) + แบ่งหน้า, ไฮไลต์สถานะคำขอแก้ไข, อนุมัติ/ปฏิเสธคำขอจากป๊อปอัปในหน้ารายการ
 - **ส่งออก CSV (SHE, Admin, Super admin, MD):** เลือกคอลัมน์ได้ถึงระดับผู้บาดเจ็บ/ตำแหน่งร่างกาย, 2 โหมดไฟล์ (1 แถวต่อเคส / 1 แถวต่อผู้เกี่ยวข้อง), บันทึกชุดที่เลือกไว้ใช้ซ้ำ (Saved presets เห็นเฉพาะเจ้าของ), ข้อมูลระบุตัวตนเลือกได้เฉพาะ SHE/Admin
-- CI: Unilever CI (Proposed v1.0) ไม่ใส่โลโก้; ตรวจสีตาม WCAG 2.2 AA
+- **Permission Matrix (Super admin กำหนดสิทธิ์รายบทบาท):** แก้ไขตรง / อนุมัติแก้ไข / เพิ่มผู้เกี่ยวข้อง / ปิดเคส / เปิดเคสใหม่ บังคับที่ฐานข้อมูล (B13a–c); Export ควบคุมที่หน้าจอ (ข้อมูลถูกจำกัดด้วย RLS อยู่แล้ว)
+- **หน้าแรก:** ประกาศสำคัญ (B14, แบนเนอร์ตามระดับ ข้อมูล/ปานกลาง/วิกฤต + ปุ่มรับทราบ), ตัวชี้วัดวันปลอด LTI (คำนวณจากเคส LTI/เสียชีวิตที่บันทึกในระบบ), สรุปงานค้าง, การแจ้งเตือนล่าสุด, ตัวเลือก Plant ที่หัวเว็บ
+- **หน้า "ประกาศสำคัญ" (SHE/Admin):** SHE ประกาศเฉพาะ Plant ที่ดูแล, Admin ประกาศทุก Plant; ปิดใช้งานแทนการลบ (มี audit log)
+- ดีไซน์: ตาม Stitch (โทเคนสี primary #005A9C / navy #0B3B60, ปุ่ม ≥ 48px, ไอคอน+ข้อความในสถานะ) ฟอนต์ Inter (SIL OFL 1.1, โฮสต์เอง) + ฟอนต์ไทยของระบบ; ตรวจสีตาม WCAG 2.2 AA
 
 ## Tech Stack
 
@@ -38,14 +41,16 @@ Live demo: [https://shewebapp.com](https://shewebapp.com) (ใช้บัญช
 | `incident.html` | Flash Report + บันทึกร่าง |
 | `checklist.html` / `training.html` | เช็กลิสต์ตรวจ / บันทึกการอบรม |
 | `records.html` | ดูข้อมูล ตัวกรอง อนุมัติคำขอแก้ไข ส่งออก CSV |
-| `admin-users.html` / `admin-master.html` | จัดการผู้ใช้ / Plant แผนก ข้อมูลหลัก |
+| `admin-users.html` / `admin-master.html` / `admin-permissions.html` | จัดการผู้ใช้ / Plant แผนก ข้อมูลหลัก / Permission Matrix |
+| `admin-announcements.html` | จัดการประกาศสำคัญ (SHE/Admin) |
+| `shell-v4.js`, `style-v4.css`, `fonts/` | แถบหัว (เมนู ภาษา ตั้งค่า Plant), สไตล์ v4, ฟอนต์ Inter |
 | `auth.js`, `plant.js`, `draft.js`, `config.js` | session และเมนู, ตัวเลือก Plant, ระบบร่าง, ค่า Supabase (publishable key) |
-| `style.css` | สไตล์ทั้งเว็บ (Unilever CI) |
+| `style.css` | สไตล์พื้นฐาน (ถูกทับด้วย `style-v4.css`) |
 | `schema.sql`, `migration-*.sql`, `test-phase-*.sql` | ตาราง, RLS, GRANT, ชุดทดสอบ |
 
 ## How to Run
 
-1. สร้างโปรเจกต์ใน Supabase แล้วรัน `schema.sql` แล้วตามด้วย `migration-A…` ถึง `migration-B12…` ตามลำดับ ใน SQL Editor (รันแต่ละไฟล์ครั้งเดียว)
+1. สร้างโปรเจกต์ใน Supabase แล้วรัน `schema.sql` แล้วตามด้วย `migration-A…` ถึง `migration-B14…` (B13a–c = Permission Matrix, B14 = ประกาศสำคัญ) ตามลำดับ ใน SQL Editor (รันแต่ละไฟล์ครั้งเดียว)
 2. ใส่ Project URL และ **publishable key** ใน `config.js`
 3. อัปโหลดขึ้น GitHub Pages
 4. Authentication → URL Configuration: ตั้ง Site URL และ Redirect URL ให้ตรงตัว (ไม่ใช้ wildcard)
@@ -65,7 +70,8 @@ Live demo: [https://shewebapp.com](https://shewebapp.com) (ใช้บัญช
 ## Known Limitations
 
 - ไฟล์ CSV ตั้งความกว้างคอลัมน์ไม่ได้ (Excel อาจแสดง `########` ในคอลัมน์วันที่ ให้ AutoFit)
-- ยังไม่มี: ขั้นตอน Investigation (5 Why/Actions), การแจ้งเตือนทางอีเมล, Dashboard, ไฟล์แนบ, Gap Assessment
+- ยังไม่มี: ขั้นตอน Investigation (5 Why/Actions), การมอบหมาย Action ให้ทีมอื่น (ต้องมีบัญชีและล็อกอินเสมอ), การแจ้งเตือนทางอีเมล, Executive Dashboard, ไฟล์แนบ, Gap Assessment, ภาษา English/မြန်မာ (ปุ่มปิดไว้)
+- ปุ่ม "รับทราบ" ของประกาศจำไว้ในเบราว์เซอร์ของผู้ใช้เท่านั้น (ไม่มีบันทึกส่วนกลาง); ตัวเลือก Plant เป็นตัวกรองหน้าจอ ไม่ใช่การให้สิทธิ์
 - ยังไม่ได้ทดสอบ Export โหมด "1 แถวต่อผู้เกี่ยวข้อง" และสิทธิ์ MD บนระบบจริง
 - เป็น personal project สำหรับเรียนรู้ ยังไม่ผ่านการ security review อย่างเป็นทางการ
 

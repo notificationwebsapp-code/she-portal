@@ -243,3 +243,32 @@ main.formcard form,main.flash form{max-width:none}
 .tplink{display:flex;align-items:center;min-height:44px;padding:.3rem .6rem;border-radius:8px;color:var(--navy);text-decoration:none;font-weight:600}
 .tplink:hover{background:var(--accent);color:var(--brand)}
 .tplink[aria-current="page"]{background:var(--accent);color:var(--brand)}
+
+/* ===== v4.3 — Plant selector, ประกาศ, ตัวชี้วัด LTI ===== */
+.plantbtn .tl{max-width:9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toolbtn svg path{fill-rule:evenodd}
+.plantlist-pop{display:grid;gap:.2rem;margin:.4rem 0}
+.tpitem.pick{display:flex;align-items:center;min-height:44px;width:100%;text-align:left;padding:.3rem .7rem;border:1px solid transparent;border-radius:8px;background:#fff;color:var(--navy);font-weight:600;box-shadow:none;cursor:pointer}
+.tpitem.pick:hover{background:var(--accent)}
+.tpitem.pick[aria-pressed="true"]{background:var(--accent);color:var(--brand);border-color:#b9d3e8}
+.tpitem.pick[aria-pressed="true"]::before{content:"✓";margin-right:.5rem}
+.annlist{display:grid;gap:.8rem;margin:0 0 1.25rem}
+.ann{display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;border-radius:var(--radius);padding:1rem 1.25rem;border:1px solid #e0b43a;border-left-width:6px;background:#fff8e1;color:#4a3300}
+.ann.info{border-color:#b9d3e8;background:#eef5fb;color:var(--navy)}
+.ann.critical{border-color:#e0a4a0;background:#fdecea;color:#6e1712}
+.ann .annmain{flex:1;min-width:16rem}
+.ann .annhead{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.3rem}
+.ann .annchip{display:inline-flex;align-items:center;gap:.3rem;border-radius:6px;padding:.1rem .6rem;font-size:.78rem;font-weight:800;letter-spacing:.04em;background:#fff;border:1px solid currentColor}
+.ann .anntitle{font-weight:700;font-size:1.05rem;margin:0}
+.ann .annbody{margin:.3rem 0 0;white-space:pre-line;overflow-wrap:anywhere}
+.ann .annmeta{font-size:.82rem;opacity:.85;margin:.4rem 0 0}
+.ann button.ackbtn{min-height:48px;padding:.4rem 1.2rem;border-radius:8px;border:1px solid currentColor;background:#fff;color:inherit;font-weight:700;cursor:pointer}
+.annmgr{margin:-.5rem 0 1rem;font-size:.9rem}
+.herometric{margin-top:1.2rem;display:flex;gap:1.5rem;align-items:flex-end;flex-wrap:wrap}
+.herometric .big{font-size:3rem;font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.herometric .bigsub{font-size:1.05rem;color:#e6f0f8;margin:.2rem 0 0}
+.herometric .facts{display:flex;gap:.6rem;flex-wrap:wrap;margin:0}
+.herometric .fact{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:.2rem .8rem;font-size:.85rem;color:#fff}
+.herometric .hnote{flex-basis:100%;font-size:.8rem;color:#cfe3f3;margin:0}
+@media(max-width:640px){.herometric .big{font-size:2.2rem}}
+.annmgr a{color:var(--brand);font-weight:700}
