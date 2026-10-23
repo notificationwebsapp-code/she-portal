@@ -415,19 +415,20 @@
       const nav = document.getElementById("pager"); nav.replaceChildren();
       const pages = Math.max(1, Math.ceil(totalRows / PAGE));
       nav.append(h("span", { class: "info", text: totalRows ? "ทั้งหมด " + totalRows + " รายการ · หน้า " + (flt.page + 1) + " / " + pages : "ไม่พบรายการตามเงื่อนไข" }));
+      if (totalRows) nav.append(h("button", { type: "button", class: "secondary small", id: "btn-export", text: "⭳ ส่งออก CSV (ตามตัวกรอง)", onclick: exportCsv }));
       if (pages > 1) nav.append(
         h("button", { type: "button", class: "secondary small", text: "← ก่อนหน้า", disabled: flt.page <= 0, onclick: () => { flt.page--; loadIncidents(); } }),
         h("button", { type: "button", class: "secondary small", text: "ถัดไป →", disabled: flt.page >= pages - 1, onclick: () => { flt.page++; loadIncidents(); } }));
     }
 
-    async function loadIncidents() {
+    // สร้าง query พร้อมเงื่อนไขกรองปัจจุบัน (ใช้ร่วมกันทั้งแสดงตารางและ Export) — สิทธิ์จริงยังถูกบังคับโดย RLS
+    async function filteredQuery(cols, withCount) {
       let pendIds = null;
       if (flt.req === "pending") {
         const p = await sb.from("incident_edit_requests").select("incident_id").eq("status", "pending").limit(1000);
         pendIds = [...new Set((p.data || []).map((x) => x.incident_id))];
       }
-      let q = sb.from("incident_reports")
-        .select("id, reporter_id, phase, deleted_at, occurred_on, occurred_time, location, type, description, created_at, plants(code), incident_types(name_th)", { count: "exact" });
+      let q = sb.from("incident_reports").select(cols, withCount ? { count: "exact" } : undefined);
       if (flt.from) q = q.gte("occurred_on", flt.from);
       if (flt.to) q = q.lte("occurred_on", flt.to);
       if (flt.plant) q = q.eq("plant_id", flt.plant);
@@ -436,9 +437,51 @@
       if (pendIds) q = pendIds.length ? q.in("id", pendIds) : q.eq("id", "00000000-0000-0000-0000-000000000000");
       const term = flt.q.replace(/[,()%*\\_]/g, " ").trim();   // ตัดอักขระพิเศษของ PostgREST filter ออก
       if (term) q = q.or("location.ilike.%" + term + "%,description.ilike.%" + term + "%");
-      q = q.order("occurred_on", { ascending: false }).order("created_at", { ascending: false })
-        .range(flt.page * PAGE, flt.page * PAGE + PAGE - 1);
-      const { data, error, count } = await q;
+      // ห่อใน object: query ของ supabase-js เป็น thenable ถ้า return ตรง ๆ จาก async function จะถูก await (รันไปเลย) ก่อนต่อ .range()
+      return { q: q.order("occurred_on", { ascending: false }).order("created_at", { ascending: false }) };
+    }
+
+    // ---------- Export CSV (ตามตัวกรองและสิทธิ์ของผู้ใช้; ไม่รวมชื่อบุคคล) ----------
+    const EXPORT_MAX = 5000;
+    // ป้องกัน CSV/Formula injection (OWASP): เซลล์ที่ขึ้นต้นด้วย = + - @ หรืออักขระควบคุม ให้นำหน้าด้วย '
+    function csvCell(v) {
+      let t = v === null || v === undefined ? "" : String(v);
+      if (/^[=+\-@\t\r]/.test(t)) t = "'" + t;
+      return /[",\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+    }
+    async function exportCsv() {
+      const btn = document.getElementById("btn-export"); btn.disabled = true; const old = btn.textContent; btn.textContent = "กำลังเตรียมไฟล์…";
+      try {
+        const cols = "occurred_on, occurred_time, location, description, how_text, why_text, immediate_action, phase, deleted_at, created_at, high_hazard_code, system_failure_code, root_cause_code, is_recordable, is_serious_potential, plants(code), incident_types(name_th)";
+        const rows = [];
+        for (let from = 0; from < EXPORT_MAX; from += 1000) {
+          const { q } = await filteredQuery(cols, false);
+          const { data, error } = await q.range(from, from + 999);
+          if (error) { showMsg("ส่งออกไม่สำเร็จ: " + error.message, false); return; }
+          rows.push(...(data || []));
+          if (!data || data.length < 1000) break;
+        }
+        const yn = (v) => (v === true ? "ใช่" : v === false ? "ไม่ใช่" : "");
+        const head = ["วันที่เกิดเหตุ", "เวลา", "Plant", "ประเภท", "จุดเกิดเหตุ", "เกิดอะไรขึ้น", "เกิดขึ้นอย่างไร (How)", "ทำไมจึงเกิด (Why)", "การดำเนินการทันที",
+          "ขั้นตอน", "High hazard", "System failure", "Root cause", "Recordable", "Serious/Potentially serious", "ส่งเมื่อ (UTC)"];
+        const lines = [head.map(csvCell).join(",")].concat(rows.map((r) => [
+          r.occurred_on, r.occurred_time ? r.occurred_time.slice(0, 5) : "", r.plants ? r.plants.code : "", r.incident_types ? r.incident_types.name_th : "",
+          r.location, r.description, r.how_text, r.why_text, r.immediate_action,
+          r.deleted_at ? "ถูกลบ" : r.phase === "closed" ? "ปิดเคสแล้ว" : r.phase === "investigation" ? "กำลังสอบสวน" : "รอ SHE ตรวจสอบ",
+          r.high_hazard_code ? lkName("high_hazard", r.high_hazard_code) : "", r.system_failure_code ? lkName("system_failure", r.system_failure_code) : "",
+          r.root_cause_code ? lkName("root_cause", r.root_cause_code) : "", yn(r.is_recordable), yn(r.is_serious_potential), r.created_at
+        ].map(csvCell).join(",")));
+        const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });   // BOM ให้ Excel อ่านภาษาไทยถูกต้อง
+        const d = new Date(), z = (n) => String(n).padStart(2, "0");
+        const a = h("a", { href: URL.createObjectURL(blob), download: "she-incidents-" + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + "-" + z(d.getHours()) + z(d.getMinutes()) + ".csv" });
+        document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        showMsg("ส่งออก " + rows.length + " รายการเรียบร้อย" + (rows.length >= EXPORT_MAX ? " (จำกัดสูงสุด " + EXPORT_MAX + " รายการ กรุณาแคบตัวกรองแล้วส่งออกใหม่)" : ""), true);
+      } finally { btn.disabled = false; btn.textContent = old; }
+    }
+
+    async function loadIncidents() {
+      const { q } = await filteredQuery("id, reporter_id, phase, deleted_at, occurred_on, occurred_time, location, type, description, created_at, plants(code), incident_types(name_th)", true);
+      const { data, error, count } = await q.range(flt.page * PAGE, flt.page * PAGE + PAGE - 1);
       if (error) { showMsg("โหลดข้อมูลไม่สำเร็จ: " + error.message, false); return; }
       totalRows = typeof count === "number" ? count : (data || []).length;
       if (!(data || []).length && flt.page > 0) { flt.page = 0; return loadIncidents(); }
