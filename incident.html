@@ -75,6 +75,9 @@
         <p><label for="type" class="required">ประเภทเหตุการณ์</label><br>
           <select id="type" required><option value="">-- เลือก --</option></select></p>
 
+        <p id="hazard-row" hidden><label for="hazard">งานอันตรายสูงที่เกี่ยวข้อง (High hazard task)</label><br>
+          <select id="hazard"><option value="">-- ไม่เกี่ยวข้อง / ไม่ทราบ --</option></select></p>
+
         <div id="serious-note" class="alertbox" role="alert" hidden>
           <b>เหตุร้ายแรง</b> — ประเภทนี้ถูกกำหนดเป็นเหตุร้ายแรง ปุ่มส่งอีเมลแจ้งเหตุจะเปิดใช้ในขั้นตอนพัฒนาถัดไป
           ระหว่างนี้กรุณาแจ้งผู้เกี่ยวข้องตามขั้นตอนขององค์กรไปก่อน
@@ -148,6 +151,19 @@
     function hhmm(t) { return (t || "").slice(0, 5); }
 
     // ---------- ข้อมูลอ้างอิง (ทุกอย่างกรองสิทธิ์โดย RLS ที่ฐานข้อมูล) ----------
+    // รายการตัวเลือกที่ Admin จัดการในหน้า "ข้อมูลหลัก" (lookup_values): ชนิดการบาดเจ็บ / ตำแหน่งร่างกาย / งานอันตรายสูง
+    const LK = { injury_type: [], body_part: [], high_hazard: [] };
+    function lkLabel(r) { return r.name_th === r.name_en ? r.name_th : r.name_th + " / " + r.name_en; }
+    async function loadLookups() {
+      const { data } = await sb.from("lookup_values").select("kind, code, name_th, name_en")
+        .in("kind", Object.keys(LK)).eq("active", true).order("sort_order").order("code");
+      Object.keys(LK).forEach((k) => { LK[k] = []; });
+      (data || []).forEach((r) => { if (LK[r.kind]) LK[r.kind].push(r); });
+      LK.high_hazard.forEach((r) => $("hazard").appendChild(opt(r.code, lkLabel(r))));
+      $("hazard-row").hidden = LK.high_hazard.length === 0;   // ไม่แสดงช่องที่ยังไม่มีตัวเลือก
+    }
+    const lookupsReady = loadLookups();
+
     async function loadTypes() {
       const { data } = await sb.from("incident_types")
         .select("id, code, name_th, name_en, is_serious").eq("active", true).order("sort_order");
@@ -254,14 +270,42 @@
       const r3 = document.createElement("div"); r3.className = "row3";
       r3.appendChild(field("สัญชาติ", f.nat)); r3.appendChild(field("ตำแหน่ง", f.pos)); r3.appendChild(field("ประเภทบุคลากร", f.ptype));
       div.appendChild(r1); div.appendChild(r2); div.appendChild(r3);
+
+      // ชนิดการบาดเจ็บ + ตำแหน่งร่างกาย (หลายค่า) — แสดงเมื่อบทบาท = ผู้บาดเจ็บ และ Admin ตั้งรายการไว้
+      const r4 = document.createElement("div");
+      f.injury = select([["", "-- ไม่ระบุ --"]].concat(LK.injury_type.map((r) => [r.code, lkLabel(r)])));
+      r4.appendChild(field("ชนิดการบาดเจ็บ", f.injury));
+      const bp = document.createElement("p");
+      const bl = document.createElement("label"); bl.textContent = "ตำแหน่งที่บาดเจ็บ (เลือกได้หลายตำแหน่ง ไม่เกิน 10)";
+      bp.appendChild(bl); bp.appendChild(document.createElement("br"));
+      const grid = document.createElement("span"); grid.style.cssText = "display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-top:.3rem";
+      f.body = [];
+      LK.body_part.forEach((r) => {
+        const lab = document.createElement("label"); lab.style.cssText = "font-weight:400;white-space:nowrap";
+        const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = r.code; cb.style.marginRight = ".3rem";
+        lab.appendChild(cb); lab.appendChild(document.createTextNode(r.name_th));
+        grid.appendChild(lab); f.body.push(cb);
+      });
+      bp.appendChild(grid); r4.appendChild(bp);
+      f.body.forEach((cb) => cb.addEventListener("change", () => {
+        if (f.body.filter((c) => c.checked).length > MAX_BODY) { cb.checked = false; show("เลือกตำแหน่งได้ไม่เกิน " + MAX_BODY + " ตำแหน่ง", "error"); }
+      }));
+      r4.hidden = true; div.appendChild(r4); f.r4 = r4;
+      const syncInjury = () => { r4.hidden = !(f.role.value === "injured" && (LK.injury_type.length || LK.body_part.length)); };
+      f.role.addEventListener("change", syncInjury);
       if (data && typeof data === "object") {
         f.role.value = data.role || "injured"; f.name.value = data.name || ""; f.code.value = data.code || "";
         f.gender.value = data.gender || ""; f.age.value = data.age ?? ""; f.tenure.value = data.tenure ?? "";
         f.nat.value = data.nat || ""; f.pos.value = data.pos || ""; f.ptype.value = data.ptype || "";
+        if (data.injury && hasOption(f.injury, data.injury)) f.injury.value = data.injury;
+        const bset = new Set(Array.isArray(data.body) ? data.body : []);
+        f.body.forEach((cb) => { cb.checked = bset.has(cb.value); });
       }
+      syncInjury();
       div._f = f; div._title = title;
       box.appendChild(div); renumber();
     }
+    const MAX_BODY = 10;
     function renumber() {
       Array.from($("persons").children).forEach((d, i) => { d._title.textContent = "ผู้เกี่ยวข้องคนที่ " + (i + 1); });
       $("btn-add-person").disabled = $("persons").children.length >= MAX_PERSONS;
@@ -279,15 +323,21 @@
           nationality: orNull(f.nat.value.trim()), position_title: orNull(f.pos.value.trim()),
           person_type: orNull(f.ptype.value)
         };
+        if (f.role.value === "injured") {
+          row.injury_type_code = orNull(f.injury.value);
+          const parts = f.body.filter((cb) => cb.checked).map((cb) => cb.value);
+          row.body_part_codes = parts.length ? parts : null;
+        }
         const hasData = row.full_name || row.employee_code || row.gender || row.age_years !== null ||
-          row.tenure_years !== null || row.nationality || row.position_title || row.person_type;
+          row.tenure_years !== null || row.nationality || row.position_title || row.person_type ||
+          row.injury_type_code || row.body_part_codes;
         if (hasData) out.push(row);
       });
       return out;
     }
 
     // ---------- เหตุการณ์ในหน้า ----------
-    $("btn-add-person").addEventListener("click", () => { addPerson(); SheDraft.markDirty(); });
+    $("btn-add-person").addEventListener("click", async () => { await lookupsReady; addPerson(); SheDraft.markDirty(); });
     $("plant").addEventListener("change", () => { lsSet("she_last_plant", $("plant").value); loadShifts(); });
     $("type").addEventListener("change", () => {
       const o = $("type").selectedOptions[0];
@@ -328,7 +378,8 @@
         immediate_action: orNull(val("immediate")),
         department_text: orNull(val("department")),
         responsible_name: orNull(val("resp-name")), responsible_email: orNull(val("resp-email")),
-        shift_id: orNull($("shift").value)
+        shift_id: orNull($("shift").value),
+        high_hazard_code: orNull($("hazard").value)
       };
       const { data: inc, error } = await sb.from("incident_reports").insert(row).select("id").single();
       if (error || !inc) { btn.disabled = false; return show(thaiError(error || {}), "error"); }
@@ -365,15 +416,18 @@
         department: $("department").value, location: $("location").value, type: $("type").value,
         description: $("description").value, how: $("how").value, why: $("why").value,
         immediate: $("immediate").value, respName: $("resp-name").value, respEmail: $("resp-email").value,
+        hazard: $("hazard").value,
         persons: Array.from($("persons").children).map((d) => {
           const f = d._f;
           return { role: f.role.value, name: f.name.value, code: f.code.value, gender: f.gender.value, age: f.age.value,
-                   tenure: f.tenure.value, nat: f.nat.value, pos: f.pos.value, ptype: f.ptype.value };
+                   tenure: f.tenure.value, nat: f.nat.value, pos: f.pos.value, ptype: f.ptype.value,
+                   injury: f.injury.value, body: f.body.filter((cb) => cb.checked).map((cb) => cb.value) };
         })
       };
     }
     function hasOption(sel, v) { return Array.from(sel.options).some((o) => o.value === v); }
     async function setState(st) {
+      await lookupsReady;
       if (st.plant && hasOption($("plant"), st.plant)) { $("plant").value = st.plant; }
       await loadShifts();
       if (st.shift && hasOption($("shift"), st.shift)) $("shift").value = st.shift;
@@ -381,6 +435,7 @@
       $("department").value = st.department || ""; $("location").value = st.location || "";
       $("type").value = (st.type && hasOption($("type"), st.type)) ? st.type : "";
       const o = $("type").selectedOptions[0]; $("serious-note").hidden = !(o && o.dataset.serious);
+      $("hazard").value = (st.hazard && hasOption($("hazard"), st.hazard)) ? st.hazard : "";
       $("description").value = st.description || ""; $("how").value = st.how || ""; $("why").value = st.why || "";
       $("immediate").value = st.immediate || ""; $("resp-name").value = st.respName || ""; $("resp-email").value = st.respEmail || "";
       $("persons").replaceChildren();
