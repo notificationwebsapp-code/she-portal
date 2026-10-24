@@ -108,7 +108,9 @@
         <div class="infobox">ข้อมูลผู้เกี่ยวข้องเห็นได้เฉพาะผู้รายงานและ SHE/Admin ของ Plant ช่วงนี้ใช้ข้อมูลทดสอบเท่านั้น (ห้ามใช้ข้อมูลจริงจนกว่าจะได้รับอนุมัติ)</div>
         <div id="persons"></div>
         <p><button type="button" id="btn-add-person" class="secondary" style="margin-left:0">+ เพิ่มผู้เกี่ยวข้อง</button>
-          <span class="helper">ไม่บังคับ เพิ่มได้สูงสุด 10 คน</span></p>
+          <span class="helper">เพิ่มได้สูงสุด 10 คน</span></p>
+        <p id="who-none-row"><label class="chk" style="font-weight:600"><input type="checkbox" id="no-persons"> ไม่มีผู้เกี่ยวข้อง (ยืนยันแล้วว่าไม่มีผู้ได้รับผลกระทบ/พยาน/ผู้เกี่ยวข้อง)</label>
+          <span class="helper" id="who-help"><b>บังคับเลือก 1 อย่าง:</b> เพิ่มผู้เกี่ยวข้องอย่างน้อย 1 คน หรือติ๊กช่องนี้ เพื่อกันการลืมกรอก</span></p>
       </section>
 
       <section class="stepcard">
@@ -381,8 +383,17 @@
     const MAX_BODY = 20;
     function renumber() {
       Array.from($("persons").children).forEach((d, i) => { d._title.textContent = "ผู้เกี่ยวข้องคนที่ " + (i + 1); });
-      $("btn-add-person").disabled = $("persons").children.length >= MAX_PERSONS;
+      syncWho();
     }
+    // B22: ต้องมีผู้เกี่ยวข้อง หรือยืนยันว่า "ไม่มี" — ติ๊กพร้อมกันไม่ได้
+    function syncWho() {
+      const n = $("persons").children.length, chk = $("no-persons");
+      if (n > 0) chk.checked = false;
+      chk.disabled = n > 0;
+      $("btn-add-person").disabled = n >= MAX_PERSONS || chk.checked;
+      updateProgress();
+    }
+    $("no-persons").addEventListener("change", () => { syncWho(); SheDraft.markDirty(); });
     function collectPersons(incidentId) {
       const out = [];
       Array.from($("persons").children).forEach((d) => {
@@ -444,6 +455,13 @@
       msg.hidden = true;
       const pid = currentPlantId();
       if (!pid) return show("ไม่พบ Plant ที่ได้รับสิทธิ์ กรุณาติดต่อ Admin", "error");
+      // B22: ต้องมีผู้เกี่ยวข้องอย่างน้อย 1 คน (ที่กรอกข้อมูลจริง) หรือยืนยันว่าไม่มี
+      const noP = $("no-persons").checked;
+      if (!noP && collectPersons(null).length === 0) {
+        $("who-help").style.color = "#b00020";
+        $("no-persons").scrollIntoView({ block: "center" }); $("no-persons").focus();
+        return show("กรุณาระบุผู้เกี่ยวข้องอย่างน้อย 1 คน (กรอกข้อมูลอย่างน้อย 1 ช่อง) หรือติ๊ก \"ไม่มีผู้เกี่ยวข้อง\" ในส่วน \"ใครเกี่ยวข้อง (Who)\"", "error");
+      }
       btn.disabled = true;
 
       // ไม่ส่ง reporter_id: ฐานข้อมูลใส่ auth.uid() ให้ (กันปลอมตัวเป็นคนอื่น)
@@ -459,7 +477,8 @@
         department_text: orNull(val("department")),
         responsible_name: orNull(val("resp-name")), responsible_email: orNull(val("resp-email")),
         shift_id: orNull($("shift").value),
-        high_hazard_code: orNull($("hazard").value)
+        high_hazard_code: orNull($("hazard").value),
+        persons_status: noP ? "none_confirmed" : "has_persons"
       };
       if ($("hazard").value === "OTHER") row.other_notes = { high_hazard: $("hazard-other").value.trim() };
       const { data: inc, error } = await sb.from("incident_reports").insert(row).select("id").single();
@@ -497,7 +516,7 @@
         department: $("department").value, location: $("location").value, type: $("type").value,
         description: $("description").value, how: $("how").value, why: $("why").value,
         immediate: $("immediate").value, respName: $("resp-name").value, respEmail: $("resp-email").value,
-        hazard: $("hazard").value, hazardOther: $("hazard-other").value,
+        hazard: $("hazard").value, hazardOther: $("hazard-other").value, noPersons: $("no-persons").checked,
         persons: Array.from($("persons").children).map((d) => {
           const f = d._f;
           return { role: f.role.value, name: f.name.value, code: f.code.value, gender: f.gender.value, age: f.age.value,
@@ -523,6 +542,7 @@
       $("immediate").value = st.immediate || ""; $("resp-name").value = st.respName || ""; $("resp-email").value = st.respEmail || "";
       $("persons").replaceChildren();
       (Array.isArray(st.persons) ? st.persons.slice(0, MAX_PERSONS) : []).forEach((p) => addPerson(p));
+      $("no-persons").checked = !!st.noPersons && $("persons").children.length === 0;
       renumber();
     }
     function draftTitle() {
@@ -533,10 +553,12 @@
     // ---------- ตัวนับช่องบังคับ (แสดงผลเท่านั้น ไม่กระทบการตรวจข้อมูล) ----------
     function updateProgress() {
       const req = Array.prototype.filter.call(form.querySelectorAll("[required]"), (e) => !e.disabled && !e.closest("[hidden]"));
-      const done = req.filter((e) => String(e.value || "").trim() !== "").length, total = req.length;
+      const whoOk = $("persons").children.length > 0 || $("no-persons").checked;   // B22: นับข้อ "ผู้เกี่ยวข้อง" เป็น 1 ช่องบังคับ
+      const done = req.filter((e) => String(e.value || "").trim() !== "").length + (whoOk ? 1 : 0), total = req.length + 1;
       $("req-count").textContent = done + " / " + total;
-      $("req-bar").style.width = (total ? Math.round(done * 100 / total) : 0) + "%";
-      const ready = total > 0 && done === total;
+      $("req-bar").style.width = Math.round(done * 100 / total) + "%";
+      if (whoOk) $("who-help").style.color = "";
+      const ready = done === total;
       [$("st-badge"), $("st-badge2")].forEach((b) => { b.textContent = ready ? "พร้อมส่ง" : "กำลังกรอก"; b.classList.toggle("ready", ready); });
     }
     form.addEventListener("input", updateProgress); form.addEventListener("change", updateProgress);

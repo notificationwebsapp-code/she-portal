@@ -613,6 +613,7 @@
       { k: "closed_at", g: "follow", l: "ปิดเคสเมื่อ (เวลาในเครื่องของท่าน)", f: ["closed_at"], c: (r) => fmtLocal(r.closed_at) },
       { k: "req_status", g: "follow", l: "คำขอแก้ไขล่าสุด (สถานะ)", need: "req", c: (r, x) => (x.req[r.id] ? REQ_LABEL[x.req[r.id].status] || x.req[r.id].status : "") },
       { k: "req_note", g: "follow", l: "คำขอแก้ไขล่าสุด (หมายเหตุผู้พิจารณา)", need: "req", c: (r, x) => (x.req[r.id] ? x.req[r.id].decision_note : "") },
+      { k: "p_status", g: "person", l: "สถานะผู้เกี่ยวข้อง", f: ["persons_status"], c: (r) => (r.persons_status === "none_confirmed" ? "ยืนยันว่าไม่มี" : r.persons_status === "has_persons" ? "มีผู้เกี่ยวข้อง" : "ไม่ได้ระบุ (เคสเก่า)") },
       { k: "p_count", g: "person", l: "จำนวนผู้เกี่ยวข้อง", need: "persons", c: (r, x) => (x.per[r.id] || []).length },
       { k: "p_injured", g: "person", l: "จำนวนผู้บาดเจ็บ", need: "persons", c: (r, x) => (x.per[r.id] || []).filter((p) => p.role_in_case === "injured").length },
       { k: "p_role", g: "person", l: "บทบาท", pf: ["role_in_case", "other_notes"], p: (p) => withOther("role_in_case", p.role_in_case, p.other_notes, PROLE[p.role_in_case] || p.role_in_case) },
@@ -1073,7 +1074,7 @@
       // ข้อมูลปัจจุบัน แบ่งกลุ่มให้อ่านง่าย
       box.append(groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"]));
       const pg = h("div", { class: "group" }, h("h4", { text: "ผู้เกี่ยวข้อง" }));
-      if (!state.persons.length) pg.append(h("p", { text: "ไม่มีข้อมูลผู้เกี่ยวข้อง" }));
+      if (!state.persons.length) pg.append(h("p", { text: inc.persons_status === "none_confirmed" ? "ผู้รายงานยืนยันแล้วว่า ไม่มีผู้เกี่ยวข้อง" : "ไม่มีข้อมูลผู้เกี่ยวข้อง" + (inc.persons_status === "has_persons" ? " (ผู้รายงานระบุว่ามี แต่ยังไม่มีข้อมูล — ควรตรวจสอบ)" : "") }));
       state.persons.forEach((p, i) => pg.append(h("p", {}, h("strong", { text: "คนที่ " + (i + 1) + ": " }),
         withOther("role_in_case", p.role_in_case, p.other_notes, fmtVal("role_in_case", p.role_in_case)) +
         " | ชนิดการบาดเจ็บ: " + withOther("injury_type_code", p.injury_type_code, p.other_notes, fmtVal("injury_type_code", p.injury_type_code)) +
