@@ -1,0 +1,31 @@
+/* theme-base.css — โครงสร้างตกแต่งร่วมของทุกธีมเทศกาล (ค่าสี/ไอคอนอยู่ในไฟล์ theme-<id>.css ของแต่ละธีม)
+   หลักการ: ตกแต่งด้วยสี/ไอคอนเท่านั้น (ไอคอนเป็น SVG วาดเอง ไม่มีลิขสิทธิ์), ไม่เปลี่ยนสีสถานะ (--ok/--danger/--warn),
+   ข้อความหลักคงคอนทราสต์ >= 4.5:1 (WCAG 2.2), ไม่มีภาพเคลื่อนไหว (WCAG 2.2.2), ไอคอนเป็น decorative (ไม่ใช่ข้อมูล) */
+html[data-theme] header{border-top:5px solid transparent;background:var(--th-strip) 0 0/100% 5px no-repeat,#fff;background-origin:border-box}
+html[data-theme] header h1::after{content:"";display:inline-block;width:30px;height:30px;background:var(--th-b) center/contain no-repeat}
+html[data-theme] .hero{background:linear-gradient(120deg,var(--th-g1) 0%,var(--th-g2) 100%)}
+html[data-theme] .authhero{position:relative;overflow:hidden;background:linear-gradient(150deg,var(--th-g1) 0%,var(--th-g2) 100%)}
+html[data-theme] .hero>*,html[data-theme] .authhero>*{position:relative;z-index:1}
+html[data-theme] .hero::before{content:"";position:absolute;left:0;top:0;width:96px;height:96px;background:var(--th-corner) 0 0/contain no-repeat;pointer-events:none;z-index:0}
+html[data-theme] .authhero::before{content:"";position:absolute;left:0;top:0;width:150px;height:150px;background:var(--th-corner) 0 0/contain no-repeat;pointer-events:none;z-index:0}
+html[data-theme] .hero::after{-webkit-mask:none;mask:none;opacity:1;right:1.2rem;top:auto;bottom:.6rem;transform:none;width:260px;height:110px;z-index:0;background:
+  var(--th-a) 0 100%/72px 72px no-repeat,var(--th-b) 82px 100%/84px 84px no-repeat,var(--th-c) 172px 8px/60px 60px no-repeat}
+html[data-theme] .authhero::after{content:"";position:absolute;right:1.5rem;bottom:1.2rem;width:260px;height:110px;pointer-events:none;z-index:0;background:
+  var(--th-a) 0 100%/72px 72px no-repeat,var(--th-b) 82px 100%/84px 84px no-repeat,var(--th-c) 172px 8px/60px 60px no-repeat}
+html[data-theme] .sitefoot{position:relative;border-top:3px solid var(--th-deco);padding-top:2rem}
+html[data-theme] .sitefoot::before{content:"";position:absolute;left:0;right:0;top:3px;height:26px;background:var(--th-tile) 0 0/160px 28px repeat-x;opacity:.9;pointer-events:none}
+/* แถบทักทาย (theme.js สร้างบนหน้าแรก/Login) */
+.themebar{display:flex;align-items:center;justify-content:center;gap:.6rem;flex-wrap:wrap;background:var(--th-bar);color:#fff;font-size:.9rem;padding:.4rem 1rem;text-align:center}
+.themebar i{display:inline-block;width:22px;height:22px;background:var(--th-b) center/contain no-repeat}
+.themebar button{background:transparent;border:1px solid rgba(255,255,255,.55);color:#fff;border-radius:999px;padding:.1rem .7rem;font-size:.78rem;cursor:pointer;min-height:28px}
+.themebar button:hover{background:rgba(255,255,255,.14)}
+@media(max-width:640px){
+  html[data-theme] .hero::after,html[data-theme] .authhero::after{width:150px;height:64px;right:.6rem;bottom:.4rem;background:
+    var(--th-a) 0 100%/42px 42px no-repeat,var(--th-b) 48px 100%/48px 48px no-repeat,var(--th-c) 100px 4px/36px 36px no-repeat}
+  html[data-theme] .hero::before,html[data-theme] .authhero::before{width:56px;height:56px}
+  html[data-theme] .hero{padding-bottom:4.4rem}
+  html[data-theme] .sitefoot{padding-bottom:1rem}
+  .themebar{font-size:.78rem;flex-wrap:nowrap;gap:.5rem;padding:.35rem .75rem;text-align:left}
+  .themebar i:nth-of-type(2){display:none}
+  .themebar i{flex:none}.themebar button{flex:none;font-size:.72rem;padding:.1rem .55rem}
+}

@@ -81,6 +81,8 @@
         row.querySelectorAll("button").forEach(function(y){y.setAttribute("aria-pressed","false")});x.setAttribute("aria-pressed","true")});
       row.appendChild(x)});
     p.appendChild(row);
+    if(window.SheTheme&&window.SheTheme.active()){p.appendChild(el("p","tpnote small","ธีมเทศกาล: "+window.SheTheme.active().label));
+      var tb=el("button","tpbtn",window.SheTheme.isOff()?"เปิดธีมตกแต่ง":"ปิดธีมตกแต่ง");tb.type="button";tb.addEventListener("click",function(){window.SheTheme.setOff(!window.SheTheme.isOff())});p.appendChild(tb)}
     adminBox=el("div","tpadmin");adminBox.hidden=true;adminBox.appendChild(el("p","tpnote small","ผู้ดูแลระบบ"));p.appendChild(adminBox);mgrBox=el("div","tpadmin");mgrBox.hidden=true;mgrBox.appendChild(el("p","tpnote small","การจัดการเนื้อหา"));p.appendChild(mgrBox)});
   function apply(v){document.documentElement.style.fontSize=v==="l"?"112.5%":v==="xl"?"125%":""}
   try{apply(localStorage.getItem("she-fs")||"n")}catch(e){}
