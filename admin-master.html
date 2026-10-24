@@ -96,6 +96,8 @@
       if (cls) e.className = cls;
       return e;
     }
+    /* ข้อมูลหลักที่ Admin กรอก/แก้อยู่ ต้องเห็นตามที่เก็บจริง — ไม่แปลอัตโนมัติ */
+    function dn(e) { e.setAttribute("data-no-i18n", ""); return e; }
     function thaiError(error) {
       if (error.code === "23505") return "รหัสนี้ถูกใช้แล้ว";
       if (error.code === "23514") return "รูปแบบข้อมูลไม่ถูกต้อง (ไม่เว้นว่าง ไม่มีช่องว่างหัว-ท้าย รหัส ≤ 20 ตัว ชื่อ ≤ 100 ตัว)";
@@ -120,10 +122,10 @@
     function buildRow(kind, r) {
       const tr = document.createElement("tr");
       tr.appendChild(el("td", r.code));
-      tr.appendChild(el("td", r.name));
+      tr.appendChild(dn(el("td", r.name)));
       if (kind === "plants") {
         tr.appendChild(el("td", countryLabel(r.country_code)));
-        tr.appendChild(el("td", [r.company_name, r.business_unit].filter(Boolean).join(" / ") || "—"));
+        tr.appendChild(dn(el("td", [r.company_name, r.business_unit].filter(Boolean).join(" / ") || "—")));
       }
       const st = el("td"); st.appendChild(el("span", r.active ? "ใช้งานอยู่" : "ปิดใช้งาน", "badge " + (r.active ? "active" : "suspended")));
       tr.appendChild(st);
@@ -222,8 +224,8 @@
     }
     function lkRow(r) {
       const tr = document.createElement("tr");
-      tr.appendChild(el("td", r.code)); tr.appendChild(el("td", r.name_th)); tr.appendChild(el("td", r.name_en));
-      tr.appendChild(el("td", r.grp || "—"));
+      tr.appendChild(el("td", r.code)); tr.appendChild(dn(el("td", r.name_th))); tr.appendChild(dn(el("td", r.name_en)));
+      tr.appendChild(dn(el("td", r.grp || "—")));
       tr.appendChild(el("td", String(r.sort_order)));
       const st = el("td"); st.appendChild(el("span", r.active ? "ใช้งานอยู่" : "ปิดใช้งาน", "badge " + (r.active ? "active" : "suspended"))); tr.appendChild(st);
       const act = el("td");

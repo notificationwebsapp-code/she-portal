@@ -975,4 +975,26 @@ I18N.add({
 "อัคคีภัย": "Fire",
 "ความปลอดภัยในกระบวนการ (PSM)": "Process Safety (PSM)",
 "สิ่งแวดล้อม": "Environment"
+,
+"{0} โรงงานจำลอง {1}": "{0} Test plant {1}",
+"ซ้าย": "Left",
+"ขวา": "Right",
+"(ไม่ระบุข้าง)": "(side not specified)"
+,
+"โรงงานจำลอง {0}": "Test plant {0}"
+,
+"แก้ไขรายงานได้ทันที": "Edit reports immediately",
+"แก้ไขรายงานเหตุการณ์โดยไม่ต้องรออนุมัติ (ต้องระบุเหตุผลและมีประวัติทุกครั้ง)": "Edit incident reports without waiting for approval (a reason is required and history is recorded every time)",
+"อนุมัติ/ปฏิเสธคำขอแก้ไข": "Approve / reject edit requests",
+"พิจารณาคำขอแก้ไขของผู้รายงาน (ผู้อนุมัติต้องไม่ใช่ผู้ขอ)": "Review edit requests from reporters (the approver must not be the requester)",
+"เพิ่มผู้เกี่ยวข้องได้ทันที": "Add involved persons immediately",
+"เพิ่มผู้เกี่ยวข้อง/ผู้บาดเจ็บในรายงานที่ส่งแล้ว โดยไม่ต้องรออนุมัติ": "Add involved / injured persons to a submitted report without waiting for approval",
+"ปิดรายงานเหตุการณ์หลังสอบสวนเสร็จ": "Close an incident report after the investigation is complete",
+"เปิดเคสที่ปิดแล้วอีกครั้ง": "Reopen a closed case",
+"เปิดเคสที่ปิดแล้วเพื่อแก้ไข (ต้องระบุเหตุผล)": "Reopen a closed case for editing (a reason is required)",
+"ใช้ Export CSV Builder และ Saved presets": "Use the Export CSV Builder and Saved presets",
+"ส่งออกข้อมูลระบุตัวตน (PII)": "Export personally identifiable information (PII)",
+"เลือกคอลัมน์ชื่อ/รหัสพนักงาน/อีเมลในไฟล์ Export": "Select name / employee ID / email columns in the export file",
+"ดู Executive Dashboard": "View Executive Dashboard",
+"ดูภาพรวมตัวเลขความปลอดภัยของทุก Plant และเลือกกรองได้ (ไม่เห็นรายละเอียดรายงานของ Plant นอกสิทธิ์)": "View safety figures across all Plants and filter them (report details of Plants outside your permission are not visible)"
 });

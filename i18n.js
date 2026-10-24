@@ -94,11 +94,29 @@
     p.re = new RegExp("^" + esc + "$");
     return p.re;
   }
+  /* วันที่แบบไทย (เช่น "27 ก.ค. 2569", "ก.ย. 69") → "27 Jul 2026", "Sep 2026" (พ.ศ. → ค.ศ.) */
+  var MON = { "ม.ค.": "Jan", "ก.พ.": "Feb", "มี.ค.": "Mar", "เม.ย.": "Apr", "พ.ค.": "May", "มิ.ย.": "Jun",
+              "ก.ค.": "Jul", "ส.ค.": "Aug", "ก.ย.": "Sep", "ต.ค.": "Oct", "พ.ย.": "Nov", "ธ.ค.": "Dec" };
+  var DATE_RE = /(\d{1,2} )?(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.) (\d{4}|\d{2})(?!\d)/g;
+  function convDates(k) {
+    return k.replace(DATE_RE, function (m, d, mo, y) {
+      var yy = y.length === 4 ? (+y - 543) : (+y + 1957);
+      return (d || "") + MON[mo] + " " + yy;
+    });
+  }
   function translate(core, depth) {
     if (!core) return null;
     var key = norm(core);
     if (Object.prototype.hasOwnProperty.call(I18N.cache, key)) return I18N.cache[key];
     var out = null;
+    if (!depth) {
+      var k2 = convDates(key);
+      if (k2 !== key) {
+        out = TH.test(k2) ? (translate(k2, 0) || k2) : k2;
+        I18N.cache[key] = out;
+        return out;
+      }
+    }
     if (Object.prototype.hasOwnProperty.call(I18N.dict, key)) out = I18N.dict[key];
     else if (!depth) {
       var pats = I18N.pats;
@@ -238,6 +256,27 @@
     childList: true, subtree: true, characterData: true,
     attributes: true, attributeFilter: ATTRS.concat(["value"])
   });
+  /* ข้อมูลหลัก (lookup_values: ประเภท/ตำแหน่งที่บาดเจ็บ ฯลฯ) แปลเองจาก name_en ในฐานข้อมูล — เติมข้อมูลหลักใหม่แล้วไม่ต้องแก้พจนานุกรม */
+  var LVK = "she_i18n_lv";
+  function addLV(rows) {
+    var m = {};
+    rows.forEach(function (r) { if (r && r.name_th && r.name_en && r.name_th !== r.name_en) m[r.name_th] = r.name_en; });
+    I18N.add(m);
+  }
+  try { var c0 = JSON.parse(localStorage.getItem(LVK) || "null"); if (c0 && c0.length) addLV(c0); } catch (e) {}
+  function fetchLV(tries) {
+    if (typeof sb === "undefined" || !sb || !sb.from) { if (tries < 25) setTimeout(function () { fetchLV(tries + 1); }, 300); return; }
+    try {
+      sb.from("lookup_values").select("name_th,name_en").not("name_en", "is", null).limit(1000).then(function (r) {
+        if (r && r.data && r.data.length) {
+          addLV(r.data);
+          try { localStorage.setItem(LVK, JSON.stringify(r.data)); } catch (e) {}
+          applyTree(document.documentElement);
+        }
+      }, function () {});
+    } catch (e) {}
+  }
+  document.addEventListener("DOMContentLoaded", function () { fetchLV(0); });
   document.addEventListener("DOMContentLoaded", function () {
     applyTree(document.documentElement);
     if (/[?&]i18n=debug/.test(location.search)) {
