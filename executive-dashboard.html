@@ -57,6 +57,8 @@
     .ed-body{display:grid;grid-template-columns:minmax(130px,190px) 1fr;gap:1.2rem;align-items:center}
     .ed-body svg{width:100%;height:auto;max-height:380px;overflow:visible}
     .ed-body svg .rg{stroke:#fff;stroke-width:3;stroke-linejoin:round;transition:fill .2s}
+    .ed-body svg .rg.sm{stroke-width:1.2}
+    .ed-body svg .cap{font-size:10px;fill:#64748b;text-anchor:middle}
     .bg0{fill:#e3e9f1}.bgm{fill:url(#hatch)}.bg1{fill:#fcd34d}.bg2{fill:#fb923c}.bg3{fill:#ef4444}
     .ed-body svg .bd rect{fill:#fff;stroke-width:2}
     .ed-body svg .bd text{font-size:12px;font-weight:700;fill:#0f172a;text-anchor:middle;dominant-baseline:central;font-family:inherit}
@@ -139,20 +141,39 @@
         <section class="ed-card"><h3>พีระมิดความรุนแรง</h3><p class="sub">จำนวนเคสตามระดับ — ฐานกว้างคือเหตุที่เบากว่าแต่เกิดบ่อยกว่า (เหตุเกือบเกิดอุบัติเหตุ) ใช้ดูว่ามีการรายงานเชิงป้องกันมากพอหรือไม่</p>
           <div class="ed-pyr" id="pyr" role="list" aria-label="พีระมิดความรุนแรง"></div>
           <p class="sub" style="margin-top:.6rem">RWC = Restricted work case · MTC = Medical treatment case · FAC = First aid case · PD = Property damage · ไม่รวมอัคคีภัย PSM สิ่งแวดล้อม</p></section>
-        <section class="ed-card"><h3>ส่วนของร่างกายที่บาดเจ็บ</h3><p class="sub" id="body-sub">จำนวนผู้บาดเจ็บแยกตามส่วนของร่างกาย (คนที่บาดเจ็บหลายจุดในกลุ่มเดียวกันนับ 1 ครั้ง · ซ้าย/ขวารวมกัน)</p>
-          <div class="ed-body"><svg id="body-svg" viewBox="-6 0 212 368" role="img" aria-label="ภาพร่างกายแสดงส่วนที่บาดเจ็บ ตัวเลขอยู่ในรายการด้านข้าง">
+        <section class="ed-card"><h3>ส่วนของร่างกายที่บาดเจ็บ</h3><p class="sub" id="body-sub">จำนวนผู้บาดเจ็บแยกตามส่วนของร่างกาย (ซ้าย/ขวาตามตัวผู้บาดเจ็บ มองจากด้านหน้า)</p>
+          <div class="ed-body"><svg id="body-svg" viewBox="-6 0 212 368" role="img" aria-label="ภาพร่างกายแสดงส่วนที่บาดเจ็บ ซ้าย/ขวาตามผู้บาดเจ็บ รายละเอียดอยู่ในรายการด้านข้าง">
             <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#e2e8f0"/><line x1="0" y1="0" x2="0" y2="6" stroke="#94a3b8" stroke-width="2"/></pattern></defs>
-            <ellipse class="rg" data-g="head" cx="100" cy="30" rx="22" ry="26"/>
-            <path class="rg" data-g="neck_shoulder" d="M89 60H111V72C132 76 150 82 158 94L156 106H44L42 94C50 82 68 76 89 72Z"/>
-            <path class="rg" data-g="trunk" d="M54 110H146L141 168C141 184 139 196 137 208H63C61 196 59 184 59 168Z"/>
-            <path class="rg" data-g="arm" d="M32 112Q32 108 38 108H46Q51 108 51 114L49 196Q49 200 44 200H36Q31 200 31 196Z"/>
-            <path class="rg" data-g="arm" d="M168 112Q168 108 162 108H154Q149 108 149 114L151 196Q151 200 156 200H164Q169 200 169 196Z"/>
-            <path class="rg" data-g="hand" d="M31 204H49V222Q49 232 40 232Q31 232 31 222Z"/>
-            <path class="rg" data-g="hand" d="M151 204H169V222Q169 232 160 232Q151 232 151 222Z"/>
-            <path class="rg" data-g="leg" d="M63 212H98L96 322Q96 328 90 328H72Q66 328 66 322Z"/>
-            <path class="rg" data-g="leg" d="M137 212H102L104 322Q104 328 110 328H128Q134 328 134 322Z"/>
-            <path class="rg" data-g="foot" d="M67 332H96V348Q96 356 88 356H66Q58 356 60 348Z"/>
-            <path class="rg" data-g="foot" d="M133 332H104V348Q104 356 112 356H134Q142 356 140 348Z"/>
+            <path class="rg" data-c="HEAD" d="M78 31A22 26 0 0 1 122 31Z"/>
+            <path class="rg" data-c="FACE" d="M78 33A22 26 0 0 0 122 33Z"/>
+            <ellipse class="rg sm" data-c="EYE_R" cx="91" cy="40" rx="5" ry="3"/><ellipse class="rg sm" data-c="EYE_L" cx="109" cy="40" rx="5" ry="3"/>
+            <path class="rg" data-c="NECK" d="M89 58H111V74H89Z"/>
+            <path class="rg" data-c="SHOULDER_R" d="M86 74C68 78 50 84 43 95L42 106H86Z"/>
+            <path class="rg" data-c="SHOULDER_L" d="M114 74C132 78 150 84 157 95L158 106H114Z"/>
+            <path class="rg" data-c="CHEST" d="M54 110H146L143 160H57Z"/>
+            <path class="rg" data-c="ABDOMEN" d="M57 163H143L141 176C141 188 139 198 137 208H63C61 198 59 188 59 176Z"/>
+            <rect class="rg sm" data-c="BACK" x="176" y="108" width="22" height="100" rx="8"/>
+            <path class="rg" data-c="ARM_R" d="M32 112Q32 108 38 108H46Q51 108 51 114L49 196Q49 200 44 200H36Q31 200 31 196Z"/>
+            <path class="rg" data-c="ARM_L" d="M168 112Q168 108 162 108H154Q149 108 149 114L151 196Q151 200 156 200H164Q169 200 169 196Z"/>
+            <ellipse class="rg sm" data-c="ELBOW_R" cx="40" cy="150" rx="9" ry="8"/><ellipse class="rg sm" data-c="ELBOW_L" cx="160" cy="150" rx="9" ry="8"/>
+            <path class="rg" data-c="HAND_R" d="M31 204H49V220Q49 224 45 224H35Q31 224 31 220Z"/>
+            <path class="rg" data-c="HAND_L" d="M169 204H151V220Q151 224 155 224H165Q169 224 169 220Z"/>
+            <rect class="rg sm" data-c="LITTLE_R" x="31" y="226" width="3.6" height="14" rx="1.8"/>
+            <rect class="rg sm" data-c="LITTLE_L" x="165.4" y="226" width="3.6" height="14" rx="1.8"/>
+            <rect class="rg sm" data-c="RING_R" x="35.2" y="226" width="3.6" height="17" rx="1.8"/>
+            <rect class="rg sm" data-c="RING_L" x="161.2" y="226" width="3.6" height="17" rx="1.8"/>
+            <rect class="rg sm" data-c="MIDDLE_R" x="39.4" y="226" width="3.6" height="19" rx="1.8"/>
+            <rect class="rg sm" data-c="MIDDLE_L" x="157.0" y="226" width="3.6" height="19" rx="1.8"/>
+            <rect class="rg sm" data-c="INDEX_R" x="43.6" y="226" width="3.6" height="17" rx="1.8"/>
+            <rect class="rg sm" data-c="INDEX_L" x="152.8" y="226" width="3.6" height="17" rx="1.8"/>
+            <rect class="rg sm" data-c="THUMB_R" x="49.8" y="206" width="3.8" height="18" rx="1.8"/>
+            <rect class="rg sm" data-c="THUMB_L" x="146.4" y="206" width="3.8" height="18" rx="1.8"/>
+            <path class="rg" data-c="LEG_R" d="M63 212H98L96 322Q96 328 90 328H72Q66 328 66 322Z"/>
+            <path class="rg" data-c="LEG_L" d="M137 212H102L104 322Q104 328 110 328H128Q134 328 134 322Z"/>
+            <ellipse class="rg sm" data-c="KNEE_R" cx="81" cy="262" rx="13" ry="9"/><ellipse class="rg sm" data-c="KNEE_L" cx="119" cy="262" rx="13" ry="9"/>
+            <path class="rg" data-c="FOOT_R" d="M67 332H96V348Q96 356 88 356H66Q58 356 60 348Z"/>
+            <path class="rg" data-c="FOOT_L" d="M133 332H104V348Q104 356 112 356H134Q142 356 140 348Z"/>
+            <text x="187" y="222" class="cap">หลัง</text>
             <g class="bd" id="body-badges"></g>
           </svg><ul class="ed-bl" id="body-list"></ul></div>
           <div class="ed-legend"><span><i class="bg0"></i>0</span><span><i class="bg1"></i>น้อย</span><span><i class="bg2"></i>ปานกลาง</span><span><i class="bg3"></i>มาก</span></div></section>
@@ -245,22 +266,26 @@
       /* body */
       var GN = { head: "ศีรษะ / ตา / ใบหน้า", neck_shoulder: "คอ / ไหล่", trunk: "ลำตัว / หลัง", arm: "แขน / ข้อศอก", hand: "มือ / นิ้ว", leg: "ขา / เข่า", foot: "เท้า / ข้อเท้า", other: "อื่น ๆ" };
       var bl = $("body-list"); bl.replaceChildren();
-      var bgs = r.body_groups || [], bmax = Math.max.apply(null, bgs.map(function (g) { return g.n || 0; }).concat([1])), bcls = {}, bval = {};
+      var bps = r.body_parts || [], bmax = Math.max.apply(null, bps.map(function (g) { return g.n || 0; }).concat([1])), bcls = {}, bval = {};
       var BCOL = { bg1: "#f59e0b", bg2: "#ea580c", bg3: "#dc2626", bgm: "#64748b", bg0: "#94a3b8" };
-      bgs.forEach(function (g) {
+      var BFILL = { bg1: "#fcd34d", bg2: "#fb923c", bg3: "#ef4444", bg0: "#e3e9f1" };
+      bps.forEach(function (g) {
         var cls = g.suppressed ? "bgm" : !g.n ? "bg0" : g.n >= bmax * 0.66 ? "bg3" : g.n >= bmax * 0.33 ? "bg2" : "bg1";
-        bcls[g.group] = cls; bval[g.group] = g.suppressed ? "<3" : (g.n ? String(g.n) : "");
-        var li = el("li"); li.appendChild(el("i", cls)); li.appendChild(el("span", null, GN[g.group] || g.group)); li.appendChild(el("b", null, numOrMask(g.n)));
+        bcls[g.code] = cls; bval[g.code] = g.suppressed ? "<3" : (g.n ? String(g.n) : "");
+        var li = el("li"); li.appendChild(el("i", cls)); li.appendChild(el("span", null, g.name_th || g.code)); li.appendChild(el("b", null, numOrMask(g.n)));
         var bar = el("div", "bar"), fill = el("s", cls); fill.style.width = (g.suppressed ? 12 : Math.round((g.n || 0) / bmax * 100)) + "%"; bar.appendChild(fill);
-        if (cls === "bgm") fill.style.background = "repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0 3px,#94a3b8 3px,#94a3b8 5px)";
-        else fill.style.background = { bg1: "#fcd34d", bg2: "#fb923c", bg3: "#ef4444", bg0: "#e3e9f1" }[cls];
+        if (cls === "bgm") fill.style.background = "repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0 3px,#94a3b8 3px,#94a3b8 5px)"; else fill.style.background = BFILL[cls];
         li.appendChild(bar); bl.appendChild(li);
       });
+      if (!bps.length) { var e0 = el("li"); e0.appendChild(el("span")); e0.appendChild(el("span", null, "ไม่มีข้อมูลตำแหน่งที่บาดเจ็บในช่วงที่เลือก")); e0.appendChild(el("b")); bl.appendChild(e0); }
       var ip = r.injured_persons || { n: 0 }, li2 = el("li", "tot"); li2.appendChild(el("span")); li2.appendChild(el("span", null, "ผู้บาดเจ็บทั้งหมด")); li2.appendChild(el("b", null, numOrMask(ip.n))); bl.appendChild(li2);
-      document.querySelectorAll("#body-svg .rg").forEach(function (n) { n.setAttribute("class", "rg " + (bcls[n.getAttribute("data-g")] || "bg0")); });
-      /* badge ตัวเลขบนภาพ (ซ้าย/ขวารวมกัน แสดงด้านซ้ายของภาพครั้งเดียว) */
+      document.querySelectorAll("#body-svg .rg").forEach(function (n) { n.setAttribute("class", "rg" + (n.getAttribute("class").indexOf(" sm") > -1 ? " sm " : " ") + (bcls[n.getAttribute("data-c")] || "bg0")); });
+      /* badge ตัวเลขบนภาพ: เฉพาะส่วนใหญ่ที่มีผู้บาดเจ็บ (นิ้ว/ตา ดูในรายการ) — ซ้าย/ขวาตามตัวผู้บาดเจ็บ (ด้านซ้ายของภาพ = ขวาของผู้บาดเจ็บ) */
       var NS = "http://www.w3.org/2000/svg", bd = $("body-badges"); bd.replaceChildren();
-      [["head", 100, 30], ["neck_shoulder", 100, 88], ["trunk", 100, 158], ["arm", 40, 154], ["hand", 40, 248], ["leg", 82, 270], ["foot", 80, 344]].forEach(function (P) {
+      var BP = [["HEAD", 100, 14], ["FACE", 100, 50], ["NECK", 100, 66], ["SHOULDER_R", 64, 96], ["CHEST", 100, 135], ["ABDOMEN", 100, 188], ["BACK", 187, 158],
+        ["ARM_R", 40, 124], ["ELBOW_R", 40, 150], ["HAND_R", 40, 262], ["LEG_R", 81, 232], ["KNEE_R", 81, 262], ["FOOT_R", 40, 344]];
+      BP.slice().forEach(function (P) { if (/_R$/.test(P[0])) BP.push([P[0].replace(/_R$/, "_L"), 200 - P[1], P[2]]); });
+      BP.forEach(function (P) {
         var v = bval[P[0]]; if (!v) return;
         var w = v.length > 2 ? 34 : 26, g = document.createElementNS(NS, "g"), rc = document.createElementNS(NS, "rect"), tx = document.createElementNS(NS, "text");
         rc.setAttribute("x", P[1] - w / 2); rc.setAttribute("y", P[2] - 10); rc.setAttribute("width", w); rc.setAttribute("height", 20); rc.setAttribute("rx", 10);

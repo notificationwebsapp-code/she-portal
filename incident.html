@@ -304,15 +304,26 @@
       f.injury = select([["", "-- ไม่ระบุ --"]].concat(LK.injury_type.map((r) => [r.code, lkLabel(r)])));
       r4.appendChild(field("ชนิดการบาดเจ็บ", f.injury));
       const bp = document.createElement("p");
-      const bl = document.createElement("label"); bl.textContent = "ตำแหน่งที่บาดเจ็บ (เลือกได้หลายตำแหน่ง ไม่เกิน 10)";
+      const bl = document.createElement("label"); bl.textContent = "ตำแหน่งที่บาดเจ็บ (เลือกได้หลายตำแหน่ง ไม่เกิน 20 · ซ้าย/ขวาตามตัวผู้บาดเจ็บ)";
       bp.appendChild(bl); bp.appendChild(document.createElement("br"));
-      const grid = document.createElement("span"); grid.style.cssText = "display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-top:.3rem";
+      const grid = document.createElement("div"); grid.style.cssText = "margin-top:.3rem";
       f.body = [];
-      LK.body_part.forEach((r) => {
-        const lab = document.createElement("label"); lab.style.cssText = "font-weight:400;white-space:nowrap";
-        const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = r.code; cb.style.marginRight = ".3rem";
-        lab.appendChild(cb); lab.appendChild(document.createTextNode(r.name_th));
-        grid.appendChild(lab); f.body.push(cb);
+      // จัดกลุ่มตามส่วนของร่างกาย (รหัสที่ Admin เพิ่มเองและไม่อยู่ในกลุ่ม จะไปอยู่ "อื่น ๆ")
+      const BG = [["ศีรษะ / ใบหน้า / ตา", /^(HEAD|FACE|EYE)/], ["คอ / ไหล่", /^(NECK|SHOULDER)/], ["ลำตัว / หลัง", /^(CHEST|ABDOMEN|BACK)$/],
+        ["แขน / ข้อศอก", /^(ARM|ELBOW)/], ["มือ / ข้อมือ", /^HAND/], ["นิ้วมือ", /^(FINGERS|THUMB|INDEX|MIDDLE|RING|LITTLE)/], ["ขา / เข่า", /^(LEG|KNEE)/], ["เท้า / ข้อเท้า", /^FOOT/]];
+      const groups = BG.map((g) => ({ t: g[0], re: g[1], rows: [] })), rest = { t: "อื่น ๆ", rows: [] };
+      LK.body_part.forEach((r) => { (groups.find((g) => g.re.test(r.code)) || rest).rows.push(r); });
+      groups.concat([rest]).forEach((g) => {
+        if (!g.rows.length) return;
+        const row = document.createElement("div"); row.style.cssText = "display:flex;flex-wrap:wrap;gap:.2rem .9rem;align-items:center;padding:.25rem 0;border-bottom:1px solid #eee";
+        const gt = document.createElement("span"); gt.style.cssText = "min-width:9.5rem;font-weight:600;font-size:.85rem;color:#475569"; gt.textContent = g.t; row.appendChild(gt);
+        g.rows.forEach((r) => {
+          const lab = document.createElement("label"); lab.style.cssText = "font-weight:400;white-space:nowrap";
+          const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = r.code; cb.style.marginRight = ".3rem";
+          lab.appendChild(cb); lab.appendChild(document.createTextNode(r.name_th));
+          row.appendChild(lab); f.body.push(cb);
+        });
+        grid.appendChild(row);
       });
       bp.appendChild(grid); r4.appendChild(bp);
       f.body.forEach((cb) => cb.addEventListener("change", () => {
@@ -333,7 +344,7 @@
       div._f = f; div._title = title;
       box.appendChild(div); renumber();
     }
-    const MAX_BODY = 10;
+    const MAX_BODY = 20;
     function renumber() {
       Array.from($("persons").children).forEach((d, i) => { d._title.textContent = "ผู้เกี่ยวข้องคนที่ " + (i + 1); });
       $("btn-add-person").disabled = $("persons").children.length >= MAX_PERSONS;
