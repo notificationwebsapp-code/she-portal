@@ -104,7 +104,7 @@
   var obs=null;
   function normalizeNav(){var n=document.querySelector("header nav");if(!n)return;if(obs)obs.disconnect();
     var f=(location.pathname.split("/").pop()||"index.html");var by={};
-    document.querySelectorAll("header a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();if(n.contains(a)||ADM.indexOf(k)>-1)by[k]=by[k]||a});
+    document.querySelectorAll("header a").forEach(function(a){if(a.closest(".tpadmin"))return;var k=(a.getAttribute("href")||"").split("/").pop();if(n.contains(a)||ADM.indexOf(k)>-1)by[k]=by[k]||a});
     ORDER.forEach(function(k){if(by[k])n.appendChild(by[k])});
     var soon=n.querySelector(".navsoon");if(!soon){soon=el("span","navsoon","Executive Dashboard");soon.setAttribute("aria-disabled","true");soon.title="เร็ว ๆ นี้ (อยู่ในแผนพัฒนา)"}
     if(by["index.html"])n.appendChild(soon);
