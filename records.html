@@ -266,13 +266,33 @@
       why_text: "ทำไมจึงเกิด (Why)", immediate_action: "การดำเนินการทันที", high_hazard_code: "High hazard",
       system_failure_code: "System / Program failure", root_cause_code: "Root cause", is_recordable: "Recordable",
       is_serious_potential: "Serious / Potentially serious", role_in_case: "บทบาท", injury_type_code: "ชนิดการบาดเจ็บ",
-      body_part_codes: "ตำแหน่งที่บาดเจ็บ", phase: "สถานะ",
+      body_part_codes: "ตำแหน่งที่บาดเจ็บ", phase: "สถานะ", other_notes: "รายละเอียด \"อื่น ๆ\"",
       full_name: "ชื่อ-นามสกุล", employee_code: "รหัสพนักงาน", gender: "เพศ", age_years: "อายุ (ปี)", tenure_years: "อายุงาน (ปี)",
       nationality: "สัญชาติ", position_title: "ตำแหน่งงาน", person_type: "ประเภทบุคคล"
     };
     const GENDER_OPTS = [["male", "ชาย"], ["female", "หญิง"], ["other", "อื่น ๆ"]];
     const PTYPE_OPTS = [["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["supplier", "ซัพพลายเออร์ (Supplier)"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]];
     const ROLE_TH = { injured: "ผู้บาดเจ็บ", witness: "พยาน", other: "อื่น ๆ" };
+    // B21: เลือก "อื่น ๆ" ต้องพิมพ์รายละเอียด (เก็บใน other_notes) — field → { key ใน other_notes, เงื่อนไขว่าเลือก "อื่น ๆ" }
+    const isOth = (v) => v === "other" || v === "OTHER";
+    const OTHER_RULE = {
+      high_hazard_code: { key: "high_hazard", is: isOth }, system_failure_code: { key: "system_failure", is: isOth }, root_cause_code: { key: "root_cause", is: isOth },
+      role_in_case: { key: "role", is: isOth }, gender: { key: "gender", is: isOth }, person_type: { key: "person_type", is: isOth },
+      injury_type_code: { key: "injury_type", is: isOth }, body_part_codes: { key: "body_part", is: (v) => Array.isArray(v) && v.includes("OTHER") }
+    };
+    const OKEY_TH = { role: "บทบาท", gender: "เพศ", person_type: "ประเภทบุคคล", injury_type: "ชนิดการบาดเจ็บ", body_part: "ตำแหน่งที่บาดเจ็บ",
+      high_hazard: "High hazard", system_failure: "System failure", root_cause: "Root cause", incident_type: "ประเภทเหตุการณ์" };
+    const onote = (notes, key) => (notes && typeof notes === "object" && typeof notes[key] === "string") ? notes[key] : "";
+    // ต่อรายละเอียด "อื่น ๆ" ท้ายข้อความ เช่น "อื่น ๆ (ระบุ: ...)"
+    function withOther(k, v, notes, text) {
+      const r = OTHER_RULE[k]; if (!r || !r.is(v)) return text;
+      const n = onote(notes, r.key); return n ? text + " (ระบุ: " + n + ")" : text;
+    }
+    function fmtNotes(o) {
+      if (!o || typeof o !== "object") return "—";
+      const e = Object.entries(o); if (!e.length) return "—";
+      return e.map(([k, v]) => (OKEY_TH[k] || k) + ": " + v).join("; ");
+    }
     // mgr = เฉพาะ SHE/Admin ของ Plant (ตรงกับ incident_classify_guard) ; req = จำเป็นต้องมีค่า (คอลัมน์ NOT NULL)
     const REPORT_FIELDS = [
       { k: "occurred_on", t: "date", req: true }, { k: "occurred_time", t: "time" },
@@ -328,6 +348,7 @@
       if (k === "gender") { const g = GENDER_OPTS.find((x) => x[0] === v); return g ? g[1] : v; }
       if (k === "person_type") { const g = PTYPE_OPTS.find((x) => x[0] === v); return g ? g[1] : v; }
       if (k === "phase") return v === "closed" ? "Closed" : "Open";
+      if (k === "other_notes") return fmtNotes(v);
       if (k === "body_part_codes") return v.map((c) => lkName("body_part", c)).join(", ");
       const f = REPORT_FIELDS.concat(PERSON_FIELDS).find((x) => x.k === k);
       if (f && f.t === "lk") return lkName(f.kind, v);
@@ -342,7 +363,7 @@
     const same = (k, a, b) => norm(k, a) === norm(k, b);
 
     // ---------- สร้างช่องกรอกของแต่ละฟิลด์ ----------
-    function makeInput(f, cur, idPrefix) {
+    function makeInput(f, cur, idPrefix, notes) {
       const id = idPrefix + f.k;
       let control, get;
       const opts = (list, curVal) => {
@@ -401,7 +422,17 @@
       }
       const hint = HINT[f.k] ? h("small", { class: "hint", id: id + "-h", text: HINT[f.k] }) : null;
       if (hint) control.setAttribute("aria-describedby", id + "-h");
-      return { control, get, hint, label: h("label", { for: id, text: LBL[f.k] + (f.req ? " *" : "") }) };
+      // ช่อง "ระบุรายละเอียด" ของ "อื่น ๆ" (B21) — แสดงเฉพาะเมื่อเลือก อื่น ๆ
+      const rule = OTHER_RULE[f.k];
+      const extra = h("div", { class: "othwrap" });
+      let oi = null;
+      if (rule) {
+        oi = h("input", { type: "text", id: id + "-other", maxlength: "200", minlength: "2", placeholder: "ระบุรายละเอียด (บังคับ เมื่อเลือก อื่น ๆ)", "aria-label": "รายละเอียด อื่น ๆ: " + LBL[f.k] });
+        oi.value = onote(notes, rule.key); extra.hidden = !rule.is(get()); extra.append(oi);
+        const sync = () => { extra.hidden = !rule.is(get()); };
+        control.addEventListener("change", sync); control.addEventListener("input", sync);
+      } else extra.hidden = true;
+      return { control, get, hint, extra, other: rule ? { key: rule.key, input: oi, on: () => rule.is(get()), text: () => oi.value.trim() } : null, label: h("label", { for: id, text: LBL[f.k] + (f.req ? " *" : "") }) };
     }
 
     // ---------- สรุปการเปลี่ยนแปลง ----------
@@ -571,11 +602,11 @@
       { k: "how", g: "detail", l: "เกิดขึ้นอย่างไร (How)", f: ["how_text"], c: (r) => r.how_text },
       { k: "why", g: "detail", l: "ทำไมจึงเกิด (Why)", f: ["why_text"], c: (r) => r.why_text },
       { k: "immediate", g: "detail", l: "การดำเนินการทันที", f: ["immediate_action"], c: (r) => r.immediate_action },
-      { k: "high_hazard", g: "detail", l: "งานอันตรายสูง (High hazard)", f: ["high_hazard_code"], c: (r) => (r.high_hazard_code ? lkName("high_hazard", r.high_hazard_code) : "") },
+      { k: "high_hazard", g: "detail", l: "งานอันตรายสูง (High hazard)", f: ["high_hazard_code", "other_notes"], c: (r) => (r.high_hazard_code ? withOther("high_hazard_code", r.high_hazard_code, r.other_notes, lkName("high_hazard", r.high_hazard_code)) : "") },
       { k: "resp_name", g: "detail", l: "ผู้รับผิดชอบหลัก (ชื่อ)", pii: true, f: ["responsible_name"], c: (r) => r.responsible_name },
       { k: "resp_email", g: "detail", l: "ผู้รับผิดชอบหลัก (อีเมล)", pii: true, f: ["responsible_email"], c: (r) => r.responsible_email },
-      { k: "system_failure", g: "cls", l: "System failure", f: ["system_failure_code"], c: (r) => (r.system_failure_code ? lkName("system_failure", r.system_failure_code) : "") },
-      { k: "root_cause", g: "cls", l: "Root cause", f: ["root_cause_code"], c: (r) => (r.root_cause_code ? lkName("root_cause", r.root_cause_code) : "") },
+      { k: "system_failure", g: "cls", l: "System failure", f: ["system_failure_code", "other_notes"], c: (r) => (r.system_failure_code ? withOther("system_failure_code", r.system_failure_code, r.other_notes, lkName("system_failure", r.system_failure_code)) : "") },
+      { k: "root_cause", g: "cls", l: "Root cause", f: ["root_cause_code", "other_notes"], c: (r) => (r.root_cause_code ? withOther("root_cause_code", r.root_cause_code, r.other_notes, lkName("root_cause", r.root_cause_code)) : "") },
       { k: "recordable", g: "cls", l: "Recordable", f: ["is_recordable"], c: (r) => yn(r.is_recordable) },
       { k: "serious", g: "cls", l: "Serious / Potentially serious", f: ["is_serious_potential"], c: (r) => yn(r.is_serious_potential) },
       { k: "created_at", g: "follow", l: "ส่งรายงานเมื่อ (เวลาในเครื่องของท่าน)", f: ["created_at"], c: (r) => fmtLocal(r.created_at) },
@@ -584,17 +615,17 @@
       { k: "req_note", g: "follow", l: "คำขอแก้ไขล่าสุด (หมายเหตุผู้พิจารณา)", need: "req", c: (r, x) => (x.req[r.id] ? x.req[r.id].decision_note : "") },
       { k: "p_count", g: "person", l: "จำนวนผู้เกี่ยวข้อง", need: "persons", c: (r, x) => (x.per[r.id] || []).length },
       { k: "p_injured", g: "person", l: "จำนวนผู้บาดเจ็บ", need: "persons", c: (r, x) => (x.per[r.id] || []).filter((p) => p.role_in_case === "injured").length },
-      { k: "p_role", g: "person", l: "บทบาท", pf: ["role_in_case"], p: (p) => PROLE[p.role_in_case] || p.role_in_case },
+      { k: "p_role", g: "person", l: "บทบาท", pf: ["role_in_case", "other_notes"], p: (p) => withOther("role_in_case", p.role_in_case, p.other_notes, PROLE[p.role_in_case] || p.role_in_case) },
       { k: "p_name", g: "person", l: "ชื่อ-นามสกุล", pii: true, pf: ["full_name"], p: (p) => p.full_name },
       { k: "p_code", g: "person", l: "รหัสพนักงาน", pii: true, pf: ["employee_code"], p: (p) => p.employee_code },
-      { k: "p_gender", g: "person", l: "เพศ", pf: ["gender"], p: (p) => GENDER[p.gender] || "" },
+      { k: "p_gender", g: "person", l: "เพศ", pf: ["gender", "other_notes"], p: (p) => withOther("gender", p.gender, p.other_notes, GENDER[p.gender] || "") },
       { k: "p_age", g: "person", l: "อายุ (ปี)", pf: ["age_years"], p: (p) => p.age_years },
       { k: "p_tenure", g: "person", l: "อายุงาน (ปี)", pf: ["tenure_years"], p: (p) => p.tenure_years },
       { k: "p_nat", g: "person", l: "สัญชาติ", pf: ["nationality"], p: (p) => p.nationality },
       { k: "p_pos", g: "person", l: "ตำแหน่ง", pf: ["position_title"], p: (p) => p.position_title },
-      { k: "p_type", g: "person", l: "ประเภทบุคคล", pf: ["person_type"], p: (p) => PTYPE[p.person_type] || "" },
-      { k: "p_injury", g: "person", l: "ชนิดการบาดเจ็บ", pf: ["injury_type_code"], p: (p) => (p.injury_type_code ? lkName("injury_type", p.injury_type_code) : "") },
-      { k: "p_body", g: "person", l: "ตำแหน่งร่างกายที่บาดเจ็บ", pf: ["body_part_codes"], p: (p) => (p.body_part_codes || []).map((c) => lkName("body_part", c)).join(" | ") }
+      { k: "p_type", g: "person", l: "ประเภทบุคคล", pf: ["person_type", "other_notes"], p: (p) => withOther("person_type", p.person_type, p.other_notes, PTYPE[p.person_type] || "") },
+      { k: "p_injury", g: "person", l: "ชนิดการบาดเจ็บ", pf: ["injury_type_code", "other_notes"], p: (p) => (p.injury_type_code ? withOther("injury_type_code", p.injury_type_code, p.other_notes, lkName("injury_type", p.injury_type_code)) : "") },
+      { k: "p_body", g: "person", l: "ตำแหน่งร่างกายที่บาดเจ็บ", pf: ["body_part_codes", "other_notes"], p: (p) => withOther("body_part_codes", p.body_part_codes, p.other_notes, (p.body_part_codes || []).map((c) => lkName("body_part", c)).join(" | ")) }
     ];
     const COLMAP = Object.fromEntries(COLS.map((c) => [c.k, c]));
     const isPersonCol = (c) => c.g === "person" && !!c.p;
@@ -1015,7 +1046,7 @@
     }
     function groupOf(title, keys) {
       const dl = h("dl");
-      keys.forEach((k) => dl.append(h("dt", { text: LBL[k] }), h("dd", { text: fmtVal(k, state.inc[k]) })));
+      keys.forEach((k) => dl.append(h("dt", { text: LBL[k] }), h("dd", { text: withOther(k, state.inc[k], state.inc.other_notes, fmtVal(k, state.inc[k])) })));
       return h("div", { class: "group" }, h("h4", { text: title }), dl);
     }
 
@@ -1044,8 +1075,10 @@
       const pg = h("div", { class: "group" }, h("h4", { text: "ผู้เกี่ยวข้อง" }));
       if (!state.persons.length) pg.append(h("p", { text: "ไม่มีข้อมูลผู้เกี่ยวข้อง" }));
       state.persons.forEach((p, i) => pg.append(h("p", {}, h("strong", { text: "คนที่ " + (i + 1) + ": " }),
-        fmtVal("role_in_case", p.role_in_case) + " | ชนิดการบาดเจ็บ: " + fmtVal("injury_type_code", p.injury_type_code) +
-        " | ตำแหน่ง: " + fmtVal("body_part_codes", p.body_part_codes))));
+        withOther("role_in_case", p.role_in_case, p.other_notes, fmtVal("role_in_case", p.role_in_case)) +
+        " | ชนิดการบาดเจ็บ: " + withOther("injury_type_code", p.injury_type_code, p.other_notes, fmtVal("injury_type_code", p.injury_type_code)) +
+        " | ตำแหน่ง: " + withOther("body_part_codes", p.body_part_codes, p.other_notes, fmtVal("body_part_codes", p.body_part_codes)) +
+        (isOth(p.gender) || isOth(p.person_type) ? " | " + [isOth(p.gender) ? "เพศ" + ": " + withOther("gender", p.gender, p.other_notes, "อื่น ๆ") : "", isOth(p.person_type) ? "ประเภทบุคคล: " + withOther("person_type", p.person_type, p.other_notes, "อื่น ๆ") : ""].filter(Boolean).join(" | ") : ""))));
       box.append(pg);
       const cls = ["high_hazard_code", "system_failure_code", "root_cause_code", "is_recordable", "is_serious_potential"];
       const cg = groupOf("การจัดประเภทโดย SHE", cls);
@@ -1123,12 +1156,12 @@
           h("li", { text: "แก้เฉพาะช่องที่ต้องการเปลี่ยน (ช่องที่แก้จะมีกรอบสีน้ำเงิน)" }),
           h("li", { text: "ตรวจ \"สรุปสิ่งที่จะเปลี่ยน\" และพิมพ์เหตุผล" }),
           h("li", { text: mgr ? "กด \"บันทึกการแก้ไข\" ข้อมูลเปลี่ยนทันทีและมีประวัติเก็บไว้" : "กด \"ส่งคำขอแก้ไข\" ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" })));
-      const rf = (addOnly ? [] : REPORT_FIELDS.filter((f) => sheLike || !f.mgr)).map((f) => ({ f, i: makeInput(f, inc[f.k], "e-") }));
-      rf.forEach(({ i }) => wrap.append(i.label, i.control, i.hint));
+      const rf = (addOnly ? [] : REPORT_FIELDS.filter((f) => sheLike || !f.mgr)).map((f) => ({ f, i: makeInput(f, inc[f.k], "e-", inc.other_notes) }));
+      rf.forEach(({ i }) => wrap.append(i.label, i.control, i.hint, i.extra));
       const pf = (addOnly ? [] : state.persons).map((p, n) => {
         const box = h("div", { class: "personedit" }, h("strong", { text: "ผู้เกี่ยวข้องคนที่ " + (n + 1) }));
-        const items = PERSON_FIELDS.map((f) => ({ f, i: makeInput(f, p[f.k], "p" + n + "-") }));
-        items.forEach(({ i }) => box.append(i.label, i.control, i.hint));
+        const items = PERSON_FIELDS.map((f) => ({ f, i: makeInput(f, p[f.k], "p" + n + "-", p.other_notes) }));
+        items.forEach(({ i }) => box.append(i.label, i.control, i.hint, i.extra));
         wrap.append(box); return { p, items };
       });
 
@@ -1145,7 +1178,7 @@
         const rm = h("button", { type: "button", class: "small btn-danger-outline", text: "นำออก" });
         box.append(h("div", { class: "rowbtns" }, title, rm));
         const items = ADD_FIELDS.map((f) => ({ f, i: makeInput(f, null, "a" + seq + "-") }));
-        items.forEach(({ i }) => box.append(i.label, i.control, i.hint));
+        items.forEach(({ i }) => box.append(i.label, i.control, i.hint, i.extra));
         const rec = { box, items, title };
         rm.addEventListener("click", () => { adds.splice(adds.indexOf(rec), 1); box.remove(); renumber(); syncAddBtn(); refresh(); });
         adds.push(rec); addBox.append(box); renumber(); syncAddBtn(); refresh();
@@ -1162,20 +1195,42 @@
       // รวบรวมสิ่งที่เปลี่ยน (ใช้ทั้งแสดงตัวอย่างและตอนส่ง)
       function collect() {
         const changes = { report: {}, persons: {} }; let missing = null;
+        // รวม other_notes ของ scope หนึ่ง: คงคีย์เดิมที่ฟอร์มไม่ได้จัดการ, ตั้ง/ลบคีย์ตามค่าที่เลือกตอนนี้
+        const mergeNotes = (oldN, items, chFlags) => {
+          const nn = Object.assign({}, (oldN && typeof oldN === "object") ? oldN : {});
+          items.forEach(({ f, i }) => {
+            if (!i.other) return;
+            if (i.other.on()) {
+              const tx = i.other.text();
+              if (tx.length < 2 && (chFlags[f.k] || !onote(oldN, i.other.key))) { if (chFlags[f.k]) missing = missing || { f: { k: f.k, other: true }, i: i }; }
+              if (tx) nn[i.other.key] = tx; else delete nn[i.other.key];
+            } else delete nn[i.other.key];
+          });
+          return nn;
+        };
+        const sameNotes = (a, b) => JSON.stringify(Object.entries(a || {}).sort()) === JSON.stringify(Object.entries(b || {}).sort());
+        const rFlag = {};
         rf.forEach(({ f, i }) => {
-          const v = i.get(); const ch = !same(f.k, inc[f.k], v);
+          const v = i.get(); const ch = !same(f.k, inc[f.k], v); rFlag[f.k] = ch;
           i.control.classList.toggle("changed", ch);
           if (f.req && v === null) { missing = missing || { f, i }; }
           if (ch) changes.report[f.k] = v;
         });
+        { const nn = mergeNotes(inc.other_notes, rf, rFlag);
+          if (!sameNotes(nn, inc.other_notes)) changes.report.other_notes = Object.keys(nn).length ? nn : null; }
         pf.forEach(({ p, items }) => {
-          const d = {};
-          items.forEach(({ f, i }) => { const v = i.get(); const ch = !same(f.k, p[f.k], v); i.control.classList.toggle("changed", ch); if (ch) d[f.k] = v; });
+          const d = {}; const pFlag = {};
+          items.forEach(({ f, i }) => { const v = i.get(); const ch = !same(f.k, p[f.k], v); pFlag[f.k] = ch; i.control.classList.toggle("changed", ch); if (ch) d[f.k] = v; });
+          { const nn = mergeNotes(p.other_notes, items, pFlag);
+            if (!sameNotes(nn, p.other_notes)) d.other_notes = Object.keys(nn).length ? nn : null; }
           if (Object.keys(d).length) changes.persons[p.id] = d;
         });
         const addList = adds.map((a) => {
           const o = {};
           a.items.forEach(({ f, i }) => { const v = i.get(); if (v !== null && v !== undefined && !(typeof v === "number" && Number.isNaN(v))) o[f.k] = v; });
+          const nn = {};
+          a.items.forEach(({ f, i }) => { if (i.other && i.other.on()) { const tx = i.other.text(); if (tx.length < 2) missing = missing || { f: { k: f.k, other: true }, i }; else nn[i.other.key] = tx; } });
+          if (Object.keys(nn).length) o.other_notes = nn;
           return o;
         });
         if (addList.length) changes.add_persons = addList;
@@ -1199,7 +1254,9 @@
       const btn = h("button", { type: "button", class: "btn-ok", text: mgr ? "บันทึกการแก้ไข" : "ส่งคำขอแก้ไข" });
       btn.addEventListener("click", () => {
         const { changes, missing, count } = collect();
-        if (missing) { showMsg("ช่อง \"" + LBL[missing.f.k] + "\" ห้ามเว้นว่าง", false); missing.i.control.focus(); return; }
+        if (missing) {
+          if (missing.f.other) { showMsg("เลือก \"อื่น ๆ\" ที่ช่อง \"" + LBL[missing.f.k] + "\" ต้องพิมพ์รายละเอียดอย่างน้อย 2 ตัวอักษร", false); missing.i.other.input.focus(); return; }
+          showMsg("ช่อง \"" + LBL[missing.f.k] + "\" ห้ามเว้นว่าง", false); missing.i.control.focus(); return; }
         if (!count) { showMsg("ยังไม่มีการเปลี่ยนแปลงจากค่าเดิม", false); return; }
         const rs = reason.value.trim();
         if (rs.length < 10) { showMsg("กรุณาระบุเหตุผลอย่างน้อย 10 ตัวอักษร", false); reason.focus(); return; }

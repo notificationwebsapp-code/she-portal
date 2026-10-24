@@ -86,7 +86,8 @@
           <select id="type" required><option value="">-- เลือก --</option></select></p>
 
         <p id="hazard-row" hidden><label for="hazard">งานอันตรายสูงที่เกี่ยวข้อง (High hazard task)</label><br>
-          <select id="hazard"><option value="">-- ไม่เกี่ยวข้อง / ไม่ทราบ --</option></select></p>
+          <select id="hazard"><option value="">-- ไม่เกี่ยวข้อง / ไม่ทราบ --</option></select>
+          <input type="text" id="hazard-other" class="other-detail" maxlength="200" minlength="2" hidden style="margin-top:.35rem" placeholder="ระบุรายละเอียด (บังคับ เมื่อเลือก อื่น ๆ)" aria-label="รายละเอียดงานอันตรายสูง (อื่น ๆ)"></p>
 
         <div id="serious-note" class="alertbox" role="alert" hidden>
           <b>เหตุร้ายแรง</b> — ประเภทนี้ถูกกำหนดเป็นเหตุร้ายแรง ปุ่มส่งอีเมลแจ้งเหตุจะเปิดใช้ในขั้นตอนพัฒนาถัดไป
@@ -266,6 +267,15 @@
       if (extra) Object.assign(i, extra);
       return i;
     }
+    // ช่อง "ระบุรายละเอียด" ที่โผล่เมื่อเลือก "อื่น ๆ" — บังคับพิมพ์ 2–200 ตัวอักษร (ฐานข้อมูลตรวจซ้ำที่ trigger other_notes_guard)
+    function otherInput(label) {
+      const i = input("text", 200); i.placeholder = "ระบุรายละเอียด (บังคับ เมื่อเลือก อื่น ๆ)"; i.minLength = 2;
+      i.hidden = true; i.className = "other-detail"; i.setAttribute("aria-label", label); i.style.marginTop = ".35rem";
+      return i;
+    }
+    function syncHazard() { const on = $("hazard").value === "OTHER"; $("hazard-other").hidden = !on; $("hazard-other").required = on; }
+    $("hazard").addEventListener("change", syncHazard);
+    function setOther(box, on) { box.hidden = !on; box.required = !!on; }
     function select(options) {
       const s = document.createElement("select");
       options.forEach(([v, t]) => s.appendChild(opt(v, t)));
@@ -291,12 +301,17 @@
       f.nat = input("text", 50); f.pos = input("text", 100);
       f.ptype = select([["", "-- ไม่ระบุ --"], ["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["supplier", "ซัพพลายเออร์ (Supplier)"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]]);
 
+      f.oRole = otherInput("รายละเอียดบทบาท (อื่น ๆ)"); f.oGender = otherInput("รายละเอียดเพศ (อื่น ๆ)");
+      f.oPtype = otherInput("รายละเอียดประเภทบุคลากร (อื่น ๆ)"); f.oInjury = otherInput("รายละเอียดชนิดการบาดเจ็บ (อื่น ๆ)"); f.oBody = otherInput("รายละเอียดตำแหน่งที่บาดเจ็บ (อื่น ๆ)");
+      const fRole = field("บทบาทในเหตุการณ์", f.role); fRole.appendChild(f.oRole);
+      const fGender = field("เพศ", f.gender); fGender.appendChild(f.oGender);
+      const fPtype = field("ประเภทบุคลากร", f.ptype); fPtype.appendChild(f.oPtype);
       const r1 = document.createElement("div"); r1.className = "row3";
-      r1.appendChild(field("บทบาทในเหตุการณ์", f.role)); r1.appendChild(field("ชื่อ-นามสกุล", f.name)); r1.appendChild(field("รหัสพนักงาน", f.code));
+      r1.appendChild(fRole); r1.appendChild(field("ชื่อ-นามสกุล", f.name)); r1.appendChild(field("รหัสพนักงาน", f.code));
       const r2 = document.createElement("div"); r2.className = "row3";
-      r2.appendChild(field("เพศ", f.gender)); r2.appendChild(field("อายุ (ปี)", f.age)); r2.appendChild(field("อายุงาน (ปี)", f.tenure));
+      r2.appendChild(fGender); r2.appendChild(field("อายุ (ปี)", f.age)); r2.appendChild(field("อายุงาน (ปี)", f.tenure));
       const r3 = document.createElement("div"); r3.className = "row3";
-      r3.appendChild(field("สัญชาติ", f.nat)); r3.appendChild(field("ตำแหน่ง", f.pos)); r3.appendChild(field("ประเภทบุคลากร", f.ptype));
+      r3.appendChild(field("สัญชาติ", f.nat)); r3.appendChild(field("ตำแหน่ง", f.pos)); r3.appendChild(fPtype);
       div.appendChild(r1); div.appendChild(r2); div.appendChild(r3);
 
       // ชนิดการบาดเจ็บ + ตำแหน่งร่างกาย (หลายค่า) — แสดงเมื่อบทบาท = ผู้บาดเจ็บ และ Admin ตั้งรายการไว้
@@ -310,7 +325,7 @@
           og.get(k).appendChild(opt(r.code, lkLabel(r)));
         });
       }
-      r4.appendChild(field("ชนิดการบาดเจ็บ", f.injury));
+      { const fInj = field("ชนิดการบาดเจ็บ", f.injury); fInj.appendChild(f.oInjury); r4.appendChild(fInj); }
       const bp = document.createElement("p");
       const bl = document.createElement("label"); bl.textContent = "ตำแหน่งที่บาดเจ็บ (เลือกได้หลายตำแหน่ง ไม่เกิน 20 · ซ้าย/ขวาตามตัวผู้บาดเจ็บ)";
       bp.appendChild(bl); bp.appendChild(document.createElement("br"));
@@ -330,6 +345,7 @@
           const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = r.code; cb.style.marginRight = ".3rem";
           lab.appendChild(cb); lab.appendChild(document.createTextNode(r.name_th));
           row.appendChild(lab); f.body.push(cb);
+          if (r.code === "OTHER") row.appendChild(f.oBody);
         });
         grid.appendChild(row);
       });
@@ -340,6 +356,14 @@
       r4.hidden = true; div.appendChild(r4); f.r4 = r4;
       const syncInjury = () => { r4.hidden = !(f.role.value === "injured" && (LK.injury_type.length || LK.body_part.length)); };
       f.role.addEventListener("change", syncInjury);
+      const syncOthers = () => {
+        const inj = f.role.value === "injured";
+        setOther(f.oRole, f.role.value === "other"); setOther(f.oGender, f.gender.value === "other"); setOther(f.oPtype, f.ptype.value === "other");
+        setOther(f.oInjury, inj && f.injury.value === "OTHER");
+        setOther(f.oBody, inj && f.body.some((cb) => cb.value === "OTHER" && cb.checked));
+      };
+      [f.role, f.gender, f.ptype, f.injury].forEach((e) => e.addEventListener("change", syncOthers));
+      f.body.forEach((cb) => cb.addEventListener("change", syncOthers));
       if (data && typeof data === "object") {
         f.role.value = data.role || "injured"; f.name.value = data.name || ""; f.code.value = data.code || "";
         f.gender.value = data.gender || ""; f.age.value = data.age ?? ""; f.tenure.value = data.tenure ?? "";
@@ -347,8 +371,10 @@
         if (data.injury && hasOption(f.injury, data.injury)) f.injury.value = data.injury;
         const bset = new Set(Array.isArray(data.body) ? data.body : []);
         f.body.forEach((cb) => { cb.checked = bset.has(cb.value); });
+        const od = (data.o && typeof data.o === "object") ? data.o : {};
+        f.oRole.value = od.role || ""; f.oGender.value = od.gender || ""; f.oPtype.value = od.ptype || ""; f.oInjury.value = od.injury || ""; f.oBody.value = od.body || "";
       }
-      syncInjury();
+      syncInjury(); syncOthers();
       div._f = f; div._title = title;
       box.appendChild(div); renumber();
     }
@@ -375,7 +401,14 @@
           const parts = f.body.filter((cb) => cb.checked).map((cb) => cb.value);
           row.body_part_codes = parts.length ? parts : null;
         }
-        const hasData = row.full_name || row.employee_code || row.gender || row.age_years !== null ||
+        const on = {};
+        if (f.role.value === "other") on.role = f.oRole.value.trim();
+        if (f.gender.value === "other") on.gender = f.oGender.value.trim();
+        if (f.ptype.value === "other") on.person_type = f.oPtype.value.trim();
+        if (f.role.value === "injured" && f.injury.value === "OTHER") on.injury_type = f.oInjury.value.trim();
+        if (f.role.value === "injured" && f.body.some((cb) => cb.value === "OTHER" && cb.checked)) on.body_part = f.oBody.value.trim();
+        if (Object.keys(on).length) row.other_notes = on;
+        const hasData = row.other_notes || row.full_name || row.employee_code || row.gender || row.age_years !== null ||
           row.tenure_years !== null || row.nationality || row.position_title || row.person_type ||
           row.injury_type_code || row.body_part_codes;
         if (hasData) out.push(row);
@@ -428,6 +461,7 @@
         shift_id: orNull($("shift").value),
         high_hazard_code: orNull($("hazard").value)
       };
+      if ($("hazard").value === "OTHER") row.other_notes = { high_hazard: $("hazard-other").value.trim() };
       const { data: inc, error } = await sb.from("incident_reports").insert(row).select("id").single();
       if (error || !inc) { btn.disabled = false; return show(thaiError(error || {}), "error"); }
 
@@ -463,12 +497,13 @@
         department: $("department").value, location: $("location").value, type: $("type").value,
         description: $("description").value, how: $("how").value, why: $("why").value,
         immediate: $("immediate").value, respName: $("resp-name").value, respEmail: $("resp-email").value,
-        hazard: $("hazard").value,
+        hazard: $("hazard").value, hazardOther: $("hazard-other").value,
         persons: Array.from($("persons").children).map((d) => {
           const f = d._f;
           return { role: f.role.value, name: f.name.value, code: f.code.value, gender: f.gender.value, age: f.age.value,
                    tenure: f.tenure.value, nat: f.nat.value, pos: f.pos.value, ptype: f.ptype.value,
-                   injury: f.injury.value, body: f.body.filter((cb) => cb.checked).map((cb) => cb.value) };
+                   injury: f.injury.value, body: f.body.filter((cb) => cb.checked).map((cb) => cb.value),
+                   o: { role: f.oRole.value, gender: f.oGender.value, ptype: f.oPtype.value, injury: f.oInjury.value, body: f.oBody.value } };
         })
       };
     }
@@ -483,6 +518,7 @@
       $("type").value = (st.type && hasOption($("type"), st.type)) ? st.type : "";
       const o = $("type").selectedOptions[0]; $("serious-note").hidden = !(o && o.dataset.serious);
       $("hazard").value = (st.hazard && hasOption($("hazard"), st.hazard)) ? st.hazard : "";
+      $("hazard-other").value = st.hazardOther || ""; syncHazard();
       $("description").value = st.description || ""; $("how").value = st.how || ""; $("why").value = st.why || "";
       $("immediate").value = st.immediate || ""; $("resp-name").value = st.respName || ""; $("resp-email").value = st.respEmail || "";
       $("persons").replaceChildren();
