@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <title>SHE Portal</title>
+  <script src="i18n.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
 </head>
@@ -93,8 +94,8 @@
           const sv = SEV[x.severity] || SEV.info;
           const a = mk("div", "ann " + sv[1]); a.setAttribute("role", x.severity === "critical" ? "alert" : "status");
           const main = mk("div", "annmain"), head = mk("div", "annhead");
-          head.appendChild(mk("span", "annchip", "ระดับ: " + sv[0])); head.appendChild(mk("p", "anntitle", x.title));
-          main.appendChild(head); if (x.body) main.appendChild(mk("p", "annbody", x.body));
+          head.appendChild(mk("span", "annchip", "ระดับ: " + sv[0])); { const _t = mk("p", "anntitle", x.title); _t.setAttribute("data-no-i18n", ""); head.appendChild(_t); }
+          main.appendChild(head); if (x.body) { const _b = mk("p", "annbody", x.body); _b.setAttribute("data-no-i18n", ""); main.appendChild(_b); }
           main.appendChild(mk("p", "annmeta", "ขอบเขต: " + (x.plants && x.plants.code ? x.plants.code : "ทุก Plant") + (x.ends_at ? " · ถึง " + new Date(x.ends_at).toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", day: "numeric", month: "short", year: "numeric" }) : "")));
           const b = mk("button", "ackbtn", "รับทราบ"); b.type = "button";
           b.addEventListener("click", async () => {

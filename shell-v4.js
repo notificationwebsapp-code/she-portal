@@ -1,5 +1,5 @@
 /* shell-v4.js — ปุ่มแจ้งเตือน / ภาษา / ตั้งค่า ในแถบหัว (ตามแบบ Stitch). ใช้ DOM + textContent เท่านั้น
-   สถานะ: กระดิ่ง = ยังไม่มีระบบแจ้งเตือน (backlog), ภาษา = เลือก EN ยังไม่ได้ (รอแปลทั้งระบบ), ตั้งค่า = ขนาดตัวอักษร (ใช้งานได้จริง) */
+   สถานะ: กระดิ่ง = ยังไม่มีระบบแจ้งเตือน (backlog), ภาษา = ไทย/EN ใช้งานได้ (i18n.js), မြန်မာ ยังไม่เปิด, ตั้งค่า = ขนาดตัวอักษร (ใช้งานได้จริง) */
 (function(){
   var NS="http://www.w3.org/2000/svg";
   var ICONS={
@@ -36,9 +36,11 @@
   }catch(e){if(bellBox)bellBox.replaceChildren(el("p","tpnote","ไม่มีข้อมูลการแจ้งเตือน"))}})();
   /* ตัวสลับภาษาแบบ segmented (ตามแบบ Stitch): ไทย ใช้งานได้ / EN, မြန်မာ ยังไม่เปิด (รอแปลทั้งระบบ) */
   var langseg=null;(function(){var g=el("div","langseg");langseg=g;g.setAttribute("role","group");g.setAttribute("aria-label","ภาษา / Language");
-    [["ไทย",true,"ภาษาไทย (ใช้งานอยู่)"],["EN",false,"English — เร็ว ๆ นี้"],["မြန်မာ",false,"မြန်မာ — เร็ว ๆ นี้"]].forEach(function(o){
-      var b=el("button",o[1]?"on":"off",o[0]);b.type="button";b.title=o[2];b.setAttribute("aria-label",o[2]);
-      if(o[1])b.setAttribute("aria-pressed","true");else{b.setAttribute("aria-disabled","true");b.addEventListener("click",function(e){e.preventDefault()})}
+    var cur=(window.I18N&&window.I18N.lang)||"th";g.setAttribute("data-no-i18n","");
+    [["ไทย","th","ภาษาไทย / Thai"],["EN","en","English"],["မြန်မာ",null,"မြန်မာ — เร็ว ๆ นี้"]].forEach(function(o){
+      var on=o[1]===cur;var b=el("button",on?"on":(o[1]?"":"off"),o[0]);b.type="button";b.title=o[2];b.setAttribute("aria-label",o[2]);
+      if(o[1]){b.setAttribute("aria-pressed",on?"true":"false");if(!on)b.addEventListener("click",function(){if(window.I18N)window.I18N.set(o[1])})}
+      else{b.setAttribute("aria-disabled","true");b.addEventListener("click",function(e){e.preventDefault()})}
       g.appendChild(b)});tools.appendChild(g)})();
   /* ตัวเลือก Plant ที่หัวเว็บ (ตามแบบ Stitch): เก็บค่าที่เลือกไว้ใน localStorage (แค่ตัวกรองหน้าจอ; สิทธิ์จริงคุมด้วย RLS) */
   var PKEY="she-plant";

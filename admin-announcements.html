@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <title>ประกาศสำคัญ | SHE Portal</title>
+  <script src="i18n.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
 </head>
@@ -101,7 +102,7 @@
       const cr = await sb.rpc("announcement_ack_counts"); const counts = {};
       if (!cr.error) (cr.data || []).forEach((c) => { counts[c.announcement_id] = Number(c.ack_count); });
       r.data.forEach((x) => {
-        const tr = el("tr"); tr.appendChild(el("td", null, x.title)); tr.appendChild(el("td", null, SEV[x.severity] || x.severity));
+        const tr = el("tr"); { const _c = el("td", null, x.title); _c.setAttribute("data-no-i18n", ""); tr.appendChild(_c); } tr.appendChild(el("td", null, SEV[x.severity] || x.severity));
         tr.appendChild(el("td", null, x.plants && x.plants.code ? x.plants.code : "ทุก Plant"));
         tr.appendChild(el("td", null, fmt(x.starts_at) + " → " + fmt(x.ends_at)));
         const st = status(x), td = el("td"); td.appendChild(el("span", st[1], st[0])); tr.appendChild(td);

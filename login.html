@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <title>เข้าสู่ระบบ | SHE Portal</title>
+  <script src="i18n.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
 </head>
 <body class="authpage">
+  <div class="langseg" role="group" aria-label="ภาษา / Language" data-no-i18n id="authlang" style="position:fixed;top:10px;right:10px;z-index:50"></div>
+  <script>(function(){var g=document.getElementById("authlang"),cur=(window.I18N&&I18N.lang)||"th";[["ไทย","th","ภาษาไทย / Thai"],["EN","en","English"]].forEach(function(o){var b=document.createElement("button");b.type="button";b.textContent=o[0];b.title=o[2];b.setAttribute("aria-label",o[2]);b.className=o[1]===cur?"on":"";b.setAttribute("aria-pressed",o[1]===cur?"true":"false");if(o[1]!==cur)b.addEventListener("click",function(){if(window.I18N)I18N.set(o[1])});g.appendChild(b)})})();</script>
   <header>
     <h1>SHE Portal</h1>
     <nav>
