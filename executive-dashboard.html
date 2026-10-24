@@ -50,6 +50,18 @@
     .ed-hm th:first-child,.ed-hm td:first-child{text-align:left}
     .ed-hm td.c{text-align:center;border-radius:6px;font-weight:700;min-width:48px;padding:.35rem .2rem}
     .h0{background:#f1f5f9;color:#475569}.hm{background:#e2e8f0;color:#334155;font-weight:400}.h1{background:#fde68a;color:#78350f}.h2{background:#fdba74;color:#7c2d12}.h3{background:#f87171;color:#fff}
+    .ed-pyr{display:flex;flex-direction:column;align-items:center;gap:4px;margin:.4rem 0}
+    .ed-pl{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem .9rem;border-radius:6px;color:#fff;font-weight:700;font-size:.9rem;min-width:0}
+    .ed-pl b{font-size:1.15rem}
+    .pl-fat{background:#8c1d18}.pl-lti{background:#c2410c}.pl-inj{background:#b45309}.pl-near{background:#0066cc}
+    .ed-body{display:grid;grid-template-columns:minmax(110px,150px) 1fr;gap:1rem;align-items:center}
+    .ed-body svg{width:100%;height:auto;max-height:290px}
+    .ed-body svg .rg{stroke:#64748b;stroke-width:1.2}
+    .bg0{fill:#f1f5f9}.bgm{fill:url(#hatch)}.bg1{fill:#fde68a}.bg2{fill:#fb923c}.bg3{fill:#dc2626}
+    .ed-legend i.bg0{background:#f1f5f9}.ed-legend i.bgm{background:repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0 3px,#94a3b8 3px,#94a3b8 5px)}.ed-legend i.bg1{background:#fde68a}.ed-legend i.bg2{background:#fb923c}.ed-legend i.bg3{background:#dc2626}
+    .ed-bl{list-style:none;margin:0;padding:0}
+    .ed-bl li{display:flex;justify-content:space-between;gap:.5rem;padding:.3rem 0;border-bottom:1px solid var(--line);font-size:.9rem}
+    .ed-bl li b{font-variant-numeric:tabular-nums}
     .ed-scroll{overflow-x:auto}
     .ed-tbl{width:100%;border-collapse:collapse;font-size:.9rem}
     .ed-tbl th,.ed-tbl td{padding:.5rem .6rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
@@ -118,6 +130,24 @@
       <section class="ed-kpis" id="kpis" aria-label="ตัวชี้วัดหลัก"></section>
 
       <div class="ed-grid">
+        <section class="ed-card"><h3>พีระมิดความรุนแรง</h3><p class="sub">จำนวนเคสตามระดับ — ฐานกว้างคือเหตุที่เบากว่าแต่เกิดบ่อยกว่า (เหตุเกือบเกิดอุบัติเหตุ) ใช้ดูว่ามีการรายงานเชิงป้องกันมากพอหรือไม่</p>
+          <div class="ed-pyr" id="pyr" role="list" aria-label="พีระมิดความรุนแรง"></div>
+          <p class="sub" style="margin-top:.6rem">บาดเจ็บ = RWC + Medical treatment + First aid · ไม่รวมทรัพย์สินเสียหาย อัคคีภัย PSM สิ่งแวดล้อม</p></section>
+        <section class="ed-card"><h3>ส่วนของร่างกายที่บาดเจ็บ</h3><p class="sub" id="body-sub">จำนวนผู้บาดเจ็บแยกตามส่วนของร่างกาย (คนที่บาดเจ็บหลายจุดในกลุ่มเดียวกันนับ 1 ครั้ง)</p>
+          <div class="ed-body"><svg id="body-svg" viewBox="0 0 120 250" role="img" aria-label="ภาพร่างกายแสดงส่วนที่บาดเจ็บ ตัวเลขอยู่ในรายการด้านข้าง">
+            <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#e2e8f0"/><line x1="0" y1="0" x2="0" y2="6" stroke="#94a3b8" stroke-width="2"/></pattern></defs>
+            <circle class="rg" data-g="head" cx="60" cy="20" r="16"/>
+            <path class="rg" data-g="neck_shoulder" d="M44 38h32l14 10v10H30V48z"/>
+            <rect class="rg" data-g="trunk" x="38" y="60" width="44" height="76" rx="8"/>
+            <rect class="rg" data-g="arm" x="18" y="62" width="16" height="64" rx="7"/><rect class="rg" data-g="arm" x="86" y="62" width="16" height="64" rx="7"/>
+            <circle class="rg" data-g="hand" cx="26" cy="138" r="9"/><circle class="rg" data-g="hand" cx="94" cy="138" r="9"/>
+            <rect class="rg" data-g="leg" x="40" y="140" width="18" height="70" rx="8"/><rect class="rg" data-g="leg" x="62" y="140" width="18" height="70" rx="8"/>
+            <ellipse class="rg" data-g="foot" cx="49" cy="226" rx="13" ry="8"/><ellipse class="rg" data-g="foot" cx="71" cy="226" rx="13" ry="8"/>
+          </svg><ul class="ed-bl" id="body-list"></ul></div>
+          <div class="ed-legend"><span><i class="bg0"></i>0</span><span><i class="bgm"></i>&lt;3 (ซ่อน)</span><span><i class="bg1"></i>น้อย</span><span><i class="bg2"></i>ปานกลาง</span><span><i class="bg3"></i>มาก</span></div></section>
+      </div>
+
+      <div class="ed-grid">
         <section class="ed-card"><h3>แนวโน้มรายเดือน</h3><p class="sub">จำนวนเคสแยกตามความรุนแรง</p>
           <div class="ed-trend" id="trend" role="img" aria-label="กราฟแท่งแนวโน้มรายเดือน มีตารางให้ดูด้านล่าง"></div>
           <div class="ed-legend"><span><i class="sg-serious"></i>เคสรุนแรง (FAT/LTI)</span><span><i class="sg-other"></i>เคสอื่น ๆ</span><span><i class="sg-near"></i>Near miss</span></div>
@@ -129,7 +159,7 @@
       <div class="ed-grid">
         <section class="ed-card"><h3>Plant × ไตรมาส (Heatmap)</h3><p class="sub">จำนวนเคสต่อไตรมาส</p><div class="ed-scroll"><table class="ed-hm" id="hm"></table></div>
           <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="hm"></i>&lt;3 (ซ่อน)</span><span><i class="h1"></i>3–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10 ขึ้นไป</span></div></section>
-        <section class="ed-card"><h3>เปรียบเทียบรายพลานต์</h3><p class="sub">ใช้เรียนรู้และปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน)</p><div class="ed-scroll"><table class="ed-tbl" id="bench"></table></div></section>
+        <section class="ed-card"><h3>เปรียบเทียบแต่ละ Plant</h3><p class="sub">ใช้เรียนรู้จาก Plant อื่นและปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน)</p><div class="ed-scroll"><table class="ed-tbl" id="bench"></table></div></section>
       </div>
 
       <section class="ed-soon" aria-label="ส่วนที่กำลังพัฒนา">
@@ -192,6 +222,25 @@
       box.appendChild(kpi("k-near", "Near miss", String(k.near_miss), "เหตุเกือบเกิดอุบัติเหตุ"));
       box.appendChild(kpi("k-days", "วันปลอด LTI", k.days_since_lti == null ? "ไม่มีเคส" : String(k.days_since_lti), k.days_since_lti == null ? "ยังไม่มี LTI/เสียชีวิตที่บันทึก" : "วัน (นับจากเคสล่าสุด)"));
       var soon = kpi("soon", "Open CAPA", "เร็ว ๆ นี้", ""); box.appendChild(soon);
+
+      /* pyramid */
+      var py = $("pyr"); py.replaceChildren();
+      var pm = r.pyramid || { fatal: 0, lti: 0, injury: 0, near_miss: 0 };
+      [["pl-fat", "เสียชีวิต (FAT)", pm.fatal, 38], ["pl-lti", "หยุดงาน (LTI)", pm.lti, 58], ["pl-inj", "บาดเจ็บ (RWC/MTC/FAC)", pm.injury, 78], ["pl-near", "Near miss", pm.near_miss, 100]].forEach(function (L) {
+        var d = el("div", "ed-pl " + L[0]); d.setAttribute("role", "listitem"); d.style.width = L[3] + "%";
+        d.appendChild(el("span", null, L[1])); d.appendChild(el("b", null, String(L[2]))); py.appendChild(d);
+      });
+
+      /* body */
+      var GN = { head: "ศีรษะ / ตา / ใบหน้า", neck_shoulder: "คอ / ไหล่", trunk: "ลำตัว / หลัง", arm: "แขน / ข้อศอก", hand: "มือ / นิ้ว", leg: "ขา / เข่า", foot: "เท้า / ข้อเท้า", other: "อื่น ๆ" };
+      var bl = $("body-list"); bl.replaceChildren();
+      var bgs = r.body_groups || [], bmax = Math.max.apply(null, bgs.map(function (g) { return g.n || 0; }).concat([1])), bcls = {};
+      bgs.forEach(function (g) {
+        var li = el("li"); li.appendChild(el("span", null, GN[g.group] || g.group)); li.appendChild(el("b", null, numOrMask(g.n))); bl.appendChild(li);
+        bcls[g.group] = g.suppressed ? "bgm" : !g.n ? "bg0" : g.n >= bmax * 0.66 ? "bg3" : g.n >= bmax * 0.33 ? "bg2" : "bg1";
+      });
+      var ip = r.injured_persons || { n: 0 }, li2 = el("li"); li2.style.fontWeight = "700"; li2.appendChild(el("span", null, "ผู้บาดเจ็บทั้งหมด")); li2.appendChild(el("b", null, numOrMask(ip.n))); bl.appendChild(li2);
+      document.querySelectorAll("#body-svg .rg").forEach(function (n) { n.setAttribute("class", "rg " + (bcls[n.getAttribute("data-g")] || "bg0")); });
 
       /* trend */
       var tr = $("trend"); tr.replaceChildren();
