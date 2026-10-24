@@ -53,15 +53,21 @@
     .ed-pyr{display:flex;flex-direction:column;align-items:center;gap:4px;margin:.4rem 0}
     .ed-pl{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem .9rem;border-radius:6px;color:#fff;font-weight:700;font-size:.9rem;min-width:0}
     .ed-pl b{font-size:1.15rem}
-    .pl-fat{background:#8c1d18}.pl-lti{background:#c2410c}.pl-inj{background:#b45309}.pl-near{background:#0066cc}
-    .ed-body{display:grid;grid-template-columns:minmax(110px,150px) 1fr;gap:1rem;align-items:center}
-    .ed-body svg{width:100%;height:auto;max-height:290px}
-    .ed-body svg .rg{stroke:#64748b;stroke-width:1.2}
-    .bg0{fill:#f1f5f9}.bgm{fill:url(#hatch)}.bg1{fill:#fde68a}.bg2{fill:#fb923c}.bg3{fill:#dc2626}
-    .ed-legend i.bg0{background:#f1f5f9}.ed-legend i.bgm{background:repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0 3px,#94a3b8 3px,#94a3b8 5px)}.ed-legend i.bg1{background:#fde68a}.ed-legend i.bg2{background:#fb923c}.ed-legend i.bg3{background:#dc2626}
-    .ed-bl{list-style:none;margin:0;padding:0}
-    .ed-bl li{display:flex;justify-content:space-between;gap:.5rem;padding:.3rem 0;border-bottom:1px solid var(--line);font-size:.9rem}
+    .pl-fat{background:#7f1d1d}.pl-lti{background:#dc2626}.pl-inj{background:#fb923c;color:#431407}.pl-near{background:#fcd34d;color:#422006}
+    .ed-body{display:grid;grid-template-columns:minmax(130px,190px) 1fr;gap:1.2rem;align-items:center}
+    .ed-body svg{width:100%;height:auto;max-height:380px;overflow:visible}
+    .ed-body svg .rg{stroke:#fff;stroke-width:3;stroke-linejoin:round;transition:fill .2s}
+    .bg0{fill:#e3e9f1}.bgm{fill:url(#hatch)}.bg1{fill:#fcd34d}.bg2{fill:#fb923c}.bg3{fill:#ef4444}
+    .ed-body svg .bd rect{fill:#fff;stroke-width:2}
+    .ed-body svg .bd text{font-size:12px;font-weight:700;fill:#0f172a;text-anchor:middle;dominant-baseline:central;font-family:inherit}
+    .ed-legend i.bg0,.ed-bl i.bg0{background:#e3e9f1}.ed-legend i.bgm,.ed-bl i.bgm{background:repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0 3px,#94a3b8 3px,#94a3b8 5px)}.ed-legend i.bg1,.ed-bl i.bg1{background:#fcd34d}.ed-legend i.bg2,.ed-bl i.bg2{background:#fb923c}.ed-legend i.bg3,.ed-bl i.bg3{background:#ef4444}
+    .ed-bl{list-style:none;margin:0;padding:0;display:grid;gap:.15rem}
+    .ed-bl li{display:grid;grid-template-columns:12px 1fr auto;gap:.2rem .6rem;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--line);font-size:.9rem}
+    .ed-bl li i{width:12px;height:12px;border-radius:4px;display:block}
+    .ed-bl li .bar{grid-column:2/4;height:5px;border-radius:3px;background:#eef2f7;overflow:hidden}
+    .ed-bl li .bar s{display:block;height:100%;border-radius:3px;text-decoration:none}
     .ed-bl li b{font-variant-numeric:tabular-nums}
+    .ed-bl li.tot{border-bottom:0;font-weight:700;padding-top:.6rem}
     .ed-scroll{overflow-x:auto}
     .ed-tbl{width:100%;border-collapse:collapse;font-size:.9rem}
     .ed-tbl th,.ed-tbl td{padding:.5rem .6rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
@@ -133,16 +139,21 @@
         <section class="ed-card"><h3>พีระมิดความรุนแรง</h3><p class="sub">จำนวนเคสตามระดับ — ฐานกว้างคือเหตุที่เบากว่าแต่เกิดบ่อยกว่า (เหตุเกือบเกิดอุบัติเหตุ) ใช้ดูว่ามีการรายงานเชิงป้องกันมากพอหรือไม่</p>
           <div class="ed-pyr" id="pyr" role="list" aria-label="พีระมิดความรุนแรง"></div>
           <p class="sub" style="margin-top:.6rem">บาดเจ็บ = RWC + Medical treatment + First aid · ไม่รวมทรัพย์สินเสียหาย อัคคีภัย PSM สิ่งแวดล้อม</p></section>
-        <section class="ed-card"><h3>ส่วนของร่างกายที่บาดเจ็บ</h3><p class="sub" id="body-sub">จำนวนผู้บาดเจ็บแยกตามส่วนของร่างกาย (คนที่บาดเจ็บหลายจุดในกลุ่มเดียวกันนับ 1 ครั้ง)</p>
-          <div class="ed-body"><svg id="body-svg" viewBox="0 0 120 250" role="img" aria-label="ภาพร่างกายแสดงส่วนที่บาดเจ็บ ตัวเลขอยู่ในรายการด้านข้าง">
+        <section class="ed-card"><h3>ส่วนของร่างกายที่บาดเจ็บ</h3><p class="sub" id="body-sub">จำนวนผู้บาดเจ็บแยกตามส่วนของร่างกาย (คนที่บาดเจ็บหลายจุดในกลุ่มเดียวกันนับ 1 ครั้ง · ซ้าย/ขวารวมกัน)</p>
+          <div class="ed-body"><svg id="body-svg" viewBox="-6 0 212 368" role="img" aria-label="ภาพร่างกายแสดงส่วนที่บาดเจ็บ ตัวเลขอยู่ในรายการด้านข้าง">
             <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#e2e8f0"/><line x1="0" y1="0" x2="0" y2="6" stroke="#94a3b8" stroke-width="2"/></pattern></defs>
-            <circle class="rg" data-g="head" cx="60" cy="20" r="16"/>
-            <path class="rg" data-g="neck_shoulder" d="M44 38h32l14 10v10H30V48z"/>
-            <rect class="rg" data-g="trunk" x="38" y="60" width="44" height="76" rx="8"/>
-            <rect class="rg" data-g="arm" x="18" y="62" width="16" height="64" rx="7"/><rect class="rg" data-g="arm" x="86" y="62" width="16" height="64" rx="7"/>
-            <circle class="rg" data-g="hand" cx="26" cy="138" r="9"/><circle class="rg" data-g="hand" cx="94" cy="138" r="9"/>
-            <rect class="rg" data-g="leg" x="40" y="140" width="18" height="70" rx="8"/><rect class="rg" data-g="leg" x="62" y="140" width="18" height="70" rx="8"/>
-            <ellipse class="rg" data-g="foot" cx="49" cy="226" rx="13" ry="8"/><ellipse class="rg" data-g="foot" cx="71" cy="226" rx="13" ry="8"/>
+            <ellipse class="rg" data-g="head" cx="100" cy="30" rx="22" ry="26"/>
+            <path class="rg" data-g="neck_shoulder" d="M89 60H111V72C132 76 150 82 158 94L156 106H44L42 94C50 82 68 76 89 72Z"/>
+            <path class="rg" data-g="trunk" d="M54 110H146L141 168C141 184 139 196 137 208H63C61 196 59 184 59 168Z"/>
+            <path class="rg" data-g="arm" d="M32 112Q32 108 38 108H46Q51 108 51 114L49 196Q49 200 44 200H36Q31 200 31 196Z"/>
+            <path class="rg" data-g="arm" d="M168 112Q168 108 162 108H154Q149 108 149 114L151 196Q151 200 156 200H164Q169 200 169 196Z"/>
+            <path class="rg" data-g="hand" d="M31 204H49V222Q49 232 40 232Q31 232 31 222Z"/>
+            <path class="rg" data-g="hand" d="M151 204H169V222Q169 232 160 232Q151 232 151 222Z"/>
+            <path class="rg" data-g="leg" d="M63 212H98L96 322Q96 328 90 328H72Q66 328 66 322Z"/>
+            <path class="rg" data-g="leg" d="M137 212H102L104 322Q104 328 110 328H128Q134 328 134 322Z"/>
+            <path class="rg" data-g="foot" d="M67 332H96V348Q96 356 88 356H66Q58 356 60 348Z"/>
+            <path class="rg" data-g="foot" d="M133 332H104V348Q104 356 112 356H134Q142 356 140 348Z"/>
+            <g class="bd" id="body-badges"></g>
           </svg><ul class="ed-bl" id="body-list"></ul></div>
           <div class="ed-legend"><span><i class="bg0"></i>0</span><span><i class="bgm"></i>&lt;3 (ซ่อน)</span><span><i class="bg1"></i>น้อย</span><span><i class="bg2"></i>ปานกลาง</span><span><i class="bg3"></i>มาก</span></div></section>
       </div>
@@ -234,13 +245,28 @@
       /* body */
       var GN = { head: "ศีรษะ / ตา / ใบหน้า", neck_shoulder: "คอ / ไหล่", trunk: "ลำตัว / หลัง", arm: "แขน / ข้อศอก", hand: "มือ / นิ้ว", leg: "ขา / เข่า", foot: "เท้า / ข้อเท้า", other: "อื่น ๆ" };
       var bl = $("body-list"); bl.replaceChildren();
-      var bgs = r.body_groups || [], bmax = Math.max.apply(null, bgs.map(function (g) { return g.n || 0; }).concat([1])), bcls = {};
+      var bgs = r.body_groups || [], bmax = Math.max.apply(null, bgs.map(function (g) { return g.n || 0; }).concat([1])), bcls = {}, bval = {};
+      var BCOL = { bg1: "#f59e0b", bg2: "#ea580c", bg3: "#dc2626", bgm: "#64748b", bg0: "#94a3b8" };
       bgs.forEach(function (g) {
-        var li = el("li"); li.appendChild(el("span", null, GN[g.group] || g.group)); li.appendChild(el("b", null, numOrMask(g.n))); bl.appendChild(li);
-        bcls[g.group] = g.suppressed ? "bgm" : !g.n ? "bg0" : g.n >= bmax * 0.66 ? "bg3" : g.n >= bmax * 0.33 ? "bg2" : "bg1";
+        var cls = g.suppressed ? "bgm" : !g.n ? "bg0" : g.n >= bmax * 0.66 ? "bg3" : g.n >= bmax * 0.33 ? "bg2" : "bg1";
+        bcls[g.group] = cls; bval[g.group] = g.suppressed ? "<3" : (g.n ? String(g.n) : "");
+        var li = el("li"); li.appendChild(el("i", cls)); li.appendChild(el("span", null, GN[g.group] || g.group)); li.appendChild(el("b", null, numOrMask(g.n)));
+        var bar = el("div", "bar"), fill = el("s", cls); fill.style.width = (g.suppressed ? 12 : Math.round((g.n || 0) / bmax * 100)) + "%"; bar.appendChild(fill);
+        if (cls === "bgm") fill.style.background = "repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0 3px,#94a3b8 3px,#94a3b8 5px)";
+        else fill.style.background = { bg1: "#fcd34d", bg2: "#fb923c", bg3: "#ef4444", bg0: "#e3e9f1" }[cls];
+        li.appendChild(bar); bl.appendChild(li);
       });
-      var ip = r.injured_persons || { n: 0 }, li2 = el("li"); li2.style.fontWeight = "700"; li2.appendChild(el("span", null, "ผู้บาดเจ็บทั้งหมด")); li2.appendChild(el("b", null, numOrMask(ip.n))); bl.appendChild(li2);
+      var ip = r.injured_persons || { n: 0 }, li2 = el("li", "tot"); li2.appendChild(el("span")); li2.appendChild(el("span", null, "ผู้บาดเจ็บทั้งหมด")); li2.appendChild(el("b", null, numOrMask(ip.n))); bl.appendChild(li2);
       document.querySelectorAll("#body-svg .rg").forEach(function (n) { n.setAttribute("class", "rg " + (bcls[n.getAttribute("data-g")] || "bg0")); });
+      /* badge ตัวเลขบนภาพ (ซ้าย/ขวารวมกัน แสดงด้านซ้ายของภาพครั้งเดียว) */
+      var NS = "http://www.w3.org/2000/svg", bd = $("body-badges"); bd.replaceChildren();
+      [["head", 100, 30], ["neck_shoulder", 100, 88], ["trunk", 100, 158], ["arm", 40, 154], ["hand", 40, 248], ["leg", 82, 270], ["foot", 80, 344]].forEach(function (P) {
+        var v = bval[P[0]]; if (!v) return;
+        var w = v.length > 2 ? 34 : 26, g = document.createElementNS(NS, "g"), rc = document.createElementNS(NS, "rect"), tx = document.createElementNS(NS, "text");
+        rc.setAttribute("x", P[1] - w / 2); rc.setAttribute("y", P[2] - 10); rc.setAttribute("width", w); rc.setAttribute("height", 20); rc.setAttribute("rx", 10);
+        rc.setAttribute("stroke", BCOL[bcls[P[0]]] || "#94a3b8");
+        tx.setAttribute("x", P[1]); tx.setAttribute("y", P[2]); tx.textContent = v; g.appendChild(rc); g.appendChild(tx); bd.appendChild(g);
+      });
 
       /* trend */
       var tr = $("trend"); tr.replaceChildren();
