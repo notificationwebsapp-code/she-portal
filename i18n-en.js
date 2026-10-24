@@ -619,7 +619,7 @@ I18N.add({
 "ลืมรหัสผ่าน?": "Forgot password?",
 "ล้างตัวกรอง": "Clear filters",
 "ล้างทั้งหมด": "Clear all",
-"วัน": "days",
+"วัน": "day(s)",
 "วัน (นับจากเคสล่าสุด)": "days (since the latest case)",
 "วัน Safety and Health at Work สากล (ILO)": "World Day for Safety and Health at Work (ILO)",
 "วัน Safety and Health at Work สากล (ILO) — ความปลอดภัยเริ่มที่ทุกคน": "World Day for Safety and Health at Work (ILO) — safety starts with everyone",
