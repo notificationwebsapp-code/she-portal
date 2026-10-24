@@ -104,8 +104,10 @@
         tr.appendChild(el("td", null, x.plants && x.plants.code ? x.plants.code : "ทุก Plant"));
         tr.appendChild(el("td", null, fmt(x.starts_at) + " → " + fmt(x.ends_at)));
         const st = status(x), td = el("td"); td.appendChild(el("span", st[1], st[0])); tr.appendChild(td);
-        const ak = el("td"); const kb = el("button", "secondary small", (counts[x.id] || 0) + " คน"); kb.type = "button";
-        kb.addEventListener("click", () => showAcks(x)); ak.appendChild(kb); tr.appendChild(ak);
+        const ak = el("td"), canSee = Object.prototype.hasOwnProperty.call(counts, x.id);
+        if (canSee) { const kb = el("button", "secondary small", counts[x.id] + " คน"); kb.type = "button"; kb.addEventListener("click", () => showAcks(x)); ak.appendChild(kb); }
+        else { const nb = el("span", null, "เฉพาะ Admin"); nb.title = "ประกาศส่วนกลาง (ทุก Plant): ดูรายชื่อผู้รับทราบได้เฉพาะ Admin"; ak.appendChild(nb); }
+        tr.appendChild(ak);
         const act = el("td");
         const eb = el("button", "secondary small", "แก้ไข"); eb.type = "button"; eb.addEventListener("click", () => startEdit(x)); act.appendChild(eb);
         const tg = el("button", (x.active ? "btn-danger-outline" : "btn-ok-outline") + " small", x.active ? "ปิดใช้งาน" : "เปิดใช้งาน"); tg.type = "button";

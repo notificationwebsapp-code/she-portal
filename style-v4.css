@@ -272,3 +272,65 @@ main.formcard form,main.flash form{max-width:none}
 .herometric .hnote{flex-basis:100%;font-size:.8rem;color:#cfe3f3;margin:0}
 @media(max-width:640px){.herometric .big{font-size:2.2rem}}
 .annmgr a{color:var(--brand);font-weight:700}
+
+/* ===== v4.4 Flash Report ตามแบบ Stitch: Breadcrumb · Stepper · 2 คอลัมน์ · แถบสถานะด้านขวา ===== */
+main.flash.v2{max-width:1240px;background:transparent;border:0;box-shadow:none;padding:1.25rem 1rem 2.5rem;margin:0 auto}
+.crumb{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;font-size:.9rem;color:var(--muted);margin:0 0 .5rem}
+.crumb a{color:var(--brand);text-decoration:none}.crumb a:hover{text-decoration:underline}
+.flashtitle{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin:0 0 1rem}
+.flashtitle h2{margin:0}
+.stbadge{display:inline-flex;align-items:center;border-radius:999px;padding:.15rem .75rem;font-size:.82rem;font-weight:700;background:#E5EEFF;color:#0B3B60}
+.stbadge.ready{background:#DCFAE6;color:#067647}
+ol.flowsteps{list-style:none;margin:0 0 1rem;padding:1rem 1.25rem;display:flex;flex-wrap:wrap;gap:1rem 0;background:#fff;border:1px solid var(--line);border-radius:16px}
+ol.flowsteps li{display:flex;align-items:center;gap:.6rem;flex:1;min-width:150px;color:var(--muted);position:relative}
+ol.flowsteps li:not(:last-child)::after{content:"";flex:1;height:2px;background:var(--line);margin:0 .75rem}
+ol.flowsteps .dot{width:2rem;height:2rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;background:#EEF2F7;color:#414750;flex:none}
+ol.flowsteps li.cur{color:#0B3B60;font-weight:700}
+ol.flowsteps li.cur .dot{background:#005A9C;color:#fff;box-shadow:0 0 0 3px #D2E4FF}
+ol.flowsteps .lbl small{display:block;font-size:.72rem;font-weight:600;text-transform:none;color:#414750}
+ol.flowsteps li.soon{opacity:.7}
+.flashlead{text-align:left!important;margin:0 0 1rem;padding:.7rem 1rem;background:#EFF4FF;border-left:5px solid #005A9C;border-radius:8px;color:#0B1C30}
+.flashgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.fl-cards .stepcard{border-left:4px solid #005A9C;border-radius:16px;padding:1.25rem 1.4rem .6rem;margin:0 0 1.25rem}
+.fl-cards .stepcard>h3{font-size:1.1rem;color:#0B3B60}
+.fl-side{position:sticky;top:16px;display:grid;gap:16px}
+.sidecard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1rem 1.1rem}
+.sidehead{display:flex;justify-content:space-between;align-items:center;gap:.5rem;font-weight:700;color:#0B3B60;margin-bottom:.6rem}
+.prog{display:flex;justify-content:space-between;align-items:baseline;margin:.2rem 0 .4rem;font-size:.92rem;color:#414750}
+.prog b{font-size:1.05rem;color:#005A9C}
+.progbar{height:8px;border-radius:4px;background:#E5EEFF;overflow:hidden}.progbar i{display:block;height:100%;background:#005A9C;border-radius:4px;transition:width .2s}
+.sidetitle{margin:0 0 .6rem;font-size:1.02rem;color:#0B3B60}
+.fl-side .formactions{display:grid;gap:.6rem;margin:.2rem 0 .6rem}
+.fl-side .formactions button{width:100%;margin:0;min-height:48px}
+.fl-side .formactions .dstatus{text-align:center;font-size:.88rem}
+.sidecard .helper{margin:.2rem 0 0;font-size:.85rem}
+.sidecard.guide{background:#EFF4FF;border-color:#D2E4FF}
+.sidecard.guide p{margin:.2rem 0 .6rem;font-size:.92rem}
+.sidecard.guide .refline{font-size:.8rem;color:#414750;margin-bottom:0}
+@media(max-width:1000px){.flashgrid{grid-template-columns:1fr}.fl-side{position:static}ol.flowsteps li:not(:last-child)::after{display:none}ol.flowsteps li{min-width:46%}}
+@media(max-width:560px){main.flash.v2{padding:.75rem .5rem 2rem}.fl-cards .stepcard{padding:1rem 1rem .4rem}}
+
+/* ===== v4.5 Mobile v1 (ตามแบบ Stitch มือถือ): แถบปุ่มล่างติดจอ + Stepper แถวเดียว + หัวกะทัดรัด ===== */
+@media(max-width:1000px){
+  main.flash.v2{padding-bottom:calc(7.5rem + env(safe-area-inset-bottom))}
+  .sendcard{padding:.2rem 0 0;border:0;background:transparent}
+  .sendcard .sidetitle{display:none}
+  .sendcard .helper{padding:0 .25rem}
+  .sendcard .formactions{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:.35rem .6rem;
+    padding:.6rem 1rem calc(.6rem + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(11,59,96,.10)}
+  .sendcard .formactions .dstatus{order:-1;flex:1 0 100%;text-align:left;font-size:.78rem;margin:0}
+  .sendcard .formactions #btn-draft{order:1;flex:1 1 38%;width:auto}
+  .sendcard .formactions #btn-save{order:2;flex:1 1 56%;width:auto}
+}
+@media(max-width:640px){
+  .crumb{font-size:.8rem;margin-bottom:.25rem}
+  .flashtitle{gap:.5rem;margin-bottom:.6rem}.flashtitle h2{font-size:1.25rem;line-height:1.3}
+  ol.flowsteps{flex-wrap:nowrap;gap:0;padding:.7rem .5rem;border-radius:12px}
+  ol.flowsteps li{flex:1 1 0;min-width:0;flex-direction:column;gap:.3rem;text-align:center;align-items:center}
+  ol.flowsteps li:not(:last-child)::after{display:none}
+  ol.flowsteps .dot{width:1.8rem;height:1.8rem;font-size:.85rem}
+  ol.flowsteps .lbl{font-size:.74rem;line-height:1.25}
+  ol.flowsteps .lbl small{display:none}
+  ol.flowsteps li.soon .lbl::after{content:"เร็ว ๆ นี้";display:block;font-size:.66rem;color:#414750}
+  .flashlead{font-size:.9rem;padding:.6rem .8rem}
+}

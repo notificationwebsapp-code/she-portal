@@ -40,12 +40,20 @@
     </nav>
   </header>
 
-  <main class="flash">
-    <h2>รายงานอุบัติเหตุ (Flash Report)</h2>
-    <p class="lead" style="text-align:left">รายงานเบื้องต้นให้เร็วที่สุด ส่วนการหาสาเหตุ (Root cause) และ Action จะเพิ่มในขั้นตอนถัดไป</p>
+  <main class="flash v2">
+    <nav class="crumb" aria-label="เส้นทางหน้า"><a href="index.html">หน้าแรก</a><span aria-hidden="true">›</span><span>รายงานอุบัติเหตุ</span><span aria-hidden="true">›</span><span aria-current="page">Flash Report ใหม่</span></nav>
+    <div class="flashtitle"><h2>รายงานอุบัติเหตุ (Flash Report)</h2><span class="stbadge" id="st-badge">กำลังกรอก</span></div>
+    <ol class="flowsteps" aria-label="ขั้นตอนของเคส">
+      <li class="cur" aria-current="step"><span class="dot">1</span><span class="lbl"><small>ขั้นที่ 1</small>ส่งรายงาน</span></li>
+      <li><span class="dot">2</span><span class="lbl"><small>ขั้นที่ 2</small>SHE ตรวจสอบ</span></li>
+      <li class="soon"><span class="dot">3</span><span class="lbl"><small>ขั้นที่ 3 · เร็ว ๆ นี้</small>Investigation</span></li>
+      <li class="soon"><span class="dot">4</span><span class="lbl"><small>ขั้นที่ 4 · เร็ว ๆ นี้</small>ปิดเคส</span></li>
+    </ol>
+    <p class="lead flashlead">รายงานเบื้องต้นให้เร็วที่สุด ส่วนการหาสาเหตุ (Root cause) และ Action จะเพิ่มในขั้นตอนถัดไป</p>
     <p id="msg" role="status" class="msg" hidden></p>
 
     <form id="incident-form" autocomplete="off">
+    <div class="flashgrid"><div class="fl-cards">
 
       <section class="stepcard">
         <h3><span class="no">1</span> เกิดอะไรขึ้น ที่ไหน เมื่อไร (What / Where / When)</h3>
@@ -116,9 +124,27 @@
         <p class="helper" style="margin-top:-.5rem">ระบบจำชื่อและอีเมลที่เคยกรอกไว้ในสมุดรายชื่อส่วนตัวของคุณ (เห็นเฉพาะคุณ) คลิกช่องเพื่อเลือกจากรายการ</p>
       </section>
 
-      <div class="formactions">
-        <button type="submit" id="btn-save">บันทึก Flash Report</button>
-      </div>
+    </div>
+    <aside class="fl-side" aria-label="สถานะและการส่งรายงาน">
+      <section class="sidecard">
+        <div class="sidehead"><span>สถานะการส่ง</span><span class="stbadge" id="st-badge2">ร่าง/กำลังกรอก</span></div>
+        <p class="prog"><span>ช่องบังคับที่กรอกแล้ว</span><b id="req-count" aria-live="polite">0 / 0</b></p>
+        <div class="progbar" aria-hidden="true"><i id="req-bar" style="width:0%"></i></div>
+      </section>
+      <section class="sidecard sendcard">
+        <h3 class="sidetitle">ส่งรายงาน</h3>
+        <div class="formactions">
+          <button type="submit" id="btn-save">บันทึก Flash Report</button>
+        </div>
+        <p class="helper">ร่างบันทึกอัตโนมัติเมื่อมีการแก้ไข ร่างยังไม่ใช่การรายงาน SHE จะเห็นข้อมูลเมื่อกดบันทึก Flash Report เท่านั้น</p>
+      </section>
+      <section class="sidecard guide">
+        <h3 class="sidetitle">คำแนะนำ SHE</h3>
+        <p><b>เหตุฉุกเฉินมาก่อนรายงาน</b> หากมีไฟไหม้ สารเคมีรั่วไหลรุนแรง หรือผู้บาดเจ็บรุนแรง ให้ดำเนินการตามแผนฉุกเฉินของโรงงานก่อน แล้วจึงกรอกรายงานนี้</p>
+        <p>กรอกข้อเท็จจริงเบื้องต้นให้เร็วที่สุด การหาสาเหตุ (Root cause) ทำในขั้นตอนถัดไป</p>
+        <p class="refline">อ้างอิง: ISO 45001:2018 ข้อ 10.2 (เหตุการณ์ ความไม่สอดคล้อง และการปฏิบัติการแก้ไข)</p>
+      </section>
+    </aside></div>
     </form>
   </main>
 
@@ -448,12 +474,24 @@
       const parts = [t && t.value ? t.textContent.split(" / ")[0] : "", val("location") || val("description").slice(0, 40)].filter(Boolean);
       return parts.join(" · ");
     }
+    // ---------- ตัวนับช่องบังคับ (แสดงผลเท่านั้น ไม่กระทบการตรวจข้อมูล) ----------
+    function updateProgress() {
+      const req = Array.prototype.filter.call(form.querySelectorAll("[required]"), (e) => !e.disabled && !e.closest("[hidden]"));
+      const done = req.filter((e) => String(e.value || "").trim() !== "").length, total = req.length;
+      $("req-count").textContent = done + " / " + total;
+      $("req-bar").style.width = (total ? Math.round(done * 100 / total) : 0) + "%";
+      const ready = total > 0 && done === total;
+      [$("st-badge"), $("st-badge2")].forEach((b) => { b.textContent = ready ? "พร้อมส่ง" : "กำลังกรอก"; b.classList.toggle("ready", ready); });
+    }
+    form.addEventListener("input", updateProgress); form.addEventListener("change", updateProgress);
+    setInterval(updateProgress, 1500); /* ครอบคลุมช่องที่ถูกเติม/แสดงด้วยโค้ด เช่น Plant และแผนก */
+
     SheDraft.init({ formType: "incident", form: form, getState: getState, setState: setState,
                     getTitle: draftTitle, getPlantId: currentPlantId,
                     actionsEl: document.querySelector(".formactions") });
 
     $("date").value = todayLocal();
-    loadTypes(); loadDepartments(); loadContacts(); loadMyPlants();
+    loadTypes(); loadDepartments(); loadContacts(); loadMyPlants(); updateProgress();
   </script>
   <script src="shell-v4.js"></script>
 </body>
