@@ -105,6 +105,12 @@ async function setupNav() {
       pm.href = "admin-permissions.html";
       pm.textContent = "สิทธิ์การใช้งาน";
       link.insertAdjacentElement("beforebegin", pm);
+      if (p.role === "super_admin") {
+        const th = document.createElement("a");
+        th.href = "admin-themes.html";
+        th.textContent = "ธีมเทศกาล";
+        link.insertAdjacentElement("beforebegin", th);
+      }
       markCurrentNav();
     }
     showRoleBadge(p, data.session.user.id, link);

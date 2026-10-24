@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ธีมเทศกาล | SHE Portal</title>
+  <style>
+    .th-list{display:grid;gap:1rem;margin:1rem 0 2rem}
+    .th-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1rem 1.2rem}
+    .th-card.off{background:#f8fafc}
+    .th-head{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1rem;margin-bottom:.8rem}
+    .th-head h3{margin:0;font-size:1.05rem;color:var(--navy)}
+    .th-id{font-size:.78rem;color:var(--muted);background:var(--grey);border-radius:999px;padding:.05rem .6rem}
+    .th-now{font-size:.8rem;font-weight:700;color:#14602d;background:#e6f4ea;border-radius:999px;padding:.1rem .7rem}
+    .th-sw{margin-left:auto;display:inline-flex;align-items:center;gap:.5rem;min-height:44px;font-weight:600;cursor:pointer}
+    .th-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem 1rem;align-items:end}
+    .th-grid label{display:block;font-size:.85rem;font-weight:600;color:var(--navy)}
+    .th-grid label span{display:block;margin-bottom:.2rem}
+    .th-grid .wide{grid-column:1/-1}
+    .th-grid select,.th-grid input[type=text],.th-grid input[type=number]{width:100%}
+    .th-pair{display:grid;grid-template-columns:1fr 5rem;gap:.4rem}
+    .th-note{font-size:.8rem;color:var(--muted);margin:.2rem 0 0;font-weight:400}
+    .th-act{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem;align-items:center}
+    .th-act .st{font-size:.85rem;color:var(--muted)}
+    .th-act a.btnlink{display:inline-flex;align-items:center;min-height:48px;padding:0 1rem;border:1px solid var(--ctl);border-radius:8px;color:var(--navy);text-decoration:none;font-weight:600;background:#fff}
+    .th-act a.btnlink:hover{background:var(--accent);border-color:var(--brand);color:var(--brand)}
+    .th-card [disabled]{opacity:.6;cursor:not-allowed}
+  </style>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- ซ่อนจนกว่าจะยืนยันว่าเป็น Admin (ซ่อนหน้าจอเท่านั้น สิทธิ์จริงอยู่ที่ RLS/ฟังก์ชันในฐานข้อมูล: แก้ไขได้เฉพาะ Super admin) -->
+    <div id="area" hidden>
+      <h2>ธีมเทศกาล</h2>
+      <p id="intro">กำหนดช่วงวันที่ เปิด/ปิด และข้อความทักทายของธีมตามเทศกาล ระบบเลือกธีมตามวันที่ (เวลาประเทศไทย) โดยลำดับคือ <b>วันเจาะจง</b> ชนะ <b>ช่วงวันที่</b> ชนะ <b>ทั้งเดือน</b> วันที่ไม่แน่นอน (เช่น ตรุษจีน ลอยกระทง) ให้เลือก "ทั้งเดือน" และระบุปีที่ใช้</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+      <p class="th-note">ไอคอนและสีของแต่ละธีมกำหนดไว้ในระบบแล้ว หน้านี้ตั้งได้เฉพาะ เมื่อไหร่ / เปิดหรือปิด / ข้อความ ปุ่ม "ดูตัวอย่าง" จะเปิดหน้าแรกด้วยธีมนั้น (ล้างตัวอย่างได้โดยเติม <code>?theme=auto</code> ท้าย URL)</p>
+      <div id="list" class="th-list"></div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* หน้านี้เป็นเพียงหน้าจอ: ความปลอดภัยจริงอยู่ที่ DB
+       - ทุกคนอ่าน theme_settings ได้ (ข้อมูลสาธารณะ ไม่ใช่ข้อมูลส่วนบุคคล)
+       - แก้ไขได้เฉพาะ Super admin ผ่าน RPC set_theme_setting / set_theme_enabled (ตรวจ is_super_admin() ในฐานข้อมูล)
+       - ข้อความที่แสดงทั้งหมดใช้ textContent */
+    const MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+    const KINDS = [["day", "วันเจาะจง (วันเดียว)"], ["range", "ช่วงวันที่"], ["month", "ทั้งเดือน (วันที่ไม่แน่นอน)"]];
+    const msgEl = document.getElementById("msg");
+    function show(t, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t; msgEl.scrollIntoView({ block: "nearest" }); }
+    function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+    let isSuper = false, rows = [], defaults = {};
+
+    function fld(labelText, input, note) {
+      const l = el("label"); l.appendChild(el("span", null, labelText)); l.appendChild(input);
+      if (note) l.appendChild(el("span", "th-note", note));
+      return l;
+    }
+    function monthSel(v) { const s = el("select"); MONTHS.forEach((m, i) => { const o = el("option", null, m); o.value = i + 1; s.appendChild(o); }); s.value = v; return s; }
+    function dayInp(v) { const i = el("input"); i.type = "number"; i.min = 1; i.max = 31; i.value = v; i.inputMode = "numeric"; return i; }
+    function parseYears(txt) {
+      const t = txt.trim(); if (!t) return null;
+      const parts = t.split(/[\s,]+/).filter(Boolean);
+      const ys = parts.map(Number);
+      if (ys.some((y) => !Number.isInteger(y) || y < 2000 || y > 2100)) throw new Error("ปีต้องเป็น ค.ศ. 4 หลัก (2000–2100) คั่นด้วยจุลภาค เช่น 2026, 2027");
+      return Array.from(new Set(ys));
+    }
+
+    function render() {
+      const box = document.getElementById("list"); box.replaceChildren();
+      const active = (window.SheTheme && window.SheTheme.active && window.SheTheme.active()) || null;
+      rows.forEach((r) => {
+        const card = el("section", "th-card" + (r.enabled ? "" : " off"));
+        const head = el("div", "th-head");
+        head.appendChild(el("h3", null, r.label)); head.appendChild(el("span", "th-id", r.id));
+        if (active && active.id === r.id && r.enabled) head.appendChild(el("span", "th-now", "กำลังใช้งานวันนี้"));
+        const sw = el("label", "th-sw"); const en = el("input"); en.type = "checkbox"; en.checked = r.enabled; en.disabled = !isSuper;
+        sw.appendChild(en); sw.appendChild(el("span", null, "เปิดใช้"));
+        head.appendChild(sw); card.appendChild(head);
+
+        const g = el("div", "th-grid");
+        const label = el("input"); label.type = "text"; label.maxLength = 80; label.value = r.label;
+        const kind = el("select"); KINDS.forEach((k) => { const o = el("option", null, k[1]); o.value = k[0]; kind.appendChild(o); }); kind.value = r.kind;
+        const fm = monthSel(r.from_month), fd = dayInp(r.from_day), tm = monthSel(r.to_month), td = dayInp(r.to_day);
+        const years = el("input"); years.type = "text"; years.value = (r.years || []).join(", "); years.placeholder = "เว้นว่าง = ทุกปี";
+        const greet = el("input"); greet.type = "text"; greet.maxLength = 160; greet.value = r.greeting;
+        const fromBox = el("div", "th-pair"); fromBox.appendChild(fm); fromBox.appendChild(fd);
+        const toBox = el("div", "th-pair"); toBox.appendChild(tm); toBox.appendChild(td);
+        const lf = fld("ชื่อธีม", label, "วันที่ไม่ใช่สากลให้ต่อท้าย (ไทย)"); lf.classList.add("wide");
+        g.appendChild(lf);
+        g.appendChild(fld("ชนิด", kind));
+        const fromL = fld("เริ่ม (เดือน / วัน)", fromBox), toL = fld("สิ้นสุด (เดือน / วัน)", toBox);
+        g.appendChild(fromL); g.appendChild(toL);
+        g.appendChild(fld("ใช้เฉพาะปี ค.ศ.", years, "ใช้กับวันที่ไม่แน่นอน เช่น 2026, 2027"));
+        const gf = fld("ข้อความทักทาย (แถบบนหน้าแรก/Login)", greet); gf.classList.add("wide"); g.appendChild(gf);
+        card.appendChild(g);
+
+        const sync = () => {
+          const k = kind.value;
+          tm.disabled = td.disabled = !isSuper || k !== "range";
+          fd.disabled = !isSuper || k === "month";
+          if (k === "day") { tm.value = fm.value; td.value = fd.value; }
+          if (k === "month") { fd.value = 1; tm.value = fm.value; td.value = 31; }
+        };
+        [kind, fm, fd].forEach((x) => x.addEventListener("change", sync)); fd.addEventListener("input", sync);
+        [label, kind, fm, fd, tm, td, years, greet].forEach((x) => { if (!isSuper) x.disabled = true; });
+        sync();
+
+        const act = el("div", "th-act"); const st = el("span", "st");
+        const save = el("button", null, "บันทึก"); save.type = "button"; save.disabled = !isSuper;
+        const reset = el("button", "secondary", "รีเซ็ตเป็นค่าเริ่มต้น"); reset.type = "button"; reset.disabled = !isSuper || !defaults[r.id];
+        const prev = el("a", "btnlink", "ดูตัวอย่าง"); prev.href = "index.html?theme=" + encodeURIComponent(r.id); prev.target = "_blank"; prev.rel = "noopener";
+        act.appendChild(save); act.appendChild(reset); act.appendChild(prev); act.appendChild(st); card.appendChild(act);
+
+        async function submit(vals) {
+          save.disabled = reset.disabled = true; st.textContent = "กำลังบันทึก…";
+          try {
+            const { error } = await sb.rpc("set_theme_setting", vals);
+            if (error) { show("บันทึกไม่สำเร็จ: " + error.message, false); st.textContent = ""; return; }
+            show("บันทึกธีม \"" + vals.p_label + "\" เรียบร้อย", true);
+            if (window.SheTheme && window.SheTheme.refresh) await window.SheTheme.refresh();
+            await load();
+          } finally { save.disabled = !isSuper; reset.disabled = !isSuper || !defaults[r.id]; }
+        }
+        save.addEventListener("click", () => {
+          let ys; try { ys = parseYears(years.value); } catch (e) { show(e.message, false); return; }
+          const k = kind.value;
+          submit({ p_id: r.id, p_label: label.value, p_greeting: greet.value, p_kind: k,
+                   p_from_month: Number(fm.value), p_from_day: Number(fd.value),
+                   p_to_month: k === "range" ? Number(tm.value) : Number(fm.value), p_to_day: k === "range" ? Number(td.value) : Number(fd.value),
+                   p_years: ys, p_enabled: en.checked });
+        });
+        reset.addEventListener("click", () => {
+          const d = defaults[r.id]; if (!d) return;
+          submit({ p_id: r.id, p_label: d.label, p_greeting: d.greet, p_kind: d.kind, p_from_month: d.from[0], p_from_day: d.from[1],
+                   p_to_month: d.to[0], p_to_day: d.to[1], p_years: d.years || null, p_enabled: true });
+        });
+        en.addEventListener("change", async () => {
+          en.disabled = true;
+          const { error } = await sb.rpc("set_theme_enabled", { p_id: r.id, p_enabled: en.checked });
+          if (error) { en.checked = !en.checked; show("เปลี่ยนสถานะไม่สำเร็จ: " + error.message, false); en.disabled = !isSuper; return; }
+          show((en.checked ? "เปิดใช้ธีม \"" : "ปิดธีม \"") + r.label + "\" เรียบร้อย", true);
+          if (window.SheTheme && window.SheTheme.refresh) await window.SheTheme.refresh();
+          await load();
+        });
+        box.appendChild(card);
+      });
+    }
+
+    async function load() {
+      const { data, error } = await sb.from("theme_settings")
+        .select("id,label,greeting,kind,from_month,from_day,to_month,to_day,years,enabled").order("id");
+      if (error) { show("โหลดข้อมูลไม่สำเร็จ: " + error.message + " (ตรวจว่ารัน Migration B16 แล้ว)", false); return; }
+      rows = data || []; render();
+    }
+
+    (async function init() {
+      const session = await requireLogin(); if (!session) return;
+      const me = await getMyProfile(); const gate = document.getElementById("gate");
+      if (!me || me.status !== "active" || (me.role !== "admin" && me.role !== "super_admin")) { gate.textContent = "หน้านี้สำหรับ Admin เท่านั้น"; return; }
+      isSuper = me.role === "super_admin";
+      gate.hidden = true; document.getElementById("area").hidden = false;
+      if (!isSuper) document.getElementById("intro").textContent += " (คุณเป็น Admin: ดูได้อย่างเดียว เฉพาะ Super admin เท่านั้นที่แก้ไขธีมได้)";
+      (window.SheTheme ? window.SheTheme.defaults() : []).forEach((d) => { defaults[d.id] = d; });
+      await load();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>
