@@ -353,3 +353,7 @@ ol.flowsteps li.soon{opacity:.7}
   body.authpage header nav{display:none}
   body.authpage{padding-bottom:0}
 }
+
+/* i18n: ข้อความที่มาจาก CSS content (ไม่อยู่ใน DOM) — โหมด English */
+html[lang="en"] nav .navsoon::after{content:"Coming soon"}
+html[lang="en"] ol.flowsteps li.soon .lbl::after{content:"Coming soon"}
