@@ -19,7 +19,7 @@
     .ed-meta{font-size:.85rem;color:var(--muted);margin:.4rem 0 0}
     .ed-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin:0 0 1rem}
     .ed-kpi{background:#fff;border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:var(--radius);box-shadow:var(--shadow);padding:.8rem 1rem}
-    .ed-kpi.k-serious{border-left-color:#b3261e}.ed-kpi.k-lti{border-left-color:#c2410c}.ed-kpi.k-near{border-left-color:#0f766e}.ed-kpi.k-days{border-left-color:#1b7a3a}
+    .ed-kpi.k-serious{border-left-color:#7f1d1d}.ed-kpi.k-lti{border-left-color:#dc2626}.ed-kpi.k-near{border-left-color:#4ade80}.ed-kpi.k-days{border-left-color:#1b7a3a}
     .ed-kpi .t{font-size:.85rem;color:var(--muted);font-weight:600}
     .ed-kpi .v{font-size:2rem;font-weight:700;line-height:1.2;color:var(--navy)}
     .ed-kpi .u{font-size:.8rem;color:var(--muted)}
@@ -37,8 +37,8 @@
     .ed-col{flex:1;min-width:46px;display:flex;flex-direction:column;align-items:center;gap:.25rem}
     .ed-stack{display:flex;flex-direction:column-reverse;width:100%;max-width:56px;border-radius:6px 6px 0 0;overflow:hidden;border:1px solid #cbd5e1}
     .ed-seg{display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;min-height:0}
-    .sg-serious{background:repeating-linear-gradient(45deg,#b3261e,#b3261e 5px,#8c1d18 5px,#8c1d18 8px)}
-    .sg-other{background:#b45309}.sg-near{background:#0f766e}
+    .sg-serious{background:repeating-linear-gradient(45deg,#dc2626,#dc2626 5px,#7f1d1d 5px,#7f1d1d 8px)}
+    .sg-other{background:#fb923c;color:#431407}.sg-near{background:#86efac;color:#052e16}
     .ed-tot{font-weight:700;font-size:.85rem}.ed-mon{font-size:.78rem;color:var(--muted)}
     .ed-legend{display:flex;flex-wrap:wrap;gap:.4rem 1rem;font-size:.82rem;margin:.6rem 0 0}
     .ed-legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:.3rem;border:1px solid #cbd5e1}
@@ -82,7 +82,7 @@
     .ed-soon .ed-card{background:#f8fafc;border-style:dashed;color:var(--muted)}
     .ed-search{width:100%;max-width:340px;min-height:44px}
     details.ed-alt summary{cursor:pointer;font-size:.85rem;color:var(--brand);margin-top:.6rem;min-height:32px}
-    @media (max-width:640px){.ed-bar{grid-template-columns:1fr auto}.ed-bar .trk{grid-column:1/-1;order:3}.ed-kpi .v{font-size:1.7rem}.ed-card{padding:.9rem}.ed-pop{position:static;box-shadow:none}}
+    @media (max-width:640px){.ed-pl{min-width:170px}.ed-bar{grid-template-columns:1fr auto}.ed-bar .trk{grid-column:1/-1;order:3}.ed-kpi .v{font-size:1.7rem}.ed-card{padding:.9rem}.ed-pop{position:static;box-shadow:none}}
   </style>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
@@ -169,7 +169,7 @@
 
       <div class="ed-grid">
         <section class="ed-card"><h3>Plant × ไตรมาส (Heatmap)</h3><p class="sub">จำนวนเคสต่อไตรมาส</p><div class="ed-scroll"><table class="ed-hm" id="hm"></table></div>
-          <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="hm"></i>&lt;3 (ซ่อน)</span><span><i class="h1"></i>3–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10 ขึ้นไป</span></div></section>
+          <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="hm"></i>&lt;3 = มี 1–2 ราย (ปกปิด)</span><span><i class="h1"></i>3–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10 ขึ้นไป</span></div></section>
         <section class="ed-card"><h3>เปรียบเทียบแต่ละ Plant</h3><p class="sub">ใช้เรียนรู้จาก Plant อื่นและปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน)</p><div class="ed-scroll"><table class="ed-tbl" id="bench"></table></div></section>
       </div>
 
@@ -290,9 +290,10 @@
       var cb = $("cats"); cb.replaceChildren();
       var cmax = Math.max.apply(null, r.by_category.map(function (c) { return c.n || 0; }).concat([1]));
       if (!r.by_category.length) cb.appendChild(el("p", "sub", "ไม่มีข้อมูลในช่วงที่เลือก"));
+      var CATCOL = { FAT: "#7f1d1d", LTI: "#dc2626", RWC: "#ea580c", MTC: "#fb923c", FAC: "#fcd34d", PD: "#bef264", NEAR: "#86efac" };
       r.by_category.forEach(function (c) {
         var row = el("div", "ed-bar"); row.appendChild(el("span", null, c.name_th));
-        var trk = el("span", "trk"), f = el("span", "fil"); f.style.width = (c.n ? Math.round(c.n / cmax * 100) : 0) + "%"; trk.appendChild(f); row.appendChild(trk);
+        var trk = el("span", "trk"), f = el("span", "fil"); f.style.width = (c.n ? Math.round(c.n / cmax * 100) : 0) + "%"; f.style.background = CATCOL[c.code] || "#64748b"; trk.appendChild(f); row.appendChild(trk);
         row.appendChild(el("span", c.suppressed ? "num msk" : "num", numOrMask(c.n))); cb.appendChild(row);
       });
 
