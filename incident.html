@@ -183,7 +183,7 @@
     const LK = { injury_type: [], body_part: [], high_hazard: [] };
     function lkLabel(r) { return r.name_th === r.name_en ? r.name_th : r.name_th + " / " + r.name_en; }
     async function loadLookups() {
-      const { data } = await sb.from("lookup_values").select("kind, code, name_th, name_en")
+      const { data } = await sb.from("lookup_values").select("kind, code, name_th, name_en, grp")
         .in("kind", Object.keys(LK)).eq("active", true).order("sort_order").order("code");
       Object.keys(LK).forEach((k) => { LK[k] = []; });
       (data || []).forEach((r) => { if (LK[r.kind]) LK[r.kind].push(r); });
@@ -289,7 +289,7 @@
       f.age = input("number", 0, { min: 0, max: 120, step: 1, inputMode: "numeric" });
       f.tenure = input("number", 0, { min: 0, max: 80, step: 0.5, inputMode: "decimal" });
       f.nat = input("text", 50); f.pos = input("text", 100);
-      f.ptype = select([["", "-- ไม่ระบุ --"], ["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]]);
+      f.ptype = select([["", "-- ไม่ระบุ --"], ["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["supplier", "ซัพพลายเออร์ (Supplier)"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]]);
 
       const r1 = document.createElement("div"); r1.className = "row3";
       r1.appendChild(field("บทบาทในเหตุการณ์", f.role)); r1.appendChild(field("ชื่อ-นามสกุล", f.name)); r1.appendChild(field("รหัสพนักงาน", f.code));
@@ -301,7 +301,15 @@
 
       // ชนิดการบาดเจ็บ + ตำแหน่งร่างกาย (หลายค่า) — แสดงเมื่อบทบาท = ผู้บาดเจ็บ และ Admin ตั้งรายการไว้
       const r4 = document.createElement("div");
-      f.injury = select([["", "-- ไม่ระบุ --"]].concat(LK.injury_type.map((r) => [r.code, lkLabel(r)])));
+      f.injury = select([["", "-- ไม่ระบุ --"]]);
+      { // จัดกลุ่มชนิดการบาดเจ็บตามหมวด (optgroup) — รายการที่ไม่มีหมวดอยู่ท้ายสุดในกลุ่ม "อื่น ๆ"
+        const og = new Map();
+        LK.injury_type.forEach((r) => {
+          const k = r.grp || "อื่น ๆ";
+          if (!og.has(k)) { const g = document.createElement("optgroup"); g.label = k; og.set(k, g); f.injury.appendChild(g); }
+          og.get(k).appendChild(opt(r.code, lkLabel(r)));
+        });
+      }
       r4.appendChild(field("ชนิดการบาดเจ็บ", f.injury));
       const bp = document.createElement("p");
       const bl = document.createElement("label"); bl.textContent = "ตำแหน่งที่บาดเจ็บ (เลือกได้หลายตำแหน่ง ไม่เกิน 20 · ซ้าย/ขวาตามตัวผู้บาดเจ็บ)";

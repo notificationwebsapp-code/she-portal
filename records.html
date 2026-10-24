@@ -247,16 +247,16 @@
     }
 
     // ---------- รายการตัวเลือก (Master list) ----------
-    let LK = {}, TYPES = [];
+    let LK = {}, LKALL = {}, TYPES = [];
     async function loadMasters() {
-      const a = await sb.from("lookup_values").select("kind, code, name_th, sort_order")
-        .eq("active", true).order("sort_order").order("code");
-      LK = {};
-      (a.data || []).forEach((r) => { (LK[r.kind] = LK[r.kind] || []).push(r); });
+      const a = await sb.from("lookup_values").select("kind, code, name_th, sort_order, grp, active")
+        .order("sort_order").order("code");
+      LK = {}; LKALL = {};
+      (a.data || []).forEach((r) => { (LKALL[r.kind] = LKALL[r.kind] || []).push(r); if (r.active) (LK[r.kind] = LK[r.kind] || []).push(r); });
       const t = await sb.from("incident_types").select("id, code, name_th").eq("active", true).order("sort_order");
       TYPES = t.data || [];
     }
-    const lkName = (kind, code) => { const f = (LK[kind] || []).find((x) => x.code === code); return f ? f.name_th : code; };
+    const lkName = (kind, code) => { const f = (LKALL[kind] || []).find((x) => x.code === code); return f ? f.name_th : code; };   // รวมรหัสที่ปิดใช้งาน เพื่อแสดงชื่อข้อมูลเก่าได้
     const typeName = (id) => { const f = TYPES.find((x) => x.id === id); return f ? f.name_th : id; };
 
     // ---------- นิยามฟิลด์ที่แก้ได้ (ต้องตรงกับ whitelist ใน incident_editable_fields ของฐานข้อมูล) ----------
@@ -271,7 +271,7 @@
       nationality: "สัญชาติ", position_title: "ตำแหน่งงาน", person_type: "ประเภทบุคคล"
     };
     const GENDER_OPTS = [["male", "ชาย"], ["female", "หญิง"], ["other", "อื่น ๆ"]];
-    const PTYPE_OPTS = [["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]];
+    const PTYPE_OPTS = [["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["supplier", "ซัพพลายเออร์ (Supplier)"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]];
     const ROLE_TH = { injured: "ผู้บาดเจ็บ", witness: "พยาน", other: "อื่น ๆ" };
     // mgr = เฉพาะ SHE/Admin ของ Plant (ตรงกับ incident_classify_guard) ; req = จำเป็นต้องมีค่า (คอลัมน์ NOT NULL)
     const REPORT_FIELDS = [
@@ -347,7 +347,12 @@
       let control, get;
       const opts = (list, curVal) => {
         const s = h("select", { id }); s.append(h("option", { value: "", text: "— ไม่ระบุ —" }));
-        list.forEach((o) => s.append(h("option", { value: o.code, text: o.name_th })));
+        const og = new Map();   // จัดกลุ่มตามหมวด (grp) ถ้ามี
+        list.forEach((o) => {
+          let parent = s;
+          if (o.grp) { if (!og.has(o.grp)) { const g = h("optgroup", { label: o.grp }); og.set(o.grp, g); s.append(g); } parent = og.get(o.grp); }
+          parent.append(h("option", { value: o.code, text: o.name_th }));
+        });
         if (curVal && !list.some((o) => o.code === curVal)) s.append(h("option", { value: curVal, text: curVal + " (ไม่ active)" }));
         s.value = curVal || ""; return s;
       };
@@ -534,7 +539,7 @@
       return /[",\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
     }
     const GENDER = { male: "ชาย", female: "หญิง", other: "อื่น ๆ" };
-    const PTYPE = { employee: "พนักงาน", contractor: "ผู้รับเหมา", visitor: "ผู้มาติดต่อ", other: "อื่น ๆ" };
+    const PTYPE = { employee: "พนักงาน", contractor: "ผู้รับเหมา", supplier: "ซัพพลายเออร์ (Supplier)", visitor: "ผู้มาติดต่อ", other: "อื่น ๆ" };
     const PROLE = { injured: "ผู้บาดเจ็บ/ผู้ได้รับผลกระทบ", witness: "พยาน", other: "อื่น ๆ" };
     const REQ_LABEL = { pending: "รอ SHE พิจารณา", approved: "อนุมัติแล้ว", rejected: "ไม่อนุมัติ", cancelled: "ยกเลิกแล้ว" };
     const yn = (v) => (v === true ? "ใช่" : v === false ? "ไม่ใช่" : "");
