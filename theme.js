@@ -33,6 +33,9 @@
   function lget(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lset(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
   function sget(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  /* เฉพาะ Super admin เท่านั้นที่ปิดธีมได้ (ปุ่มปิด, ?theme=none, ค่าที่จำไว้) — เก็บสถานะ Super admin ไว้ในเบราว์เซอร์เพื่อไม่ให้ธีมกะพริบตอนโหลด; ตรวจจริงจากบทบาทใน shell-v4.js */
+  var SA_KEY = "she-theme-sa";
+  function isSuper() { return lget(SA_KEY) === "1"; }
   function sset(k, v) { try { if (v == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} }
 
   /* แปลงแถวจากฐานข้อมูล/แคชเป็นรูปแบบภายใน (ตรวจรูปแบบก่อนใช้; ข้อความใช้ผ่าน textContent เท่านั้น) */
@@ -70,20 +73,28 @@
   }
   function byId(id) { for (var i = 0; i < THEMES.length; i++) if (THEMES[i].id === id) return THEMES[i]; return null; }
   function evaluate() {
-    var q = sget("she-theme-preview");
+    var q = isSuper() ? sget("she-theme-preview") : null;
     var now = new Date(Date.now() + 7 * 3600 * 1000);
     return q === "none" ? null : q ? byId(q) : pick(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate());
   }
 
   var qs = (location.search.match(/[?&]theme=([a-z0-9_-]+)/i) || [])[1];
-  if (qs) sset("she-theme-preview", qs === "auto" ? null : qs);
+  if (qs && isSuper()) sset("she-theme-preview", qs === "auto" ? null : qs);
   var theme = evaluate();
-  var off = lget("she-theme-off") === "1";
+  var off = isSuper() && lget("she-theme-off") === "1";
 
   window.SheTheme = {
     active: function () { return theme; },
     isOff: function () { return off; },
-    setOff: function (v) { off = !!v; lset("she-theme-off", off ? "1" : null); location.reload(); },
+    isSuper: isSuper,
+    /* shell-v4.js เรียกหลังรู้บทบาทจริง: ไม่ใช่ Super admin = ล้างค่าปิดธีมที่เคยจำไว้และซ่อนปุ่มปิด */
+    setSuper: function (v) {
+      lset(SA_KEY, v ? "1" : null);
+      if (!v) lset("she-theme-off", null);
+      off = !!v && lget("she-theme-off") === "1";
+      sync(); fixBar();
+    },
+    setOff: function (v) { if (!isSuper()) return; off = !!v; lset("she-theme-off", off ? "1" : null); location.reload(); },
     defaults: function () { return JSON.parse(JSON.stringify(DEFAULTS)); },
     /* หน้า Admin เรียกหลังบันทึก เพื่ออัปเดตแคชของเบราว์เซอร์นี้ทันที */
     refresh: function () { return fetchConfig(); }
@@ -97,6 +108,17 @@
     var b = document.querySelector(".themebar"); if (b && b.parentNode) b.parentNode.removeChild(b);
     applied = null;
   }
+  function addBtn(b) {
+    var x = document.createElement("button"); x.type = "button"; x.textContent = "ปิดธีมตกแต่ง";
+    x.setAttribute("aria-label", "ปิดธีมตกแต่งเทศกาล (เฉพาะ Super admin)");
+    x.addEventListener("click", function () { window.SheTheme.setOff(true); });
+    b.appendChild(x);
+  }
+  function fixBar() {
+    var b = document.querySelector(".themebar"); if (!b) return;
+    var x = b.querySelector("button");
+    if (isSuper() && !x) addBtn(b); else if (!isSuper() && x) x.parentNode.removeChild(x);
+  }
   function bar(t) {
     var f = location.pathname.split("/").pop() || "";
     if (BAR_PAGES.indexOf(f) < 0 || document.querySelector(".themebar") || !document.body) return;
@@ -106,10 +128,8 @@
     var i1 = document.createElement("i"); i1.setAttribute("aria-hidden", "true");
     var s = document.createElement("span"); s.textContent = t.greet;
     var i2 = document.createElement("i"); i2.setAttribute("aria-hidden", "true");
-    var x = document.createElement("button"); x.type = "button"; x.textContent = "ปิดธีมตกแต่ง";
-    x.setAttribute("aria-label", "ปิดธีมตกแต่งเทศกาล");
-    x.addEventListener("click", function () { window.SheTheme.setOff(true); });
-    b.appendChild(i1); b.appendChild(s); b.appendChild(i2); b.appendChild(x);
+    b.appendChild(i1); b.appendChild(s); b.appendChild(i2);
+    if (isSuper()) addBtn(b);
     document.body.insertBefore(b, document.body.firstChild);
   }
   function apply(t) {

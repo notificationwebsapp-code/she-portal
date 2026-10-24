@@ -129,7 +129,7 @@
         const save = el("button", null, "บันทึก"); save.type = "button"; save.disabled = !isSuper;
         const reset = el("button", "secondary", "รีเซ็ตเป็นค่าเริ่มต้น"); reset.type = "button"; reset.disabled = !isSuper || !defaults[r.id];
         const prev = el("a", "btnlink", "ดูตัวอย่าง"); prev.href = "index.html?theme=" + encodeURIComponent(r.id); prev.target = "_blank"; prev.rel = "noopener";
-        act.appendChild(save); act.appendChild(reset); act.appendChild(prev); act.appendChild(st); card.appendChild(act);
+        act.appendChild(save); act.appendChild(reset); if (isSuper) act.appendChild(prev); act.appendChild(st); card.appendChild(act);
 
         async function submit(vals) {
           save.disabled = reset.disabled = true; st.textContent = "กำลังบันทึก…";

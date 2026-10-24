@@ -11,7 +11,7 @@
   function icon(n){var s=document.createElementNS(NS,"svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.setAttribute("focusable","false");var p=document.createElementNS(NS,"path");p.setAttribute("d",ICONS[n]);s.appendChild(p);return s}
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
   var tools=el("div","tools");tools.setAttribute("role","group");tools.setAttribute("aria-label","เครื่องมือ");
-  var open=null,adminBox=null,mgrBox=null;
+  var open=null,adminBox=null,mgrBox=null,themeBox=null;
   function close(){if(open){open.btn.setAttribute("aria-expanded","false");open.pop.hidden=true;open=null}}
   function make(name,label,short,build){
     var w=el("div","toolwrap"),b=el("button","toolbtn");b.type="button";b.setAttribute("aria-label",label);b.setAttribute("aria-haspopup","true");b.setAttribute("aria-expanded","false");b.title=label;
@@ -66,6 +66,12 @@
     if(list.length===1){btn.setAttribute("aria-haspopup","false")}
     document.dispatchEvent(new CustomEvent("she-plant-ready"));
   }catch(e){}})();
+  /* ปุ่มปิด/เปิดธีมตกแต่ง: เฉพาะ Super admin (ผู้อื่นปิดเองไม่ได้ — ปรับธีมทั้งระบบที่หน้า "ธีมเทศกาล") */
+  function fillTheme(){if(!themeBox)return;themeBox.replaceChildren();var T=window.SheTheme;
+    if(T&&T.isSuper&&T.isSuper()&&(T.active()||T.isOff())){
+      themeBox.appendChild(el("p","tpnote small","ธีมเทศกาล: "+(T.active()?T.active().label:"ปิดอยู่ (เฉพาะคุณ)")));
+      var tb=el("button","tpbtn",T.isOff()?"เปิดธีมตกแต่ง":"ปิดธีมตกแต่ง");tb.type="button";tb.addEventListener("click",function(){T.setOff(!T.isOff())});themeBox.appendChild(tb);themeBox.hidden=false}
+    else themeBox.hidden=true}
   /* ลิงก์จัดการประกาศ (เฉพาะ SHE/Admin): เห็นในเมนูเฟือง */
   (async function(){try{
     if(typeof getMyProfile!=="function"||!mgrBox)return;var p=await getMyProfile();
@@ -81,9 +87,11 @@
         row.querySelectorAll("button").forEach(function(y){y.setAttribute("aria-pressed","false")});x.setAttribute("aria-pressed","true")});
       row.appendChild(x)});
     p.appendChild(row);
-    if(window.SheTheme&&window.SheTheme.active()){p.appendChild(el("p","tpnote small","ธีมเทศกาล: "+window.SheTheme.active().label));
-      var tb=el("button","tpbtn",window.SheTheme.isOff()?"เปิดธีมตกแต่ง":"ปิดธีมตกแต่ง");tb.type="button";tb.addEventListener("click",function(){window.SheTheme.setOff(!window.SheTheme.isOff())});p.appendChild(tb)}
+    themeBox=el("div");themeBox.hidden=true;p.appendChild(themeBox);fillTheme();
     adminBox=el("div","tpadmin");adminBox.hidden=true;adminBox.appendChild(el("p","tpnote small","ผู้ดูแลระบบ"));p.appendChild(adminBox);mgrBox=el("div","tpadmin");mgrBox.hidden=true;mgrBox.appendChild(el("p","tpnote small","การจัดการเนื้อหา"));p.appendChild(mgrBox)});
+  /* ยืนยันบทบาทจริง: ไม่ใช่ Super admin (หรือยังไม่ล็อกอิน) = ล้างสิทธิ์ปิดธีมที่จำไว้ในเบราว์เซอร์ */
+  (function(){var tries=0;(function wait(){if(typeof getMyProfile!=="function"||!window.SheTheme||!window.SheTheme.setSuper){if(++tries<60)setTimeout(wait,100);return}
+    Promise.resolve(getMyProfile()).then(function(p){window.SheTheme.setSuper(!!(p&&p.status==="active"&&p.role==="super_admin"));fillTheme()},function(){window.SheTheme.setSuper(false);fillTheme()})})()})();
   function apply(v){document.documentElement.style.fontSize=v==="l"?"112.5%":v==="xl"?"125%":""}
   try{apply(localStorage.getItem("she-fs")||"n")}catch(e){}
   document.addEventListener("click",function(e){if(open&&!open.pop.contains(e.target))close()});
