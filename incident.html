@@ -134,9 +134,9 @@
       <section class="sidecard sendcard">
         <h3 class="sidetitle">ส่งรายงาน</h3>
         <div class="formactions">
-          <button type="submit" id="btn-save">บันทึก Flash Report</button>
+          <button type="submit" id="btn-save">ส่ง Flash Report</button>
         </div>
-        <p class="helper">ร่างบันทึกอัตโนมัติเมื่อมีการแก้ไข ร่างยังไม่ใช่การรายงาน SHE จะเห็นข้อมูลเมื่อกดบันทึก Flash Report เท่านั้น</p>
+        <p class="helper">ร่างบันทึกอัตโนมัติเมื่อมีการแก้ไข ร่างยังไม่ใช่การรายงาน SHE จะเห็นข้อมูลเมื่อกดส่ง Flash Report เท่านั้น</p>
       </section>
       <section class="sidecard guide">
         <h3 class="sidetitle">คำแนะนำ SHE</h3>
@@ -433,7 +433,7 @@
       $("plant").value = keepPlant; $("department").value = keepDept; $("date").value = todayLocal();
       $("serious-note").hidden = true;
       loadShifts();
-      show("บันทึก Flash Report เรียบร้อยแล้ว" + warn, warn ? "error" : "ok");
+      show("ส่ง Flash Report เรียบร้อยแล้ว" + warn, warn ? "error" : "ok");
     });
 
     // ---------- ร่าง (Save draft) ----------

@@ -334,3 +334,22 @@ ol.flowsteps li.soon{opacity:.7}
   ol.flowsteps li.soon .lbl::after{content:"เร็ว ๆ นี้";display:block;font-size:.66rem;color:#414750}
   .flashlead{font-size:.9rem;padding:.6rem .8rem}
 }
+
+/* ===== v4.6 Mobile v2: แถบเมนูล่าง (bottom tab bar) ทุกหน้า ≤640px — ใช้ CSS ล้วน ไม่แก้โครง DOM ===== */
+@media(max-width:640px){
+  :root{--tabh:58px}
+  body{padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom))}
+  header nav{position:fixed;left:0;right:0;bottom:0;z-index:60;order:0;margin:0;width:100%;display:flex;flex-wrap:nowrap;justify-content:space-around;gap:0;
+    background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(11,59,96,.10);padding:0 .25rem env(safe-area-inset-bottom);overflow:hidden}
+  header nav a{flex:1 1 0;min-width:0;min-height:var(--tabh);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;
+    padding:.35rem .1rem;font-size:.68rem;line-height:1.15;text-align:center;border-bottom:0;border-top:3px solid transparent;white-space:normal}
+  header nav a svg.ni{width:22px;height:22px;margin:0}
+  header nav a[aria-current="page"]{border-top-color:var(--brand);color:var(--brand);font-weight:700}
+  header nav a[aria-current="page"]::after{display:none}
+  header nav .navsoon,header nav a[href="admin-users.html"]{display:none}
+  /* แถบปุ่มของหน้า Incident ยกขึ้นเหนือแถบเมนูล่าง */
+  .sendcard .formactions{bottom:calc(var(--tabh) + env(safe-area-inset-bottom));padding-bottom:.6rem}
+  main.flash.v2{padding-bottom:calc(var(--tabh) + 7.5rem + env(safe-area-inset-bottom))}
+  body.authpage header nav{display:none}
+  body.authpage{padding-bottom:0}
+}
