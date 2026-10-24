@@ -53,7 +53,7 @@
     .ed-pyr{display:flex;flex-direction:column;align-items:center;gap:4px;margin:.4rem 0}
     .ed-pl{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem .9rem;border-radius:6px;color:#fff;font-weight:700;font-size:.9rem;min-width:0}
     .ed-pl b{font-size:1.15rem}
-    .pl-fat{background:#7f1d1d}.pl-lti{background:#dc2626}.pl-inj{background:#fb923c;color:#431407}.pl-near{background:#fcd34d;color:#422006}
+    .pl-fat{background:#7f1d1d}.pl-lti{background:#dc2626}.pl-rwc{background:#ea580c}.pl-mtc{background:#fb923c;color:#431407}.pl-fac{background:#fcd34d;color:#422006}.pl-pd{background:#bef264;color:#1a2e05}.pl-near{background:#86efac;color:#052e16}
     .ed-body{display:grid;grid-template-columns:minmax(130px,190px) 1fr;gap:1.2rem;align-items:center}
     .ed-body svg{width:100%;height:auto;max-height:380px;overflow:visible}
     .ed-body svg .rg{stroke:#fff;stroke-width:3;stroke-linejoin:round;transition:fill .2s}
@@ -138,7 +138,7 @@
       <div class="ed-grid">
         <section class="ed-card"><h3>พีระมิดความรุนแรง</h3><p class="sub">จำนวนเคสตามระดับ — ฐานกว้างคือเหตุที่เบากว่าแต่เกิดบ่อยกว่า (เหตุเกือบเกิดอุบัติเหตุ) ใช้ดูว่ามีการรายงานเชิงป้องกันมากพอหรือไม่</p>
           <div class="ed-pyr" id="pyr" role="list" aria-label="พีระมิดความรุนแรง"></div>
-          <p class="sub" style="margin-top:.6rem">บาดเจ็บ = RWC + Medical treatment + First aid · ไม่รวมทรัพย์สินเสียหาย อัคคีภัย PSM สิ่งแวดล้อม</p></section>
+          <p class="sub" style="margin-top:.6rem">RWC = Restricted work case · MTC = Medical treatment case · FAC = First aid case · PD = Property damage · ไม่รวมอัคคีภัย PSM สิ่งแวดล้อม</p></section>
         <section class="ed-card"><h3>ส่วนของร่างกายที่บาดเจ็บ</h3><p class="sub" id="body-sub">จำนวนผู้บาดเจ็บแยกตามส่วนของร่างกาย (คนที่บาดเจ็บหลายจุดในกลุ่มเดียวกันนับ 1 ครั้ง · ซ้าย/ขวารวมกัน)</p>
           <div class="ed-body"><svg id="body-svg" viewBox="-6 0 212 368" role="img" aria-label="ภาพร่างกายแสดงส่วนที่บาดเจ็บ ตัวเลขอยู่ในรายการด้านข้าง">
             <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#e2e8f0"/><line x1="0" y1="0" x2="0" y2="6" stroke="#94a3b8" stroke-width="2"/></pattern></defs>
@@ -155,7 +155,7 @@
             <path class="rg" data-g="foot" d="M133 332H104V348Q104 356 112 356H134Q142 356 140 348Z"/>
             <g class="bd" id="body-badges"></g>
           </svg><ul class="ed-bl" id="body-list"></ul></div>
-          <div class="ed-legend"><span><i class="bg0"></i>0</span><span><i class="bgm"></i>&lt;3 (ซ่อน)</span><span><i class="bg1"></i>น้อย</span><span><i class="bg2"></i>ปานกลาง</span><span><i class="bg3"></i>มาก</span></div></section>
+          <div class="ed-legend"><span><i class="bg0"></i>0</span><span><i class="bgm"></i>&lt;3 = มี 1–2 ราย (ปกปิดจำนวนจริง)</span><span><i class="bg1"></i>น้อย</span><span><i class="bg2"></i>ปานกลาง</span><span><i class="bg3"></i>มาก</span></div></section>
       </div>
 
       <div class="ed-grid">
@@ -236,8 +236,8 @@
 
       /* pyramid */
       var py = $("pyr"); py.replaceChildren();
-      var pm = r.pyramid || { fatal: 0, lti: 0, injury: 0, near_miss: 0 };
-      [["pl-fat", "เสียชีวิต (FAT)", pm.fatal, 38], ["pl-lti", "หยุดงาน (LTI)", pm.lti, 58], ["pl-inj", "บาดเจ็บ (RWC/MTC/FAC)", pm.injury, 78], ["pl-near", "Near miss", pm.near_miss, 100]].forEach(function (L) {
+      var pm = r.pyramid || { fatal: 0, lti: 0, rwc: 0, mtc: 0, fac: 0, near_miss: 0 };
+      [["pl-fat", "เสียชีวิต (FAT)", pm.fatal, 30], ["pl-lti", "หยุดงาน (LTI)", pm.lti, 39], ["pl-rwc", "จำกัดงาน (RWC)", pm.rwc || 0, 49], ["pl-mtc", "รักษาพยาบาล (MTC)", pm.mtc || 0, 59], ["pl-fac", "ปฐมพยาบาล (FAC)", pm.fac || 0, 70], ["pl-pd", "ทรัพย์สินเสียหาย (PD)", pm.pd || 0, 84], ["pl-near", "Near miss", pm.near_miss, 100]].forEach(function (L) {
         var d = el("div", "ed-pl " + L[0]); d.setAttribute("role", "listitem"); d.style.width = L[3] + "%";
         d.appendChild(el("span", null, L[1])); d.appendChild(el("b", null, String(L[2]))); py.appendChild(d);
       });
