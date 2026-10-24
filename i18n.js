@@ -116,6 +116,14 @@
         }
       }
     }
+    /* ป้ายสองภาษาจากฐานข้อมูลรูปแบบ "ไทย / English" → แสดงเฉพาะส่วนอังกฤษ */
+    if (out == null && !depth) {
+      var si = key.lastIndexOf(" / ");
+      if (si > 0) {
+        var L = key.slice(0, si), R = key.slice(si + 3);
+        if (TH.test(L) && R && !TH.test(R)) out = R;
+      }
+    }
     if (out == null && !depth) out = fragments(key);
     I18N.cache[key] = out;
     return out;

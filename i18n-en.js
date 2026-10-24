@@ -964,4 +964,6 @@ I18N.add({
 "เลือกตำแหน่งได้ไม่เกิน {0} ตำแหน่ง": "You can select at most {0} positions",
 "การแจ้งเตือน มี {0} รายการรอดำเนินการ": "Notifications: {0} pending item(s)",
 "ผู้รับทราบ: {0}": "Acknowledged by: {0}"
+,
+"{0} — โรงงานจำลอง {1}": "{0} — Test plant {1}"
 });
