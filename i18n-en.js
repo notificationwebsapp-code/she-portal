@@ -966,4 +966,13 @@ I18N.add({
 "ผู้รับทราบ: {0}": "Acknowledged by: {0}"
 ,
 "{0} — โรงงานจำลอง {1}": "{0} — Test plant {1}"
+,
+"บาดเจ็บถึงขั้นหยุดงาน (LTI)": "Lost Time Injury (LTI)",
+"บาดเจ็บถึงขั้นจำกัดงาน (RWC)": "Restricted Work Case (RWC)",
+"รักษาพยาบาล (Medical treatment)": "Medical Treatment Case (MTC)",
+"ปฐมพยาบาล (First aid)": "First Aid Case (FAC)",
+"ทรัพย์สินเสียหาย": "Property Damage (PD)",
+"อัคคีภัย": "Fire",
+"ความปลอดภัยในกระบวนการ (PSM)": "Process Safety (PSM)",
+"สิ่งแวดล้อม": "Environment"
 });
