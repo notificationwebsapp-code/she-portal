@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>Executive Dashboard | SHE Portal</title>
+  <style>
+    .ed-filters{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1rem 1.2rem;margin:0 0 1rem}
+    .ed-fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.7rem 1rem;align-items:end}
+    .ed-fgrid label,.ed-fgrid .lbl{display:block;font-size:.85rem;font-weight:600;color:var(--navy)}
+    .ed-fgrid select,.ed-fgrid input[type=date],.ed-fgrid summary{width:100%;min-height:48px}
+    .ed-fgrid summary{display:flex;align-items:center;padding:0 .8rem;border:1px solid var(--ctl,#9aa8c4);border-radius:8px;background:#fff;cursor:pointer;font-weight:400}
+    .ed-fgrid details{position:relative}
+    .ed-fgrid details[open] .ed-pop{display:block}
+    .ed-pop{display:none;position:absolute;z-index:20;left:0;right:0;min-width:240px;max-height:300px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:.4rem .6rem;margin-top:.2rem}
+    .ed-pop label{display:flex;align-items:center;gap:.5rem;min-height:44px;font-weight:400;font-size:.95rem}
+    .ed-fact{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.9rem;align-items:center}
+    .ed-meta{font-size:.85rem;color:var(--muted);margin:.4rem 0 0}
+    .ed-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin:0 0 1rem}
+    .ed-kpi{background:#fff;border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:var(--radius);box-shadow:var(--shadow);padding:.8rem 1rem}
+    .ed-kpi.k-serious{border-left-color:#b3261e}.ed-kpi.k-lti{border-left-color:#c2410c}.ed-kpi.k-near{border-left-color:#0f766e}.ed-kpi.k-days{border-left-color:#1b7a3a}
+    .ed-kpi .t{font-size:.85rem;color:var(--muted);font-weight:600}
+    .ed-kpi .v{font-size:2rem;font-weight:700;line-height:1.2;color:var(--navy)}
+    .ed-kpi .u{font-size:.8rem;color:var(--muted)}
+    .ed-kpi.soon{border-left-color:#94a3b8;background:#f8fafc}.ed-kpi.soon .v{font-size:1rem;color:var(--muted);padding:.5rem 0}
+    .ed-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:1rem;margin:0 0 1rem}
+    .ed-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1rem 1.2rem;min-width:0}
+    .ed-card h3{margin:0 0 .15rem;font-size:1.05rem;color:var(--navy)}
+    .ed-card .sub{margin:0 0 .8rem;font-size:.82rem;color:var(--muted)}
+    .ed-bar{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:.5rem;align-items:center;margin:.35rem 0;font-size:.9rem}
+    .ed-bar .trk{background:var(--grey);border-radius:6px;height:14px;overflow:hidden}
+    .ed-bar .fil{display:block;height:100%;background:var(--brand);border-radius:6px}
+    .ed-bar .num{font-weight:700;min-width:2.5rem;text-align:right}
+    .ed-bar .msk{font-weight:400;color:var(--muted);font-size:.8rem}
+    .ed-trend{display:flex;align-items:flex-end;gap:.6rem;min-height:190px;overflow-x:auto;padding-top:1rem}
+    .ed-col{flex:1;min-width:46px;display:flex;flex-direction:column;align-items:center;gap:.25rem}
+    .ed-stack{display:flex;flex-direction:column-reverse;width:100%;max-width:56px;border-radius:6px 6px 0 0;overflow:hidden;border:1px solid #cbd5e1}
+    .ed-seg{display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;min-height:0}
+    .sg-serious{background:repeating-linear-gradient(45deg,#b3261e,#b3261e 5px,#8c1d18 5px,#8c1d18 8px)}
+    .sg-other{background:#b45309}.sg-near{background:#0f766e}
+    .ed-tot{font-weight:700;font-size:.85rem}.ed-mon{font-size:.78rem;color:var(--muted)}
+    .ed-legend{display:flex;flex-wrap:wrap;gap:.4rem 1rem;font-size:.82rem;margin:.6rem 0 0}
+    .ed-legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:.3rem;border:1px solid #cbd5e1}
+    .ed-time{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:.6rem}
+    .ed-tc{background:#f1f5fb;border-radius:10px;padding:.6rem;text-align:center}
+    .ed-tc .p{font-size:1.5rem;font-weight:700;color:var(--navy)}.ed-tc .h{font-size:.82rem;color:var(--muted)}
+    .ed-hm{width:100%;border-collapse:separate;border-spacing:4px;font-size:.88rem}
+    .ed-hm th{font-weight:600;text-align:center;color:var(--muted);font-size:.8rem}
+    .ed-hm th:first-child,.ed-hm td:first-child{text-align:left}
+    .ed-hm td.c{text-align:center;border-radius:6px;font-weight:700;min-width:48px;padding:.35rem .2rem}
+    .h0{background:#f1f5f9;color:#475569}.hm{background:#e2e8f0;color:#334155;font-weight:400}.h1{background:#fde68a;color:#78350f}.h2{background:#fdba74;color:#7c2d12}.h3{background:#f87171;color:#fff}
+    .ed-scroll{overflow-x:auto}
+    .ed-tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+    .ed-tbl th,.ed-tbl td{padding:.5rem .6rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+    .ed-tbl th{font-size:.8rem;color:var(--muted);background:#f8fafc;white-space:nowrap}
+    .ed-tbl td,.ed-tbl th{white-space:nowrap}
+    .ed-tbl td.n,.ed-tbl th.n{text-align:right;font-variant-numeric:tabular-nums}
+    .badge{display:inline-block;border-radius:999px;padding:.05rem .6rem;font-size:.78rem;font-weight:700;border:1px solid #cbd5e1;background:#f1f5f9;color:#334155}
+    .badge.ser{background:#fdeceb;color:#8c1d18;border-color:#f3b8b4}
+    .ed-own{font-size:.75rem;background:var(--accent);color:var(--brand);border-radius:999px;padding:0 .5rem;margin-left:.4rem;font-weight:700}
+    .ed-note{background:#fff8e1;border:1px solid #f3d98b;border-radius:10px;padding:.6rem .9rem;font-size:.88rem;margin:0 0 1rem}
+    .ed-soon{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin:0 0 1rem}
+    .ed-soon .ed-card{background:#f8fafc;border-style:dashed;color:var(--muted)}
+    .ed-search{width:100%;max-width:340px;min-height:44px}
+    details.ed-alt summary{cursor:pointer;font-size:.85rem;color:var(--brand);margin-top:.6rem;min-height:32px}
+    @media (max-width:640px){.ed-bar{grid-template-columns:1fr auto}.ed-bar .trk{grid-column:1/-1;order:3}.ed-kpi .v{font-size:1.7rem}.ed-card{padding:.9rem}.ed-pop{position:static;box-shadow:none}}
+  </style>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- ซ่อนจนกว่าจะยืนยันสิทธิ์ (เป็นเพียงหน้าจอ: สิทธิ์จริงบังคับที่ฐานข้อมูลใน dashboard_summary / dashboard_filters) -->
+    <div id="area" hidden>
+      <h2>Executive Dashboard</h2>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <section class="ed-filters" aria-label="ตัวกรอง">
+        <div class="ed-fgrid">
+          <label>ช่วงเวลา
+            <select id="f-range">
+              <option value="30">30 วันล่าสุด</option><option value="90" selected>90 วันล่าสุด</option>
+              <option value="180">6 เดือนล่าสุด</option><option value="365">12 เดือนล่าสุด</option>
+              <option value="ytd">ตั้งแต่ต้นปีนี้</option><option value="custom">กำหนดเอง</option>
+            </select></label>
+          <label id="l-from" hidden>ตั้งแต่วันที่<input type="date" id="f-from"></label>
+          <label id="l-to" hidden>ถึงวันที่<input type="date" id="f-to"></label>
+          <div><span class="lbl">Plant</span>
+            <details id="d-plants"><summary id="s-plants">ทุก Plant</summary><div class="ed-pop" id="pop-plants"></div></details></div>
+          <div><span class="lbl">ประเภทเหตุการณ์</span>
+            <details id="d-types"><summary id="s-types">ทุกประเภท</summary><div class="ed-pop" id="pop-types"></div></details></div>
+          <label>สถานะเคส
+            <select id="f-phase">
+              <option value="">ทุกสถานะ</option><option value="flash">Flash Report</option>
+              <option value="investigation">กำลังสอบสวน</option><option value="closed">ปิดแล้ว</option>
+            </select></label>
+        </div>
+        <div class="ed-fact"><button type="button" id="b-apply">แสดงผล</button><button type="button" class="secondary" id="b-reset">ล้างตัวกรอง</button></div>
+        <p class="ed-meta" id="meta"></p>
+      </section>
+
+      <p class="ed-note">ตัวเลขทั้งหมดเป็น <b>จำนวนเคส</b> ที่บันทึกในระบบ ยังไม่ปรับตามขนาดโรงงาน/ชั่วโมงทำงาน จึงใช้เปรียบเทียบเชิงแนวโน้มเท่านั้น (ไม่ใช่คะแนนหรืออันดับ) และจำนวน Near miss ที่สูงมักสะท้อนวัฒนธรรมการรายงานที่ดี ค่าที่มี 1–2 เคสจะแสดงเป็น "&lt;3" เพื่อป้องกันการระบุตัวบุคคล (ISO/IEC 27001:2022 A.5.34)</p>
+
+      <section class="ed-kpis" id="kpis" aria-label="ตัวชี้วัดหลัก"></section>
+
+      <div class="ed-grid">
+        <section class="ed-card"><h3>แนวโน้มรายเดือน</h3><p class="sub">จำนวนเคสแยกตามความรุนแรง</p>
+          <div class="ed-trend" id="trend" role="img" aria-label="กราฟแท่งแนวโน้มรายเดือน มีตารางให้ดูด้านล่าง"></div>
+          <div class="ed-legend"><span><i class="sg-serious"></i>เคสรุนแรง (FAT/LTI)</span><span><i class="sg-other"></i>เคสอื่น ๆ</span><span><i class="sg-near"></i>Near miss</span></div>
+          <details class="ed-alt"><summary>ดูเป็นตาราง</summary><div class="ed-scroll"><table class="ed-tbl" id="trend-tbl"></table></div></details></section>
+        <section class="ed-card"><h3>หมวดเหตุการณ์</h3><p class="sub">จำนวนเคสตามประเภท</p><div id="cats"></div></section>
+        <section class="ed-card"><h3>ช่วงเวลาที่เกิดเหตุ</h3><p class="sub">แบ่งตามช่วง 6 ชั่วโมง (เวลาท้องถิ่นของ Plant) เพราะแต่ละ Plant กำหนดกะไม่เหมือนกัน</p><div class="ed-time" id="times"></div></section>
+      </div>
+
+      <div class="ed-grid">
+        <section class="ed-card"><h3>Plant × ไตรมาส (Heatmap)</h3><p class="sub">จำนวนเคสต่อไตรมาส</p><div class="ed-scroll"><table class="ed-hm" id="hm"></table></div>
+          <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="hm"></i>&lt;3 (ซ่อน)</span><span><i class="h1"></i>3–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10 ขึ้นไป</span></div></section>
+        <section class="ed-card"><h3>เปรียบเทียบรายพลานต์</h3><p class="sub">ใช้เรียนรู้และปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน)</p><div class="ed-scroll"><table class="ed-tbl" id="bench"></table></div></section>
+      </div>
+
+      <section class="ed-soon" aria-label="ส่วนที่กำลังพัฒนา">
+        <div class="ed-card"><h3>Open CAPA</h3><p class="sub">เร็ว ๆ นี้ — รอระบบสอบสวนและแผนแก้ไข (Phase 2)</p></div>
+        <div class="ed-card"><h3>Root Cause Pareto</h3><p class="sub">เร็ว ๆ นี้ — รอข้อมูลการสอบสวน 5-Why (Phase 2)</p></div>
+        <div class="ed-card"><h3>Safety score</h3><p class="sub">เร็ว ๆ นี้ — ต้องตกลงสูตรกับทีม SHE และมีข้อมูลชั่วโมงทำงานก่อน</p></div>
+      </section>
+
+      <section class="ed-card"><h3>เหตุการณ์ล่าสุด</h3><p class="sub">20 เคสล่าสุดตามตัวกรอง (ไม่แสดงรายละเอียดและข้อมูลระบุตัวตน)</p>
+        <input type="search" class="ed-search" id="q" placeholder="ค้นหา Plant / ประเภท" aria-label="ค้นหาในตาราง">
+        <div class="ed-scroll"><table class="ed-tbl" id="latest"></table></div></section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* ข้อมูลทั้งหมดมาจากฟังก์ชันสรุปผลในฐานข้อมูล (dashboard_summary) ที่ตรวจสิทธิ์ dashboard.view เอง
+       หน้านี้ไม่ดึงรายงานรายแถว และแสดงข้อความด้วย textContent เท่านั้น */
+    var $ = function (id) { return document.getElementById(id); };
+    function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+    var msgEl = $("msg");
+    function show(t, ok) { msgEl.hidden = !t; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t || ""; }
+    var MON = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+    var PHASE = { flash: "Flash Report", investigation: "กำลังสอบสวน", closed: "ปิดแล้ว" };
+    var plants = [], types = [], own = {}, data = null, busy = false;
+
+    function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+    function thDate(s) { var p = String(s).split("-"); return p.length === 3 ? Number(p[2]) + " " + MON[Number(p[1]) - 1] + " " + (Number(p[0]) + 543) : s; }
+    function range() {
+      var v = $("f-range").value, to = new Date(), from = new Date();
+      if (v === "custom") return { from: $("f-from").value, to: $("f-to").value };
+      if (v === "ytd") from = new Date(to.getFullYear(), 0, 1); else from.setDate(from.getDate() - Number(v) + 1);
+      return { from: ymd(from), to: ymd(to) };
+    }
+    function checks(boxId) { return Array.prototype.slice.call($(boxId).querySelectorAll("input:checked")).map(function (c) { return c.value; }); }
+    function sumLabel(boxId, sumId, all, noun) {
+      var c = checks(boxId); $(sumId).textContent = c.length === 0 ? all : c.length + " " + noun + " ที่เลือก";
+    }
+    function buildPop(boxId, sumId, items, valKey, labFn, all, noun) {
+      var box = $(boxId); box.replaceChildren();
+      items.forEach(function (it) {
+        var l = el("label"), c = el("input"); c.type = "checkbox"; c.value = it[valKey];
+        c.addEventListener("change", function () { sumLabel(boxId, sumId, all, noun); });
+        l.appendChild(c); l.appendChild(el("span", null, labFn(it))); box.appendChild(l);
+      });
+    }
+
+    function kpi(cls, title, value, unit) {
+      var d = el("div", "ed-kpi " + cls); d.appendChild(el("div", "t", title)); d.appendChild(el("div", "v", value)); if (unit) d.appendChild(el("div", "u", unit)); return d;
+    }
+    function numOrMask(o) { return o == null ? "<3" : String(o); }
+
+    function render(r) {
+      var k = r.kpi, box = $("kpis"); box.replaceChildren();
+      box.appendChild(kpi("", "เคสทั้งหมด", String(k.total), "ในช่วงที่เลือก"));
+      box.appendChild(kpi("k-serious", "เคสรุนแรง (FAT/LTI)", String(k.serious), "เสียชีวิต + หยุดงาน"));
+      box.appendChild(kpi("k-lti", "LTI", String(k.lti), "เสียชีวิต " + k.fatal + " เคส"));
+      box.appendChild(kpi("k-near", "Near miss", String(k.near_miss), "เหตุเกือบเกิดอุบัติเหตุ"));
+      box.appendChild(kpi("k-days", "วันปลอด LTI", k.days_since_lti == null ? "ไม่มีเคส" : String(k.days_since_lti), k.days_since_lti == null ? "ยังไม่มี LTI/เสียชีวิตที่บันทึก" : "วัน (นับจากเคสล่าสุด)"));
+      var soon = kpi("soon", "Open CAPA", "เร็ว ๆ นี้", ""); box.appendChild(soon);
+
+      /* trend */
+      var tr = $("trend"); tr.replaceChildren();
+      var mx = Math.max.apply(null, r.trend.map(function (m) { return m.serious + m.other + m.near_miss; }).concat([1]));
+      r.trend.forEach(function (m) {
+        var col = el("div", "ed-col"), tot = m.serious + m.other + m.near_miss;
+        col.appendChild(el("div", "ed-tot", String(tot)));
+        var st = el("div", "ed-stack"); st.style.height = Math.max(tot ? 6 : 0, Math.round(tot / mx * 130)) + "px";
+        [["serious", "sg-serious"], ["other", "sg-other"], ["near_miss", "sg-near"]].forEach(function (p) {
+          if (!m[p[0]]) return; var s = el("div", "ed-seg " + p[1], String(m[p[0]])); s.style.flex = String(m[p[0]]); st.appendChild(s);
+        });
+        col.appendChild(st);
+        var mm = m.month.split("-"); col.appendChild(el("div", "ed-mon", MON[Number(mm[1]) - 1] + " " + String(Number(mm[0]) + 543).slice(2)));
+        tr.appendChild(col);
+      });
+      var tt = $("trend-tbl"); tt.replaceChildren();
+      var th = el("tr"); ["เดือน", "รุนแรง", "อื่น ๆ", "Near miss"].forEach(function (h, i) { th.appendChild(el("th", i ? "n" : "", h)); }); tt.appendChild(th);
+      r.trend.forEach(function (m) { var tr2 = el("tr"); tr2.appendChild(el("td", "", m.month)); [m.serious, m.other, m.near_miss].forEach(function (v) { tr2.appendChild(el("td", "n", String(v))); }); tt.appendChild(tr2); });
+
+      /* category */
+      var cb = $("cats"); cb.replaceChildren();
+      var cmax = Math.max.apply(null, r.by_category.map(function (c) { return c.n || 0; }).concat([1]));
+      if (!r.by_category.length) cb.appendChild(el("p", "sub", "ไม่มีข้อมูลในช่วงที่เลือก"));
+      r.by_category.forEach(function (c) {
+        var row = el("div", "ed-bar"); row.appendChild(el("span", null, c.name_th));
+        var trk = el("span", "trk"), f = el("span", "fil"); f.style.width = (c.n ? Math.round(c.n / cmax * 100) : 0) + "%"; trk.appendChild(f); row.appendChild(trk);
+        row.appendChild(el("span", c.suppressed ? "num msk" : "num", numOrMask(c.n))); cb.appendChild(row);
+      });
+
+      /* time */
+      var tb = $("times"); tb.replaceChildren();
+      var lab = { "00-05": "00:00–05:59", "06-11": "06:00–11:59", "12-17": "12:00–17:59", "18-23": "18:00–23:59", unknown: "ไม่ระบุเวลา" };
+      r.by_time.forEach(function (t) {
+        var c = el("div", "ed-tc"); c.appendChild(el("div", "p", numOrMask(t.n)));
+        c.appendChild(el("div", "h", lab[t.bucket] || t.bucket));
+        c.appendChild(el("div", "h", t.n != null && k.total ? Math.round(t.n / k.total * 100) + "% ของเคส" : "")); tb.appendChild(c);
+      });
+
+      /* heatmap */
+      var hm = $("hm"); hm.replaceChildren();
+      var hr = el("tr"); hr.appendChild(el("th", "", "Plant")); r.heatmap.quarters.forEach(function (q) { hr.appendChild(el("th", "", q.replace("-", " "))); }); hm.appendChild(hr);
+      var cell = {}; r.heatmap.cells.forEach(function (c) { cell[c.plant_id + "|" + c.quarter] = c; });
+      r.heatmap.plants.forEach(function (p) {
+        var tr3 = el("tr"), td0 = el("td", "", p.code); if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr3.appendChild(td0);
+        r.heatmap.quarters.forEach(function (q) {
+          var c = cell[p.id + "|" + q] || { n: 0 }, v = c.n, cls = c.suppressed ? "hm" : v === 0 ? "h0" : v < 6 ? "h1" : v < 10 ? "h2" : "h3";
+          tr3.appendChild(el("td", "c " + cls, numOrMask(v)));
+        }); hm.appendChild(tr3);
+      });
+
+      /* benchmark */
+      var bt = $("bench"); bt.replaceChildren();
+      var bh = el("tr"); ["Plant", "ทั้งหมด", "รุนแรง", "LTI", "Near miss"].forEach(function (h, i) { bh.appendChild(el("th", i ? "n" : "", h)); }); bt.appendChild(bh);
+      r.by_plant.forEach(function (p) {
+        var tr4 = el("tr"), td0 = el("td", "", p.code + " " + p.name); if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr4.appendChild(td0);
+        [p.total, p.serious, p.lti, p.near_miss].forEach(function (v) { tr4.appendChild(el("td", "n", numOrMask(v))); }); bt.appendChild(tr4);
+      });
+
+      /* latest */
+      renderLatest(r.latest);
+    }
+    function renderLatest(rows) {
+      var q = $("q").value.trim().toLowerCase(), t = $("latest"); t.replaceChildren();
+      var h = el("tr"); ["วันที่", "Plant", "ประเภท", "ความรุนแรง", "สถานะ"].forEach(function (x) { h.appendChild(el("th", "", x)); }); t.appendChild(h);
+      var shown = rows.filter(function (r) { return !q || (r.plant_code + " " + r.type_name).toLowerCase().indexOf(q) > -1; });
+      shown.forEach(function (r) {
+        var tr = el("tr"); tr.appendChild(el("td", "", thDate(r.occurred_on))); tr.appendChild(el("td", "", r.plant_code)); tr.appendChild(el("td", "", r.type_name));
+        var td = el("td"); td.appendChild(el("span", "badge" + (r.is_serious ? " ser" : ""), r.is_serious ? "รุนแรง" : "ทั่วไป")); tr.appendChild(td);
+        tr.appendChild(el("td", "", PHASE[r.phase] || r.phase)); t.appendChild(tr);
+      });
+      if (!shown.length) { var e = el("tr"), c = el("td", "", "ไม่พบข้อมูล"); c.colSpan = 5; e.appendChild(c); t.appendChild(e); }
+    }
+
+    async function load() {
+      if (busy) return; var rg = range();
+      if (!rg.from || !rg.to || rg.from > rg.to) { show("กรุณาเลือกช่วงวันที่ให้ถูกต้อง (วันเริ่มต้องไม่เกินวันสิ้นสุด)", false); return; }
+      busy = true; $("b-apply").disabled = true; show("กำลังโหลดข้อมูล…", true);
+      try {
+        var pl = checks("pop-plants"), ty = checks("pop-types"), ph = $("f-phase").value;
+        var res = await sb.rpc("dashboard_summary", { p_from: rg.from, p_to: rg.to, p_plants: pl.length ? pl : null, p_types: ty.length ? ty : null, p_phase: ph || null });
+        if (res.error) { show("โหลดข้อมูลไม่สำเร็จ: " + res.error.message, false); return; }
+        data = res.data; show("", true); render(data);
+        $("meta").textContent = "ช่วงข้อมูล " + thDate(rg.from) + " – " + thDate(rg.to) + " · " + (pl.length ? pl.length + " Plant" : "ทุก Plant") + " · " + (ty.length ? ty.length + " ประเภท" : "ทุกประเภท");
+      } finally { busy = false; $("b-apply").disabled = false; }
+    }
+
+    (async function init() {
+      var session = await requireLogin(); if (!session) return;
+      var gate = $("gate");
+      var perms = await sb.rpc("my_permissions");
+      if (perms.error || !Array.isArray(perms.data) || perms.data.indexOf("dashboard.view") < 0) { gate.textContent = "คุณไม่มีสิทธิ์เข้าหน้านี้ (ติดต่อ Admin เพื่อขอสิทธิ์ ดู Executive Dashboard)"; return; }
+      var f = await sb.rpc("dashboard_filters");
+      if (f.error) { gate.textContent = "โหลดตัวกรองไม่สำเร็จ: " + f.error.message + " (ตรวจว่ารัน Migration B17 แล้ว)"; return; }
+      plants = f.data.plants || []; types = f.data.types || [];
+      try { var up = await sb.from("user_plants").select("plant_id").eq("user_id", session.user.id); (up.data || []).forEach(function (u) { own[u.plant_id] = true; }); } catch (e) {}
+      buildPop("pop-plants", "s-plants", plants, "id", function (p) { return p.code + " " + p.name; }, "ทุก Plant", "Plant");
+      buildPop("pop-types", "s-types", types, "code", function (t) { return t.name_th; }, "ทุกประเภท", "ประเภท");
+      $("f-range").addEventListener("change", function () {
+        var c = $("f-range").value === "custom"; $("l-from").hidden = $("l-to").hidden = !c;
+        if (c) { var r = range0(); $("f-from").value = r.from; $("f-to").value = r.to; }
+      });
+      function range0() { var t = new Date(), fr = new Date(); fr.setDate(fr.getDate() - 89); return { from: ymd(fr), to: ymd(t) }; }
+      $("b-apply").addEventListener("click", load);
+      $("b-reset").addEventListener("click", function () {
+        $("f-range").value = "90"; $("l-from").hidden = $("l-to").hidden = true; $("f-phase").value = "";
+        document.querySelectorAll("#pop-plants input,#pop-types input").forEach(function (c) { c.checked = false; });
+        sumLabel("pop-plants", "s-plants", "ทุก Plant", "Plant"); sumLabel("pop-types", "s-types", "ทุกประเภท", "ประเภท"); load();
+      });
+      $("q").addEventListener("input", function () { if (data) renderLatest(data.latest); });
+      gate.hidden = true; $("area").hidden = false; load();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>

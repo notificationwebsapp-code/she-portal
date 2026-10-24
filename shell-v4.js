@@ -90,7 +90,7 @@
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&open){var b=open.btn;close();b.focus()}});
 
   /* ไอคอนเมนู (inline SVG เส้นบาง) + Footer */
-  var NAVIC={"index.html":"M3 11l9-8 9 8v10a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z","incident.html":"M12 3 2.5 20h19L12 3zM12 10v4.5M12 17.2v.1","checklist.html":"M5 4h14v16H5zM8.5 9l1.6 1.6L13 7.7M9 15h6","training.html":"M2.5 9.5 12 4.5l9.5 5-9.5 5zM6.5 12v4.5c0 1.2 2.5 2.5 5.5 2.5s5.5-1.3 5.5-2.5V12","records.html":"M4 5h16v14H4zM4 10h16M9.5 10v9","admin-users.html":"M16 11a4 4 0 10-8 0M4 21a8 8 0 0116 0","admin-permissions.html":"M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5zM9 12l2 2 4-4","admin-master.html":"M4 6h16M4 12h16M4 18h10"};
+  var NAVIC={"index.html":"M3 11l9-8 9 8v10a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z","incident.html":"M12 3 2.5 20h19L12 3zM12 10v4.5M12 17.2v.1","checklist.html":"M5 4h14v16H5zM8.5 9l1.6 1.6L13 7.7M9 15h6","training.html":"M2.5 9.5 12 4.5l9.5 5-9.5 5zM6.5 12v4.5c0 1.2 2.5 2.5 5.5 2.5s5.5-1.3 5.5-2.5V12","records.html":"M4 5h16v14H4zM4 10h16M9.5 10v9","admin-users.html":"M16 11a4 4 0 10-8 0M4 21a8 8 0 0116 0","admin-permissions.html":"M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5zM9 12l2 2 4-4","admin-master.html":"M4 6h16M4 12h16M4 18h10","executive-dashboard.html":"M4 20V10M10 20V4M16 20v-7M22 20H2"};
   function decorateNav(){document.querySelectorAll("header nav a").forEach(function(a){
     if(a.querySelector("svg.ni"))return;var k=(a.getAttribute("href")||"").split("/").pop();var d=NAVIC[k];if(!d)return;
     var s=document.createElementNS(NS,"svg");s.setAttribute("class","ni");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");
@@ -100,14 +100,14 @@
     var u=n.querySelector('a[href="#"],a[href="login.html"]');if(u&&u.parentNode!==tools){u.classList.add("userlink");tools.appendChild(u)}}
   /* เมนูหลักชุดเดียวกันทุกหน้า (ตามแบบ Stitch): หน้าแรก · รายงาน · เช็กลิสต์ · อบรม · ดูข้อมูล · Executive Dashboard (เร็ว ๆ นี้) · ผู้ดูแลระบบ (เฉพาะ Admin) */
   var ORDER=["index.html","incident.html","checklist.html","training.html","records.html"];
-  var ADM=["admin-users.html","admin-master.html","admin-permissions.html","admin-themes.html"];var hasTh=false;
+  var ADM=["admin-users.html","admin-master.html","admin-permissions.html","admin-themes.html"];var hasTh=false,dashMode=null;
   var obs=null;
   function normalizeNav(){var n=document.querySelector("header nav");if(!n)return;if(obs)obs.disconnect();
     var f=(location.pathname.split("/").pop()||"index.html");var by={};
     document.querySelectorAll("header a").forEach(function(a){if(a.closest(".tpadmin"))return;var k=(a.getAttribute("href")||"").split("/").pop();if(n.contains(a)||ADM.indexOf(k)>-1)by[k]=by[k]||a});
     ORDER.forEach(function(k){if(by[k])n.appendChild(by[k])});
-    var soon=n.querySelector(".navsoon");if(!soon){soon=el("span","navsoon","Executive Dashboard");soon.setAttribute("aria-disabled","true");soon.title="เร็ว ๆ นี้ (อยู่ในแผนพัฒนา)"}
-    if(by["index.html"])n.appendChild(soon);
+    var dl=n.querySelector("a.navdash");if(!dl&&dashMode==="yes"){dl=el("a","navdash","Executive Dashboard");dl.href="executive-dashboard.html"}
+    if(dl&&by["index.html"])n.appendChild(dl);
     if(by["admin-themes.html"])hasTh=true;if(hasTh){var st=document.querySelector("nav.subtabs");if(st&&!st.querySelector('a[href="admin-themes.html"]')){var ta=el("a",null,"ธีมเทศกาล");ta.href="admin-themes.html";if(f==="admin-themes.html")ta.setAttribute("aria-current","page");st.appendChild(ta)}}var isAdmin=!!(by[ADM[0]]||by[ADM[1]]||by[ADM[2]]);
     ADM.slice(1).forEach(function(k){if(by[k]&&by[k].parentNode)by[k].parentNode.removeChild(by[k])});
     if(adminBox){var labs={"admin-users.html":"จัดการผู้ใช้","admin-master.html":"ข้อมูลหลัก","admin-permissions.html":"สิทธิ์การใช้งาน","admin-themes.html":"ธีมเทศกาล"};
@@ -119,6 +119,10 @@
       var cur=(k===f)||(ADM.indexOf(f)>-1&&k===ADM[0]);if(cur)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
     decorateNav();relocate();
     if(obs)obs.observe(document.querySelector("header"),{childList:true,subtree:true})}
+  /* เมนู Executive Dashboard: แสดงเฉพาะผู้มีสิทธิ์ dashboard.view (ซ่อนหน้าจอเท่านั้น สิทธิ์จริงบังคับที่ฐานข้อมูล) */
+  (function(){var tries=0;(function wait(){if(typeof sb==="undefined"||!sb.auth){if(++tries<60)setTimeout(wait,100);return}
+    sb.auth.getSession().then(function(r){if(!r||!r.data||!r.data.session){return}
+      return sb.rpc("my_permissions").then(function(p){if(!p.error&&Array.isArray(p.data)&&p.data.indexOf("dashboard.view")>-1){dashMode="yes";normalizeNav()}})}).catch(function(){})})()})();
   decorateNav();
   var nv=document.querySelector("header nav");if(nv){obs=new MutationObserver(normalizeNav);normalizeNav()}
   if(!document.querySelector(".sitefoot")){
