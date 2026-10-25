@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <title>จัดการผู้ใช้ | SHE Portal</title>
-  <script src="i18n.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
+  <style>.badge.dormant{background:#e8eaf6;color:#283593}</style>
 </head>
 <body>
   <header>
@@ -59,7 +59,7 @@
     const NO_PLANT_EDIT = ["md", "ceo", "admin", "super_admin"];
     let isSuper = false;   // ผู้ใช้ปัจจุบันเป็น super_admin หรือไม่ (ใช้แสดงผลเท่านั้น สิทธิ์จริงอยู่ที่ RPC/trigger ในฐานข้อมูล)
     let userPlants = {};   // user_id -> [plant_id]
-    const STATUS_TH = { pending: "รออนุมัติ", active: "ใช้งานอยู่", suspended: "ถูกระงับ", rejected: "ไม่อนุมัติ" };
+    const STATUS_TH = { pending: "รออนุมัติ", active: "ใช้งานอยู่", suspended: "ถูกระงับ", dormant: "พักบัญชี (ไม่ได้ใช้งาน)", rejected: "ไม่อนุมัติ" };
     const NO_PLANT_ROLES = ["md", "ceo"];
     const msgEl = document.getElementById("msg");
     let plants = [], depts = [];
@@ -213,6 +213,20 @@
         });
         act.appendChild(b);
       }
+      if (u.id !== myId && !locked && u.status === "dormant") {
+        const b = el("button", "เปิดใช้งาน", "btn-ok-outline small");
+        b.type = "button";
+        b.addEventListener("click", async () => {
+          if (!confirm("เปิดใช้งานบัญชีที่ถูกพัก " + (u.email || "") + " ?")) return;
+          b.disabled = true;
+          const { error } = await sb.rpc("admin_reactivate_user", { target: u.id });
+          b.disabled = false;
+          if (error) { show("ไม่สำเร็จ: " + error.message, false); return; }
+          show("เปิดใช้งาน " + (u.email || "") + " แล้ว", true);
+          load();
+        });
+        act.appendChild(b);
+      }
       if (u.id !== myId && !locked && (u.status === "active" || u.status === "suspended")) {
         const next = u.status === "active" ? "suspended" : "active";
         const b = el("button", next === "suspended" ? "ระงับ" : "เปิดใช้งาน",
@@ -332,7 +346,7 @@
     function renderSummary(users) {
       const box = document.getElementById("summary");
       box.replaceChildren();
-      ["pending", "active", "suspended", "rejected"].forEach(s => {
+      ["pending", "active", "dormant", "suspended", "rejected"].forEach(s => {
         const n = users.filter(u => u.status === s).length;
         const chip = el("span", undefined, "chip");
         chip.appendChild(el("span", STATUS_TH[s], "badge " + s));

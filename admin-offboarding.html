@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ผู้ใช้ที่ลาออก / ทบทวนสิทธิ์ | SHE Portal</title>
+  <style>
+    .ob-toolbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.7rem .9rem;align-items:end;background:#fff;border:1px solid var(--line);border-radius:16px;padding:1rem 1.1rem;margin:1rem 0}
+    .ob-toolbar label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.92rem}
+    .ob-toolbar select,.ob-toolbar input{min-height:44px;font:inherit;font-weight:400}
+    .ob-toolbar .wide{grid-column:1/-1}
+    table.ot{min-width:980px}
+    table.ot td .sub{display:block;color:var(--muted);font-size:.85rem}
+    table.ot td.chk{width:2.6rem;text-align:center}
+    table.ot td.chk input{width:22px;height:22px}
+    .ob-act{position:sticky;bottom:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:.8rem 1rem;margin:1rem 0;display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+    .ob-act input[type=text]{min-height:44px;flex:1;min-width:14rem}
+    .ob-act button{min-height:44px}
+    .tag{display:inline-block;border-radius:999px;padding:.1rem .6rem;font-size:.8rem;font-weight:700;background:#eee;color:#333}
+    .tag.warn{background:#fff4d6;color:#6b4200}.tag.bad{background:#fdecea;color:#8c1d18}.tag.ok{background:#e3f6e8;color:#14532d}
+    .tabs{display:flex;flex-wrap:wrap;gap:.3rem;padding:.3rem;margin:.8rem 0}
+    .tabs button{flex:1;min-width:10rem;margin:0}
+    .panel[hidden]{display:none}
+    textarea.ob-ta{width:100%;min-height:9rem;font:inherit;padding:.6rem}
+    .ob-set{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.2rem;margin:1rem 0;display:grid;gap:.9rem;max-width:46rem}
+    .ob-set label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy)}
+    .ob-set label.inline{flex-direction:row;align-items:center;gap:.6rem}
+    .ob-set input[type=number]{max-width:10rem;min-height:44px}
+    .hint{color:var(--muted);font-size:.88rem;font-weight:400}
+    .ob-sum{display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0}
+    .badge.dormant{background:#e8eaf6;color:#283593}
+    .pager{display:flex;gap:.6rem;align-items:center;margin:.6rem 0;flex-wrap:wrap}
+  </style>
+  <script src="i18n.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- หน้านี้เป็นเพียงหน้าจอ: สิทธิ์จริงบังคับที่ RPC (my_role()='admin'; ตั้งค่า = Super admin เท่านั้น) -->
+    <div id="area" hidden>
+      <h2>ผู้ใช้ที่ลาออก / ทบทวนสิทธิ์</h2>
+      <p>ใช้ถอนสิทธิ์ผู้ที่ลาออกหรือย้ายงาน ทั้งแบบเลือกจากรายชื่อ และแบบนำเข้ารายชื่อจาก HR (จับคู่ด้วยรหัสพนักงานหรืออีเมล) การระงับจะถอนสิทธิ์รายบุคคลที่ยังใช้งานอยู่ทั้งหมดด้วย และบันทึกในประวัติ (Audit log) อ้างอิงแนวปฏิบัติ ISO/IEC 27001:2022 ข้อ A.5.18 (Access rights) และ A.6.5 (Responsibilities after termination)</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <div class="tabs" role="tablist" aria-label="เมนูย่อย">
+        <button type="button" role="tab" id="tb-review" aria-selected="true" aria-controls="p-review">ทบทวนผู้ใช้</button>
+        <button type="button" role="tab" id="tb-import" aria-selected="false" aria-controls="p-import">นำเข้ารายชื่อจาก HR</button>
+        <button type="button" role="tab" id="tb-set" aria-selected="false" aria-controls="p-set">ตั้งค่าและประวัติ</button>
+      </div>
+
+      <!-- ===== แท็บ 1: ทบทวนผู้ใช้ ===== -->
+      <section id="p-review" class="panel" role="tabpanel" aria-labelledby="tb-review">
+        <div class="ob-toolbar">
+          <label class="wide">ค้นหา (ชื่อ / รหัสพนักงาน / อีเมล)<input id="f-q" type="search" autocomplete="off"></label>
+          <label>สถานะ<select id="f-status">
+            <option value="">ทั้งหมด</option><option value="active" selected>ใช้งานอยู่</option><option value="dormant">พักบัญชี (ไม่ได้ใช้งาน)</option>
+            <option value="suspended">ถูกระงับ</option><option value="pending">รออนุมัติ</option><option value="rejected">ไม่อนุมัติ</option></select></label>
+          <label>Role<select id="f-role"><option value="">ทั้งหมด</option></select></label>
+          <label>Plant<select id="f-plant"><option value="">ทั้งหมด</option></select></label>
+          <label>ไม่ได้เข้าใช้งาน<select id="f-idle">
+            <option value="0">ทุกคน</option><option value="30">30 วันขึ้นไป</option><option value="60">60 วันขึ้นไป</option>
+            <option value="90">90 วันขึ้นไป</option><option value="180">180 วันขึ้นไป</option></select></label>
+          <label>เรียงตาม<select id="f-sort">
+            <option value="name">ชื่อ (ก-ฮ)</option><option value="idle">ไม่ได้ใช้งานนานที่สุดก่อน</option>
+            <option value="code">รหัสพนักงาน</option><option value="status">สถานะ</option></select></label>
+        </div>
+        <div class="ob-sum" id="r-sum" aria-live="polite"></div>
+        <div class="tablewrap"><table class="ot" id="rt">
+          <thead><tr><th class="chk"><input type="checkbox" id="r-all" aria-label="เลือกทั้งหมดที่แสดง"></th><th>ผู้ใช้</th><th>Role / Plant</th><th>สถานะ</th><th>เข้าใช้ล่าสุด</th><th>สิทธิ์รายบุคคล</th><th>CAPA ค้าง</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="pager"><button type="button" class="secondary small" id="r-prev">ก่อนหน้า</button><span id="r-page"></span><button type="button" class="secondary small" id="r-next">ถัดไป</button></div>
+        <p id="r-empty" hidden>ไม่พบผู้ใช้ตามเงื่อนไข</p>
+        <div class="ob-act" id="r-act">
+          <strong id="r-count">เลือกแล้ว 0 บัญชี</strong>
+          <input id="r-reason" type="text" maxlength="200" placeholder="เหตุผล เช่น ลาออก มีผลวันที่ 31 ตุลาคม (5–200 ตัวอักษร)" aria-label="เหตุผลการระงับ" autocomplete="off">
+          <button type="button" class="btn-danger" id="r-go">ระงับและถอนสิทธิ์ที่เลือก</button>
+        </div>
+      </section>
+
+      <!-- ===== แท็บ 2: นำเข้ารายชื่อจาก HR ===== -->
+      <section id="p-import" class="panel" role="tabpanel" aria-labelledby="tb-import" hidden>
+        <p>เลือกไฟล์ CSV จาก HR (บันทึกจาก Excel เป็น CSV UTF-8) หรือวางรายชื่อลงในช่องด้านล่าง ระบบอ่านคอลัมน์ที่ชื่อมีคำว่า code / รหัส (รหัสพนักงาน) และ email / อีเมล หากไม่มีหัวตาราง จะถือว่าค่าที่มี @ คืออีเมล ที่เหลือคือรหัสพนักงาน ระบบจับคู่ด้วยรหัสพนักงานก่อน แล้วจึงใช้อีเมล (เหมาะกับประเทศที่ยังไม่ทราบรูปแบบรหัส) ไฟล์นี้ถูกอ่านในเบราว์เซอร์ของคุณและส่งเฉพาะรหัส/อีเมลไปตรวจเท่านั้น</p>
+        <div class="ob-toolbar">
+          <label class="wide">ไฟล์ CSV<input id="i-file" type="file" accept=".csv,.txt,text/csv,text/plain"></label>
+          <label class="wide">หรือวางรายชื่อ (1 บรรทัดต่อ 1 คน)<textarea id="i-text" class="ob-ta" placeholder="employee_code,email&#10;TH12345,somchai@example.com"></textarea></label>
+          <div class="wide actions"><button type="button" id="i-check">ตรวจรายชื่อ (ยังไม่ระงับ)</button></div>
+        </div>
+        <div class="ob-sum" id="i-sum" aria-live="polite"></div>
+        <div class="tablewrap" id="i-wrap" hidden><table class="ot" id="it">
+          <thead><tr><th class="chk"><input type="checkbox" id="i-all" aria-label="เลือกทั้งหมดที่ระงับได้"></th><th>แถวที่</th><th>ค่าจาก HR</th><th>ผู้ใช้ที่พบ</th><th>Role / Plant</th><th>สถานะ</th><th>ผลการตรวจ</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="ob-act" id="i-act" hidden>
+          <strong id="i-count">เลือกแล้ว 0 บัญชี</strong>
+          <input id="i-reason" type="text" maxlength="200" placeholder="เหตุผล เช่น รายชื่อลาออกจาก HR ประจำเดือน (5–200 ตัวอักษร)" aria-label="เหตุผลการระงับ" autocomplete="off">
+          <button type="button" class="btn-danger" id="i-go">ระงับและถอนสิทธิ์ที่เลือก</button>
+        </div>
+      </section>
+
+      <!-- ===== แท็บ 3: ตั้งค่าและประวัติ ===== -->
+      <section id="p-set" class="panel" role="tabpanel" aria-labelledby="tb-set" hidden>
+        <h3>การพักบัญชีอัตโนมัติ (Dormant)</h3>
+        <p>บัญชีที่ไม่ได้เข้าใช้งานเกินกำหนดจะถูก "พัก" อัตโนมัติ (ยกเว้น Admin / Super admin) ผู้ใช้กลับมาเองได้เมื่อ (1) อีเมลอยู่ในโดเมนบริษัทด้านล่าง และ (2) ตั้งรหัสผ่านใหม่แล้วผ่าน "ลืมรหัสผ่าน" ส่วนผู้ที่ถูกระงับเพราะลาออกจะกลับมาเองไม่ได้ ต้องให้ Admin เปิดให้ (NIST SP 800-63B ไม่แนะนำให้บังคับเปลี่ยนรหัสผ่านตามรอบเวลา จึงใช้เงื่อนไขไม่ได้ใช้งานแทน)</p>
+        <form id="s-form" class="ob-set" novalidate>
+          <label class="inline"><input type="checkbox" id="s-en"> เปิดใช้การพักบัญชีอัตโนมัติ</label>
+          <label>จำนวนวันที่ไม่ได้เข้าใช้งานก่อนพัก (30–730)<input id="s-days" type="number" min="30" max="730" step="1"></label>
+          <label>โดเมนอีเมลบริษัทที่กลับมาใช้งานเองได้ (1 บรรทัดต่อ 1 โดเมน)<textarea id="s-dom" class="ob-ta" placeholder="company-a.com&#10;company-b.co.th" spellcheck="false"></textarea>
+            <span class="hint">ใส่เฉพาะโดเมนของกลุ่มบริษัท ห้ามใส่อีเมลสาธารณะ เช่น gmail.com ถ้าเว้นว่าง ผู้ที่ถูกพักทุกคนต้องให้ Admin เปิดให้ ไม่เกิน 50 โดเมน</span></label>
+          <p class="hint" id="s-note"></p>
+          <div class="actions"><button type="submit" class="btn-ok" id="s-save">บันทึกการตั้งค่า</button><button type="button" class="secondary" id="s-run">ตรวจบัญชีที่ไม่ได้ใช้งานตอนนี้</button></div>
+        </form>
+        <h3>ประวัติการระงับ / พัก / เปิดใช้งาน</h3>
+        <div class="tablewrap"><table class="ot" id="et" style="min-width:760px">
+          <thead><tr><th>เวลา</th><th>เหตุการณ์</th><th>ผู้ใช้</th><th>เหตุผล / รายละเอียด</th><th>ผู้ดำเนินการ</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <p id="e-empty" hidden>ยังไม่มีประวัติ</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* หน้านี้เป็นเพียงหน้าจอ: ความปลอดภัยจริงอยู่ที่ DB
+       - ทุกการอ่าน/เขียนผ่าน RPC (ตรวจ my_role()='admin'; ตั้งค่าเฉพาะ Super admin; Admin แตะ Super admin ไม่ได้)
+       - ตารางเก็บข้อมูลไม่มี GRANT ให้ผู้ใช้เข้าถึงตรง ๆ
+       - แสดงข้อมูลทุกจุดด้วย textContent (OWASP A03) */
+    const msgEl = document.getElementById("msg");
+    let isSuper = false, myId = null;
+    function show(t, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t; msgEl.scrollIntoView({ block: "nearest" }); }
+    function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+    function nd(e) { e.setAttribute("data-no-i18n", ""); return e; }
+    function fmt(ts) { try { return new Date(ts).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }); } catch (e) { return String(ts || ""); } }
+    function errText(e) {
+      const c = e && e.code, m = (e && e.message) || "";
+      if (c === "42501") return "คุณไม่มีสิทธิ์ทำรายการนี้ (Admin เท่านั้น; การตั้งค่าและการแตะบัญชี Super admin เฉพาะ Super admin)";
+      if (c === "22023") {
+        if (/Reason/i.test(m)) return "กรุณาระบุเหตุผล 5–200 ตัวอักษร";
+        if (/Select 1-500/i.test(m)) return "เลือกได้ครั้งละ 1–500 คน";
+        if (/Invalid rows/i.test(m)) return "รายชื่อไม่ถูกต้องหรือเกิน 2,000 แถว กรุณาแบ่งไฟล์";
+        if (/Public email/i.test(m)) return "ห้ามใส่โดเมนอีเมลสาธารณะ เช่น gmail.com ในรายการโดเมนบริษัท";
+        if (/Invalid domain/i.test(m)) return "รูปแบบโดเมนไม่ถูกต้อง (ตัวอย่าง company.com)";
+        if (/Too many/i.test(m)) return "ใส่โดเมนได้ไม่เกิน 50 รายการ";
+        if (/Days/i.test(m)) return "จำนวนวันต้องอยู่ระหว่าง 30–730";
+        return "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง";
+      }
+      return "ทำรายการไม่สำเร็จ: " + m;
+    }
+    const STATUS_TH = { pending: "รออนุมัติ", active: "ใช้งานอยู่", dormant: "พักบัญชี (ไม่ได้ใช้งาน)", suspended: "ถูกระงับ", rejected: "ไม่อนุมัติ" };
+    const EVENT_TH = { suspended_leaver: "ระงับ (ลาออก/ย้ายงาน)", dormant: "พักบัญชีอัตโนมัติ", reactivated_self: "ผู้ใช้เปิดใช้งานเอง", reactivated_admin: "Admin เปิดใช้งาน", settings_changed: "เปลี่ยนการตั้งค่า", sweep_run: "ตรวจบัญชีที่ไม่ได้ใช้งาน" };
+    const ISSUE_TH = {
+      empty_row: ["แถวว่าง", "bad"], not_found: ["ไม่พบในระบบ", "bad"], conflict: ["รหัสกับอีเมลชี้คนละคน ตรวจสอบเอง", "bad"],
+      self: ["เป็นบัญชีของคุณเอง", "bad"], protected: ["Super admin (เฉพาะ Super admin ระงับได้)", "bad"],
+      already_suspended: ["ถูกระงับอยู่แล้ว", "warn"], not_active: ["ยังไม่ได้เปิดใช้งาน (รออนุมัติ/ไม่อนุมัติ)", "warn"]
+    };
+    const MATCH_TH = { code: "จับคู่ด้วยรหัสพนักงาน", email: "จับคู่ด้วยอีเมล" };
+
+    /* ---------- แท็บ ---------- */
+    const TABS = ["review", "import", "set"];
+    function selectTab(k) {
+      TABS.forEach((t) => {
+        const on = t === k;
+        document.getElementById("tb-" + t).setAttribute("aria-selected", on ? "true" : "false");
+        document.getElementById("p-" + t).hidden = !on;
+      });
+      if (k === "set") loadSettings();
+    }
+    TABS.forEach((t) => document.getElementById("tb-" + t).addEventListener("click", () => selectTab(t)));
+
+    /* ---------- แท็บ 1: ทบทวนผู้ใช้ ---------- */
+    let all = [], rows = [], sel = new Set(), page = 0;
+    const PAGE = 100;
+    function eligible(u) { return (u.status === "active" || u.status === "dormant") && u.user_id !== myId && !(u.role === "super_admin" && !isSuper); }
+    function applyFilters() {
+      const q = document.getElementById("f-q").value.trim().toLowerCase();
+      const st = document.getElementById("f-status").value, ro = document.getElementById("f-role").value, pl = document.getElementById("f-plant").value;
+      const idle = parseInt(document.getElementById("f-idle").value, 10) || 0, so = document.getElementById("f-sort").value;
+      rows = all.filter((u) =>
+        (!q || [u.full_name, u.employee_code, u.email].some((x) => (x || "").toLowerCase().includes(q))) &&
+        (!st || u.status === st) && (!ro || u.role === ro) && (!pl || (u.plants || []).includes(pl)) &&
+        (!idle || (u.days_inactive != null && u.days_inactive >= idle)));
+      const cmpS = (a, b) => (a || "").localeCompare(b || "", "th");
+      rows.sort(so === "idle" ? (a, b) => (b.days_inactive == null ? -1 : b.days_inactive) - (a.days_inactive == null ? -1 : a.days_inactive)
+        : so === "code" ? (a, b) => cmpS(a.employee_code, b.employee_code)
+        : so === "status" ? (a, b) => cmpS(a.status, b.status) || cmpS(a.full_name, b.full_name)
+        : (a, b) => cmpS(a.full_name, b.full_name));
+      page = 0; renderReview();
+    }
+    function updCount(idc, btnId, set) {
+      document.getElementById(idc).textContent = "เลือกแล้ว " + set.size + " บัญชี";
+      document.getElementById(btnId).disabled = set.size === 0;
+    }
+    function renderReview() {
+      const tb = document.querySelector("#rt tbody"); tb.replaceChildren();
+      const pages = Math.max(1, Math.ceil(rows.length / PAGE)); if (page >= pages) page = pages - 1;
+      const slice = rows.slice(page * PAGE, page * PAGE + PAGE);
+      document.getElementById("r-empty").hidden = rows.length > 0;
+      slice.forEach((u) => {
+        const tr = el("tr");
+        const c = el("td", "chk"); const cb = el("input"); cb.type = "checkbox"; cb.setAttribute("aria-label", "เลือก " + (u.full_name || ""));
+        if (eligible(u)) { cb.checked = sel.has(u.user_id); cb.addEventListener("change", () => { cb.checked ? sel.add(u.user_id) : sel.delete(u.user_id); updCount("r-count", "r-go", sel); }); }
+        else cb.disabled = true;
+        c.appendChild(cb); tr.appendChild(c);
+        const t1 = el("td"); t1.appendChild(nd(el("span", null, u.full_name || "(ไม่มีชื่อ)")));
+        t1.appendChild(nd(el("span", "sub", (u.employee_code ? u.employee_code + " · " : "") + (u.email || "")))); tr.appendChild(t1);
+        const t2 = el("td"); t2.appendChild(nd(el("span", null, u.role)));
+        t2.appendChild(nd(el("span", "sub", (u.role === "admin" || u.role === "super_admin") ? "ALL" : ((u.plants || []).join(", ") || "—")))); tr.appendChild(t2);
+        const t3 = el("td"); t3.appendChild(el("span", "badge " + u.status, STATUS_TH[u.status] || u.status)); tr.appendChild(t3);
+        const t4 = el("td"); if (u.last_seen_at) { t4.appendChild(nd(el("span", null, fmt(u.last_seen_at)))); t4.appendChild(nd(el("span", "sub", u.days_inactive + " วัน"))); } else t4.textContent = "—"; tr.appendChild(t4);
+        tr.appendChild(nd(el("td", null, String(u.active_grants || 0))));
+        const t6 = el("td"); t6.appendChild(u.open_capa > 0 ? el("span", "tag warn", String(u.open_capa)) : el("span", null, "0")); tr.appendChild(t6);
+        tb.appendChild(tr);
+      });
+      document.getElementById("r-page").textContent = (page + 1) + " / " + pages + "  (" + rows.length + " / " + all.length + ")";
+      document.getElementById("r-prev").disabled = page === 0; document.getElementById("r-next").disabled = page >= pages - 1;
+      const n = (s) => all.filter((u) => u.status === s).length;
+      const sum = document.getElementById("r-sum"); sum.replaceChildren();
+      ["active", "dormant", "suspended", "pending"].forEach((s) => { const ch = el("span", "chip"); ch.appendChild(el("span", "badge " + s, STATUS_TH[s])); ch.appendChild(el("b", null, String(n(s)))); sum.appendChild(ch); });
+      document.getElementById("r-all").checked = false;
+      updCount("r-count", "r-go", sel);
+    }
+    ["f-q", "f-status", "f-role", "f-plant", "f-idle", "f-sort"].forEach((id) => document.getElementById(id).addEventListener(id === "f-q" ? "input" : "change", applyFilters));
+    document.getElementById("r-prev").addEventListener("click", () => { page--; renderReview(); });
+    document.getElementById("r-next").addEventListener("click", () => { page++; renderReview(); });
+    document.getElementById("r-all").addEventListener("change", (e) => {
+      rows.slice(page * PAGE, page * PAGE + PAGE).filter(eligible).forEach((u) => e.target.checked ? sel.add(u.user_id) : sel.delete(u.user_id));
+      renderReview(); document.getElementById("r-all").checked = e.target.checked;
+    });
+    function showSummary(r) {
+      const lines = ["ระงับแล้ว " + r.suspended + " บัญชี ถอนสิทธิ์รายบุคคล " + r.grants_revoked + " รายการ"];
+      if (r.skipped) lines.push("ข้าม " + r.skipped + " บัญชี");
+      if (r.open_capa) lines.push("มี CAPA ค้างของผู้ถูกระงับ " + r.open_capa + " รายการ กรุณาเปลี่ยนผู้รับผิดชอบที่หน้า Action (CAPA)");
+      msgEl.hidden = false; msgEl.className = "msg ok"; msgEl.replaceChildren();
+      lines.forEach((l) => msgEl.appendChild(el("div", null, l)));
+      msgEl.scrollIntoView({ block: "nearest" });
+    }
+    async function doApply(ids, reasonId, afterOk) {
+      const reason = document.getElementById(reasonId).value.trim();
+      if (!ids.length) { show("กรุณาเลือกอย่างน้อย 1 คน", false); return; }
+      if (reason.length < 5) { show("กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร", false); document.getElementById(reasonId).focus(); return; }
+      if (!confirm("ยืนยันระงับ " + ids.length + " บัญชี และถอนสิทธิ์รายบุคคลทั้งหมดของบัญชีเหล่านี้ ?")) return;
+      const { data, error } = await sb.rpc("offboard_apply", { p_user_ids: ids, p_reason: reason });
+      if (error) { show(errText(error), false); return; }
+      showSummary(data);
+      document.getElementById(reasonId).value = "";
+      await afterOk();
+    }
+    document.getElementById("r-go").addEventListener("click", async () => {
+      const b = document.getElementById("r-go"); b.disabled = true;
+      try { await doApply(Array.from(sel), "r-reason", async () => { sel.clear(); await loadReview(); }); } finally { updCount("r-count", "r-go", sel); }
+    });
+    async function loadReview() {
+      const { data, error } = await sb.rpc("list_users_for_review");
+      if (error) { show("โหลดรายชื่อไม่สำเร็จ: " + errText(error), false); return; }
+      all = data || [];
+      const roles = Array.from(new Set(all.map((u) => u.role))).sort(), plants = Array.from(new Set(all.flatMap((u) => u.plants || []))).sort();
+      const fill = (id, vals) => { const s = document.getElementById(id), cur = s.value; while (s.options.length > 1) s.remove(1); vals.forEach((v) => s.appendChild(nd(new Option(v, v)))); s.value = vals.includes(cur) ? cur : ""; };
+      fill("f-role", roles); fill("f-plant", plants);
+      applyFilters();
+    }
+
+    /* ---------- แท็บ 2: นำเข้ารายชื่อ ---------- */
+    function parseDelimited(text) {
+      text = String(text || "").replace(/^﻿/, "");
+      const first = text.split(/\r?\n/, 1)[0] || "";
+      const d = first.includes("\t") ? "\t" : (first.split(";").length > first.split(",").length ? ";" : ",");
+      const out = []; let row = [], cur = "", q = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (q) { if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+        else if (ch === '"') q = true;
+        else if (ch === d) { row.push(cur); cur = ""; }
+        else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(cur); out.push(row); row = []; cur = ""; }
+        else cur += ch;
+      }
+      if (cur !== "" || row.length) { row.push(cur); out.push(row); }
+      return out.filter((r) => r.some((c) => c.trim() !== ""));
+    }
+    function toRows(text) {
+      const t = parseDelimited(text); if (!t.length) return [];
+      const head = t[0].map((h) => h.trim().toLowerCase());
+      const ci = head.findIndex((h) => /code|รหัส|emp.*id|employee/.test(h) && !/mail/.test(h));
+      const ei = head.findIndex((h) => /mail|อีเมล/.test(h));
+      let body = t, mode = "auto";
+      if (ci > -1 || ei > -1) { body = t.slice(1); mode = "head"; }
+      return body.slice(0, 2001).map((r) => {
+        if (mode === "head") return { code: ci > -1 ? (r[ci] || "").trim() : "", email: ei > -1 ? (r[ei] || "").trim() : "" };
+        const vals = r.map((c) => c.trim()).filter(Boolean);
+        return { code: vals.find((v) => !v.includes("@")) || "", email: vals.find((v) => v.includes("@")) || "" };
+      });
+    }
+    let imp = [], isel = new Set();
+    function impOk(r) { return r.user_id && !r.issue; }
+    function renderImport() {
+      const tb = document.querySelector("#it tbody"); tb.replaceChildren();
+      const okc = imp.filter(impOk).length, bad = imp.filter((r) => r.issue && r.issue !== "already_suspended").length, dup = imp.filter((r) => r.issue === "already_suspended").length;
+      const sum = document.getElementById("i-sum"); sum.replaceChildren();
+      [["ระงับได้", okc, "ok"], ["ถูกระงับอยู่แล้ว", dup, "warn"], ["ต้องตรวจสอบ", bad, "bad"]].forEach(([l, n, k]) => { const ch = el("span", "chip"); ch.appendChild(el("span", "tag " + k, l)); ch.appendChild(el("b", null, String(n))); sum.appendChild(ch); });
+      document.getElementById("i-wrap").hidden = imp.length === 0; document.getElementById("i-act").hidden = imp.length === 0;
+      imp.forEach((r) => {
+        const tr = el("tr");
+        const c = el("td", "chk"); const cb = el("input"); cb.type = "checkbox"; cb.setAttribute("aria-label", "เลือกแถว " + r.idx);
+        if (impOk(r)) { cb.checked = isel.has(r.user_id); cb.addEventListener("change", () => { cb.checked ? isel.add(r.user_id) : isel.delete(r.user_id); updCount("i-count", "i-go", isel); }); } else cb.disabled = true;
+        c.appendChild(cb); tr.appendChild(c);
+        tr.appendChild(el("td", null, String(r.idx)));
+        const t1 = el("td"); t1.appendChild(nd(el("span", null, r.in_code || "—"))); t1.appendChild(nd(el("span", "sub", r.in_email || ""))); tr.appendChild(t1);
+        const t2 = el("td"); if (r.user_id) { t2.appendChild(nd(el("span", null, r.full_name || "(ไม่มีชื่อ)"))); t2.appendChild(nd(el("span", "sub", (r.employee_code || "") + " · " + (r.email || "")))); } else t2.textContent = "—"; tr.appendChild(t2);
+        const t3 = el("td"); if (r.user_id) { t3.appendChild(nd(el("span", null, r.role))); t3.appendChild(nd(el("span", "sub", (r.role === "admin" || r.role === "super_admin") ? "ALL" : ((r.plants || []).join(", ") || "—")))); } else t3.textContent = "—"; tr.appendChild(t3);
+        const t4 = el("td"); if (r.user_id) t4.appendChild(el("span", "badge " + r.status, STATUS_TH[r.status] || r.status)); else t4.textContent = "—"; tr.appendChild(t4);
+        const t5 = el("td");
+        if (r.issue) { const [l, k] = ISSUE_TH[r.issue] || [r.issue, "bad"]; t5.appendChild(el("span", "tag " + k, l)); }
+        else { t5.appendChild(el("span", "tag ok", "ระงับได้")); t5.appendChild(el("span", "sub", MATCH_TH[r.match_by] || "")); if (r.active_grants) t5.appendChild(el("span", "sub", "จะถอนสิทธิ์รายบุคคล " + r.active_grants + " รายการ")); if (r.open_capa) t5.appendChild(el("span", "sub", "มี CAPA ค้าง " + r.open_capa + " รายการ")); }
+        tr.appendChild(t5); tb.appendChild(tr);
+      });
+      document.getElementById("i-all").checked = false; updCount("i-count", "i-go", isel);
+    }
+    document.getElementById("i-file").addEventListener("change", async (e) => {
+      const f = e.target.files && e.target.files[0]; if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { show("ไฟล์ใหญ่เกิน 2 MB กรุณาแบ่งไฟล์", false); return; }
+      document.getElementById("i-text").value = await f.text();
+    });
+    document.getElementById("i-check").addEventListener("click", async () => {
+      const rs = toRows(document.getElementById("i-text").value);
+      if (!rs.length) { show("ยังไม่มีรายชื่อ กรุณาเลือกไฟล์หรือวางรายชื่อ", false); return; }
+      if (rs.length > 2000) { show("เกิน 2,000 แถว กรุณาแบ่งไฟล์", false); return; }
+      const b = document.getElementById("i-check"); b.disabled = true;
+      try {
+        const { data, error } = await sb.rpc("offboard_match", { p_rows: rs });
+        if (error) { show(errText(error), false); return; }
+        imp = data || []; isel = new Set(); renderImport();
+        show("ตรวจรายชื่อแล้ว " + imp.length + " แถว (ยังไม่มีการระงับ กรุณาตรวจผลแล้วเลือกรายการที่ต้องการ)", true);
+      } finally { b.disabled = false; }
+    });
+    document.getElementById("i-all").addEventListener("change", (e) => {
+      imp.filter(impOk).forEach((r) => e.target.checked ? isel.add(r.user_id) : isel.delete(r.user_id)); renderImport(); document.getElementById("i-all").checked = e.target.checked;
+    });
+    document.getElementById("i-go").addEventListener("click", async () => {
+      const b = document.getElementById("i-go"); b.disabled = true;
+      try { await doApply(Array.from(isel), "i-reason", async () => { isel.clear(); imp = []; renderImport(); document.getElementById("i-text").value = ""; await loadReview(); }); } finally { updCount("i-count", "i-go", isel); }
+    });
+
+    /* ---------- แท็บ 3: ตั้งค่าและประวัติ ---------- */
+    async function loadSettings() {
+      const [s, ev] = await Promise.all([sb.rpc("get_offboarding_settings"), sb.rpc("list_offboarding_events", { p_limit: 200 })]);
+      if (s.error) { show("โหลดการตั้งค่าไม่สำเร็จ: " + errText(s.error), false); }
+      else {
+        const r = (s.data || [])[0] || {};
+        document.getElementById("s-en").checked = !!r.dormant_enabled;
+        document.getElementById("s-days").value = r.dormant_days || 90;
+        document.getElementById("s-dom").value = (r.reactivation_domains || []).join("\n");
+      }
+      ["s-en", "s-days", "s-dom", "s-save"].forEach((id) => { document.getElementById(id).disabled = !isSuper; });
+      document.getElementById("s-note").textContent = isSuper ? "" : "การแก้ไขการตั้งค่าทำได้เฉพาะ Super admin (Admin ดูและกดตรวจบัญชีที่ไม่ได้ใช้งานได้)";
+      const tb = document.querySelector("#et tbody"); tb.replaceChildren();
+      if (ev.error) { show("โหลดประวัติไม่สำเร็จ: " + errText(ev.error), false); return; }
+      document.getElementById("e-empty").hidden = (ev.data || []).length > 0;
+      (ev.data || []).forEach((e) => {
+        const tr = el("tr");
+        tr.appendChild(nd(el("td", null, fmt(e.at))));
+        tr.appendChild(el("td", null, EVENT_TH[e.event] || e.event));
+        const t = el("td"); if (e.user_name || e.user_email) { t.appendChild(nd(el("span", null, e.user_name || ""))); t.appendChild(nd(el("span", "sub", e.user_email || ""))); } else t.textContent = "—"; tr.appendChild(t);
+        const d = e.details || {}; let txt = e.reason || "";
+        if (e.event === "dormant") { const m = /(\d+)/.exec(e.reason || ""); txt = m ? "ไม่ได้เข้าใช้งาน " + m[1] + " วัน" : ""; }
+        if (e.event === "sweep_run" && d.dormant != null) txt = "พักบัญชี " + d.dormant + " บัญชี";
+        if (!txt && e.event === "settings_changed") txt = (d.days != null ? d.days + " วัน" : "") + (d.enabled === false ? " (ปิดใช้งาน)" : "") + (Array.isArray(d.domains) ? " | domains: " + d.domains.join(", ") : "");
+        tr.appendChild(nd(el("td", null, txt)));
+        tr.appendChild(nd(el("td", null, e.actor_name || "ระบบอัตโนมัติ")));
+        tb.appendChild(tr);
+      });
+    }
+    document.getElementById("s-form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const days = parseInt(document.getElementById("s-days").value, 10);
+      if (!(days >= 30 && days <= 730)) { show("จำนวนวันต้องอยู่ระหว่าง 30–730", false); return; }
+      const doms = document.getElementById("s-dom").value.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
+      const b = document.getElementById("s-save"); b.disabled = true;
+      try {
+        const { error } = await sb.rpc("set_offboarding_settings", { p_enabled: document.getElementById("s-en").checked, p_days: days, p_domains: doms });
+        if (error) { show(errText(error), false); return; }
+        show("บันทึกการตั้งค่าแล้ว", true); await loadSettings();
+      } finally { b.disabled = !isSuper; }
+    });
+    document.getElementById("s-run").addEventListener("click", async () => {
+      if (!confirm("ตรวจและพักบัญชีที่ไม่ได้เข้าใช้งานเกินกำหนดตอนนี้ ?")) return;
+      const b = document.getElementById("s-run"); b.disabled = true;
+      try {
+        const { data, error } = await sb.rpc("admin_run_dormant_sweep");
+        if (error) { show(errText(error), false); return; }
+        show("ตรวจแล้ว พักบัญชี " + (data || 0) + " บัญชี", true); await loadSettings(); await loadReview();
+      } finally { b.disabled = false; }
+    });
+
+    (async function init() {
+      const session = await requireLogin(); if (!session) return;
+      myId = session.user.id;
+      const me = await getMyProfile(); const gate = document.getElementById("gate");
+      if (!me || me.status !== "active" || (me.role !== "admin" && me.role !== "super_admin")) { gate.textContent = "หน้านี้สำหรับ Admin เท่านั้น"; return; }
+      isSuper = me.role === "super_admin";
+      gate.hidden = true; document.getElementById("area").hidden = false;
+      await loadReview();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>

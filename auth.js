@@ -61,6 +61,32 @@ function showAccountNotice(p) {
     div.textContent = "คำขอใช้งานของคุณไม่ได้รับการอนุมัติ" +
       (p.reject_reason ? " — เหตุผล: " + p.reject_reason : "") +
       " หากต้องการสอบถาม กรุณาติดต่อ Admin";
+  } else if (p.status === "dormant") {
+    // พักบัญชีอัตโนมัติเพราะไม่ได้เข้าใช้งานเกินกำหนด (ISO/IEC 27001:2022 A.5.18) — กลับมาใช้เองได้เมื่อ: อีเมลเป็นโดเมนบริษัท และตั้งรหัสผ่านใหม่แล้ว
+    div.textContent = "บัญชีของคุณถูกพักการใช้งานเพราะไม่ได้เข้าใช้งานนานเกินกำหนด หากเป็นอีเมลของบริษัท ให้กด \"ลืมรหัสผ่าน\" ที่หน้าเข้าสู่ระบบเพื่อตั้งรหัสผ่านใหม่ แล้วกลับมากดปุ่มด้านล่าง ถ้าไม่สำเร็จ กรุณาติดต่อ Admin";
+    const msg = document.createElement("p");
+    msg.id = "reactivate-msg";
+    msg.setAttribute("role", "status");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "เปิดใช้งานบัญชีอีกครั้ง";
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const { error } = await sb.rpc("reactivate_my_account");
+      if (!error) { window.location.reload(); return; }
+      btn.disabled = false;
+      const m = error.message || "";
+      msg.textContent = /PASSWORD_NOT_CHANGED/.test(m)
+        ? "ยังไม่พบการตั้งรหัสผ่านใหม่ กรุณากด \"ลืมรหัสผ่าน\" ที่หน้าเข้าสู่ระบบ ตั้งรหัสผ่านใหม่ แล้วลองอีกครั้ง"
+        : /DOMAIN_NOT_ALLOWED/.test(m)
+          ? "อีเมลนี้ไม่อยู่ในโดเมนบริษัทที่เปิดใช้งานเองได้ กรุณาติดต่อ Admin เพื่อเปิดใช้งานให้"
+          : /NOT_DORMANT/.test(m)
+            ? "สถานะบัญชีเปลี่ยนแล้ว กรุณารีเฟรชหน้านี้"
+            : "ทำรายการไม่สำเร็จ กรุณาติดต่อ Admin";
+    });
+    div.appendChild(document.createElement("br"));
+    div.appendChild(btn);
+    div.appendChild(msg);
   } else {
     div.textContent = "บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ Admin";
   }
