@@ -1196,3 +1196,12 @@ I18N.add({
   "ระดับความรุนแรงของ Action (CAPA severity)": "Action severity (CAPA severity)",
   "+ สร้าง Action (CAPA) จากเคสนี้": "+ Create an Action (CAPA) from this case"
 });
+
+/* B24a-3 */
+I18N.add({
+  "ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis เช่น 5 Whys)": "Root cause analysis (e.g. 5 Whys)",
+  "มาตรการแก้ไข (Corrective action)": "Corrective action",
+  "มาตรการป้องกัน (Preventive action)": "Preventive action",
+  "ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis)": "Root cause analysis"
+});
+I18N.add({"ข้อความยาวเกิน 2,000 ตัวอักษรต่อช่อง":"Text exceeds 2,000 characters per field."});

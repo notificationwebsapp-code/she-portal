@@ -26,8 +26,8 @@
     .capacard.s-verified{border-left-color:#1b7a3d}
     .capacard.s-cancelled{border-left-color:#8a94a6;opacity:.8}
     .capacard.od{border-left-color:#c62828;background:#fff7f7}
-    .stbadge{display:inline-block;padding:.1rem .65rem;border-radius:999px;font-size:.82rem;font-weight:700;color:#fff;margin-right:.3rem}
-    .stbadge.open,.stbadge.in_progress{background:#1565c0}.stbadge.returned{background:#b57a00}.stbadge.closed{background:#7b3fa0}
+    .stbadge{display:inline-block;padding:.1rem .65rem;border-radius:999px;font-size:.82rem;font-weight:700;color:#fff!important;margin-right:.3rem}
+    .stbadge.open,.stbadge.in_progress{background:#0d47a1}.stbadge.returned{background:#8a5a00}.stbadge.closed{background:#7b3fa0}
     .stbadge.verified{background:#1b7a3d}.stbadge.cancelled{background:#6b7385}.stbadge.od{background:#c62828}
     #capadetail{border:1px solid var(--line);border-radius:12px;padding:1rem;margin:1.2rem 0;background:#fff}
     #capadetail h4{margin:1.2rem 0 .4rem}
@@ -41,6 +41,7 @@
     .hist{list-style:none;padding:0;margin:0}
     .hist li{border-left:3px solid var(--line);padding:.2rem .7rem;margin:.3rem 0;overflow-wrap:anywhere}
     .hist small{color:#4b5565}
+    .prewrap{white-space:pre-wrap;overflow-wrap:anywhere}
     .errtxt{color:#8a1010;font-weight:600}
     @media(max-width:640px){#capadetail dl{grid-template-columns:1fr}#capadetail dt{margin-top:.5rem}.capabar select{width:100%}}
   </style>
@@ -124,7 +125,7 @@
       [/Owner must be an active user/i, "ผู้รับผิดชอบต้องเป็นผู้ใช้ที่ใช้งานอยู่และมีสิทธิ์ใน Plant นี้"],
       [/Owner is required/i, "ต้องระบุผู้รับผิดชอบ (เลือกผู้ใช้ หรือพิมพ์ชื่อ 2–100 ตัวอักษร)"],
       [/Title must be/i, "ชื่อเรื่องต้องยาว 3–200 ตัวอักษร"],
-      [/Description too long/i, "รายละเอียดยาวเกิน 2,000 ตัวอักษร"],
+      [/Description too long|Text too long/i, "ข้อความยาวเกิน 2,000 ตัวอักษรต่อช่อง"],
       [/Reason must be|reason of at least|note of at least/i, "ต้องระบุเหตุผล/หมายเหตุอย่างน้อย 5 ตัวอักษร"],
       [/Incident not found/i, "ไม่พบรายงานอุบัติเหตุต้นทางใน Plant นี้"],
       [/audit actions are created/i, "Action จาก Audit จะสร้างจากรอบ Audit (ยังไม่เปิดใช้)"],
@@ -229,6 +230,9 @@
         ["ระดับความรุนแรง", lkName("capa_severity", a.severity_code)],
         ["สร้างโดย", a.created_by_name, 1], ["ปิดงานโดย", a.closed_by_name, 1], ["ตรวจสอบโดย", a.verified_by_name, 1]]));
       box.append(h("h4", { text: "รายละเอียด" }), h("p", { "data-no-i18n": true, text: a.description || "-" }));
+      [["ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis)", a.root_cause_text], ["มาตรการแก้ไข (Corrective action)", a.corrective_action], ["มาตรการป้องกัน (Preventive action)", a.preventive_action]].forEach(([t, v]) => {
+        box.append(h("h4", { text: t }), h("p", { class: "prewrap", "data-no-i18n": true, text: v || "-" }));
+      });
       if (a.source_type === "incident" && a.source_id) box.append(h("p", {}, h("a", { href: "records.html" }, "ดูรายงานอุบัติเหตุต้นทางในหน้า \"ดูข้อมูล\"")));
       box.append(h("h4", { text: "หลักฐานการแก้ไข" }));
       const attBox = h("div"); box.append(attBox);
@@ -305,12 +309,16 @@
       const rc = h("select", { id: "fm-rc" }); fillSel(rc, lkOpts("root_cause"), "-- ไม่ระบุ --");
       const cl = h("select", { id: "fm-cl" }); fillSel(cl, lkOpts("control_level"), "-- ไม่ระบุ --");
       const sv = h("select", { id: "fm-sv" }); fillSel(sv, lkOpts("capa_severity"), "-- ไม่ระบุ --");
+      const rct = h("textarea", { id: "fm-rct", maxlength: "2000" });
+      const cor = h("textarea", { id: "fm-cor", maxlength: "2000" });
+      const prv = h("textarea", { id: "fm-prv", maxlength: "2000" });
       const ev = h("input", { type: "number", id: "fm-ev", min: "0", max: "20", value: "1" });
       const err = h("p", { class: "errtxt", role: "alert" });
       const src = pre && pre.source_type === "incident" ? pre : null;
       if (edit) {
         title.value = a.title; desc.value = a.description || ""; ownerName.value = a.owner_user_id ? "" : (a.owner_name || "");
         ownerSel.value = a.owner_user_id || ""; dept.value = a.department_id || ""; due.value = a.due_date;
+        rct.value = a.root_cause_text || ""; cor.value = a.corrective_action || ""; prv.value = a.preventive_action || "";
         rc.value = a.root_cause_code || ""; cl.value = a.control_level_code || ""; sv.value = a.severity_code || "";
       } else if (pre && pre.plant) plant.value = pre.plant;
       const rows = [];
@@ -322,6 +330,9 @@
         h("label", { for: "fm-dept", text: "แผนก" }), dept);
       if (!edit) rows.push(h("label", { for: "fm-due", text: "กำหนดเสร็จ" }), due);
       rows.push(h("label", { for: "fm-rc", text: "สาเหตุหลัก (Root cause)" }), rc,
+        h("label", { for: "fm-rct", text: "ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis เช่น 5 Whys)" }), rct,
+        h("label", { for: "fm-cor", text: "มาตรการแก้ไข (Corrective action)" }), cor,
+        h("label", { for: "fm-prv", text: "มาตรการป้องกัน (Preventive action)" }), prv,
         h("label", { for: "fm-cl", text: "ระดับมาตรการควบคุม (Hierarchy of Controls)" }), cl,
         h("label", { for: "fm-sv", text: "ระดับความรุนแรง" }), sv);
       if (!edit) rows.push(h("label", { for: "fm-ev", text: "จำนวนหลักฐานขั้นต่ำก่อนปิดงาน" }), ev);
@@ -340,12 +351,14 @@
         if (edit) {
           res = await sb.rpc("capa_update", { p_id: a.id, p_changes: {
             title: title.value.trim(), description: desc.value, owner_user_id: ou, owner_name: ou ? null : on,
-            department_id: dept.value || null, root_cause_code: rc.value || null, control_level_code: cl.value || null, severity_code: sv.value || null } });
+            department_id: dept.value || null, root_cause_code: rc.value || null, control_level_code: cl.value || null, severity_code: sv.value || null,
+            root_cause_text: rct.value, corrective_action: cor.value, preventive_action: prv.value } });
         } else {
           res = await sb.rpc("capa_create", { p_plant: plant.value, p_title: title.value.trim(), p_due: due.value, p_owner_user: ou, p_owner_name: ou ? null : on,
             p_description: desc.value.trim() || null, p_source_type: src ? "incident" : "other", p_source_id: src ? src.source_id : null,
             p_department: dept.value || null, p_root_cause: rc.value || null, p_control_level: cl.value || null, p_severity: sv.value || null,
-            p_min_evidence: parseInt(ev.value, 10) });
+            p_min_evidence: parseInt(ev.value, 10),
+            p_root_cause_text: rct.value.trim() || null, p_corrective: cor.value.trim() || null, p_preventive: prv.value.trim() || null });
         }
         if (res.error) { err.textContent = errTh(res.error); return; }
         dlg.close(); say(edit ? "แก้ไขเรียบร้อย" : "สร้าง Action เรียบร้อย");
