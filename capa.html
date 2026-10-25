@@ -15,8 +15,10 @@
     .sumchip.bad{background:#fdecec;border-color:#c62828;color:#8a1010}
     .sumchip.wait{background:#fff8e1;border-color:#e0a100;color:#6b4200}
     #capalist{display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:.8rem}
-    .capacard{border:1px solid var(--line);border-left:6px solid #8a94a6;border-radius:10px;background:#fff;padding:.8rem 1rem;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
-    .capacard:hover,.capacard:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+    .capacard{border:1px solid var(--line);border-left:6px solid #8a94a6;border-radius:10px;background:#fff!important;padding:.8rem 1rem;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+    .capacard:hover,.capacard:focus-visible{outline:2px solid var(--brand);outline-offset:1px;background:#f4f0fb!important;color:#1b2430!important;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+    .capacard:hover.od,.capacard.od:focus-visible{background:#ffecec!important}
+    .capacard:hover .no,.capacard:hover .meta{color:#394150!important}
     .capacard{display:block}.capacard>span{display:block}.capacard>span.no{margin-bottom:.1rem}.capacard .no{font-size:.82rem;color:#4b5565;font-weight:600}
     .capacard .tt{display:block;font-weight:700;margin:.15rem 0 .35rem;overflow-wrap:anywhere}
     .capacard .meta{display:block;font-size:.88rem;color:#394150;margin-top:.15rem;overflow-wrap:anywhere}
@@ -146,6 +148,7 @@
     const hasP = (c) => MYPERMS.includes(c);       // ใช้ซ่อน/แสดงปุ่มเท่านั้น — การบังคับจริงอยู่ที่ RPC + RLS
     const lkName = (kind, code) => { if (!code) return "-"; const r = LK[kind].find((x) => x.code === code); return r ? (EN && r.name_en ? r.name_en : r.name_th) : code; };
     const fixedOpts = new Set(["f-status", "f-source"]);   // ตัวเลือกคงที่ของระบบ = แปลได้; ที่เหลือเป็นข้อมูลผู้ใช้ = ไม่แปล
+    const userLabel = (u) => (u.full_name || u.email || u.id) + (u.employee_code ? " · " + u.employee_code : "");
     const plantLabel = (p) => (p.name ? p.code + " — " + p.name : p.code);
 
     function fillSel(sel, opts, first) {
@@ -301,9 +304,10 @@
       fillSel(plant, PLANTS.map((p) => [p.id, plantLabel(p)]), PLANTS.length > 1 ? "-- เลือก --" : null);
       const title = h("input", { type: "text", id: "fm-title", maxlength: "200", required: "" });
       const desc = h("textarea", { id: "fm-desc", maxlength: "2000" });
-      const ownerSel = h("select", { id: "fm-ouser" });
-      fillSel(ownerSel, USERS.map((u) => [u.id, u.full_name || u.email || u.id]), "-- ไม่เลือก (พิมพ์ชื่อด้านล่าง) --");
-      const ownerName = h("input", { type: "text", id: "fm-oname", maxlength: "100" });
+      // ช่องเดียว: พิมพ์ค้นหาชื่อผู้ใช้ในระบบ (datalist) หรือพิมพ์ชื่อคนนอกระบบ — ไม่ต้องเลื่อนรายการยาว ๆ
+      const ownerName = h("input", { type: "text", id: "fm-oname", maxlength: "100", list: "fm-ousers", autocomplete: "off" });
+      const ownerList = h("datalist", { id: "fm-ousers" });
+      USERS.forEach((u) => ownerList.append(h("option", { value: userLabel(u) })));
       const dept = h("select", { id: "fm-dept" }); fillSel(dept, DEPTS.map((d) => [d.id, d.name]), "-- ไม่ระบุ --");
       const due = h("input", { type: "date", id: "fm-due", required: "" });
       const rc = h("select", { id: "fm-rc" }); fillSel(rc, lkOpts("root_cause"), "-- ไม่ระบุ --");
@@ -316,8 +320,9 @@
       const err = h("p", { class: "errtxt", role: "alert" });
       const src = pre && pre.source_type === "incident" ? pre : null;
       if (edit) {
-        title.value = a.title; desc.value = a.description || ""; ownerName.value = a.owner_user_id ? "" : (a.owner_name || "");
-        ownerSel.value = a.owner_user_id || ""; dept.value = a.department_id || ""; due.value = a.due_date;
+        title.value = a.title; desc.value = a.description || "";
+        const cu = a.owner_user_id && USERS.find((u) => u.id === a.owner_user_id);
+        ownerName.value = cu ? userLabel(cu) : (a.owner_name || ""); dept.value = a.department_id || ""; due.value = a.due_date;
         rct.value = a.root_cause_text || ""; cor.value = a.corrective_action || ""; prv.value = a.preventive_action || "";
         rc.value = a.root_cause_code || ""; cl.value = a.control_level_code || ""; sv.value = a.severity_code || "";
       } else if (pre && pre.plant) plant.value = pre.plant;
@@ -325,8 +330,7 @@
       if (!edit) rows.push(h("label", { for: "fm-plant", text: "Plant" }), plant);
       rows.push(h("label", { for: "fm-title", text: "ชื่อเรื่อง Action (3–200 ตัวอักษร)" }), title,
         h("label", { for: "fm-desc", text: "รายละเอียดมาตรการ" }), desc,
-        h("label", { for: "fm-ouser", text: "ผู้รับผิดชอบ (เลือกจากผู้ใช้)" }), ownerSel,
-        h("label", { for: "fm-oname", text: "หรือพิมพ์ชื่อผู้รับผิดชอบ (กรณีไม่มีบัญชีผู้ใช้)" }), ownerName,
+        h("label", { for: "fm-oname", text: "ผู้รับผิดชอบ (พิมพ์ค้นหาชื่อผู้ใช้ในระบบ หรือพิมพ์ชื่อคนนอกระบบ)" }), ownerName, ownerList,
         h("label", { for: "fm-dept", text: "แผนก" }), dept);
       if (!edit) rows.push(h("label", { for: "fm-due", text: "กำหนดเสร็จ" }), due);
       rows.push(h("label", { for: "fm-rc", text: "สาเหตุหลัก (Root cause)" }), rc,
@@ -342,7 +346,11 @@
         h("div", { class: "actrow" }, h("button", { type: "submit" }, "บันทึก"), h("button", { type: "button", class: "secondary", onclick: () => dlg.close() }, "ยกเลิก")));
       form.addEventListener("submit", async (ev2) => {
         ev2.preventDefault(); err.textContent = "";
-        const ou = ownerSel.value || null, on = ownerName.value.trim() || null;
+        const typed = ownerName.value.trim();
+        const hit = USERS.find((u) => userLabel(u) === typed);
+        // ถ้าไม่ได้แก้ชื่อเดิมของ Action ที่มีผู้รับผิดชอบเป็นผู้ใช้ ให้คงผู้ใช้คนเดิมไว้ (กรณีผู้ใช้ทั่วไปอ่านรายชื่อไม่ได้)
+        const keep = edit && a.owner_user_id && typed === a.owner_name;
+        const ou = hit ? hit.id : keep ? a.owner_user_id : null, on = ou ? null : (typed || null);
         if (!edit && !plant.value) { err.textContent = "กรุณาเลือก Plant"; return; }
         if (title.value.trim().length < 3) { err.textContent = "ชื่อเรื่องต้องยาวอย่างน้อย 3 ตัวอักษร"; return; }
         if (!ou && !on) { err.textContent = "กรุณาระบุผู้รับผิดชอบ"; return; }
@@ -376,7 +384,7 @@
         sb.from("plants").select("id, code, name").eq("active", true).order("code"),
         sb.from("departments").select("id, name").eq("active", true).order("name"),
         sb.from("lookup_values").select("kind, code, name_th, name_en, sort_order").in("kind", ["root_cause", "control_level", "capa_severity"]).eq("active", true).order("sort_order"),
-        sb.from("profiles").select("id, full_name, email").eq("status", "active").order("full_name")]);
+        sb.from("profiles").select("id, full_name, email, employee_code").eq("status", "active").order("full_name")]);
       PLANTS = pl.data || []; DEPTS = dp.data || [];
       (lk.data || []).forEach((r) => { if (LK[r.kind]) LK[r.kind].push(r); });
       USERS = (us.data || []).length > 1 ? us.data : [];      // RLS ของ profiles: ผู้ใช้ทั่วไปเห็นเฉพาะตัวเอง → ซ่อนตัวเลือก ให้พิมพ์ชื่อแทน
