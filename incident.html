@@ -129,6 +129,11 @@
         <p class="helper" style="margin-top:-.5rem">ระบบจำชื่อและอีเมลที่เคยกรอกไว้ในสมุดรายชื่อส่วนตัวของคุณ (เห็นเฉพาะคุณ) คลิกช่องเพื่อเลือกจากรายการ</p>
       </section>
 
+      <section class="stepcard" id="att-card" hidden>
+        <h3><span class="no">4</span> ไฟล์แนบ (รูปที่เกิดเหตุ / หลักฐาน) — ไม่บังคับ</h3>
+        <div id="att-queue"></div>
+      </section>
+
     </div>
     <aside class="fl-side" aria-label="สถานะและการส่งรายงาน">
       <section class="sidecard">
@@ -156,6 +161,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="auth.js"></script>
+  <script src="attach.js"></script>
   <script src="draft.js"></script>
   <script>requireLogin();</script>
   <script>
@@ -451,6 +457,9 @@
       return "บันทึกไม่สำเร็จ: " + error.message;
     }
 
+    // B10b-2: ไฟล์แนบ — เลือกไว้ก่อน แล้วอัปโหลดหลังส่งรายงานสำเร็จ (ซ่อนทั้งส่วนถ้าไม่มีสิทธิ์ attachment.upload)
+    const attQ = Attach.queue($("att-queue"), { entityType: "incident", onReady: () => { $("att-card").hidden = false; } });
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       msg.hidden = true;
@@ -495,6 +504,12 @@
       if (row.responsible_name && row.responsible_email) {
         const { error: ce } = await sb.from("contacts").insert({ full_name: row.responsible_name, email: row.responsible_email });
         if (!ce) { contacts.push({ full_name: row.responsible_name, email: row.responsible_email }); }
+      }
+      if (attQ.count()) {
+        show("กำลังอัปโหลดไฟล์แนบ…", "ok");
+        const ar = await attQ.flush(inc.id);
+        if (ar.failed) warn += " (แนบไฟล์ไม่สำเร็จ " + ar.failed + " ไฟล์ — เพิ่มใหม่ได้ที่หน้า \"ดูข้อมูล\" > รายงานนี้)";
+        attQ.clear();
       }
       await SheDraft.clear();
       lsSet("she_last_dept", val("department"));

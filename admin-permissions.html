@@ -69,7 +69,7 @@
       ["employee", "employee (พนักงาน)"], ["contractor", "contractor (ผู้รับเหมา)"], ["supplier", "supplier (ซัพพลายเออร์)"],
       ["plant_director", "plant_director"], ["director", "director"], ["md", "md"], ["ceo", "ceo"]
     ];
-    const CAT_TH = { incident: "รายงานอุบัติเหตุ", export: "การส่งออกข้อมูล (Export)" };
+    const CAT_TH = { incident: "รายงานอุบัติเหตุ", export: "การส่งออกข้อมูล (Export)", dashboard: "Executive Dashboard", attachment: "ไฟล์แนบ" };
     const msgEl = document.getElementById("msg");
     function show(t, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t; msgEl.scrollIntoView({ block: "nearest" }); }
     function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }

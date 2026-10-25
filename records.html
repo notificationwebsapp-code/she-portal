@@ -193,6 +193,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="auth.js"></script>
+  <script src="attach.js"></script>
   <script src="shell-v4.js"></script>
   <script>
     requireLogin();
@@ -1086,6 +1087,11 @@
       const cg = groupOf("การจัดประเภทโดย SHE", cls);
       if (cls.every((k) => inc[k] === null || inc[k] === undefined)) cg.append(h("small", { text: "SHE ยังไม่ได้จัดประเภท (ปกติจะทำในขั้น \"SHE ตรวจสอบ\")" }));
       box.append(cg);
+
+      // B10b-2: ไฟล์แนบ (สิทธิ์จริงตัดสินที่ฐานข้อมูล — หน้านี้ซ่อน/แสดงปุ่มตามสิทธิ์เท่านั้น)
+      box.append(h("h4", { text: "ไฟล์แนบ (รูปที่เกิดเหตุ / หลักฐาน)" }));
+      const attBox = h("div"); box.append(attBox);
+      Attach.panel(attBox, { entityType: "incident", entityId: inc.id, canUpload: !deleted && (reporter || sheLike), closed: closed && !deleted });
 
       // คำขอแก้ไข
       if (state.reqs.length) {
