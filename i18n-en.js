@@ -1320,6 +1320,8 @@ I18N.add({
   "เปิดใช้งานบัญชีอีกครั้ง": "Reactivate my account",
   "ยังไม่พบการตั้งรหัสผ่านใหม่ กรุณากด \"ลืมรหัสผ่าน\" ที่หน้าเข้าสู่ระบบ ตั้งรหัสผ่านใหม่ แล้วลองอีกครั้ง": "No new password found yet. Please click \"Forgot password\" on the sign-in page, set a new password, then try again.",
   "อีเมลนี้ไม่อยู่ในโดเมนบริษัทที่เปิดใช้งานเองได้ กรุณาติดต่อ Admin เพื่อเปิดใช้งานให้": "This email is not in a company domain allowed to reactivate on its own. Please contact an Admin to reactivate it.",
+  "สมัครล่าสุด": "Newest first",
+  "แสดง {0} จาก {1} บัญชี": "Showing {0} of {1} accounts",
   "สถานะบัญชีเปลี่ยนแล้ว กรุณารีเฟรชหน้านี้": "The account status has changed. Please refresh this page.",
   "ทำรายการไม่สำเร็จ กรุณาติดต่อ Admin": "Action failed. Please contact an Admin."
 });
