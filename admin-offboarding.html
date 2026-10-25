@@ -382,7 +382,7 @@
         if (e.event === "sweep_run" && d.dormant != null) txt = "พักบัญชี " + d.dormant + " บัญชี";
         if (!txt && e.event === "settings_changed") txt = (d.days != null ? d.days + " วัน" : "") + (d.enabled === false ? " (ปิดใช้งาน)" : "") + (Array.isArray(d.domains) ? " | domains: " + d.domains.join(", ") : "");
         tr.appendChild(nd(el("td", null, txt)));
-        tr.appendChild(nd(el("td", null, e.actor_name || "ระบบอัตโนมัติ")));
+        tr.appendChild(nd(el("td", null, e.actor_name || e.actor_email || "ระบบอัตโนมัติ")));
         tb.appendChild(tr);
       });
     }
