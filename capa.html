@@ -17,7 +17,7 @@
     #capalist{display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:.8rem}
     .capacard{border:1px solid var(--line);border-left:6px solid #8a94a6;border-radius:10px;background:#fff;padding:.8rem 1rem;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
     .capacard:hover,.capacard:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
-    .capacard .no{font-size:.82rem;color:#4b5565;font-weight:600}
+    .capacard{display:block}.capacard>span{display:block}.capacard>span.no{margin-bottom:.1rem}.capacard .no{font-size:.82rem;color:#4b5565;font-weight:600}
     .capacard .tt{display:block;font-weight:700;margin:.15rem 0 .35rem;overflow-wrap:anywhere}
     .capacard .meta{display:block;font-size:.88rem;color:#394150;margin-top:.15rem;overflow-wrap:anywhere}
     .capacard.s-open,.capacard.s-in_progress{border-left-color:#1565c0}
@@ -171,10 +171,10 @@
       const box = $("capalist"); box.replaceChildren();
       $("emptymsg").hidden = ROWS.length > 0;
       const od = ROWS.filter((r) => r.is_overdue).length, wt = ROWS.filter((r) => r.status === "closed").length;
-      const sr = $("sumrow"); sr.replaceChildren(
+      const sr = $("sumrow"); sr.replaceChildren(...[
         h("span", { class: "sumchip", text: "ทั้งหมด " + ROWS.length + " รายการ" }),
         od ? h("span", { class: "sumchip bad", text: "เกินกำหนด " + od + " รายการ" }) : null,
-        wt ? h("span", { class: "sumchip wait", text: "รอตรวจสอบ " + wt + " รายการ" }) : null);
+        wt ? h("span", { class: "sumchip wait", text: "รอตรวจสอบ " + wt + " รายการ" }) : null].filter(Boolean));   // replaceChildren แปลง null เป็นข้อความ "null" จึงต้องกรองออกก่อน
       ROWS.forEach((r) => {
         const card = h("button", { type: "button", class: "capacard s-" + r.status + (r.is_overdue ? " od" : ""), onclick: () => openDetail(r.id) },
           h("span", { class: "no", "data-no-i18n": true, text: r.action_no + " · " + r.plant_code }),
