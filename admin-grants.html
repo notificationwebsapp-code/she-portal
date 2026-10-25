@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>สิทธิ์รายบุคคล | SHE Portal</title>
+  <style>
+    .gform{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.9rem 1.2rem;align-items:end;background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.2rem;margin:1rem 0 1.4rem}
+    .gform label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.95rem}
+    .gform select,.gform input{min-height:48px;font:inherit;font-weight:400}
+    .gform .wide{grid-column:1/-1}
+    .gform .hint{color:var(--muted);font-size:.85rem;font-weight:400}
+    table.gt{min-width:860px}
+    table.gt td .sub{display:block;color:var(--muted);font-size:.85rem}
+    .tag{display:inline-block;border-radius:999px;padding:.1rem .6rem;font-size:.8rem;font-weight:700}
+    .tag.on{background:#e3f6e8;color:#14532d}.tag.off{background:#eee;color:#555}
+    .revbox{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem;align-items:center}
+    .revbox input{min-height:44px;min-width:14rem;flex:1}
+    .gbtn{min-height:44px}
+    .toolbar{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin:.5rem 0}
+    .toolbar label{display:inline-flex;gap:.5rem;align-items:center;min-height:44px}
+  </style>
+  <script src="i18n.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- ซ่อนหน้าจอจนกว่าจะยืนยันว่าเป็น Admin (สิทธิ์จริงบังคับที่ RPC grant_user_permission / revoke_user_permission ซึ่งอนุญาตเฉพาะ Admin / Super admin) -->
+    <div id="area" hidden>
+      <h2>สิทธิ์รายบุคคล</h2>
+      <p>ให้สิทธิ์เพิ่มแก่ผู้ใช้เป็นรายบุคคล เช่น แต่งตั้ง SHE ให้เป็นผู้ยืนยันผล (SHE Manager) สิทธิ์รายบุคคลเพิ่มสิทธิ์ได้อย่างเดียว ไม่ลดสิทธิ์ที่ Role มีอยู่ และยังจำกัดตาม Plant ที่ผู้ใช้เข้าถึงเสมอ ทุกการให้และถอนสิทธิ์ต้องระบุเหตุผลและถูกบันทึกในประวัติ (Audit log) ให้สิทธิ์ตัวเองไม่ได้</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <form id="gform" class="gform" novalidate>
+        <label>ผู้ใช้<select id="g-user" required></select></label>
+        <label>สิทธิ์<select id="g-perm" required></select></label>
+        <label>Plant<select id="g-plant"></select><span class="hint" id="g-plant-hint"></span></label>
+        <label class="wide">เหตุผล / ที่มาของการอนุมัติ (5–200 ตัวอักษร)<input id="g-reason" type="text" maxlength="200" autocomplete="off" required></label>
+        <div class="wide actions"><button type="submit" id="g-save" class="btn-ok gbtn">ให้สิทธิ์</button></div>
+      </form>
+
+      <h3>รายการสิทธิ์รายบุคคล</h3>
+      <div class="toolbar"><label><input type="checkbox" id="showall"> แสดงรายการที่ถอนแล้วด้วย</label></div>
+      <div class="tablewrap"><table class="gt" id="gt">
+        <thead><tr><th>ผู้ใช้</th><th>สิทธิ์</th><th>Plant</th><th>เหตุผล</th><th>ผู้ให้สิทธิ์ / เวลา</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p id="empty" hidden>ยังไม่มีสิทธิ์รายบุคคล</p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* หน้านี้เป็นเพียงหน้าจอ: ความปลอดภัยจริงอยู่ที่ DB
+       - ให้/ถอนสิทธิ์ผ่าน RPC เท่านั้น (ตรวจ my_role()='admin', ห้ามให้ตัวเอง, ตรวจผู้รับ/Plant/เหตุผล)
+       - ตารางเขียนตรงไม่ได้ (ไม่มี GRANT เขียน) */
+    const msgEl = document.getElementById("msg");
+    function show(t, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t; msgEl.scrollIntoView({ block: "nearest" }); }
+    function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+    function fmt(ts) { try { return new Date(ts).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }); } catch (e) { return String(ts || ""); } }
+    function errText(e) {
+      const c = e && e.code, m = (e && e.message) || "";
+      if (c === "42501") return /yourself/i.test(m) ? "ให้สิทธิ์ตัวเองไม่ได้" : "คุณไม่มีสิทธิ์ทำรายการนี้ (เฉพาะ Admin / Super admin)";
+      if (c === "23505") return "ผู้ใช้นี้ได้รับสิทธิ์นี้ในขอบเขตเดียวกันอยู่แล้ว";
+      if (c === "P0002") return "ไม่พบข้อมูล (อาจถูกลบหรือเปลี่ยนไปแล้ว) กรุณารีเฟรชหน้า";
+      if (c === "22023") {
+        if (/not active/i.test(m)) return "ผู้ใช้นี้ยังไม่เปิดใช้งาน จึงให้สิทธิ์ไม่ได้";
+        if (/already has every/i.test(m)) return "Admin มีทุกสิทธิ์อยู่แล้ว ไม่ต้องให้เพิ่ม";
+        if (/not Plant-scoped/i.test(m)) return "สิทธิ์นี้ไม่ผูกกับ Plant กรุณาเลือก \"ทุก Plant\"";
+        if (/access to this Plant/i.test(m)) return "ผู้ใช้นี้ไม่ได้เข้าถึง Plant ที่เลือก";
+        if (/Reason/i.test(m)) return "กรุณาระบุเหตุผล 5–200 ตัวอักษร";
+        if (/Already revoked/i.test(m)) return "รายการนี้ถูกถอนไปแล้ว";
+        return "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง";
+      }
+      return "ทำรายการไม่สำเร็จ: " + m;
+    }
+
+    let users = [], perms = [], plants = [], permByCode = {};
+
+    function fillSelects() {
+      const su = document.getElementById("g-user"); su.replaceChildren();
+      su.appendChild(new Option("— เลือกผู้ใช้ —", ""));
+      users.forEach((u) => {
+        const o = new Option((u.full_name || "(ไม่มีชื่อ)") + (u.employee_code ? " (" + u.employee_code + ")" : "") + " — " + u.role, u.id);
+        o.setAttribute("data-no-i18n", ""); su.appendChild(o);
+      });
+      const sp = document.getElementById("g-perm"); sp.replaceChildren();
+      sp.appendChild(new Option("— เลือกสิทธิ์ —", ""));
+      perms.forEach((p) => sp.appendChild(new Option(p.label_th + (p.she_default === false ? " (SHE ไม่ได้อัตโนมัติ)" : ""), p.code)));
+      const pl = document.getElementById("g-plant"); pl.replaceChildren();
+      pl.appendChild(new Option("ทุก Plant ที่ผู้ใช้เข้าถึง", ""));
+      plants.forEach((p) => { const o = new Option(p.code + " — " + p.name, p.id); o.setAttribute("data-no-i18n", ""); pl.appendChild(o); });
+      syncPlant();
+    }
+    function syncPlant() {
+      const p = permByCode[document.getElementById("g-perm").value];
+      const sel = document.getElementById("g-plant"), hint = document.getElementById("g-plant-hint");
+      const scoped = !p || p.plant_scoped;
+      sel.disabled = !scoped; if (!scoped) sel.value = "";
+      hint.textContent = scoped ? "ถ้าเลือก Plant สิทธิ์จะใช้ได้เฉพาะ Plant นั้น" : "สิทธิ์นี้ไม่ผูกกับ Plant";
+    }
+
+    async function loadList() {
+      const all = document.getElementById("showall").checked;
+      const { data, error } = await sb.rpc("list_user_permission_grants", { only_active: !all });
+      if (error) { show("โหลดรายการไม่สำเร็จ: " + errText(error), false); return; }
+      const tb = document.querySelector("#gt tbody"); tb.replaceChildren();
+      document.getElementById("empty").hidden = (data || []).length > 0;
+      (data || []).forEach((g) => {
+        const tr = el("tr");
+        const tdU = el("td"); const nm = el("span", null, g.full_name || "(ไม่มีชื่อ)"); nm.setAttribute("data-no-i18n", "");
+        tdU.appendChild(nm);
+        const sub = el("span", "sub", (g.employee_code ? g.employee_code + " · " : "") + g.user_role); sub.setAttribute("data-no-i18n", ""); tdU.appendChild(sub);
+        tr.appendChild(tdU);
+        const p = permByCode[g.permission_code];
+        tr.appendChild(el("td", null, p ? p.label_th : g.permission_code));
+        const tdP = el("td"); if (g.plant_code) { tdP.textContent = g.plant_code; tdP.setAttribute("data-no-i18n", ""); } else tdP.textContent = "ทุก Plant ตามสิทธิ์เดิม";
+        tr.appendChild(tdP);
+        const tdR = el("td"); const rs = el("span", null, g.reason); rs.setAttribute("data-no-i18n", ""); tdR.appendChild(rs);
+        if (!g.active && g.revoke_reason) { tdR.appendChild(el("span", "sub", "เหตุผลที่ถอน:")); const rr = el("span", "sub", g.revoke_reason); rr.setAttribute("data-no-i18n", ""); tdR.appendChild(rr); }
+        tr.appendChild(tdR);
+        const tdG = el("td"); const gb = el("span", null, g.granted_by_name || "-"); gb.setAttribute("data-no-i18n", ""); tdG.appendChild(gb);
+        const gt = el("span", "sub", fmt(g.granted_at)); gt.setAttribute("data-no-i18n", ""); tdG.appendChild(gt);
+        tr.appendChild(tdG);
+        const tdS = el("td"); tdS.appendChild(el("span", "tag " + (g.active ? "on" : "off"), g.active ? "ใช้งานอยู่" : "ถอนแล้ว"));
+        if (!g.active && g.revoked_at) { const rt = el("span", "sub", fmt(g.revoked_at)); rt.setAttribute("data-no-i18n", ""); tdS.appendChild(rt); }
+        tr.appendChild(tdS);
+        const tdA = el("td");
+        if (g.active) {
+          const b = el("button", "secondary gbtn", "ถอนสิทธิ์"); b.type = "button";
+          b.addEventListener("click", () => openRevoke(tdA, b, g));
+          tdA.appendChild(b);
+        }
+        tr.appendChild(tdA); tb.appendChild(tr);
+      });
+    }
+
+    function openRevoke(cell, btn, g) {
+      btn.hidden = true;
+      const box = el("div", "revbox");
+      const inp = el("input"); inp.type = "text"; inp.maxLength = 200; inp.placeholder = "เหตุผลที่ถอน (อย่างน้อย 5 ตัวอักษร)";
+      inp.setAttribute("aria-label", "เหตุผลที่ถอน");
+      const ok = el("button", "btn-ok gbtn", "ยืนยันถอน"); ok.type = "button";
+      const no = el("button", "secondary gbtn", "ยกเลิก"); no.type = "button";
+      no.addEventListener("click", () => { box.remove(); btn.hidden = false; });
+      ok.addEventListener("click", async () => {
+        const r = inp.value.trim();
+        if (r.length < 5) { show("กรุณาระบุเหตุผลที่ถอนอย่างน้อย 5 ตัวอักษร", false); inp.focus(); return; }
+        ok.disabled = no.disabled = true;
+        const { error } = await sb.rpc("revoke_user_permission", { grant_id: g.id, reason: r });
+        if (error) { ok.disabled = no.disabled = false; show(errText(error), false); return; }
+        show("ถอนสิทธิ์เรียบร้อย", true); await loadList();
+      });
+      box.append(inp, ok, no); cell.appendChild(box); inp.focus();
+    }
+
+    async function loadAll() {
+      let pq = await sb.from("permissions").select("code, label_th, plant_scoped, sensitive, she_default, sort_order").order("sort_order");
+      if (pq.error) pq = await sb.from("permissions").select("code, label_th, plant_scoped, sensitive, sort_order").order("sort_order");
+      const [uq, plq] = await Promise.all([
+        sb.from("profiles").select("id, full_name, employee_code, role, status").eq("status", "active").not("role", "in", "(admin,super_admin)").order("full_name"),
+        sb.from("plants").select("id, code, name").eq("active", true).order("code")
+      ]);
+      if (pq.error || uq.error || plq.error) { show("โหลดข้อมูลไม่สำเร็จ: " + (pq.error || uq.error || plq.error).message, false); return; }
+      perms = pq.data || []; users = uq.data || []; plants = plq.data || [];
+      permByCode = {}; perms.forEach((p) => { permByCode[p.code] = p; });
+      fillSelects(); await loadList();
+    }
+
+    document.getElementById("g-perm").addEventListener("change", syncPlant);
+    document.getElementById("showall").addEventListener("change", loadList);
+    document.getElementById("gform").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const user = document.getElementById("g-user").value, perm = document.getElementById("g-perm").value;
+      const plant = document.getElementById("g-plant").value || null, reason = document.getElementById("g-reason").value.trim();
+      if (!user) { show("กรุณาเลือกผู้ใช้", false); return; }
+      if (!perm) { show("กรุณาเลือกสิทธิ์", false); return; }
+      if (reason.length < 5) { show("กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร", false); return; }
+      const p = permByCode[perm];
+      if (p && p.sensitive && !confirm("สิทธิ์นี้อาจเกี่ยวข้องกับข้อมูลระบุตัวตน (PII) ต้องได้รับอนุมัติจาก IT/Security และ Legal/DPO ก่อนใช้กับข้อมูลจริง ต้องการดำเนินการต่อหรือไม่")) return;
+      const btn = document.getElementById("g-save"); btn.disabled = true;
+      try {
+        const { error } = await sb.rpc("grant_user_permission", { target: user, perm_code: perm, plant: plant, reason: reason });
+        if (error) { show(errText(error), false); return; }
+        show("ให้สิทธิ์เรียบร้อย", true);
+        document.getElementById("g-reason").value = "";
+        await loadList();
+      } finally { btn.disabled = false; }
+    });
+
+    (async function init() {
+      const session = await requireLogin(); if (!session) return;
+      const me = await getMyProfile(); const gate = document.getElementById("gate");
+      if (!me || me.status !== "active" || (me.role !== "admin" && me.role !== "super_admin")) { gate.textContent = "หน้านี้สำหรับ Admin เท่านั้น"; return; }
+      gate.hidden = true; document.getElementById("area").hidden = false;
+      await loadAll();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>

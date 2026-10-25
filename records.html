@@ -1092,6 +1092,9 @@
       box.append(h("h4", { text: "ไฟล์แนบ (รูปที่เกิดเหตุ / หลักฐาน)" }));
       const attBox = h("div"); box.append(attBox);
       Attach.panel(attBox, { entityType: "incident", entityId: inc.id, canUpload: !deleted && (reporter || sheLike), closed: closed && !deleted });
+      if (!deleted && (sheLike || hasP("capa.create"))) {
+        box.append(h("p", {}, h("a", { href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") }, "+ สร้าง Action (CAPA) จากเคสนี้")));
+      }
 
       // คำขอแก้ไข
       if (state.reqs.length) {

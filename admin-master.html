@@ -205,7 +205,7 @@
       body_part: "ตำแหน่งร่างกาย (Body part)",
       root_cause: "สาเหตุหลัก (Root cause)",
       high_hazard: "งานอันตรายสูง (High hazard task)",
-      system_failure: "ความล้มเหลวของระบบ/โปรแกรม (System/Program failure)"
+      control_level: "ระดับมาตรการควบคุม (Hierarchy of Controls)", capa_severity: "ระดับความรุนแรงของ Action (CAPA severity)", system_failure: "ความล้มเหลวของระบบ/โปรแกรม (System/Program failure)"
     };
     const lkSel = document.getElementById("lk-kind");
     Object.keys(LK_KINDS).forEach((k) => { const o = document.createElement("option"); o.value = k; o.textContent = LK_KINDS[k]; lkSel.appendChild(o); });

@@ -47,7 +47,7 @@
       <p id="intro">กำหนดว่าแต่ละ Role ทำอะไรกับรายงานอุบัติเหตุและการส่งออกข้อมูลได้บ้าง Admin และ SHE ทำได้ทุกอย่างเสมอ (SHE เฉพาะ Plant ของตน) การเปลี่ยนสิทธิ์มีผลทันที และสิทธิ์แบบ Plant-scoped ยังจำกัดตาม Plant ที่ผู้ใช้เข้าถึงเสมอ</p>
       <div id="msg" class="msg" hidden role="status"></div>
       <div class="legend">
-        <span>✓ = ได้รับสิทธิ์</span><span>▢ = ไม่ได้รับสิทธิ์</span><span>● = ล็อกถาวร (ปรับไม่ได้)</span>
+        <span>✓ = ได้รับสิทธิ์</span><span>▢ = ไม่ได้รับสิทธิ์</span><span>● = ล็อกถาวร (ปรับไม่ได้)</span><span>◐ = ไม่ได้อัตโนมัติ ต้องให้เป็นรายบุคคลที่หน้า "สิทธิ์รายบุคคล"</span>
       </div>
       <div class="tablewrap pm-wrap"><table class="pm" id="pm"></table></div>
     </div>
@@ -69,7 +69,7 @@
       ["employee", "employee (พนักงาน)"], ["contractor", "contractor (ผู้รับเหมา)"], ["supplier", "supplier (ซัพพลายเออร์)"],
       ["plant_director", "plant_director"], ["director", "director"], ["md", "md"], ["ceo", "ceo"]
     ];
-    const CAT_TH = { incident: "รายงานอุบัติเหตุ", export: "การส่งออกข้อมูล (Export)", dashboard: "Executive Dashboard", attachment: "ไฟล์แนบ" };
+    const CAT_TH = { incident: "รายงานอุบัติเหตุ", export: "การส่งออกข้อมูล (Export)", dashboard: "Executive Dashboard", attachment: "ไฟล์แนบ", capa: "Action / CAPA", audit: "Audit (ตรวจประเมิน)" };
     const msgEl = document.getElementById("msg");
     function show(t, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t; msgEl.scrollIntoView({ block: "nearest" }); }
     function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -103,7 +103,7 @@
         if (p.plant_scoped) first.appendChild(el("span", "pdesc", "จำกัดตาม Plant ที่ผู้ใช้เข้าถึง"));
         first.appendChild(el("span", "pdesc", p.category === "export" ? "ควบคุมที่หน้าจอ (ข้อมูลจริงยังถูกจำกัดด้วย RLS ตาม Plant/Role)" : "บังคับที่ฐานข้อมูล (RPC/RLS)"));
         tr.appendChild(first);
-        tr.appendChild(el("td", "cell fixed", p.code === "incident.reopen" ? "✕ ไม่ได้ (Admin เท่านั้น)" : "● ได้เสมอ"));   // กฎเดิม: SHE เปิดเคสใหม่ไม่ได้
+        tr.appendChild(el("td", "cell fixed", p.code === "incident.reopen" ? "✕ ไม่ได้ (Admin เท่านั้น)" : (p.she_default === false ? "◐ ให้รายบุคคลเท่านั้น" : "● ได้เสมอ")));   // กฎเดิม: SHE เปิดเคสใหม่ไม่ได้; she_default=false: ต้องให้รายบุคคล (หน้า "สิทธิ์รายบุคคล")
         tr.appendChild(el("td", "cell fixed", "● ได้เสมอ"));
         CFG_ROLES.forEach((r) => {
           const td = el("td", "cell"), lab = el("label"), cb = el("input"); cb.type = "checkbox";
@@ -131,9 +131,13 @@
 
     async function load() {
       const [pp, rp] = await Promise.all([
-        sb.from("permissions").select("code, label_th, description_th, category, plant_scoped, sensitive, sort_order").order("sort_order"),
+        sb.from("permissions").select("code, label_th, description_th, category, plant_scoped, sensitive, she_default, sort_order").order("sort_order"),
         sb.from("role_permissions").select("role, permission_code, granted")
       ]);
+      if (pp.error && /she_default/.test(pp.error.message || "")) {   // ยังไม่ได้รัน migration B24a-0: ใช้ค่าเดิม
+        const pf = await sb.from("permissions").select("code, label_th, description_th, category, plant_scoped, sensitive, sort_order").order("sort_order");
+        pp.data = pf.data; pp.error = pf.error;
+      }
       if (pp.error || rp.error) { show("โหลดข้อมูลไม่สำเร็จ: " + (pp.error || rp.error).message, false); return; }
       perms = pp.data || []; grants = {};
       (rp.data || []).forEach((r) => { grants[r.role + "|" + r.permission_code] = !!r.granted; });
