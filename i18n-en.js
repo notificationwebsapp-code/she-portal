@@ -1415,4 +1415,5 @@ I18N.add({
  "ข้อความที่ผู้รับเห็นในกระดิ่ง เช่น \"เกินกำหนดแล้ว: ชื่อ Action (ครบกำหนด 29 ต.ค.)\" กดแล้วเปิด Action นั้นได้ทันที": "What the recipient sees in the bell, e.g. \"Overdue: Action title (due 29 Oct)\" — click to open that Action",
  "พิมพ์ค้นหา Plant (รหัสหรือชื่อ)": "Type to search Plant (code or name)",
  "ค้นหา Plant": "Search Plant",
+ "ไม่พบ Plant ที่ตรงกับคำค้น": "No Plant matches your search",
 });

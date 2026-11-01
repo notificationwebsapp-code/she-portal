@@ -207,4 +207,4 @@
   var h=document.querySelector("header");if(h)h.appendChild(tools);relocate();
 })();
 /* ช่องพิมพ์ค้นหา Plant ในทุก dropdown Plant (plant-search.js) */
-(function(){try{var s=document.createElement("script");s.src="plant-search.js?v=1";s.defer=true;document.head.appendChild(s)}catch(e){}})();
+(function(){try{var s=document.createElement("script");s.src="plant-search.js?v=2";s.defer=true;document.head.appendChild(s)}catch(e){}})();
