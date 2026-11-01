@@ -23,17 +23,46 @@
   var bellBox;
   var bellBtn=make("bell","การแจ้งเตือน","",function(p){p.appendChild(el("strong",null,"การแจ้งเตือน"));bellBox=el("div","bellbox");bellBox.appendChild(el("p","tpnote","กำลังโหลด…"));p.appendChild(bellBox);p.appendChild(el("p","tpnote small","นับจากข้อมูลที่คุณมีสิทธิ์เห็นเท่านั้น (ระบบแจ้งเตือนทางอีเมล/มือถืออยู่ระหว่างพัฒนา)"))});
   function bellItem(n,t,href){var a=el("a","bellitem");a.href=href;var b=el("b",null,String(n));a.appendChild(b);a.appendChild(el("span",null,t));return a}
-  (async function(){try{
+  /* ข้อความแจ้งเตือน CAPA: ส่วนคงที่แปลได้ (i18n) ส่วนที่ผู้ใช้พิมพ์/ชื่อเรื่องใส่ด้วย textContent และกันไม่ให้แปล (OWASP A03) */
+  var CST={open:"เปิดใหม่",in_progress:"กำลังดำเนินการ",returned:"ส่งกลับให้แก้",closed:"รอตรวจสอบ",verified:"ตรวจสอบแล้ว",cancelled:"ยกเลิก"};
+  var CEV={capa_assigned:"มอบหมาย Action ให้คุณ",capa_due_soon:"ใกล้ครบกำหนด",capa_overdue:"เกินกำหนดแล้ว",capa_status:"เปลี่ยนสถานะ",capa_due_changed:"เลื่อนกำหนดเสร็จ",capa_comment:"ความคิดเห็นใหม่"};
+  function noData(t){var s=el("span",null,t);s.setAttribute("data-no-i18n","true");return s}
+  function notifItem(n,onRead){
+    var a=el("a","bellitem");a.href="capa.html?id="+encodeURIComponent(n.entity_id);a.style.alignItems="flex-start";
+    if(!n.read_at)a.style.fontWeight="700";
+    var col=el("span");col.style.display="block";
+    var head=el("span",null,CEV[n.event_type]||"แจ้งเตือน");col.appendChild(head);
+    if(n.event_type==="capa_status"&&n.code){col.appendChild(document.createTextNode(" : "));col.appendChild(el("span",null,CST[n.code]||n.code))}
+    else if(n.code&&(n.event_type==="capa_due_changed"||n.event_type==="capa_due_soon"||n.event_type==="capa_overdue")){col.appendChild(noData(" : "+n.code))}
+    var t=noData(n.title);t.style.display="block";t.style.fontWeight="400";col.appendChild(t);
+    if(n.note){var nt=noData(n.note);nt.style.display="block";nt.style.fontWeight="400";nt.style.fontSize=".85rem";col.appendChild(nt)}
+    var meta=noData((n.actor_name?n.actor_name+" · ":"")+new Date(n.created_at).toLocaleString((window.I18N&&I18N.lang==="en")?"en-GB":"th-TH"));meta.style.display="block";meta.style.fontWeight="400";meta.style.fontSize=".78rem";col.appendChild(meta);
+    a.appendChild(col);
+    a.addEventListener("click",function(){if(!n.read_at){try{sb.rpc("notification_mark_read",{p_id:n.id})}catch(e){}}});
+    return a}
+  async function loadBell(){try{
     if(typeof sb==="undefined"||!bellBox)return;var ss=await sb.auth.getSession();if(!ss.data.session){bellBox.replaceChildren(el("p","tpnote","เข้าสู่ระบบเพื่อดูการแจ้งเตือน"));return}
     var r=await sb.from("incident_edit_requests").select("id",{count:"exact",head:true}).eq("status","pending");
     var o=await sb.from("incident_reports").select("id",{count:"exact",head:true}).neq("phase","closed").is("deleted_at",null);
     if(r.error||o.error){bellBox.replaceChildren(el("p","tpnote","โหลดการแจ้งเตือนไม่สำเร็จ"));return}
+    /* แจ้งเตือน Action (CAPA): ถ้ายังไม่ได้รัน migration B24a-4 จะข้ามส่วนนี้ ไม่กระทบรายการเดิม */
+    var nl=[],uc=0;
+    try{await sb.rpc("notifications_refresh");var l=await sb.rpc("notifications_list",{p_unread_only:false,p_limit:20});if(!l.error&&Array.isArray(l.data))nl=l.data;var c=await sb.rpc("notifications_unread_count");if(!c.error&&typeof c.data==="number")uc=c.data}catch(e){}
     bellBox.replaceChildren();var rc=r.count||0,oc=o.count||0;
     if(rc)bellBox.appendChild(bellItem(rc,"คำขอแก้ไขที่รอดำเนินการ","records.html"));
     if(oc)bellBox.appendChild(bellItem(oc,"รายงานอุบัติเหตุที่ยังไม่ปิดเคส","records.html"));
-    if(!rc&&!oc)bellBox.appendChild(el("p","tpnote","ไม่มีรายการค้าง"));
-    if(rc){var d=el("span","belldot",rc>99?"99+":String(rc));d.setAttribute("aria-hidden","true");bellBtn.appendChild(d);bellBtn.setAttribute("aria-label","การแจ้งเตือน มี "+rc+" รายการรอดำเนินการ")}
-  }catch(e){if(bellBox)bellBox.replaceChildren(el("p","tpnote","ไม่มีข้อมูลการแจ้งเตือน"))}})();
+    if(nl.length){
+      var hd=el("p","tpnote small");hd.appendChild(el("strong",null,"แจ้งเตือน Action (CAPA)"));
+      if(uc){var mb=el("button","secondary","อ่านทั้งหมด");mb.type="button";mb.style.marginLeft=".6rem";mb.addEventListener("click",async function(ev){ev.stopPropagation();var x=await sb.rpc("notifications_mark_all_read");if(!x.error){bellBtn.querySelectorAll(".belldot").forEach(function(d){d.remove()});await loadBell()}});hd.appendChild(mb)}
+      bellBox.appendChild(hd);
+      nl.forEach(function(n){bellBox.appendChild(notifItem(n))});
+    }
+    if(!rc&&!oc&&!nl.length)bellBox.appendChild(el("p","tpnote","ไม่มีรายการค้าง"));
+    bellBtn.querySelectorAll(".belldot").forEach(function(d){d.remove()});
+    var tot=rc+uc;
+    if(tot){var d=el("span","belldot",tot>99?"99+":String(tot));d.setAttribute("aria-hidden","true");bellBtn.appendChild(d);bellBtn.setAttribute("aria-label","การแจ้งเตือน มี "+tot+" รายการรอดำเนินการ")}
+  }catch(e){if(bellBox)bellBox.replaceChildren(el("p","tpnote","ไม่มีข้อมูลการแจ้งเตือน"))}}
+  loadBell();
   /* ตัวสลับภาษาแบบ segmented (ตามแบบ Stitch): ไทย ใช้งานได้ / EN, မြန်မာ ยังไม่เปิด (รอแปลทั้งระบบ) */
   var langseg=null;(function(){var g=el("div","langseg");langseg=g;g.setAttribute("role","group");g.setAttribute("aria-label","ภาษา / Language");
     var cur=(window.I18N&&window.I18N.lang)||"th";g.setAttribute("data-no-i18n","");

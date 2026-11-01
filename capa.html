@@ -249,6 +249,38 @@
           h("small", { "data-no-i18n": true, text: (x.actor_name || "-") + " · " + new Date(x.at).toLocaleString(EN ? "en-GB" : "th-TH") + (x.reason ? " · " + x.reason : "") })));
       });
       box.append(ul);
+      box.append(h("h4", { text: "ความคิดเห็น" }));
+      const cbox = h("div"); box.append(cbox);
+      renderComments(cbox, a.id);
+    }
+
+    // ---------- ความคิดเห็น (เพิ่มอย่างเดียว แก้/ลบไม่ได้ — ISO/IEC 27001:2022 A.8.15) ----------
+    // ทำไมใช้ textContent: ความคิดเห็นเป็นข้อความที่ผู้ใช้พิมพ์เอง ต้องไม่ถูกตีความเป็น HTML (OWASP A03)
+    async function renderComments(box, id) {
+      box.replaceChildren(h("p", { class: "tpnote", text: "กำลังโหลด…" }));
+      const { data, error } = await sb.rpc("capa_comments_list", { p_id: id });
+      box.replaceChildren();
+      if (error) { box.append(h("p", { class: "errtxt", text: "โหลดความคิดเห็นไม่สำเร็จ" })); return; }
+      const ul = h("ul", { class: "hist" });
+      (data || []).forEach((c) => ul.append(h("li", {},
+        h("small", { "data-no-i18n": true, text: (c.mine ? (EN ? "You" : "คุณ") : (c.author_name || "-")) + " · " + new Date(c.created_at).toLocaleString(EN ? "en-GB" : "th-TH") }),
+        h("br"), h("span", { class: "prewrap", "data-no-i18n": true, text: c.body }))));
+      if (!(data || []).length) box.append(h("p", { text: "ยังไม่มีความคิดเห็น" }));
+      else box.append(ul);
+      const ta = h("textarea", { id: "cm-ta", maxlength: "1000", "aria-label": "เขียนความคิดเห็น" });
+      const err = h("p", { class: "errtxt", role: "alert" });
+      const btn = h("button", { type: "button" }, "ส่งความคิดเห็น");
+      btn.addEventListener("click", async () => {
+        err.textContent = "";
+        const v = ta.value.trim();
+        if (!v) { err.textContent = "กรุณาพิมพ์ความคิดเห็น"; ta.focus(); return; }
+        btn.disabled = true;
+        const r = await sb.rpc("capa_comment_add", { p_id: id, p_body: v });
+        btn.disabled = false;
+        if (r.error) { err.textContent = /1-1000/.test(r.error.message || "") ? "ความคิดเห็นต้องยาว 1–1,000 ตัวอักษร" : errTh(r.error); return; }
+        await renderComments(box, id);
+      });
+      box.append(h("div", { class: "capaform" }, ta, err, h("div", { class: "actrow" }, btn)));
     }
 
     // ---------- เปลี่ยนสถานะ / เลื่อนกำหนด ----------
