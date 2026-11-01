@@ -12,8 +12,8 @@
     .nt-card label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.95rem}
     .nt-card select,.nt-card input[type=number]{min-height:44px;font:inherit;font-weight:400}
     .nt-card input[type=number]{max-width:9rem}
-    .nt-ev{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.4rem .9rem;margin:.6rem 0}
-    .nt-ev label{flex-direction:row;align-items:center;gap:.5rem;font-weight:400;color:inherit;min-height:44px}
+    .nt-ev{display:grid;grid-template-columns:repeat(auto-fit,minmax(19rem,1fr));gap:.4rem .9rem;margin:.6rem 0}
+    .nt-ev label{flex-direction:row;align-items:flex-start;gap:.5rem;font-weight:400;color:inherit;min-height:44px;padding:.3rem 0}.nt-ev label strong{color:var(--navy)}.nt-help{background:#f3f6fd;border:1px solid var(--line);border-radius:12px;padding:.7rem 1rem;margin:.4rem 0 1rem;font-size:.92rem}.nt-ex{margin:.2rem 0 0 1.1rem;padding:0}.nt-ex li{margin:.5rem 0}.nt-sum{background:#eef7ee;border:1px solid #b7dcb9;border-radius:12px;padding:.7rem 1rem;margin:.8rem 0;font-weight:600;color:#14532d}.nt-help ul{margin:.3rem 0 0 1.1rem;padding:0}.nt-help li{margin:.2rem 0}
     .nt-ev input,.nt-kind input,.nt-act input{width:22px;height:22px}
     .nt-kind{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem}
     .nt-kind label{flex-direction:row;align-items:center;gap:.5rem;font-weight:400;color:inherit;min-height:44px}
@@ -77,6 +77,28 @@
 
       <section class="nt-card" aria-labelledby="h-form">
         <h3 id="h-form">เพิ่มกฎใหม่</h3>
+        <div class="nt-help"><strong>อ่านก่อนเพิ่มกฎ</strong>
+          <ul>
+            <li><strong>ตาม Role</strong> = ทุกคนที่มี Role นั้นและดู Plant นั้นได้ จะได้รับแจ้ง (เช่น Plant Director ทุกคนของโรงงาน A)</li>
+            <li><strong>รายบุคคล</strong> = เฉพาะคนที่เลือก ต้องเลือก Plant ด้วย และต้องเป็นบทบาทที่เปิดดู Action ได้ (พนักงานทั่วไปเลือกไม่ได้)</li>
+            <li><strong>ทุก Plant</strong> = กฎส่วนกลาง ตั้งได้เฉพาะ Super admin · Admin/SHE ตั้งได้เฉพาะ Plant ที่ตนดูแล</li>
+            <li><strong>Escalate</strong> = ปุ่มลัดเลือกเฉพาะ "เกินกำหนด" และ "ส่งกลับ / ยกเลิก" เหมาะกับผู้บริหารที่ไม่ต้องการแจ้งเตือนทุกเรื่อง · แท็กสีเหลืองในตารางคือเหตุการณ์กลุ่มนี้</li>
+            <li><strong>ผู้รับผิดชอบ / ผู้สร้าง Action</strong> ได้รับแจ้งเสมอ ไม่ต้องตั้งกฎ</li>
+          </ul>
+          <p style="margin:.7rem 0 .2rem"><strong>ตัวอย่างการตั้งค่าที่ใช้บ่อย</strong></p>
+          <ol class="nt-ex">
+            <li><strong>ผู้อำนวยการโรงงาน A อยากรู้เฉพาะเรื่องที่ต้องตัดสินใจ</strong><br>
+              Plant = โรงงาน A · ตาม Role = Plant Director · กดปุ่ม Escalate<br>
+              <span class="hint">ผล: Plant Director ของโรงงาน A จะได้แจ้งเฉพาะเมื่อ Action เลยกำหนด หรือถูกส่งกลับ/ยกเลิก ไม่ถูกรบกวนด้วยความคิดเห็นหรือการเปลี่ยนสถานะทั่วไป</span></li>
+            <li><strong>ทีม SHE ต้องตามงานทุกเรื่อง</strong><br>
+              ตาม Role = SHE · กดปุ่ม "ทุกเหตุการณ์"<br>
+              <span class="hint">ผล: SHE ได้แจ้งทุกเหตุการณ์ (ระบบมีกฎนี้ให้เป็นค่าเริ่มต้นแล้วสำหรับ SHE, Admin และ Super admin ทุก Plant)</span></li>
+            <li><strong>ผู้จัดการคนหนึ่งอยากรู้แค่เมื่อมีคนคอมเมนต์</strong><br>
+              Plant = โรงงานของเขา · เลือก "รายบุคคล" · เลือกชื่อ · ติ๊กเฉพาะ "ความคิดเห็นใหม่"<br>
+              <span class="hint">ผล: เฉพาะคนนี้ได้แจ้งเมื่อมีความคิดเห็นใหม่ใน Action ของโรงงานนั้น เรื่องอื่นไม่แจ้ง</span></li>
+          </ol>
+          <p class="hint" style="margin:.4rem 0 0">ข้อความที่ผู้รับเห็นในกระดิ่ง เช่น "เกินกำหนดแล้ว: ชื่อ Action (ครบกำหนด 29 ต.ค.)" กดแล้วเปิด Action นั้นได้ทันที</p>
+        </div>
         <form id="f" novalidate>
           <div class="nt-grid">
             <label for="f-plant">Plant<select id="f-plant"></select></label>
@@ -95,6 +117,7 @@
             </div>
             <div class="nt-ev" id="ev"></div>
           </fieldset>
+          <p id="f-sum" class="nt-sum" aria-live="polite"></p>
           <label class="inline" style="flex-direction:row;align-items:center;gap:.6rem;min-height:44px"><input type="checkbox" id="f-active" checked style="width:22px;height:22px"> เปิดใช้งานกฎนี้</label>
           <div class="nt-row">
             <button type="submit" id="f-save">+ เพิ่มกฎ</button>
@@ -118,10 +141,15 @@
     const nd = (e) => { e.setAttribute("data-no-i18n", ""); return e; };
     const ROLE_TH = { she: "SHE", plant_director: "Plant Director", director: "Director", md: "MD", ceo: "CEO", admin: "Admin", super_admin: "Super admin" };
     const EV = [
-      ["assigned", "มอบหมาย Action ให้"], ["due_soon", "ใกล้ครบกำหนด"], ["overdue", "เกินกำหนดแล้ว"],
-      ["status_all", "เปลี่ยนสถานะทุกครั้ง"], ["status_return", "ส่งกลับ / ยกเลิก"], ["due_changed", "เปลี่ยนวันครบกำหนด"], ["comment", "ความคิดเห็นใหม่"]
+      ["assigned", "มอบหมาย Action ให้", "เมื่อมีการมอบหมาย Action ให้ผู้รับผิดชอบ (ผู้รับผิดชอบได้รับอยู่แล้วเสมอ กฎนี้ใช้แจ้งผู้ดูแลเพิ่ม)"],
+      ["due_soon", "ใกล้ครบกำหนด", "ก่อนวันครบกำหนดตามจำนวนวันที่ตั้งไว้ด้านบน และ Action ยังไม่ปิด"],
+      ["overdue", "เกินกำหนดแล้ว", "เลยวันครบกำหนดแล้วแต่ Action ยังไม่ปิด (ใช้เป็น Escalate ให้ผู้บริหาร)"],
+      ["status_all", "เปลี่ยนสถานะทุกครั้ง", "ทุกครั้งที่สถานะเปลี่ยน เช่น เริ่มดำเนินการ รอตรวจสอบ ปิดงาน"],
+      ["status_return", "ส่งกลับ / ยกเลิก", "เฉพาะเมื่อ Action ถูกส่งกลับให้แก้ไข หรือถูกยกเลิก (ใช้เป็น Escalate)"],
+      ["due_changed", "เปลี่ยนวันครบกำหนด", "เมื่อมีการเลื่อนหรือแก้วันครบกำหนด พร้อมเหตุผล"],
+      ["comment", "ความคิดเห็นใหม่", "เมื่อมีคนเขียนความคิดเห็นใน Action (ผู้เขียนเองไม่ได้รับ)"]
     ];
-    const EV_TH = Object.fromEntries(EV);
+    
     const ESC = ["overdue", "status_return"];
     let me = null, plants = [], isSuper = false, rules = [], editing = null, cands = [];
 
@@ -234,18 +262,31 @@
       cands = r.data || [];
       const o0 = el("option", null, "— เลือกบุคคล —"); o0.value = ""; sel.appendChild(o0);
       cands.forEach((c) => { const o = nd(el("option", null, (c.full_name || "") + (c.employee_code ? " (" + c.employee_code + ")" : "") + " · " + (ROLE_TH[c.role] || c.role || ""))); o.value = c.id; sel.appendChild(o); });
-      if (keep) sel.value = keep;
+      if (keep) sel.value = keep; updSum();
+    }
+    function updSum() {
+      const EN = window.I18N && I18N.lang === "en";
+      const pSel = $("f-plant"), pTxt = pSel.value ? (pSel.options[pSel.selectedIndex].textContent.split(" — ")[0]) : (EN ? "all Plants" : "ทุก Plant");
+      const ev = getEv().map((k) => { const e = EV.find((x) => x[0] === k); return e ? e[1] : k; });
+      let who;
+      if (kindVal() === "user") { const u = $("f-user"); who = u.value ? u.options[u.selectedIndex].textContent : (EN ? "(select a person)" : "(ยังไม่ได้เลือกบุคคล)"); }
+      else who = EN ? "everyone with the role " + ROLE_TH[$("f-role").value] : "ทุกคนที่เป็น " + ROLE_TH[$("f-role").value];
+      const evt = ev.length ? ev.join(", ") : (EN ? "(no event selected)" : "(ยังไม่ได้เลือกเหตุการณ์)");
+      $("f-sum").textContent = EN
+        ? "Summary: " + who + " — in " + pTxt + " — will be notified when: " + evt + ($("f-active").checked ? "" : " (rule disabled)")
+        : "สรุปกฎนี้: " + who + " ใน " + pTxt + " จะได้รับแจ้งเมื่อ: " + evt + ($("f-active").checked ? "" : " (ปิดใช้งานกฎอยู่)");
+      $("f-sum").setAttribute("data-no-i18n", "");
     }
     function buildEv() {
       const box = $("ev"); box.replaceChildren();
-      EV.forEach(([k, t]) => { const l = el("label"); const i = document.createElement("input"); i.type = "checkbox"; i.value = k; i.name = "ev"; l.append(i, el("span", null, t)); box.appendChild(l); });
+      EV.forEach(([k, t, d]) => { const l = el("label"); const i = document.createElement("input"); i.type = "checkbox"; i.value = k; i.name = "ev"; const w = el("span"); w.appendChild(el("strong", null, t)); w.appendChild(el("span", "hint", d)); w.lastChild.style.display = "block"; l.append(i, w); box.appendChild(l); });
     }
     const setEv = (keys) => document.querySelectorAll("#ev input").forEach((i) => { i.checked = keys.includes(i.value); });
     const getEv = () => Array.from(document.querySelectorAll("#ev input:checked")).map((i) => i.value);
     function resetForm() {
       editing = null; $("h-form").textContent = "เพิ่มกฎใหม่"; $("f-save").textContent = "+ เพิ่มกฎ"; $("f-cancel").hidden = true;
       document.querySelector('input[name=kind][value=role]').checked = true; syncKind();
-      $("f-active").checked = true; setEv(EV.map((e) => e[0]));
+      $("f-active").checked = true; setEv(EV.map((e) => e[0])); updSum();
       $("f-plant").disabled = false; document.querySelectorAll("input[name=kind]").forEach((i) => { i.disabled = false; });
     }
     async function startEdit(x) {
@@ -256,13 +297,17 @@
       $("w-role").hidden = x.kind === "user"; $("w-user").hidden = x.kind !== "user";
       if (x.kind === "role") $("f-role").value = x.role_code; else { await loadCands(x.user_id); $("f-role").disabled = false; }
       if (x.kind === "role") $("f-role").disabled = true;
-      setEv(x.events || []); $("f-active").checked = !!x.active;
+      setEv(x.events || []); $("f-active").checked = !!x.active; updSum();
       $("f").scrollIntoView({ block: "center" });
     }
     $("f-cancel").addEventListener("click", () => { $("f-role").disabled = false; resetForm(); });
     $("p-all").addEventListener("click", () => setEv(EV.map((e) => e[0])));
     $("p-esc").addEventListener("click", () => setEv(ESC));
     $("p-none").addEventListener("click", () => setEv([]));
+    ["f-plant","f-role","f-user","f-active"].forEach((id) => $(id).addEventListener("change", updSum));
+    document.querySelectorAll("input[name=kind]").forEach((i) => i.addEventListener("change", updSum));
+    $("ev").addEventListener("change", updSum);
+    ["p-all","p-esc","p-none"].forEach((id) => $(id).addEventListener("click", updSum));
     document.querySelectorAll("input[name=kind]").forEach((i) => i.addEventListener("change", syncKind));
     $("f-plant").addEventListener("change", () => { if (kindVal() === "user") loadCands(); });
     $("l-plant").addEventListener("change", loadRules);
