@@ -200,6 +200,9 @@
     var n=el("nav","subtabs");n.setAttribute("aria-label","เมนูผู้ดูแลระบบ");
     T.forEach(function(t){var a=el("a",null,t[1]);a.href=t[0];if(t[0]===f)a.setAttribute("aria-current","page");n.appendChild(a)});m.insertBefore(n,m.firstChild)})();
   (function(){var f=(location.pathname.split("/").pop()||""),m=document.querySelector("main");
-    if(m&&["checklist.html","training.html","reset.html"].indexOf(f)>-1&&!m.classList.contains("narrow")&&!m.classList.contains("authsplit"))m.classList.add("formcard")})();
+    if(m&&["checklist.html","training.html","reset.html"].indexOf(f)>-1&&!m.classList.contains("narrow")&&!m.classList.contains("authsplit")){m.classList.add("formcard");
+      /* เช็กลิสต์/บันทึกอบรมเป็นฟอร์มทำงานบนจอกว้าง → เต็มหน้าจอเหมือนหน้าอื่น (reset.html คงเป็นการ์ดแคบ) */
+      if(f!=="reset.html")m.classList.add("fullw")}})();
+  (function(){var st=document.createElement("style");st.textContent="@media(min-width:1100px){main.formcard.fullw{max-width:none;margin:1.5rem 2rem}main.wide form{max-width:none}}";document.head.appendChild(st)})();
   var h=document.querySelector("header");if(h)h.appendChild(tools);relocate();
 })();
