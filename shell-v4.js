@@ -206,3 +206,5 @@
   (function(){var st=document.createElement("style");st.textContent="@media(min-width:1100px){main.formcard.fullw{max-width:none;margin:1.5rem 2rem}main.wide form{max-width:none}}";document.head.appendChild(st)})();
   var h=document.querySelector("header");if(h)h.appendChild(tools);relocate();
 })();
+/* ช่องพิมพ์ค้นหา Plant ในทุก dropdown Plant (plant-search.js) */
+(function(){try{var s=document.createElement("script");s.src="plant-search.js?v=1";s.defer=true;document.head.appendChild(s)}catch(e){}})();

@@ -1413,4 +1413,6 @@ I18N.add({
  "Plant = โรงงานของเขา · เลือก \"รายบุคคล\" · เลือกชื่อ · ติ๊กเฉพาะ \"ความคิดเห็นใหม่\"": "Plant = their plant · choose \"Individual\" · select the person · tick only \"New comment\"",
  "ผล: เฉพาะคนนี้ได้แจ้งเมื่อมีความคิดเห็นใหม่ใน Action ของโรงงานนั้น เรื่องอื่นไม่แจ้ง": "Result: only this person is notified of new comments on Actions of that plant; nothing else",
  "ข้อความที่ผู้รับเห็นในกระดิ่ง เช่น \"เกินกำหนดแล้ว: ชื่อ Action (ครบกำหนด 29 ต.ค.)\" กดแล้วเปิด Action นั้นได้ทันที": "What the recipient sees in the bell, e.g. \"Overdue: Action title (due 29 Oct)\" — click to open that Action",
+ "พิมพ์ค้นหา Plant (รหัสหรือชื่อ)": "Type to search Plant (code or name)",
+ "ค้นหา Plant": "Search Plant",
 });
