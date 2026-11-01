@@ -124,7 +124,7 @@
     else themeBox.hidden=true}
   /* ลิงก์จัดการประกาศ (เฉพาะ SHE/Admin): เห็นในเมนูเฟือง */
   (async function(){try{
-    if(typeof getMyProfile!=="function"||!mgrBox)return;var p=await getMyProfile();
+    if(typeof getMyProfile!=="function")return;var p=await getMyProfile();if(!mgrBox)return; /* รอให้เมนูเฟืองสร้างเสร็จก่อน (ก่อนหน้านี้เช็ก mgrBox เร็วเกินไปจึงไม่เคยแสดงลิงก์) */
     if(p&&p.status==="active"&&["she","admin","super_admin"].indexOf(p.role)>-1){var l=el("a","tplink","ประกาศสำคัญ");l.href="admin-announcements.html";if((location.pathname.split("/").pop()||"")==="admin-announcements.html")l.setAttribute("aria-current","page");mgrBox.appendChild(l);var l2=el("a","tplink","แจ้งเตือน Action (CAPA)");l2.href="admin-notifications.html";if((location.pathname.split("/").pop()||"")==="admin-notifications.html")l2.setAttribute("aria-current","page");mgrBox.appendChild(l2);mgrBox.hidden=false}
   }catch(e){}})();
   make("gear","ตั้งค่า","",function(p){
