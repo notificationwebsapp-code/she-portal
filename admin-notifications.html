@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ตั้งค่าแจ้งเตือน Action (CAPA) | SHE Portal</title>
+  <style>
+    .nt-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.2rem;margin:1rem 0}
+    .nt-card h3{margin:.1rem 0 .6rem}
+    .nt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.8rem 1rem;align-items:end}
+    .nt-card label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.95rem}
+    .nt-card select,.nt-card input[type=number]{min-height:44px;font:inherit;font-weight:400}
+    .nt-card input[type=number]{max-width:9rem}
+    .nt-ev{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.4rem .9rem;margin:.6rem 0}
+    .nt-ev label{flex-direction:row;align-items:center;gap:.5rem;font-weight:400;color:inherit;min-height:44px}
+    .nt-ev input,.nt-kind input,.nt-act input{width:22px;height:22px}
+    .nt-kind{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem}
+    .nt-kind label{flex-direction:row;align-items:center;gap:.5rem;font-weight:400;color:inherit;min-height:44px}
+    .nt-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.5rem 0}
+    .nt-row button{min-height:44px;margin:0}
+    .nt-tag{display:inline-block;border-radius:999px;padding:.1rem .6rem;margin:.1rem .2rem .1rem 0;font-size:.82rem;font-weight:700;background:#e8eaf6;color:#1a237e}
+    .nt-tag.esc{background:#fff4d6;color:#6b4200}
+    table.nt{min-width:760px}
+    table.nt td .sub{display:block;color:var(--muted);font-size:.85rem}
+    .nt-act{display:flex;gap:.4rem;flex-wrap:wrap}
+    .nt-act button{min-height:44px;margin:0}
+    .hint{color:var(--muted);font-size:.88rem;font-weight:400}
+    [hidden]{display:none!important}
+  </style>
+  <script src="i18n.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- หน้านี้เป็นเพียงหน้าจอ: สิทธิ์จริงบังคับที่ RPC notif_* (SECURITY DEFINER) ไม่มีสิทธิ์เขียนตารางตรง ๆ -->
+    <div id="area" hidden>
+      <h2>ตั้งค่าแจ้งเตือน Action (CAPA)</h2>
+      <p>กำหนดว่าใครได้รับแจ้งเตือนในกระดิ่งเมื่อมีเหตุการณ์ของ Action (ตอนนี้แจ้งในระบบเท่านั้น ยังไม่ส่งอีเมล) · ผู้รับผิดชอบและผู้สร้าง Action ได้รับแจ้งเสมอ · ผู้รับตามกฎต้องมีสิทธิ์เปิดดู Action ของ Plant นั้นได้จริง ตามหลักสิทธิ์น้อยที่สุด ISO/IEC 27001:2022 A.5.15 · ทุกการเปลี่ยนแปลงถูกบันทึกใน Audit log</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <section class="nt-card" aria-labelledby="h-set">
+        <h3 id="h-set">จำนวนวันที่ถือว่า "ใกล้ครบกำหนด"</h3>
+        <div class="nt-row">
+          <label for="s-days">ล่วงหน้า (วัน) 0–30<input id="s-days" type="number" min="0" max="30" step="1"></label>
+          <button type="button" id="s-save">บันทึก</button>
+        </div>
+        <p class="hint" id="s-hint"></p>
+      </section>
+
+      <section class="nt-card" aria-labelledby="h-list">
+        <h3 id="h-list">กฎผู้รับแจ้งเตือน</h3>
+        <div class="nt-grid">
+          <label for="l-plant">แสดงของ Plant<select id="l-plant"></select></label>
+        </div>
+        <p class="hint">กฎ "ทุก Plant" ใช้กับทุก Plant ที่ผู้รับมีสิทธิ์เห็น · แก้ได้เฉพาะ Super admin · ปิดการใช้งานกฎได้โดยไม่ต้องลบ</p>
+        <div class="tablewrap"><table class="nt" id="t">
+          <thead><tr><th>ผู้รับ</th><th>Plant</th><th>เหตุการณ์ที่ได้รับ</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+          <tbody id="tb"></tbody>
+        </table></div>
+        <p id="empty" class="hint" hidden>ยังไม่มีกฎสำหรับ Plant นี้ — เพิ่มได้จากฟอร์มด้านล่าง</p>
+      </section>
+
+      <section class="nt-card" aria-labelledby="h-form">
+        <h3 id="h-form">เพิ่มกฎใหม่</h3>
+        <form id="f" novalidate>
+          <div class="nt-grid">
+            <label for="f-plant">Plant<select id="f-plant"></select></label>
+            <fieldset class="nt-kind" style="border:0;padding:0;margin:0"><legend style="font-weight:700;color:var(--navy)">ผู้รับเป็น</legend>
+              <label><input type="radio" name="kind" value="role" checked> ตาม Role</label>
+              <label><input type="radio" name="kind" value="user"> รายบุคคล</label>
+            </fieldset>
+            <label for="f-role" id="w-role">Role<select id="f-role"></select></label>
+            <label for="f-user" id="w-user" hidden>บุคคล<select id="f-user"></select></label>
+          </div>
+          <fieldset style="border:0;padding:0;margin:.6rem 0 0"><legend style="font-weight:700;color:var(--navy)">เหตุการณ์ที่ต้องแจ้ง</legend>
+            <div class="nt-row">
+              <button type="button" id="p-all" class="secondary">ทุกเหตุการณ์</button>
+              <button type="button" id="p-esc" class="secondary">Escalate (เกินกำหนด + ส่งกลับ/ยกเลิก)</button>
+              <button type="button" id="p-none" class="secondary">ล้างที่เลือก</button>
+            </div>
+            <div class="nt-ev" id="ev"></div>
+          </fieldset>
+          <label class="inline" style="flex-direction:row;align-items:center;gap:.6rem;min-height:44px"><input type="checkbox" id="f-active" checked style="width:22px;height:22px"> เปิดใช้งานกฎนี้</label>
+          <div class="nt-row">
+            <button type="submit" id="f-save">+ เพิ่มกฎ</button>
+            <button type="button" id="f-cancel" class="secondary" hidden>ยกเลิกการแก้ไข</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* หน้านี้เป็นเพียงหน้าจอ: ความปลอดภัยจริงอยู่ที่ DB (migration B24a-5)
+       - ทุกการอ่าน/เขียนผ่าน RPC notif_* ที่ตรวจสิทธิ์ใน DB (Super admin = ทั้งระบบ; Admin/SHE = Plant ที่ตนจัดการ)
+       - ตารางกฎ/ตั้งค่าไม่มี GRANT ให้ผู้ใช้เข้าถึงตรง ๆ
+       - แสดงข้อมูลทุกจุดด้วย textContent (OWASP A03) */
+    const $ = (id) => document.getElementById(id);
+    const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+    const nd = (e) => { e.setAttribute("data-no-i18n", ""); return e; };
+    const ROLE_TH = { she: "SHE", plant_director: "Plant Director", director: "Director", md: "MD", ceo: "CEO", admin: "Admin", super_admin: "Super admin" };
+    const EV = [
+      ["assigned", "มอบหมาย Action ให้"], ["due_soon", "ใกล้ครบกำหนด"], ["overdue", "เกินกำหนดแล้ว"],
+      ["status_all", "เปลี่ยนสถานะทุกครั้ง"], ["status_return", "ส่งกลับ / ยกเลิก"], ["due_changed", "เปลี่ยนวันครบกำหนด"], ["comment", "ความคิดเห็นใหม่"]
+    ];
+    const EV_TH = Object.fromEntries(EV);
+    const ESC = ["overdue", "status_return"];
+    let me = null, plants = [], isSuper = false, rules = [], editing = null, cands = [];
+
+    function msg(t, ok) { const m = $("msg"); m.hidden = false; m.className = "msg " + (ok ? "ok" : "error"); m.textContent = t; m.scrollIntoView({ block: "nearest" }); }
+    function errText(e) {
+      const c = e && e.code, m = (e && e.message) || "";
+      if (c === "42501") return "คุณไม่มีสิทธิ์ทำรายการนี้ (Super admin ตั้งกฎทุก Plant ได้ · Admin/SHE ตั้งได้เฉพาะ Plant ที่ตนดูแล)";
+      if (c === "23505") return "มีกฎของผู้รับและ Plant นี้อยู่แล้ว กรุณากดแก้ไขกฎเดิมแทน";
+      if (c === "22023") {
+        if (/Due-soon/i.test(m)) return "จำนวนวันต้องอยู่ระหว่าง 0–30";
+        if (/event/i.test(m)) return "กรุณาเลือกเหตุการณ์อย่างน้อย 1 รายการ";
+        if (/recipient|user/i.test(m)) return "บุคคลที่เลือกไม่มีสิทธิ์เปิดดู Action ของ Plant นี้ หรือบัญชีไม่ได้ใช้งานอยู่";
+        return "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง";
+      }
+      return "ทำรายการไม่สำเร็จ: " + m;
+    }
+
+    /* ---------- ตั้งค่าจำนวนวัน ---------- */
+    async function loadSettings() {
+      const r = await sb.rpc("notif_settings_get");
+      if (r.error) { $("s-hint").textContent = "อ่านค่าไม่ได้: " + errText(r.error); return; }
+      $("s-days").value = r.data;
+      $("s-days").disabled = !isSuper; $("s-save").hidden = !isSuper;
+      $("s-hint").textContent = isSuper
+        ? "ใช้กับทุกคนทั้งระบบ — ระบบสร้างแจ้งเตือนใกล้ครบกำหนด/เกินกำหนดเมื่อผู้รับเปิดหน้าเว็บ (ไม่ได้รันอัตโนมัติเบื้องหลัง)"
+        : "ตั้งค่านี้ปรับได้เฉพาะ Super admin (แสดงเพื่ออ่านอย่างเดียว)";
+    }
+    $("s-save").addEventListener("click", async () => {
+      const n = parseInt($("s-days").value, 10);
+      if (!Number.isInteger(n) || n < 0 || n > 30) { msg("จำนวนวันต้องเป็นเลข 0–30", false); return; }
+      const r = await sb.rpc("notif_settings_set", { p_due_soon_days: n });
+      if (r.error) { msg(errText(r.error), false); return; }
+      msg("บันทึกจำนวนวันแล้ว: " + n + " วัน", true);
+    });
+
+    /* ---------- รายการกฎ ---------- */
+    function plantOpts(sel, withAll, allText) {
+      sel.replaceChildren();
+      if (withAll) { const o = el("option", null, allText); o.value = ""; sel.appendChild(o); }
+      plants.forEach((p) => { const o = nd(el("option", null, p.code + " — " + p.name)); o.value = p.id; sel.appendChild(o); });
+    }
+    async function loadRules() {
+      const pid = $("l-plant").value || null;
+      const r = await sb.rpc("notif_rules_list", { p_plant: pid });
+      if (r.error) { msg(errText(r.error), false); return; }
+      rules = r.data || [];
+      renderRules();
+    }
+    function who(x) {
+      const td = el("td");
+      if (x.kind === "user") {
+        td.appendChild(nd(el("strong", null, x.user_name || "(ไม่ทราบชื่อ)")));
+        td.appendChild(nd(el("span", "sub", (x.employee_code || "") + " · รายบุคคล")));
+      } else {
+        td.appendChild(nd(el("strong", null, ROLE_TH[x.role_code] || x.role_code)));
+        td.appendChild(el("span", "sub", "ตาม Role"));
+      }
+      return td;
+    }
+    function renderRules() {
+      const tb = $("tb"); tb.replaceChildren();
+      $("empty").hidden = rules.length > 0;
+      rules.forEach((x) => {
+        const tr = el("tr");
+        tr.appendChild(who(x));
+        tr.appendChild(x.plant_id ? nd(el("td", null, x.plant_code || "")) : el("td", null, "ทุก Plant"));
+        const te = el("td");
+        EV.forEach(([k, t]) => { if ((x.events || []).includes(k)) te.appendChild(el("span", "nt-tag" + (ESC.includes(k) ? " esc" : ""), t)); });
+        tr.appendChild(te);
+        const ts = el("td"); ts.appendChild(el("span", "badge " + (x.active ? "active" : "cancelled"), x.active ? "เปิดใช้งาน" : "ปิดอยู่"));
+        tr.appendChild(ts);
+        const ta = el("td");
+        if (x.can_edit) {
+          const box = el("div", "nt-act");
+          const b1 = el("button", "secondary", "แก้ไข"); b1.type = "button"; b1.addEventListener("click", () => startEdit(x));
+          const b2 = el("button", "secondary", x.active ? "ปิดใช้งาน" : "เปิดใช้งาน"); b2.type = "button"; b2.addEventListener("click", () => toggle(x));
+          const b3 = el("button", "secondary", "ลบ"); b3.type = "button"; b3.addEventListener("click", () => del(x));
+          box.append(b1, b2, b3); ta.appendChild(box);
+        } else ta.appendChild(el("span", "hint", "อ่านอย่างเดียว"));
+        tr.appendChild(ta);
+        tb.appendChild(tr);
+      });
+    }
+    async function save(args, okText) {
+      const r = await sb.rpc("notif_rule_save", args);
+      if (r.error) { msg(errText(r.error), false); return false; }
+      msg(okText, true); await loadRules(); return true;
+    }
+    function argsOf(x, active) {
+      return { p_id: x.id, p_plant: x.plant_id, p_kind: x.kind, p_role: x.kind === "role" ? x.role_code : null, p_user: x.kind === "user" ? x.user_id : null, p_events: x.events, p_active: active };
+    }
+    function toggle(x) { return save(argsOf(x, !x.active), x.active ? "ปิดใช้งานกฎแล้ว" : "เปิดใช้งานกฎแล้ว"); }
+    async function del(x) {
+      if (!window.confirm("ลบกฎนี้ใช่หรือไม่? (ประวัติการลบยังอยู่ใน Audit log)")) return;
+      const r = await sb.rpc("notif_rule_delete", { p_id: x.id });
+      if (r.error) { msg(errText(r.error), false); return; }
+      if (editing && editing.id === x.id) resetForm();
+      msg("ลบกฎแล้ว", true); loadRules();
+    }
+
+    /* ---------- ฟอร์ม ---------- */
+    const kindVal = () => document.querySelector('input[name=kind]:checked').value;
+    function syncKind() { const u = kindVal() === "user"; $("w-role").hidden = u; $("w-user").hidden = !u; if (u) loadCands(); }
+    async function loadCands(keep) {
+      const sel = $("f-user"); sel.replaceChildren();
+      const pid = $("f-plant").value || null;
+      if (!pid) { const o = el("option", null, "ต้องเลือก Plant ก่อน (รายบุคคลตั้งได้เฉพาะรายต่อ Plant)"); o.value = ""; sel.appendChild(o); return; }
+      const r = await sb.rpc("notif_user_candidates", { p_plant: pid });
+      if (r.error) { msg(errText(r.error), false); return; }
+      cands = r.data || [];
+      const o0 = el("option", null, "— เลือกบุคคล —"); o0.value = ""; sel.appendChild(o0);
+      cands.forEach((c) => { const o = nd(el("option", null, (c.full_name || "") + (c.employee_code ? " (" + c.employee_code + ")" : "") + " · " + (ROLE_TH[c.role] || c.role || ""))); o.value = c.id; sel.appendChild(o); });
+      if (keep) sel.value = keep;
+    }
+    function buildEv() {
+      const box = $("ev"); box.replaceChildren();
+      EV.forEach(([k, t]) => { const l = el("label"); const i = document.createElement("input"); i.type = "checkbox"; i.value = k; i.name = "ev"; l.append(i, el("span", null, t)); box.appendChild(l); });
+    }
+    const setEv = (keys) => document.querySelectorAll("#ev input").forEach((i) => { i.checked = keys.includes(i.value); });
+    const getEv = () => Array.from(document.querySelectorAll("#ev input:checked")).map((i) => i.value);
+    function resetForm() {
+      editing = null; $("h-form").textContent = "เพิ่มกฎใหม่"; $("f-save").textContent = "+ เพิ่มกฎ"; $("f-cancel").hidden = true;
+      document.querySelector('input[name=kind][value=role]').checked = true; syncKind();
+      $("f-active").checked = true; setEv(EV.map((e) => e[0]));
+      $("f-plant").disabled = false; document.querySelectorAll("input[name=kind]").forEach((i) => { i.disabled = false; });
+    }
+    async function startEdit(x) {
+      editing = x; $("h-form").textContent = "แก้ไขกฎ"; $("f-save").textContent = "บันทึกการแก้ไข"; $("f-cancel").hidden = false;
+      $("f-plant").value = x.plant_id || "";
+      document.querySelector('input[name=kind][value=' + x.kind + ']').checked = true;
+      $("f-plant").disabled = true; document.querySelectorAll("input[name=kind]").forEach((i) => { i.disabled = true; }); /* เปลี่ยน Plant/ประเภทผู้รับ = สร้างกฎใหม่ แทนการแก้ */
+      $("w-role").hidden = x.kind === "user"; $("w-user").hidden = x.kind !== "user";
+      if (x.kind === "role") $("f-role").value = x.role_code; else { await loadCands(x.user_id); $("f-role").disabled = false; }
+      if (x.kind === "role") $("f-role").disabled = true;
+      setEv(x.events || []); $("f-active").checked = !!x.active;
+      $("f").scrollIntoView({ block: "center" });
+    }
+    $("f-cancel").addEventListener("click", () => { $("f-role").disabled = false; resetForm(); });
+    $("p-all").addEventListener("click", () => setEv(EV.map((e) => e[0])));
+    $("p-esc").addEventListener("click", () => setEv(ESC));
+    $("p-none").addEventListener("click", () => setEv([]));
+    document.querySelectorAll("input[name=kind]").forEach((i) => i.addEventListener("change", syncKind));
+    $("f-plant").addEventListener("change", () => { if (kindVal() === "user") loadCands(); });
+    $("l-plant").addEventListener("change", loadRules);
+    $("f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const ev = getEv();
+      if (!ev.length) { msg("กรุณาเลือกเหตุการณ์อย่างน้อย 1 รายการ", false); return; }
+      const kind = kindVal(), plant = $("f-plant").value || null;
+      if (kind === "user" && !$("f-user").value) { msg("กรุณาเลือกบุคคล", false); return; }
+      if (kind === "user" && !plant) { msg("กฎรายบุคคลต้องเลือก Plant", false); return; }
+      const ok = await save({
+        p_id: editing ? editing.id : null, p_plant: plant, p_kind: kind,
+        p_role: kind === "role" ? $("f-role").value : null, p_user: kind === "user" ? $("f-user").value : null,
+        p_events: ev, p_active: $("f-active").checked
+      }, editing ? "บันทึกการแก้ไขแล้ว" : "เพิ่มกฎแล้ว");
+      if (ok) { $("f-role").disabled = false; resetForm(); }
+    });
+
+    (async function () {
+      const session = await requireLogin(); if (!session) return;
+      me = await getMyProfile();
+      const gate = $("gate");
+      if (!me || me.status !== "active" || !["she", "admin", "super_admin"].includes(me.role)) { gate.textContent = "หน้านี้สำหรับ SHE และ Admin เท่านั้น"; return; }
+      isSuper = me.role === "super_admin";   /* ใช้แสดงผลเท่านั้น สิทธิ์จริงตรวจที่ RPC */
+      gate.hidden = true; $("area").hidden = false;
+      const pr = await sb.from("plants").select("id, code, name").eq("active", true).order("code"); plants = pr.data || [];
+      plantOpts($("l-plant"), true, "ทุก Plant (แสดงทั้งหมดที่ฉันเห็น)");
+      plantOpts($("f-plant"), isSuper, "ทุก Plant (กฎส่วนกลาง — Super admin)");
+      const rs = $("f-role"); rs.replaceChildren();
+      Object.keys(ROLE_TH).forEach((k) => { const o = el("option", null, ROLE_TH[k]); o.value = k; rs.appendChild(o); });
+      buildEv(); resetForm(); await loadSettings(); await loadRules();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>
