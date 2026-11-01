@@ -27,17 +27,36 @@
   var CST={open:"เปิดใหม่",in_progress:"กำลังดำเนินการ",returned:"ส่งกลับให้แก้",closed:"รอตรวจสอบ",verified:"ตรวจสอบแล้ว",cancelled:"ยกเลิก"};
   var CEV={capa_assigned:"มอบหมาย Action ให้คุณ",capa_due_soon:"ใกล้ครบกำหนด",capa_overdue:"เกินกำหนดแล้ว",capa_status:"เปลี่ยนสถานะ",capa_due_changed:"เลื่อนกำหนดเสร็จ",capa_comment:"ความคิดเห็นใหม่"};
   function noData(t){var s=el("span",null,t);s.setAttribute("data-no-i18n","true");return s}
-  function notifItem(n,onRead){
-    var a=el("a","bellitem");a.href="capa.html?id="+encodeURIComponent(n.entity_id);a.style.alignItems="flex-start";
-    if(!n.read_at)a.style.fontWeight="700";
-    var col=el("span");col.style.display="block";
-    var head=el("span",null,CEV[n.event_type]||"แจ้งเตือน");col.appendChild(head);
-    if(n.event_type==="capa_status"&&n.code){col.appendChild(document.createTextNode(" : "));col.appendChild(el("span",null,CST[n.code]||n.code))}
-    else if(n.code&&(n.event_type==="capa_due_changed"||n.event_type==="capa_due_soon"||n.event_type==="capa_overdue")){col.appendChild(noData(" : "+n.code))}
-    var t=noData(n.title);t.style.display="block";t.style.fontWeight="400";col.appendChild(t);
-    if(n.note){var nt=noData(n.note);nt.style.display="block";nt.style.fontWeight="400";nt.style.fontSize=".85rem";col.appendChild(nt)}
-    var meta=noData((n.actor_name?n.actor_name+" · ":"")+new Date(n.created_at).toLocaleString((window.I18N&&I18N.lang==="en")?"en-GB":"th-TH"));meta.style.display="block";meta.style.fontWeight="400";meta.style.fontSize=".78rem";col.appendChild(meta);
-    a.appendChild(col);
+  /* รูปแบบการ์ดแจ้งเตือน: ใส่ผ่าน <style> ในไฟล์นี้ เพื่อไม่ต้องแก้ style-v4.css เพิ่ม; สีป้ายทุกสีตัวอักษรขาวบนพื้นเข้ม (WCAG 2.2 ข้อ 1.4.3 ≥ 4.5:1) */
+  (function(){var st=document.createElement("style");st.textContent=
+   ".bellbox{max-height:min(65vh,30rem);overflow-y:auto}"+
+   ".nsec{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.6rem 0 .35rem;padding-top:.5rem;border-top:1px solid var(--line,#d9dee7);font-size:.8rem;font-weight:700;letter-spacing:.02em;color:#4b5565;text-transform:uppercase}"+
+   ".nsec button{min-height:32px;padding:.15rem .7rem;font-size:.8rem;border-radius:999px;border:1px solid var(--brand,#1b3a8a);background:#fff;color:var(--brand,#1b3a8a);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0}"+
+   ".nsec button:hover{background:var(--brand,#1b3a8a);color:#fff}"+
+   ".ncard{display:block;position:relative;margin:.4rem 0;padding:.55rem .7rem .55rem .85rem;border:1px solid var(--line,#d9dee7);border-left:6px solid var(--nc,#6b7385);border-radius:10px;background:#fff;color:#1b2430;text-decoration:none}"+
+   ".ncard:hover,.ncard:focus-visible{outline:2px solid var(--nc,#1b3a8a);outline-offset:1px;background:#f6f8fc}"+
+   ".ncard.unread{background:#eef4ff;border-color:var(--nc,#6b7385);box-shadow:0 1px 4px rgba(0,0,0,.12)}"+
+   ".ncard.unread::after{content:'';position:absolute;top:.6rem;right:.6rem;width:10px;height:10px;border-radius:50%;background:#c62828}"+
+   ".ncard:not(.unread){opacity:.78}"+
+   ".npill{display:inline-block;padding:.1rem .6rem;border-radius:999px;background:var(--nc,#6b7385);color:#fff;font-size:.78rem;font-weight:700}"+
+   ".ncode{display:block;margin-top:.3rem;font-size:.8rem;font-weight:700;color:#4b5565}"+
+   ".nttl{display:block;font-size:.95rem;font-weight:700;overflow-wrap:anywhere}"+
+   ".nnote{display:block;margin-top:.3rem;padding:.3rem .5rem;border-left:3px solid #b8c2d6;border-radius:4px;background:#f1f3f7;font-size:.85rem;font-weight:400;overflow-wrap:anywhere}"+
+   ".nmeta{display:block;margin-top:.3rem;font-size:.76rem;font-weight:400;color:#4b5565}"+
+   ".ncard.t-assigned{--nc:#0d47a1}.ncard.t-due_soon{--nc:#8a5a00}.ncard.t-overdue{--nc:#b71c1c}.ncard.t-status{--nc:#6a2c91}.ncard.t-due_changed{--nc:#a64b00}.ncard.t-comment{--nc:#00695c}";
+   document.head.appendChild(st)})();
+  function notifItem(n){
+    var tp=(n.event_type||"").replace("capa_","");
+    var a=el("a","ncard t-"+tp+(n.read_at?"":" unread"));a.href="capa.html?id="+encodeURIComponent(n.entity_id);
+    var pill=el("span","npill",CEV[n.event_type]||"แจ้งเตือน");
+    if(n.event_type==="capa_status"&&n.code){pill.appendChild(document.createTextNode(" → "));pill.appendChild(el("span",null,CST[n.code]||n.code))}
+    else if(n.code&&(n.event_type==="capa_due_changed"||n.event_type==="capa_due_soon"||n.event_type==="capa_overdue")){pill.appendChild(noData(" · "+n.code))}
+    a.appendChild(pill);
+    var ti=String(n.title||""),sp=ti.indexOf(" "),no=sp>0?ti.slice(0,sp):"",nm=sp>0?ti.slice(sp+1):ti;
+    if(no){var c=noData(no);c.className="ncode";a.appendChild(c)}
+    var t=noData(nm);t.className="nttl";a.appendChild(t);
+    if(n.note){var nt=noData(n.note);nt.className="nnote";a.appendChild(nt)}
+    var meta=noData((n.actor_name?n.actor_name+" · ":"")+new Date(n.created_at).toLocaleString((window.I18N&&I18N.lang==="en")?"en-GB":"th-TH"));meta.className="nmeta";a.appendChild(meta);
     a.addEventListener("click",function(){if(!n.read_at){try{sb.rpc("notification_mark_read",{p_id:n.id})}catch(e){}}});
     return a}
   async function loadBell(){try{
@@ -52,8 +71,8 @@
     if(rc)bellBox.appendChild(bellItem(rc,"คำขอแก้ไขที่รอดำเนินการ","records.html"));
     if(oc)bellBox.appendChild(bellItem(oc,"รายงานอุบัติเหตุที่ยังไม่ปิดเคส","records.html"));
     if(nl.length){
-      var hd=el("p","tpnote small");hd.appendChild(el("strong",null,"แจ้งเตือน Action (CAPA)"));
-      if(uc){var mb=el("button","secondary","อ่านทั้งหมด");mb.type="button";mb.style.marginLeft=".6rem";mb.addEventListener("click",async function(ev){ev.stopPropagation();var x=await sb.rpc("notifications_mark_all_read");if(!x.error){bellBtn.querySelectorAll(".belldot").forEach(function(d){d.remove()});await loadBell()}});hd.appendChild(mb)}
+      var hd=el("div","nsec");hd.appendChild(el("span",null,"แจ้งเตือน Action (CAPA)"));
+      if(uc){var mb=el("button",null,"อ่านทั้งหมด");mb.type="button";mb.addEventListener("click",async function(ev){ev.stopPropagation();var x=await sb.rpc("notifications_mark_all_read");if(!x.error){await loadBell()}});hd.appendChild(mb)}
       bellBox.appendChild(hd);
       nl.forEach(function(n){bellBox.appendChild(notifItem(n))});
     }
