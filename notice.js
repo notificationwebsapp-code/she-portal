@@ -42,6 +42,30 @@
     if (el.id === "msg") { if (el.classList.contains("error") || el.classList.contains("err")) show(txt); return; }
     if (el.classList.contains("errtxt")) show(txt);
   }
+
+  /* SheNotice.confirm({title, body, ok, cancel, danger}) → Promise<boolean> — popup ยืนยันก่อนทำรายการที่ย้อนยาก (ปุ่มยกเลิกเป็นค่าเริ่มต้นที่โฟกัส) */
+  function confirmDlg(o) {
+    o = o || {};
+    return new Promise(function (resolve) {
+      var d = document.createElement("dialog");
+      d.setAttribute("role", "alertdialog"); d.setAttribute("aria-labelledby", "sc-t"); d.setAttribute("aria-describedby", "sc-m");
+      d.style.cssText = "max-width:min(520px,92vw);width:100%;border:2px solid " + (o.danger === false ? "#005A9C" : "#D97706") + ";border-radius:12px;padding:0;box-shadow:0 12px 40px rgba(11,59,96,.35);font-family:inherit";
+      var box = document.createElement("div"); box.style.cssText = "padding:1.25rem 1.25rem 1rem";
+      var t = document.createElement("h3"); t.id = "sc-t"; t.style.cssText = "margin:0 0 .6rem;color:#0B3B60;font-size:1.15rem"; t.textContent = o.title || "ยืนยันการทำรายการ";
+      var m = document.createElement("p"); m.id = "sc-m"; m.style.cssText = "margin:0 0 1.1rem;color:#0B3B60;font-size:1.02rem;line-height:1.55;white-space:pre-line"; m.textContent = o.body || "";
+      var row = document.createElement("div"); row.style.cssText = "display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap";
+      var c = document.createElement("button"); c.type = "button"; c.textContent = o.cancel || "ยกเลิก";
+      c.style.cssText = "min-height:48px;min-width:120px;padding:.6rem 1.2rem;background:#fff;color:#0B3B60;border:2px solid #0B3B60;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer";
+      var k = document.createElement("button"); k.type = "button"; k.textContent = o.ok || "ยืนยัน";
+      k.style.cssText = "min-height:48px;min-width:120px;padding:.6rem 1.2rem;background:" + (o.danger === false ? "#005A9C" : "#B45309") + ";color:#fff;border:2px solid #0B3B60;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer";
+      var res = false;
+      c.addEventListener("click", function () { d.close(); });
+      k.addEventListener("click", function () { res = true; d.close(); });
+      d.addEventListener("close", function () { d.remove(); resolve(res); });
+      row.append(c, k); box.append(t, m, row); d.appendChild(box); document.body.appendChild(d);
+      d.showModal(); c.focus();
+    });
+  }
   function start() {
     var msg = document.getElementById("msg");
     var obs = new MutationObserver(function (muts) {
@@ -52,7 +76,7 @@
       });
     });
     obs.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["class", "hidden"] });
-    window.SheNotice = { show: show };
+    window.SheNotice = { show: show, confirm: confirmDlg };
   }
   if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
 })();

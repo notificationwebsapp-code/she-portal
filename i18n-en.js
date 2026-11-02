@@ -1609,4 +1609,9 @@ I18N.add({
  "รอหลักฐาน": "Awaiting evidence",
  "⚠ ไม่สามารถดำเนินการได้": "⚠ Unable to continue",
  "เข้าใจแล้ว": "Got it",
+ "ถอน Action ออกจาก Root cause นี้?": "Unlink this Action from the Root cause?",
+ "ไม่ถอน": "Keep linked",
+ "ยืนยันการทำรายการ": "Confirm",
+ "ถอน Action แล้ว — ผูกกลับได้จากช่อง \"ผูก Action ที่มีอยู่\"": "Action unlinked — you can link it back from \"Link an existing Action\"",
+ "Action และไฟล์หลักฐานยังอยู่ครบ ไม่ถูกลบ แต่ Root cause นี้จะกลับเป็น \"ต้องมี Action\" และปิดเคสไม่ได้จนกว่าจะผูก Action อีกครั้ง\n\nถ้าถอนผิด สามารถผูกกลับได้จากช่อง \"— ผูก Action ที่มีอยู่ —\" ใต้ Root cause": "The Action and its evidence files are kept (nothing is deleted), but this Root cause returns to \"Action required\" and the case cannot be closed until an Action is linked again.\n\nIf you unlinked by mistake, link it back from the \"— Link an existing Action —\" box under the Root cause.",
 });

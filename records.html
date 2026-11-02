@@ -1385,7 +1385,9 @@
             capas.forEach((a) => foot.append(h("span", { class: "chip" + (a.status === "cancelled" ? " off" : evOk(a) ? " t-done" : " t-link") },
               h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }), " ",
               a.status === "cancelled" ? null : h("span", { class: "ev" }, (evOk(a) ? "✓ " : "○ "), h("span", { text: "หลักฐาน" }), " " + (a.evidence_count || 0) + "/" + (a.evidence_needed || 1)), " ",
-              h("button", { type: "button", class: "chip-x", "aria-label": "ถอน Action ออกจาก Root cause นี้", onclick: () => { if (dirtyGuard()) return; act(sb.rpc("incident_root_cause_unlink_capa", { p_capa: a.id }), "ถอน Action แล้ว"); } }, ico("x"), h("span", { text: "ถอน" })))));
+              h("button", { type: "button", class: "chip-x", "aria-label": "ถอน Action ออกจาก Root cause นี้", onclick: async () => { if (dirtyGuard()) return;
+                const okGo = window.SheNotice ? await window.SheNotice.confirm({ title: "ถอน Action ออกจาก Root cause นี้?", body: a.action_no + " · " + a.title + "\n\nAction และไฟล์หลักฐานยังอยู่ครบ ไม่ถูกลบ แต่ Root cause นี้จะกลับเป็น \"ต้องมี Action\" และปิดเคสไม่ได้จนกว่าจะผูก Action อีกครั้ง\n\nถ้าถอนผิด สามารถผูกกลับได้จากช่อง \"— ผูก Action ที่มีอยู่ —\" ใต้ Root cause", ok: "ยืนยันถอน", cancel: "ไม่ถอน" }) : true;
+                if (okGo) act(sb.rpc("incident_root_cause_unlink_capa", { p_capa: a.id }), "ถอน Action แล้ว — ผูกกลับได้จากช่อง \"ผูก Action ที่มีอยู่\""); } }, ico("x"), h("span", { text: "ถอน" })))));
             if (!live) foot.append(h("p", { class: "rc-warn" }, ico("alert"), h("span", { text: "ยังไม่มี Action — ต้องมีอย่างน้อย 1 รายการก่อนปิดเคส" })));
             const row = h("div", { class: "rowbtns" }, h("a", { class: "btn-link", href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") + "&rc=" + encodeURIComponent(it.id),
               onclick: (ev) => { if (dirtyGuard()) ev.preventDefault(); } }, ico("plus"), h("span", { text: "สร้าง Action จาก Root cause นี้" })));
