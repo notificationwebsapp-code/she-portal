@@ -245,7 +245,8 @@
       if (a.source_type === "incident" && a.source_id) box.append(h("p", {}, h("a", { href: "records.html" }, "ดูรายงานอุบัติเหตุต้นทางในหน้า \"ดูข้อมูล\"")));
       box.append(h("h4", { text: "หลักฐานการแก้ไข" }));
       const attBox = h("div"); box.append(attBox);
-      Attach.panel(attBox, { entityType: "capa", entityId: a.id, canUpload: live && (own || hasP("capa.create") || hasP("capa.close")), closed: !live });
+      Attach.panel(attBox, { entityType: "capa", entityId: a.id, canUpload: live && (own || hasP("capa.create") || hasP("capa.close")), closed: !live,
+        onChange: async () => { await loadList(); await openDetail(a.id, true); } });
       box.append(h("h4", { text: "ประวัติ" }));
       const ul = h("ul", { class: "hist" });
       hist.forEach((x) => {
