@@ -1592,4 +1592,11 @@ I18N.add({
  "ผู้ใช้กลุ่มนี้ (SHE/Admin) มีสิทธิ์สอบสวนอยู่แล้ว": "SHE/Admin already have investigation permission",
  "ผู้ใช้นี้ไม่ได้อยู่ใน Plant ของเคสนี้": "This user is not in this case's Plant",
  "มอบสิทธิ์ให้ตัวเองไม่ได้": "You cannot assign the permission to yourself",
+ "การบันทึกนี้ยังไม่ใช่การปิดเคส — บันทึกได้ทุกเมื่อแม้กรอกยังไม่ครบ กลับมาแก้ไขและบันทึกซ้ำได้จนกว่าจะกด \"ปิดเคส\"": "Saving is not closing the case — save any time even if incomplete, then come back to edit and save again until you press \"Close case\"",
+ "ปิด (เก็บเป็นร่าง)": "Close (keep as draft)",
+ "ร่าง Action ยังไม่ใช่การสั่งการ — ผู้รับผิดชอบจะยังไม่เห็นจนกว่าจะกด “บันทึก” ระบบบันทึกร่างให้อัตโนมัติทุก 30 วินาที และเมื่อปิดกล่องนี้ ร่างเก็บไว้ 30 วัน": "An Action draft is not an assignment — the owner will not see it until you press “Save”. Drafts autosave every 30 seconds and when this box is closed, and are kept for 30 days",
+ "Action นี้จะถูกผูกกับ Root cause เดิมของร่าง (ถ้ายังใช้ได้)": "This Action will be linked to the draft's original Root cause (if still valid)",
+ "มีแบบร่างค้างอยู่": "Unfinished drafts",
+ "ร่างยังไม่ใช่การรายงาน — กดเพื่อทำต่อ": "Drafts are not reports — click to continue",
+ "ทำต่อ →": "Continue →",
 });

@@ -1412,6 +1412,7 @@
           act(sb.rpc("incident_investigation_save", { p_incident: inc.id, p_problem: problem.value.trim() || null,
             p_whys: arr, p_root_cause: null, p_conclusion: concl.value.trim() || null, p_root_cause_text: null, p_root_causes: rcs }), "บันทึกการสอบสวนแล้ว");
         } }, ico("check"), h("span", { text: "บันทึกการสอบสวน" })), dirty));
+        wrap.append(h("p", { class: "hint", text: "การบันทึกนี้ยังไม่ใช่การปิดเคส — บันทึกได้ทุกเมื่อแม้กรอกยังไม่ครบ กลับมาแก้ไขและบันทึกซ้ำได้จนกว่าจะกด \"ปิดเคส\"" }));
         wrap.append(h("p", { class: "hint", text: "ขั้นต่อไป: เมื่อได้สาเหตุแล้ว กด \"+ สร้าง Action (CAPA) จากเคสนี้\" ด้านล่างเพื่อกำหนดมาตรการแก้ไข/ป้องกัน แล้วกด \"ปิดเคส\"" }));
       }
       if (isMgrRole() && !closed) delegationBox(wrap, inc);

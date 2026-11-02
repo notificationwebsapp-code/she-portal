@@ -89,6 +89,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="auth.js"></script>
+  <script src="draft.js"></script>
   <script src="attach.js"></script>
   <script src="shell-v4.js"></script>
   <script>
@@ -319,8 +320,8 @@
       const prv = h("textarea", { id: "fm-prv", maxlength: "2000" });
       const ev = h("input", { type: "number", id: "fm-ev", min: "0", max: "20", value: "1" });
       const err = h("p", { class: "errtxt", role: "alert" });
-      const src = pre && pre.source_type === "incident" ? pre : null;
-      const rcId = src && pre.rc ? pre.rc : null;          // มาจากปุ่ม "+ สร้าง Action จาก Root cause นี้" ในหน้าดูข้อมูล
+      let src = pre && pre.source_type === "incident" ? pre : null;
+      let rcId = src && pre.rc ? pre.rc : null;          // มาจากปุ่ม "+ สร้าง Action จาก Root cause นี้" ในหน้าดูข้อมูล
       if (edit) {
         title.value = a.title; desc.value = a.description || "";
         const cu = a.owner_user_id && USERS.find((u) => u.id === a.owner_user_id);
@@ -346,7 +347,7 @@
         h("h3", { id: "formdlg-t", text: edit ? "แก้ไข " + a.action_no : "สร้าง Action ใหม่" }),
         src ? h("p", { class: "msg", text: "สร้างจากรายงานอุบัติเหตุที่เลือก" }) : null,
         rcId ? h("p", { class: "msg", id: "fm-rcnote", role: "status", text: "กำลังโหลด Root cause ที่จะผูก..." }) : null, ...rows, err,
-        h("div", { class: "actrow" }, h("button", { type: "submit" }, "บันทึก"), h("button", { type: "button", class: "secondary", onclick: () => dlg.close() }, "ยกเลิก")));
+        h("div", { class: "actrow" }, h("button", { type: "submit" }, "บันทึก"), h("button", { type: "button", class: "secondary", onclick: () => dlg.close() }, edit ? "ยกเลิก" : "ปิด (เก็บเป็นร่าง)")));
       form.addEventListener("submit", async (ev2) => {
         ev2.preventDefault(); err.textContent = "";
         const typed = ownerName.value.trim();
@@ -372,6 +373,7 @@
             p_root_cause_text: rct.value.trim() || null, p_corrective: cor.value.trim() || null, p_preventive: prv.value.trim() || null });
         }
         if (res.error) { err.textContent = errTh(res.error); return; }
+        if (!edit) await SheDraft.clear();
         let linkErr = "";
         if (!edit && rcId && res.data) { const lk = await sb.rpc("incident_root_cause_link_capa", { p_root_cause: rcId, p_capa: res.data }); if (lk.error) linkErr = errTh(lk.error); }
         dlg.close();
@@ -380,6 +382,27 @@
         await loadList(); const id = edit ? a.id : res.data; if (id) await openDetail(id, true);
       });
       dlg.append(form); dlg.showModal(); title.focus();
+      if (!edit) {
+        // ร่าง (หลักการ: ไม่มี record ไหนเสร็จในครั้งเดียว) — ปิดกล่องแล้วเก็บร่างให้ ไม่ต้องกลัวข้อมูลหาย
+        SheDraft.destroy();
+        const ctl = { plant, title, desc, oname: ownerName, dept, due, rc, rct, cor, prv, cl, sv, ev };
+        SheDraft.init({
+          formType: "capa", form: form,
+          note: "ร่าง Action ยังไม่ใช่การสั่งการ — ผู้รับผิดชอบจะยังไม่เห็นจนกว่าจะกด “บันทึก” ระบบบันทึกร่างให้อัตโนมัติทุก 30 วินาที และเมื่อปิดกล่องนี้ ร่างเก็บไว้ 30 วัน",
+          getState: () => { const o = { src: src ? { source_id: src.source_id } : null, rcId: rcId || null };
+            Object.keys(ctl).forEach((k) => { o[k] = ctl[k].value; }); return o; },
+          setState: async (o) => {
+            Object.keys(ctl).forEach((k) => { if (o[k] !== undefined && o[k] !== null) ctl[k].value = o[k]; });
+            if (o.oname !== undefined) ownerName.value = o.oname || "";
+            src = o.src && o.src.source_id ? { source_type: "incident", source_id: o.src.source_id } : src;
+            rcId = o.rcId || rcId;
+            const nt = $("fm-rcnote"); if (nt && rcId) nt.textContent = "Action นี้จะถูกผูกกับ Root cause เดิมของร่าง (ถ้ายังใช้ได้)";
+          },
+          getTitle: () => title.value.trim() ? title.value.trim().slice(0, 100) : "Action (ยังไม่ตั้งชื่อ)",
+          getPlantId: () => plant.value || ""
+        });
+        dlg.addEventListener("close", () => { SheDraft.flush().finally(() => SheDraft.destroy()); }, { once: true });
+      }
       if (rcId) (async () => {                       // เติมหมวด/คำอธิบายจาก Root cause ที่เลือก (ผู้ใช้แก้ได้)
         const note = $("fm-rcnote");
         const r = await sb.rpc("incident_investigation_get", { p_incident: src.source_id });

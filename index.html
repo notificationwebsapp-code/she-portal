@@ -43,6 +43,10 @@
       <a class="card" href="training.html"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m2.5 9.5 9.5-5 9.5 5-9.5 5-9.5-5Z"/><path d="M6.5 12v4.5c0 1.2 2.5 2.5 5.5 2.5s5.5-1.3 5.5-2.5V12"/></svg></span><strong>บันทึกการอบรม</strong><span class="d">ลงทะเบียนหลักสูตรและผู้เข้าอบรม</span></a>
       <a class="card" href="records.html"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17"/><path d="M9.5 10v9.5"/></svg></span><strong>ดูข้อมูล</strong><span class="d">ตรวจดูข้อมูลตามสิทธิ์ของคุณ</span></a>
     </div>
+    <section aria-labelledby="drafthead-t" id="draftsec" hidden>
+      <div class="secthead" id="drafthead"><h3 id="drafthead-t">มีแบบร่างค้างอยู่</h3><span id="draftsub">ร่างยังไม่ใช่การรายงาน — กดเพื่อทำต่อ</span></div>
+      <div class="tasklist" id="drafts" role="status"></div>
+    </section>
     <div class="secthead" id="todayhead" hidden><h3>สรุปสำหรับคุณ</h3><span>ตามสิทธิ์ของบัญชี</span></div>
     <div class="todaypanel" id="today" hidden>
       <div class="kpi"><b id="k-open">–</b><span>รายงานอุบัติเหตุที่ยังไม่ปิดเคส</span><br><a href="records.html">ดูรายการ</a></div>
@@ -181,11 +185,32 @@
         $("alerthead").hidden = false; box.hidden = false;
       }
 
+      /* แบบร่างค้างอยู่ (B8/B9 drafts): อ่านผ่าน RLS เดิม — เห็นเฉพาะร่างของตนและร่างทีมที่มีสิทธิ์ ร่างหมดอายุถูกซ่อนโดยฐานข้อมูล */
+      const DRAFT_FORMS = { incident: ["รายงานอุบัติเหตุ", "incident.html"], checklist: ["เช็กลิสต์ตรวจ", "checklist.html"], training: ["บันทึกการอบรม", "training.html"], capa: ["สร้าง Action (CAPA)", "capa.html?new=1"] };
+      async function loadDrafts() {
+        const sec = $("draftsec"), box = $("drafts"); sec.hidden = true;
+        const r = await sb.from("drafts").select("id, form_type, title, updated_at, expires_at").order("updated_at", { ascending: false }).limit(10);
+        if (r.error || !(r.data || []).length) return;
+        box.replaceChildren();
+        r.data.forEach((d) => {
+          const f = DRAFT_FORMS[d.form_type] || [d.form_type, "index.html"];
+          const a = mk("a", "taskcard"); a.href = f[1]; const l = mk("div");
+          l.appendChild(mk("span", "badge pend", "ร่าง · " + f[0]));
+          const t = mk("p", "tt", d.title || "(ไม่มีชื่อ)"); t.setAttribute("data-no-i18n", ""); l.appendChild(t);
+          const left = Math.max(0, Math.ceil((Date.parse(d.expires_at) - Date.now()) / 86400000));
+          const m = mk("p", "tm", "แก้ไขล่าสุด " + new Date(d.updated_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) + " · จะถูกลบใน " + left + " วัน");
+          m.style.margin = ".2rem 0 0"; l.appendChild(m);
+          a.appendChild(l); a.appendChild(mk("span", "go", "ทำต่อ →")); box.appendChild(a);
+        });
+        $("draftsub").textContent = "ทั้งหมด " + r.data.length + " ฉบับ · ร่างยังไม่ใช่การรายงาน — กดเพื่อทำต่อ";
+        sec.hidden = false;
+      }
+
       async function loadAll() {
         try {
           if (typeof sb === "undefined") return;
           const ses = await sb.auth.getSession(); session = ses.data.session; if (!session) return;
-          await Promise.all([loadAnnouncements(), loadLti(), loadKpi(), loadTasks(), loadAlerts()].map((p) => p.catch(() => {})));
+          await Promise.all([loadAnnouncements(), loadLti(), loadKpi(), loadTasks(), loadAlerts(), loadDrafts()].map((p) => p.catch(() => {})));
           loadManagerLink();
         } catch (e) { /* ไม่แสดงแผง */ }
       }

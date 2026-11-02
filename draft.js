@@ -59,6 +59,7 @@ const SheDraft = (function () {
     } catch (e) { return ""; }
   }
   function status(text, kind) {
+    if (!el.status) return;
     el.status.textContent = text;
     el.status.className = "dstatus" + (kind ? " " + kind : "");
   }
@@ -77,9 +78,11 @@ const SheDraft = (function () {
     const { data, error } = await sb.from("drafts")
       .select("id, title, updated_at, owner_id, owner_name, last_editor_name, team_shared")
       .eq("form_type", cfg.formType).order("updated_at", { ascending: false });
+    if (!el.list) return;
     el.list.replaceChildren();
     const rows = error ? [] : (data || []);
     el.count.textContent = String(rows.length);
+    if (rows.length && !el.autoOpened && !currentId && el.det) { el.det.open = true; el.autoOpened = true; }   // มีร่างค้าง: เปิดรายการให้เห็นทันที ไม่ต้องหา
     if (!rows.length) {
       el.list.appendChild(mk("li", "", "ยังไม่มีร่างที่บันทึกไว้"));
       return;
@@ -113,7 +116,7 @@ const SheDraft = (function () {
     const state = cfg.getState();
     const json = JSON.stringify(state);
     if (json.length > 95000) { status("ร่างมีขนาดใหญ่เกินกำหนด", "err"); return; }
-    saving = true; el.btn.disabled = true;
+    saving = true; if (el.btn) el.btn.disabled = true;
     const title = (cfg.getTitle ? cfg.getTitle() : "") || ("ร่าง " + fmt(new Date()));
     const plant = (cfg.getPlantId ? cfg.getPlantId() : "") || null;
     let error = null, conflict = false;
@@ -134,7 +137,7 @@ const SheDraft = (function () {
       error = r.error;
       if (!error && r.data) { currentId = r.data.id; currentVersion = r.data.version; currentOwnerId = r.data.owner_id || myId; }
     }
-    saving = false; el.btn.disabled = false;
+    saving = false; if (el.btn) el.btn.disabled = false;
     if (conflict) { status(CONFLICT, "err"); refreshList(); return; }
     if (error) { status(thaiErr(error), "err"); return; }
     dirty = false;
@@ -175,10 +178,31 @@ const SheDraft = (function () {
 
   function markDirty() { dirty = true; }
 
+  // ตัวจัดการระดับหน้าต่าง เก็บไว้เพื่อถอดออกได้ (ฟอร์มแบบ dialog เปิด/ปิดหลายครั้งในหน้าเดียว)
+  let onVis = null, onUnload = null, barEl = null;
+
+  function destroy() {
+    if (timer) { clearInterval(timer); timer = null; }
+    if (onVis) { document.removeEventListener("visibilitychange", onVis); onVis = null; }
+    if (onUnload) { window.removeEventListener("beforeunload", onUnload); onUnload = null; }
+    if (barEl && barEl.parentNode) barEl.parentNode.removeChild(barEl);
+    barEl = null; el = {}; cfg = null;
+    currentId = null; currentVersion = null; currentOwnerId = null; dirty = false; saving = false;
+  }
+
+  // บันทึกร่างทันทีถ้ามีการแก้ไขค้าง (ใช้ตอนปิดกล่องฟอร์ม/ออกจากหน้า) และรอให้เสร็จก่อน
+  async function flush() {
+    if (!cfg) return;
+    while (saving) await new Promise((r) => setTimeout(r, 50));
+    if (dirty) await save(false);
+  }
+
   function init(config) {
+    if (cfg) destroy();
     cfg = config;
     injectStyle();
     const bar = mk("section", "draftbar");
+    barEl = bar;
     bar.setAttribute("aria-label", "ร่างของฉันและทีม");
     const row = mk("div", "drow");
     el.btn = mk("button", "secondary", "บันทึกร่าง");
@@ -191,13 +215,14 @@ const SheDraft = (function () {
     } else {
       row.appendChild(el.btn); row.appendChild(el.status); bar.appendChild(row);
     }
-    bar.appendChild(mk("p", "dnote", "ร่างยังไม่ใช่การรายงาน — SHE จะยังไม่เห็นข้อมูลจนกว่าจะกด “ส่งรายงาน” ระบบบันทึกร่างให้อัตโนมัติทุก 30 วินาทีเมื่อมีการแก้ไข ร่างเก็บไว้ 30 วัน ร่างของพนักงานทั่วไปเห็นได้เฉพาะเจ้าของ ส่วนร่างที่ SHE/Admin สร้างและระบุ Plant ไว้ SHE/Admin ของ Plant เดียวกันจะเห็นและทำต่อแทนกันได้"));
+    bar.appendChild(mk("p", "dnote", cfg.note || "ร่างยังไม่ใช่การรายงาน — SHE จะยังไม่เห็นข้อมูลจนกว่าจะกด “ส่งรายงาน” ระบบบันทึกร่างให้อัตโนมัติทุก 30 วินาทีเมื่อมีการแก้ไข ร่างเก็บไว้ 30 วัน ร่างของพนักงานทั่วไปเห็นได้เฉพาะเจ้าของ ส่วนร่างที่ SHE/Admin สร้างและระบุ Plant ไว้ SHE/Admin ของ Plant เดียวกันจะเห็นและทำต่อแทนกันได้"));
     const det = mk("details");
     const sum = mk("summary");
     sum.appendChild(document.createTextNode("ร่างของฉันและทีม ("));
     el.count = mk("span", "", "0");
     sum.appendChild(el.count); sum.appendChild(document.createTextNode(")"));
     el.list = mk("ul", "draftlist");
+    el.det = det;
     det.appendChild(sum); det.appendChild(el.list); bar.appendChild(det);
     cfg.form.parentNode.insertBefore(bar, cfg.form);
 
@@ -205,10 +230,12 @@ const SheDraft = (function () {
     cfg.form.addEventListener("change", markDirty);
     timer = setInterval(() => { if (dirty) save(false); }, AUTOSAVE_MS);
     // สลับแอป/แท็บ (เช่น มีงานด่วนเข้า) = บันทึกร่างให้ทันที
-    document.addEventListener("visibilitychange", () => { if (document.hidden && dirty) save(false); });
-    window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
-    sb.auth.getUser().then((r) => { myId = r && r.data && r.data.user ? r.data.user.id : null; }).finally(refreshList);
+    onVis = () => { if (document.hidden && dirty) save(false); };
+    onUnload = (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("beforeunload", onUnload);
+    sb.auth.getUser().then((r) => { myId = r && r.data && r.data.user ? r.data.user.id : null; }).finally(() => { if (cfg) refreshList(); });
   }
 
-  return { init, clear, markDirty, save: () => save(true) };
+  return { init, clear, destroy, flush, markDirty, save: () => save(true) };
 })();
