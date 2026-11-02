@@ -69,7 +69,7 @@
         </div>
 
         <div class="row3">
-          <p><label for="date" class="required">วันที่เกิดเหตุ</label><br><input type="date" id="date" required></p>
+          <p><label for="date" class="required">วันที่เกิดเหตุ</label><br><input type="date" id="date" required data-date-warn="future"></p>
           <p><label for="time" class="required">เวลา</label><br><input type="time" id="time" required></p>
           <p id="shift-row" hidden><label for="shift">กะ (Shift)</label><br>
             <select id="shift"><option value="">-- ไม่ระบุ --</option></select></p>
@@ -163,6 +163,7 @@
   <script src="auth.js"></script>
   <script src="attach.js"></script>
   <script src="draft.js"></script>
+  <script src="date-hint.js"></script>
   <script>requireLogin();</script>
   <script>
     const $ = (id) => document.getElementById(id);

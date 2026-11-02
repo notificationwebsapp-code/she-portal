@@ -37,7 +37,7 @@
       </p>
       <p>
         <label for="date">วันที่ตรวจ</label><br>
-        <input type="date" id="date" name="date" required>
+        <input type="date" id="date" name="date" required data-date-warn="future">
       </p>
       <p>
         <label for="area">พื้นที่ที่ตรวจ</label><br>
@@ -64,6 +64,7 @@
   <script src="config.js"></script>
   <script src="auth.js"></script>
   <script src="draft.js"></script>
+  <script src="date-hint.js"></script>
   <script src="plant.js"></script>
   <script>requireLogin();</script>
   <script>
