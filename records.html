@@ -16,6 +16,27 @@
     .invbox textarea{min-height:4.2rem}
     .invbox .whyrow{border-left:4px solid var(--brand);padding-left:.7rem;margin:.4rem 0}
     .invbox .hint{color:var(--muted);font-size:.9rem;margin:.2rem 0}
+    .invbox .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+    .invbox .inv-card{background:#fff;border:1px solid var(--line,#dfe3ea);border-radius:12px;padding:.9rem 1rem 1rem;margin:.8rem 0;box-shadow:0 1px 2px rgba(20,30,60,.05)}
+    .invbox .inv-head{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.5rem}
+    .invbox .inv-head h5{margin:.1rem 0 .1rem;font-size:1.02rem}
+    .invbox .inv-num{flex:0 0 auto;width:1.9rem;height:1.9rem;border-radius:50%;background:var(--brand,#1a3a8a);color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+    .invbox .inv-field{position:relative}
+    .invbox .inv-field textarea{resize:vertical;line-height:1.5;padding:.6rem .75rem;border-radius:8px;font:inherit}
+    .invbox .inv-field textarea:focus,.invbox select:focus{outline:3px solid rgba(26,58,138,.35);outline-offset:1px}
+    .invbox .inv-count{text-align:right;font-size:.8rem;color:var(--muted,#667);margin-top:.15rem}
+    .invbox .why-chain{list-style:none;margin:.2rem 0 .4rem;padding:0;position:relative}
+    .invbox .why-row,.invbox .why-chain>li{display:grid;grid-template-columns:4.6rem 1fr;gap:.6rem;align-items:start;position:relative;padding-bottom:.55rem}
+    .invbox .why-chain>li:not(:last-child)::before{content:"";position:absolute;left:2.3rem;top:2rem;bottom:-.1rem;width:2px;background:linear-gradient(var(--brand,#1a3a8a),rgba(26,58,138,.15))}
+    .invbox .why-chain>li[hidden]{display:none}
+    .invbox .why-badge{display:inline-block;text-align:center;background:#e8eefc;color:var(--brand,#1a3a8a);font-weight:700;border-radius:999px;padding:.25rem .5rem;margin:.35rem 0 0;font-size:.9rem;position:relative;z-index:1}
+    .invbox .inv-sublabel{font-weight:600;margin:.9rem 0 .3rem}
+    .invbox .inv-card:nth-of-type(n) .inv-ro{white-space:pre-wrap;overflow-wrap:anywhere;margin:.2rem 0}
+    .invbox .inv-rc-ro{border-left:4px solid var(--brand,#1a3a8a);background:#f3f6fd;padding:.5rem .8rem;border-radius:0 8px 8px 0}
+    .invbox .chip{display:inline-block;background:#eef1f6;border:1px solid var(--line,#dfe3ea);border-radius:999px;padding:.2rem .7rem;font-size:.9rem}
+    .invbox .inv-savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:.8rem;align-items:center;background:rgba(255,255,255,.96);border-top:1px solid var(--line,#dfe3ea);padding:.65rem .2rem;margin-top:.6rem;backdrop-filter:blur(4px)}
+    .invbox .inv-dirty{color:#9a5b00;font-size:.9rem}
+    @media (max-width:560px){.invbox .why-row,.invbox .why-chain>li{grid-template-columns:1fr}.invbox .why-chain>li:not(:last-child)::before{display:none}}
     .invbox dl.ro{display:grid;grid-template-columns:minmax(8rem,12rem) 1fr;gap:.25rem .8rem;margin:.4rem 0}
     .invbox dl.ro dt{font-weight:600}.invbox dl.ro dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
     .invbox .dlist{margin:.4rem 0;padding:0;list-style:none}
@@ -1169,41 +1190,84 @@
           h("div", { class: "rowbtns" }, h("button", { type: "button", class: "btn-ok", text: "เริ่มสอบสวน",
             onclick: () => act(sb.rpc("incident_investigation_start", { p_incident: inc.id }), "เริ่มสอบสวนแล้ว") })));
       } else if (!d.can_edit) {
-        const dl = h("dl", { class: "ro" });
-        dl.append(h("dt", { text: "ปัญหาที่พบ" }), h("dd", { text: d.problem || "-" }));
-        whys.forEach((w) => dl.append(h("dt", { text: "Why " + w.step }), h("dd", { text: w.text })));
-        if (!whys.length) dl.append(h("dt", { text: "5 Why" }), h("dd", { text: "-" }));
-        dl.append(h("dt", { text: "Root cause" }), h("dd", { text: d.root_cause_code ? lkName("root_cause", d.root_cause_code) : "-" }),
-          h("dt", { text: "สรุปผลสอบสวน" }), h("dd", { text: d.conclusion || "-" }));
-        wrap.append(dl);
+        // อ่านอย่างเดียว (เคสปิดแล้ว): แสดงเป็นลำดับ ปัญหา → Why → Root cause → สรุป
+        const card = (n, title, ...kids) => h("section", { class: "inv-card" }, h("div", { class: "inv-head" }, h("span", { class: "inv-num", text: n }), h("h5", { text: title })), kids);
+        wrap.append(card("1", "ปัญหาที่พบ", h("p", { class: "inv-ro", text: d.problem || "-" })));
+        const chain = h("ol", { class: "why-chain" });
+        whys.forEach((w) => chain.append(h("li", {}, h("span", { class: "why-badge", text: "Why " + w.step }), h("span", { class: "inv-ro", text: w.text }))));
+        wrap.append(card("2", "5 Why", whys.length ? chain : h("p", { class: "inv-ro", text: "-" })));
+        wrap.append(card("3", "Root cause (สาเหตุที่แท้จริง)", h("p", { class: "inv-ro inv-rc-ro", text: d.root_cause_text || "-" }),
+          d.root_cause_code ? h("p", {}, h("span", { class: "chip", text: lkName("root_cause", d.root_cause_code) })) : null));
+        wrap.append(card("4", "สรุปผลสอบสวน", h("p", { class: "inv-ro", text: d.conclusion || "-" })));
       } else {
-        const problem = h("textarea", { id: "inv-problem", maxlength: "1000", rows: "3" }); problem.value = d.problem || "";
-        wrap.append(h("label", { for: "inv-problem", text: "ปัญหาที่พบ (Problem statement)" }), problem);
-        wrap.append(h("div", { class: "hint", text: "ถาม \"ทำไม\" ต่อเนื่องจนถึงสาเหตุที่แก้ได้ที่ระบบ/กระบวนการ ไม่จำเป็นต้องครบ 5 ชั้น แต่ต้องมีอย่างน้อย 1 ชั้นก่อนปิดเคส และกรอกเรียงลำดับ ไม่เว้นช่อง" }));
-        const wf = [];
+        // ฟอร์มสอบสวน: 4 ขั้น (ปัญหา → Why → Root cause → สรุป) เพิ่ม Why ทีละชั้น นับตัวอักษร และมีแถบบันทึกค้างล่าง
+        const dirty = h("span", { class: "inv-dirty", role: "status", "aria-live": "polite", text: "" });
+        const markDirty = () => { dirty.textContent = "มีการแก้ไขที่ยังไม่ได้บันทึก"; };
+        const withCount = (ta, max) => {
+          const c = h("div", { class: "inv-count", "aria-hidden": "true" });
+          const upd = () => { c.textContent = ta.value.length + " / " + max; ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight + 2, 360) + "px"; };
+          ta.addEventListener("input", () => { upd(); markDirty(); }); upd();
+          return h("div", { class: "inv-field" }, ta, c);
+        };
+        const mkTa = (id, max, rows, ph, val) => { const t = h("textarea", { id, maxlength: String(max), rows: String(rows), placeholder: ph || null }); t.value = val || ""; return t; };
+        const card = (n, title, sub, ...kids) => h("section", { class: "inv-card" }, h("div", { class: "inv-head" }, h("span", { class: "inv-num", text: n }),
+          h("div", {}, h("h5", { text: title }), sub ? h("div", { class: "hint", text: sub }) : null)), kids);
+
+        // 1) ปัญหา
+        const problem = mkTa("inv-problem", 1000, 3, "เช่น พนักงานลื่นล้มบริเวณทางเดินหน้าโรงอาหาร ขณะพื้นเปียก", d.problem);
+        wrap.append(card("1", "ปัญหาที่พบ (Problem statement)", "เขียนสิ่งที่เกิดขึ้นเป็นข้อเท็จจริง สั้น ชัด ไม่ระบุตัวบุคคล", h("label", { for: "inv-problem", class: "sr", text: "ปัญหาที่พบ (Problem statement)" }), withCount(problem, 1000)));
+
+        // 2) 5 Why — แสดงทีละชั้น
+        const tas = [], rows = [];
+        const chain = h("ol", { class: "why-chain" });
         for (let i = 1; i <= 5; i++) {
-          const t = h("textarea", { id: "inv-why-" + i, maxlength: "1000", rows: "2" });
-          t.value = (whys.find((w) => w.step === i) || {}).text || "";
-          wf.push(t);
-          wrap.append(h("div", { class: "whyrow" }, h("label", { for: "inv-why-" + i, text: "Why " + i + (i === 1 ? " — ทำไมจึงเกิดเหตุนี้" : " — ทำไมข้อก่อนหน้าจึงเกิด") }), t));
+          const ta = mkTa("inv-why-" + i, 1000, 2, i === 1 ? "เช่น เพราะพื้นมีน้ำขังและไม่มีป้ายเตือน" : "ทำไมข้อก่อนหน้าจึงเกิดขึ้น?", (whys.find((w) => w.step === i) || {}).text);
+          tas.push(ta);
+          const li = h("li", { class: "why-row" }, h("label", { for: "inv-why-" + i, class: "why-badge", text: "Why " + i }), withCount(ta, 1000));
+          rows.push(li); chain.append(li);
         }
+        let shown = Math.max(1, whys.length);
+        const addBtn = h("button", { type: "button", class: "secondary small", id: "inv-addwhy", onclick: () => { if (shown < 5) { shown++; refresh(); tas[shown - 1].focus(); markDirty(); } } });
+        const refresh = () => {
+          rows.forEach((li, i) => { li.hidden = i >= shown; });
+          addBtn.hidden = shown >= 5; addBtn.textContent = "+ เพิ่ม Why ชั้นที่ " + (shown + 1);
+        };
+        refresh();
+        wrap.append(card("2", "ถามซ้ำ \"ทำไม\" (5 Why)", "ถามต่อเนื่องจนถึงสาเหตุที่แก้ได้ที่ระบบ/กระบวนการ ไม่ต้องครบ 5 ชั้น แต่ต้องมีอย่างน้อย 1 ชั้นก่อนปิดเคส", chain, h("div", { class: "rowbtns" }, addBtn)));
+
+        // 3) Root cause (ข้อความ) + หมวดสาเหตุ (จัดกลุ่ม)
+        const rct = mkTa("inv-rct", 1000, 3, "สรุปสาเหตุที่แท้จริงที่ได้จากการถาม Why เช่น ไม่มีขั้นตอนตรวจสอบพื้นเปียกก่อนเริ่มกะ", d.root_cause_text);
+        const GROUPS = { MGT: "ระบบจัดการ", PRC: "ขั้นตอนงาน", HUM: "คน (Human)", EQP: "เครื่องจักร (Equipment)", MAT: "วัสดุ/สารเคมี (Material)", ENV: "สภาพแวดล้อม (Environment)", EXT: "ปัจจัยภายนอก (External)", OTH: "อื่น ๆ" };
         const rc = h("select", { id: "inv-rc" }, h("option", { value: "", text: "— ยังไม่ระบุ —" }));
         const opts = (LK.root_cause || []).slice();
         if (d.root_cause_code && !opts.some((o) => o.code === d.root_cause_code)) opts.push({ code: d.root_cause_code, name_th: lkName("root_cause", d.root_cause_code) + " (ปิดใช้งานแล้ว)" });
-        opts.forEach((o) => rc.append(h("option", { value: o.code, text: o.name_th })));
+        const byG = {}, order = [];
+        opts.forEach((o) => { const g = GROUPS[(o.code.split("_")[0] || "")] ? o.code.split("_")[0] : "_CUSTOM"; if (!byG[g]) { byG[g] = []; order.push(g); } byG[g].push(o); });
+        order.forEach((g) => {
+          const og = h("optgroup", { label: (window.I18N && I18N.t ? I18N.t(GROUPS[g] || "หมวดที่ Admin เพิ่มเอง") : (GROUPS[g] || "หมวดที่ Admin เพิ่มเอง")) });
+          byG[g].forEach((o) => { const i = o.name_th.indexOf(": "); og.append(h("option", { value: o.code, text: GROUPS[g] && i > 0 ? o.name_th.slice(i + 2) : o.name_th })); });
+          rc.append(og);
+        });
         rc.value = d.root_cause_code || "";
-        wrap.append(h("label", { for: "inv-rc", text: "Root cause (สาเหตุที่แท้จริง)" }), rc);
-        if (!opts.length) wrap.append(h("div", { class: "hint", text: "ยังไม่มีรายการ Root cause — ให้ Admin เพิ่มในหน้า \"ข้อมูลหลัก\" ก่อน" }));
-        const concl = h("textarea", { id: "inv-concl", maxlength: "2000", rows: "4" }); concl.value = d.conclusion || "";
-        wrap.append(h("label", { for: "inv-concl", text: "สรุปผลสอบสวน" }), concl);
-        wrap.append(h("div", { class: "rowbtns" }, h("button", { type: "button", text: "บันทึกการสอบสวน", onclick: () => {
-          const vals = wf.map((t) => t.value.trim());
+        rc.addEventListener("change", markDirty);
+        wrap.append(card("3", "Root cause (สาเหตุที่แท้จริง)", "ข้อสรุปจากการถาม Why — เขียนเป็นข้อความของคุณเอง",
+          h("label", { for: "inv-rct", class: "sr", text: "Root cause (สาเหตุที่แท้จริง)" }), withCount(rct, 1000),
+          h("label", { for: "inv-rc", class: "inv-sublabel", text: "หมวดสาเหตุ (ไม่บังคับ — ใช้จัดกลุ่มทำสถิติ)" }), rc,
+          opts.length ? null : h("div", { class: "hint", text: "ยังไม่มีรายการหมวดสาเหตุ — ให้ Admin เพิ่มในหน้า \"ข้อมูลหลัก\" ก่อน" })));
+
+        // 4) สรุป
+        const concl = mkTa("inv-concl", 2000, 3, "สรุปผลการสอบสวน และข้อเสนอแนะเบื้องต้น", d.conclusion);
+        wrap.append(card("4", "สรุปผลสอบสวน", null, h("label", { for: "inv-concl", class: "sr", text: "สรุปผลสอบสวน" }), withCount(concl, 2000)));
+
+        // แถบบันทึก
+        wrap.append(h("div", { class: "inv-savebar" }, h("button", { type: "button", text: "บันทึกการสอบสวน", onclick: () => {
+          const vals = tas.map((t) => t.value.trim());
           let last = -1; vals.forEach((v, i) => { if (v) last = i; });
           const arr = vals.slice(0, last + 1);
           if (arr.some((v) => !v)) { showMsg("กรอก Why ให้เรียงลำดับ ไม่เว้นช่องระหว่างชั้น", false); return; }
           act(sb.rpc("incident_investigation_save", { p_incident: inc.id, p_problem: problem.value.trim() || null,
-            p_whys: arr, p_root_cause: rc.value || null, p_conclusion: concl.value.trim() || null }), "บันทึกการสอบสวนแล้ว");
-        } })));
+            p_whys: arr, p_root_cause: rc.value || null, p_conclusion: concl.value.trim() || null, p_root_cause_text: rct.value.trim() || null }), "บันทึกการสอบสวนแล้ว");
+        } }), dirty));
         wrap.append(h("p", { class: "hint", text: "ขั้นต่อไป: เมื่อได้สาเหตุแล้ว กด \"+ สร้าง Action (CAPA) จากเคสนี้\" ด้านล่างเพื่อกำหนดมาตรการแก้ไข/ป้องกัน แล้วกด \"ปิดเคส\"" }));
       }
       if (isMgrRole() && !closed) delegationBox(wrap, inc);
