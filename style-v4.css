@@ -336,13 +336,13 @@ ol.flowsteps li.soon{opacity:.7}
 }
 
 /* ===== v4.6 Mobile v2: แถบเมนูล่าง (bottom tab bar) ทุกหน้า ≤640px — ใช้ CSS ล้วน ไม่แก้โครง DOM ===== */
-@media(max-width:640px){
+@media(max-width:900px){
   :root{--tabh:58px}
   body{padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom))}
   header nav{position:fixed;left:0;right:0;bottom:0;z-index:60;order:0;margin:0;width:100%;display:flex;flex-wrap:nowrap;justify-content:space-around;gap:0;
     background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(11,59,96,.10);padding:0 .25rem env(safe-area-inset-bottom);overflow:hidden}
   header nav a{flex:1 1 0;min-width:0;min-height:var(--tabh);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;
-    padding:.35rem .1rem;font-size:.68rem;line-height:1.15;text-align:center;border-bottom:0;border-top:3px solid transparent;white-space:normal}
+    padding:.35rem .1rem;font-size:.75rem;line-height:1.15;text-align:center;border-bottom:0;border-top:3px solid transparent;white-space:normal}
   header nav a svg.ni{width:22px;height:22px;margin:0}
   header nav a[aria-current="page"]{border-top-color:var(--brand);color:var(--brand);font-weight:700}
   header nav a[aria-current="page"]::after{display:none}
@@ -392,3 +392,21 @@ a.card:hover,.card.is-active,.taskcard:hover,.alertcard:hover{border-color:var(-
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 4px rgba(0,90,156,.15)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
+/* ===== ชุด D (2 พ.ย. 2026): ปุ่ม "เพิ่มเติม" ในแถบเมนูล่าง + แผงเมนู ===== */
+header nav button.navmore{display:none}
+#navmorepanel{display:none}
+@media(max-width:900px){
+  header nav a.navextra{display:none}
+  header nav button.navmore{display:flex;order:99;flex:1 1 0;min-width:0;min-height:var(--tabh);flex-direction:column;align-items:center;justify-content:center;gap:.15rem;
+    padding:.35rem .1rem;background:transparent;color:var(--muted);border:0;border-top:3px solid transparent;border-radius:0;box-shadow:none;font:inherit;font-size:.75rem;line-height:1.15;cursor:pointer}
+  header nav button.navmore[hidden]{display:none}
+  header nav button.navmore svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round}
+  header nav button.navmore:hover{background:transparent;color:var(--brand)}
+  header nav button.navmore.on,header nav button.navmore[aria-expanded="true"]{border-top-color:var(--brand);color:var(--brand);font-weight:700}
+  #navmorepanel{display:block;position:fixed;right:8px;bottom:calc(var(--tabh) + 8px + env(safe-area-inset-bottom));z-index:70;min-width:230px;max-width:calc(100vw - 16px);
+    background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 15px -3px rgba(11,59,96,.12),0 4px 6px -4px rgba(11,59,96,.08);padding:.4rem}
+  #navmorepanel a{display:flex;align-items:center;gap:.7rem;min-height:48px;padding:.4rem .8rem;border-radius:8px;color:var(--navy);text-decoration:none;font-size:.9375rem;font-weight:600}
+  #navmorepanel a:hover{background:var(--accent);color:var(--brand)}
+  #navmorepanel a[aria-current="page"]{color:var(--brand);background:var(--accent)}
+  #navmorepanel a svg.ni{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+}

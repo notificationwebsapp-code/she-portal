@@ -174,6 +174,25 @@
     #t-incident td small.sub{display:block;color:#555;margin-top:.15rem}
     .sr{position:absolute;left:-9999px}
     #t-incident td button{white-space:nowrap}
+    #t-incident td small.sub{font-family:var(--mono,ui-monospace,Consolas,monospace);font-variant-numeric:tabular-nums}
+    /* มือถือ/แคบ: แถวรายงานเป็นการ์ด (ไม่ต้องเลื่อนแนวนอน) — วัน-เวลา+Plant | สถานะ / ประเภท / จุดเกิดเหตุ / คำขอแก้ไข / ปุ่มเปิดดู */
+    @media(max-width:700px){
+      #t-incident,#t-incident tbody{display:block;width:100%}
+      #t-incident thead{display:none}
+      #t-incident tr{display:grid;grid-template-columns:1fr auto;gap:.3rem .6rem;padding:.8rem 1rem;border-bottom:1px solid var(--line);align-items:start}
+      #t-incident td{display:block;border:0!important;padding:0!important;background:transparent!important;min-width:0;overflow-wrap:anywhere}
+      #t-incident td:nth-child(1){grid-column:1;font-weight:700}
+      #t-incident td:nth-child(5){grid-column:2;grid-row:1;justify-self:end}
+      #t-incident td:nth-child(2){grid-column:1/-1}
+      #t-incident td:nth-child(3){grid-column:1/-1;color:var(--muted)}
+      #t-incident td:nth-child(4),#t-incident td:nth-child(7){display:none}
+      #t-incident td:nth-child(6){grid-column:1/-1}
+      #t-incident td:nth-child(6):empty{display:none}
+      #t-incident td:nth-child(8){grid-column:1/-1}
+      #t-incident td:nth-child(8) button{width:100%;min-height:48px}
+      #t-incident tr.needs-action{background:#fff8e1;box-shadow:inset 5px 0 0 #e0a100}
+      #t-incident tr.needs-action td:first-child{box-shadow:none}
+    }
     /* แถบ Flow 4 ขั้นตอน */
     ol.flow{display:flex;list-style:none;padding:0;margin:.6rem 0 1rem}
     ol.flow li.step{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.1rem;padding:0 .25rem}

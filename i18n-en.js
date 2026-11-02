@@ -1629,4 +1629,5 @@ I18N.add({
  "เปิดดูภาพเต็ม": "Open full image",
  "แสดงภาพไม่ได้": "Cannot display image",
  "ไม่มีชื่อในโปรไฟล์": "No name in profile",
+ "เพิ่มเติม": "More",
 });

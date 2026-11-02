@@ -176,8 +176,33 @@
     if(by[ADM[0]]){var a=by[ADM[0]];a.textContent="ผู้ดูแลระบบ";n.appendChild(a)}
     n.querySelectorAll("a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();
       var cur=(k===f)||(ADM.indexOf(f)>-1&&k===ADM[0]);if(cur)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
-    decorateNav();relocate();
+    decorateNav();relocate();setupMore();
     if(obs)obs.observe(document.querySelector("header"),{childList:true,subtree:true})}
+  /* มือถือ/แท็บเล็ตแคบ (<=900px): แถบเมนูล่างแสดง 4 หน้าหลัก + ปุ่ม "เพิ่มเติม" (ที่เหลือ) — ทำไม: 7 ปุ่มในแถบเดียวแคบเกินกด/อ่านไม่ได้ (WCAG 2.2 SC 2.5.8)
+     ปุ่ม+แผงอยู่นอก nav/header ที่ observer เฝ้าอยู่ไม่ได้ (แผงต่อท้าย body) เพื่อไม่ให้ normalizeNav ย้ายลิงก์ผิด */
+  var MORE_MAIN=["index.html","incident.html","records.html","capa.html"];
+  function closeMore(){var p=document.getElementById("navmorepanel");if(p)p.remove();var b=document.getElementById("navmore");if(b)b.setAttribute("aria-expanded","false")}
+  function openMore(){closeMore();var n=document.querySelector("header nav");if(!n)return;
+    var p=el("div");p.id="navmorepanel";p.setAttribute("role","menu");
+    n.querySelectorAll("a.navextra").forEach(function(a){var l=el("a",null,a.textContent);l.href=a.getAttribute("href");l.setAttribute("role","menuitem");
+      if(a.getAttribute("aria-current")==="page")l.setAttribute("aria-current","page");
+      var sv=a.querySelector("svg.ni");if(sv)l.insertBefore(sv.cloneNode(true),l.firstChild);p.appendChild(l)});
+    document.body.appendChild(p);var b=document.getElementById("navmore");if(b)b.setAttribute("aria-expanded","true");
+    var first=p.querySelector("a");if(first)first.focus()}
+  function setupMore(){var n=document.querySelector("header nav");if(!n)return;var cur=false,cnt=0;
+    n.querySelectorAll("a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();
+      var ex=(k!==""&&k!=="#"&&k!=="login.html"&&k!==ADM[0]&&MORE_MAIN.indexOf(k)<0);a.classList.toggle("navextra",ex);
+      if(ex){cnt++;if(a.getAttribute("aria-current")==="page")cur=true}});
+    var b=document.getElementById("navmore");
+    if(!b){b=el("button","navmore");b.id="navmore";b.type="button";b.setAttribute("aria-haspopup","menu");b.setAttribute("aria-expanded","false");
+      var sv=document.createElementNS(NS,"svg");sv.setAttribute("class","ni");sv.setAttribute("viewBox","0 0 24 24");sv.setAttribute("aria-hidden","true");
+      var pa=document.createElementNS(NS,"path");pa.setAttribute("d","M5 12h.01M12 12h.01M19 12h.01");sv.appendChild(pa);b.appendChild(sv);b.appendChild(el("span",null,"เพิ่มเติม"));
+      b.addEventListener("click",function(e){e.stopPropagation();if(document.getElementById("navmorepanel"))closeMore();else openMore()});
+      n.appendChild(b)}
+    b.hidden=(cnt===0);b.classList.toggle("on",cur)}
+  document.addEventListener("click",function(e){var p=document.getElementById("navmorepanel");if(p&&!p.contains(e.target))closeMore()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"){var p=document.getElementById("navmorepanel");if(p){closeMore();var b=document.getElementById("navmore");if(b)b.focus()}}});
+  window.addEventListener("resize",function(){if(window.innerWidth>900)closeMore()});
   /* เมนู Executive Dashboard: แสดงเฉพาะผู้มีสิทธิ์ dashboard.view (ซ่อนหน้าจอเท่านั้น สิทธิ์จริงบังคับที่ฐานข้อมูล) */
   (function(){var tries=0;(function wait(){if(typeof sb==="undefined"||!sb.auth){if(++tries<60)setTimeout(wait,100);return}
     sb.auth.getSession().then(function(r){if(!r||!r.data||!r.data.session){return}capaOn=true;normalizeNav();
