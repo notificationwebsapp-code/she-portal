@@ -205,6 +205,42 @@
     details[open]>summary::before{transform:rotate(90deg)}
     details.editdet>div,details.histdet>div{padding:0 1rem 1rem}
     .steps123{margin:.2rem 0 .6rem;padding-left:1.3rem}
+    /* ===== รายละเอียดรายงาน: การ์ดเกิดอะไรขึ้น + ภาพ / การ์ดแก้ไข (UX/UI ใหม่) ===== */
+    #detail .evgrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start;margin:.8rem 0}
+    #detail .evgrid .group{margin:0}
+    #detail .evgrid dl{grid-template-columns:minmax(7rem,10rem) 1fr}
+    .evphoto{background:#fff;border:1px solid #CBD5E1;border-top:4px solid #00A3AD;border-radius:12px;padding:16px}
+    .evphoto-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+    .evphoto-h .ic{width:40px;height:40px;padding:8px;border-radius:8px;background:#E6F7F8;color:#0B3B60;flex:none}
+    .evphoto-h h4{margin:0;color:#0B3B60;font-size:1.02rem}
+    .evphoto-h small{color:#414750;display:block;margin-top:2px}
+    details.editcard{border:1px solid #CBD5E1;border-left:6px solid #005A9C;border-radius:12px;background:#fff;margin:1rem 0}
+    details.editcard>summary{padding:14px 16px;gap:14px;min-height:64px;display:flex;align-items:center;cursor:pointer;list-style:none;color:#0B3B60}
+    details.editcard>summary::-webkit-details-marker{display:none}
+    details.editcard>summary::before{content:none}
+    details.editcard[open]>summary{border-bottom:1px solid #E2E8F0;background:#F4F8FC;border-radius:6px 10px 0 0}
+    .ec-ic{display:inline-flex;width:44px;height:44px;border-radius:10px;background:#E8F1F9;color:#005A9C;align-items:center;justify-content:center;flex:none}
+    .ec-ic .ic{width:22px;height:22px}
+    .ec-t{display:flex;flex-direction:column;flex:1;min-width:0}
+    .ec-t strong{font-size:1.05rem}.ec-t small{color:#414750;margin-top:2px}
+    .ec-cta{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1.5px solid #005A9C;border-radius:8px;color:#005A9C;font-weight:700;background:#fff;white-space:nowrap}
+    details.editcard>summary:hover .ec-cta{background:#E8F1F9}
+    details.editcard>summary:focus-visible{outline:2px solid #005A9C;outline-offset:2px}
+    .ec-cta .on-open{display:none}details.editcard[open] .ec-cta .on-open{display:inline}details.editcard[open] .ec-cta .on-closed{display:none}
+    details.editcard>div{padding:16px}
+    .editgrid .steps123{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0;margin:0 0 16px}
+    .steps123 li{display:flex;gap:10px;align-items:flex-start;background:#F4F8FC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;font-size:.92rem}
+    .steps123 li b{flex:none;width:24px;height:24px;border-radius:50%;background:#005A9C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem}
+    .editgrid .ec-h{margin:20px 0 8px;padding-bottom:6px;border-bottom:2px solid #E2E8F0;color:#0B3B60}
+    .fldgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px}
+    .editgrid input[type=time]{width:100%;box-sizing:border-box}
+    .fldgrid .fld.wide{grid-column:1/-1}
+    .ec-sub{margin:14px 0 2px;padding:6px 10px;background:#E8F1F9;border-left:4px solid #005A9C;color:#0B3B60;font-size:.95rem;border-radius:0 6px 6px 0}
+    .personedit{background:#FAFCFE;border:1px solid #CBD5E1;border-radius:10px;padding:12px 14px}
+    .editfoot{margin-top:20px;background:#F4F8FC;border:1px solid #CBD5E1;border-radius:12px;padding:4px 16px 16px}
+    .editfoot .previewbox{border:1.5px dashed #005A9C;background:#fff}
+    @media (max-width:900px){#detail .evgrid{grid-template-columns:1fr}.fldgrid{grid-template-columns:1fr}.editgrid .steps123{grid-template-columns:1fr}.ec-cta{display:none}}
+
     .previewbox{background:#fff;border:2px dashed var(--brand);border-radius:8px;padding:.5rem .9rem;margin:1rem 0}
     .previewbox .t{font-weight:700;color:var(--brand)}
     dialog#expdlg{width:min(860px,96vw);max-height:92vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:0 1.2rem}
@@ -1190,7 +1226,11 @@
         canAp ? "มีคำขอแก้ไข " + pend.length + " รายการรอคุณพิจารณา (ดูด้านล่าง)" : "คุณมีคำขอแก้ไขที่รอ SHE พิจารณาอยู่ ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" }));
 
       // ข้อมูลปัจจุบัน แบ่งกลุ่มให้อ่านง่าย
-      box.append(groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"]));
+      const evGrid = h("div", { class: "evgrid" }, groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"]));
+      const photoBox = h("div", { class: "attbox" });
+      evGrid.append(h("aside", { class: "evphoto", "aria-label": "ภาพที่เกิดเหตุและไฟล์หลักฐาน" },
+        h("div", { class: "evphoto-h" }, ico("image"), h("div", {}, h("h4", { text: "ภาพที่เกิดเหตุ / ไฟล์หลักฐาน" }), h("small", { text: "แนบรูป เอกสาร หรือไฟล์ที่เกี่ยวกับเหตุการณ์นี้" }))), photoBox));
+      box.append(evGrid);
       const pg = h("div", { class: "group" }, h("h4", { text: "ผู้เกี่ยวข้อง" }));
       if (!state.persons.length) pg.append(h("p", { text: inc.persons_status === "none_confirmed" ? "ผู้รายงานยืนยันแล้วว่า ไม่มีผู้เกี่ยวข้อง" : "ไม่มีข้อมูลผู้เกี่ยวข้อง" + (inc.persons_status === "has_persons" ? " (ผู้รายงานระบุว่ามี แต่ยังไม่มีข้อมูล — ควรตรวจสอบ)" : "") }));
       state.persons.forEach((p, i) => pg.append(h("p", {}, h("strong", { text: "คนที่ " + (i + 1) + ": " }),
@@ -1207,8 +1247,7 @@
       investigationPanel(invBox, inc, deleted, closed);
 
       // B10b-2: ไฟล์แนบ (สิทธิ์จริงตัดสินที่ฐานข้อมูล — หน้านี้ซ่อน/แสดงปุ่มตามสิทธิ์เท่านั้น)
-      box.append(h("h4", { text: "ไฟล์แนบ (รูปที่เกิดเหตุ / หลักฐาน)" }));
-      const attBox = h("div"); box.append(attBox);
+      const attBox = photoBox;
       Attach.panel(attBox, { entityType: "incident", entityId: inc.id, canUpload: !deleted && (reporter || sheLike), closed: closed && !deleted });
       if (!deleted && (sheLike || hasP("capa.create"))) {
         box.append(h("p", {}, h("a", { href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") }, "+ สร้าง Action (CAPA) จากเคสนี้")));
@@ -1225,8 +1264,11 @@
       else if (closed) { if (canRe) box.append(reopenForm()); }
       else if (mgr || reporter || MYPERMS.includes("incident.person_add")) {
         const addOnly = !mgr && !reporter;
-        const det = h("details", { class: "editdet" },
-          h("summary", { text: addOnly ? "เพิ่มผู้เกี่ยวข้อง (ต้องระบุเหตุผล)" : mgr ? "แก้ไขข้อมูลรายงาน (ต้องระบุเหตุผล)" : "ข้อมูลไม่ถูกต้อง? ขอแก้ไข/เพิ่มผู้เกี่ยวข้องได้ที่นี่" }),
+        const ttl = addOnly ? "เพิ่มผู้เกี่ยวข้อง" : "แก้ไขข้อมูลรายงาน";
+        const sub = mgr ? "ต้องระบุเหตุผลทุกครั้ง · ข้อมูลเปลี่ยนทันทีและมีประวัติเก็บไว้" : "ต้องระบุเหตุผลทุกครั้ง · ส่งให้ SHE/Admin พิจารณาก่อนมีผล";
+        const det = h("details", { class: "editdet editcard" },
+          h("summary", {}, h("span", { class: "ec-ic" }, ico("pencil")), h("span", { class: "ec-t" }, h("strong", { text: ttl }), h("small", { text: sub })),
+            h("span", { class: "ec-cta" }, h("span", { class: "on-closed", text: "เปิดฟอร์มแก้ไข" }), h("span", { class: "on-open", text: "ซ่อนฟอร์ม" }))),
           h("div", {}, editForm(mgr, addOnly, sheLike)));
         if (pend.length && !mgr) det.open = false;
         box.append(det);
@@ -1252,7 +1294,7 @@
     // ข้อความจากผู้ใช้ทั้งหมดแสดงด้วย textContent (OWASP A03)
     // ---- B23 UI: ไอคอน SVG ชุดเดียว (ไม่ใช้ emoji) + การ์ดขั้นตอน ----
     const ICO = { check: "M5 13l4 4L19 7", checks: "M2 13l4 4 8-9M10 16l1.5 1.5L22 7", alert: "M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z", plus: "M12 5v14M5 12h14", x: "M6 6l12 12M18 6L6 18",
-      trash: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3", circle: "M12 21a9 9 0 100-18 9 9 0 000 18z", link: "M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1" };
+      image: "M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zM8.5 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 16l-5-5-8 8", pencil: "M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4", trash: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3", circle: "M12 21a9 9 0 100-18 9 9 0 000 18z", link: "M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1" };
     function ico(name) {
       const ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"), p = document.createElementNS(ns, "path");
       s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("class", "ic"); s.setAttribute("aria-hidden", "true"); s.setAttribute("fill", "none");
@@ -1518,17 +1560,24 @@
     function editForm(mgr, addOnly, sheLike) {
       const inc = state.inc;
       const wrap = h("div", { class: "editgrid" });
-      wrap.append(h("p", {}, h("strong", { text: "วิธีใช้ (3 ขั้นตอน)" })),
-        h("ol", { class: "steps123" },
-          h("li", { text: "แก้เฉพาะช่องที่ต้องการเปลี่ยน (ช่องที่แก้จะมีกรอบสีน้ำเงิน)" }),
-          h("li", { text: "ตรวจ \"สรุปสิ่งที่จะเปลี่ยน\" และพิมพ์เหตุผล" }),
-          h("li", { text: mgr ? "กด \"บันทึกการแก้ไข\" ข้อมูลเปลี่ยนทันทีและมีประวัติเก็บไว้" : "กด \"ส่งคำขอแก้ไข\" ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" })));
+      wrap.append(h("ol", { class: "steps123" },
+          h("li", {}, h("b", { text: "1" }), h("span", { text: "แก้เฉพาะช่องที่ต้องการ (ช่องที่แก้จะมีกรอบสีน้ำเงิน)" })),
+          h("li", {}, h("b", { text: "2" }), h("span", { text: "ตรวจ \"สรุปสิ่งที่จะเปลี่ยน\" และพิมพ์เหตุผล" })),
+          h("li", {}, h("b", { text: "3" }), h("span", { text: mgr ? "กด \"บันทึกการแก้ไข\" ข้อมูลเปลี่ยนทันทีและมีประวัติเก็บไว้" : "กด \"ส่งคำขอแก้ไข\" ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" }))));
       const rf = (addOnly ? [] : REPORT_FIELDS.filter((f) => sheLike || !f.mgr)).map((f) => ({ f, i: makeInput(f, inc[f.k], "e-", inc.other_notes) }));
-      rf.forEach(({ i }) => wrap.append(i.label, i.control, i.hint, i.extra));
+      const fg = h("div", { class: "fldgrid" });
+      const CLSK = ["high_hazard_code", "system_failure_code", "root_cause_code", "is_recordable", "is_serious_potential"]; let clsHead = false;
+      rf.forEach(({ f, i }) => {
+        if (!clsHead && CLSK.includes(f.k)) { clsHead = true; fg.append(h("h5", { class: "fld wide ec-sub", text: "การจัดประเภทโดย SHE" })); }
+        fg.append(h("div", { class: "fld" + (i.control.tagName === "TEXTAREA" ? " wide" : "") }, i.label, i.control, i.hint, i.extra));
+      });
+      if (rf.length) wrap.append(h("h4", { class: "ec-h", text: "ข้อมูลเหตุการณ์" }), fg);
       const pf = (addOnly ? [] : state.persons).map((p, n) => {
         const box = h("div", { class: "personedit" }, h("strong", { text: "ผู้เกี่ยวข้องคนที่ " + (n + 1) }));
         const items = PERSON_FIELDS.map((f) => ({ f, i: makeInput(f, p[f.k], "p" + n + "-", p.other_notes) }));
-        items.forEach(({ i }) => box.append(i.label, i.control, i.hint, i.extra));
+        const pg2 = h("div", { class: "fldgrid" });
+        items.forEach(({ i }) => pg2.append(h("div", { class: "fld" + (i.control.tagName === "TEXTAREA" ? " wide" : "") }, i.label, i.control, i.hint, i.extra)));
+        box.append(pg2);
         wrap.append(box); return { p, items };
       });
 
@@ -1552,7 +1601,7 @@
         const first = items.find((x) => x.f.k === "full_name"); if (first) first.i.control.focus();
       });
       function renumber() { adds.forEach((a, n) => { a.title.textContent = "ผู้เกี่ยวข้องใหม่ คนที่ " + (n + 1); }); }
-      wrap.append(h("h4", { text: "เพิ่มผู้เกี่ยวข้อง" }), addBox, h("div", { class: "rowbtns" }, addBtn), addHint);
+      wrap.append(h("h4", { class: "ec-h", text: "เพิ่มผู้เกี่ยวข้อง" }), addBox, h("div", { class: "rowbtns" }, addBtn), addHint);
       syncAddBtn();
 
       const preview = h("div", { class: "previewbox", "aria-live": "polite" });
@@ -1615,8 +1664,9 @@
       }
       wrap.addEventListener("input", refresh); wrap.addEventListener("change", refresh);
 
-      wrap.append(preview, h("label", { for: "e-reason", text: "เหตุผลที่แก้ไข * (อย่างน้อย 10 ตัวอักษร)" }), reason,
+      const foot = h("div", { class: "editfoot" }, h("h4", { class: "ec-h", text: "ยืนยันการแก้ไข" }), preview, h("label", { for: "e-reason", text: "เหตุผลที่แก้ไข * (อย่างน้อย 10 ตัวอักษร)" }), reason,
         h("small", { class: "hint", id: "e-reason-help", text: "บอกสั้น ๆ ว่าทำไมต้องแก้ เพื่อให้ผู้ตรวจสอบเข้าใจ" }));
+      wrap.append(foot);
 
       const btn = h("button", { type: "button", class: "btn-ok", text: mgr ? "บันทึกการแก้ไข" : "ส่งคำขอแก้ไข" });
       btn.addEventListener("click", () => {
@@ -1630,7 +1680,7 @@
         if (isDirect(changes)) act(sb.rpc("edit_incident", { inc: inc.id, changes, reason: rs }), "บันทึกการแก้ไขเรียบร้อย");
         else act(sb.rpc("request_incident_edit", { inc: inc.id, changes, reason: rs }), "ส่งคำขอแก้ไขเรียบร้อย รอ SHE/Admin พิจารณา");
       });
-      wrap.append(h("div", { class: "rowbtns" }, btn));
+      foot.append(h("div", { class: "rowbtns" }, btn));
       refresh();
       return wrap;
     }
