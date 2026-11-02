@@ -16,11 +16,54 @@
     .invbox textarea{min-height:4.2rem}
     .invbox .whyrow{border-left:4px solid var(--brand);padding-left:.7rem;margin:.4rem 0}
     .invbox .hint{color:var(--muted);font-size:.9rem;margin:.2rem 0}
+    /* ---- B23 UI v3 (SHE Portal Design System: border คม ไม่ใช้ shadow ฟุ้ง, semantic color + icon + ข้อความ) ---- */
+    .invbox{--ib-primary:#005A9C;--ib-navy:#0B3B60;--ib-teal:#00A3AD;--ib-canvas:#F4F6F9;--ib-bd:#E2E8F0;--ib-bd2:#CBD5E1;--ib-ink:#0B1C30;--ib-muted:#414750;--ib-safe:#16A34A;--ib-warn:#D97706;--ib-danger:#DC2626}
+    .invbox .ic{width:16px;height:16px;flex:0 0 auto;vertical-align:-3px}
+    .invbox .inv-card{background:#fff;border:1px solid var(--ib-bd2);border-radius:16px;padding:24px;margin:24px 0}
+    .invbox .inv-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+    .invbox .inv-ttl{flex:1 1 auto;min-width:0}
+    .invbox .inv-kick{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--ib-muted);line-height:1.4}
+    .invbox .inv-head h5{margin:2px 0 4px;font-size:1.1rem;line-height:1.5;color:var(--ib-ink)}
+    .invbox .inv-num{flex:0 0 auto;width:40px;height:40px;border-radius:50%;background:var(--ib-canvas);border:2px solid var(--ib-navy);color:var(--ib-navy);font-weight:700;font-size:1.05rem;display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+    .invbox .pill{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:4px 12px;border-radius:8px;border:1px solid var(--ib-bd2);background:#fff;color:var(--ib-muted);font-size:12px;font-weight:700;white-space:nowrap}
+    .invbox .pill.ok{background:#F0FDF4;border-color:#BBF7D0;color:#166534}
+    .invbox .pill.idle{background:#FFFBEB;border-color:#FDE68A;color:#B45309}
+    .invbox .pill.new{background:var(--ib-canvas);border-style:dashed}
+    /* ขั้น 1: ข้อเท็จจริง — การ์ดพื้นขาวเรียบ */
+    .invbox .v-plain{background:#fff}
+    /* ขั้น 2: ห่วงโซ่ Why — พื้นเทาอ่อน ช่องกรอกสีขาวเด่นขึ้นมา */
+    .invbox .v-chain{background:var(--ib-canvas)}
+    .invbox .v-chain textarea{background:#fff}
+    /* ขั้น 3: Root cause = หัวใจของหน้า — แถบหัวสี Navy ตัดจากการ์ดอื่นชัดเจน */
+    .invbox .v-key{border:2px solid var(--ib-navy);padding-top:0;overflow:hidden}
+    .invbox .v-key>.inv-head{background:var(--ib-navy);margin:0 -24px 24px;padding:16px 24px}
+    .invbox .v-key .inv-kick,.invbox .v-key .hint{color:#C9D8E6}
+    .invbox .v-key .inv-head h5{color:#fff}
+    .invbox .v-key .inv-num{background:#fff;border-color:#fff}
+    .invbox .v-key .pill{border-color:transparent}
+    /* ขั้น 4: สรุป — แถบซ้ายสี Teal (accent เดียวของระบบ) */
+    .invbox .v-end{border-left:6px solid var(--ib-teal)}
+    .invbox .inv-field textarea,.invbox select{border:1px solid var(--ib-bd2);border-radius:8px}
+    .invbox select{min-height:48px;padding:0 12px;background:#fff}
+    .invbox button,.invbox .btn-link{min-height:48px;display:inline-flex;align-items:center;gap:8px;border-radius:8px;font-weight:600}
+    .invbox .chip-x{min-height:32px;border:0;background:transparent;color:#991B1B;padding:0 8px;font-weight:600;cursor:pointer}
+    .invbox .btn-link{background:var(--ib-primary);color:#fff;padding:0 16px;text-decoration:none;border:1.5px solid transparent}
+    .invbox .btn-link:hover{background:var(--ib-navy)}
+    .invbox button:focus-visible,.invbox .btn-link:focus-visible,.invbox select:focus-visible,.invbox textarea:focus-visible{outline:2px solid var(--ib-primary);outline-offset:2px;box-shadow:0 0 0 4px rgba(0,90,156,.15)}
+    .invbox .rc-item{background:#fff;border:1px solid var(--ib-bd2);border-left-width:6px;border-radius:12px;padding:16px}
+    .invbox .rc-item.s-ok{border-left-color:var(--ib-safe)}.invbox .rc-item.s-need{border-left-color:var(--ib-warn)}.invbox .rc-item.s-new{border-left-color:var(--ib-bd2)}
+    .invbox .rc-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .invbox .rc-warn{display:flex;gap:8px;align-items:center;color:#B45309;font-weight:600;font-size:.92rem}
+    .invbox .warnbox{display:flex;gap:8px;align-items:flex-start;border-radius:8px}
+    .invbox .warnbox .ic{margin-top:4px;color:#B45309}
+    /* กล่องสรุปความพร้อมปิดเคส: สีตามผล (เขียว=พร้อม / เหลือง=ยังไม่พร้อม) + icon + ข้อความ */
+    .invbox .inv-gate{border:1px solid var(--ib-bd2);border-left:6px solid var(--ib-warn);border-radius:12px;padding:16px 24px;margin:24px 0;background:#fff}
+    .invbox .inv-gate.is-ok{border-left-color:var(--ib-safe)}
+    .invbox .inv-gate h5{display:flex;gap:8px;align-items:center;margin:0 0 8px;font-size:1.02rem}
+    .invbox .inv-gate.is-ok h5{color:#166534}.invbox .inv-gate.is-block h5{color:#B45309}
+    .invbox .inv-gate ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+    .invbox .inv-gate li{display:flex;gap:12px;align-items:center}
     .invbox .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-    .invbox .inv-card{background:#fff;border:1px solid var(--line,#dfe3ea);border-radius:12px;padding:.9rem 1rem 1rem;margin:.8rem 0;box-shadow:0 1px 2px rgba(20,30,60,.05)}
-    .invbox .inv-head{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.5rem}
-    .invbox .inv-head h5{margin:.1rem 0 .1rem;font-size:1.02rem}
-    .invbox .inv-num{flex:0 0 auto;width:1.9rem;height:1.9rem;border-radius:50%;background:var(--brand,#1a3a8a);color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
     .invbox .inv-field{position:relative}
     .invbox .inv-field textarea{resize:vertical;line-height:1.5;padding:.6rem .75rem;border-radius:8px;font:inherit}
     .invbox .inv-field textarea:focus,.invbox select:focus{outline:3px solid rgba(26,58,138,.35);outline-offset:1px}
@@ -37,24 +80,13 @@
     .invbox .inv-savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:.8rem;align-items:center;background:rgba(255,255,255,.96);border-top:1px solid var(--line,#dfe3ea);padding:.65rem .2rem;margin-top:.6rem;backdrop-filter:blur(4px)}
     .invbox .inv-dirty{color:#9a5b00;font-size:.9rem}
     .invbox .rc-list{list-style:none;margin:.3rem 0;padding:0;display:grid;gap:.8rem}
-    .invbox .rc-item{border:1px solid var(--line,#dfe3ea);border-left:5px solid var(--brand,#1a3a8a);border-radius:10px;padding:.7rem .9rem .8rem;background:#fbfcff}
     .invbox .rc-head{display:flex;gap:.6rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
     .invbox .rc-no{font-weight:700;color:var(--brand,#1a3a8a)}
     .invbox .rc-capas{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.4rem .5rem;align-items:center}
     .invbox .rc-capas .rowbtns{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;width:100%}
     .invbox .rc-capas .chip.off{opacity:.55;text-decoration:line-through}
     .invbox .rc-capas p{margin:.2rem 0;width:100%}
-    .invbox .rc-warn{color:#9a5b00;font-weight:600;font-size:.92rem}
-    .invbox .chip-x{border:0;background:transparent;color:#8a1010;cursor:pointer;font:inherit;font-size:.82rem;padding:.1rem .3rem;min-height:24px}
-    .invbox .btn-link{display:inline-block;background:var(--brand,#1a3a8a);color:#fff;border-radius:8px;padding:.45rem .8rem;text-decoration:none;font-weight:600;min-height:24px}
-    .invbox .btn-link:hover,.invbox .btn-link:focus-visible{filter:brightness(1.12)}
-    .invbox .inv-ready{border:1px dashed var(--brand,#1a3a8a);border-radius:10px;padding:.6rem .9rem;margin:.8rem 0;background:#f7f9ff}
-    .invbox .inv-ready h5{margin:.1rem 0 .3rem}
-    .invbox .inv-ready ul{list-style:none;margin:0;padding:0}
-    .invbox .inv-ready li{display:flex;gap:.5rem;align-items:center;padding:.1rem 0}
-    .invbox .inv-ready li.ok{color:#1b6b3a}.invbox .inv-ready li.todo{color:#6b4200}
-    .invbox .inv-ready .mark{font-weight:700;width:1.2rem;text-align:center}
-    @media (max-width:560px){.invbox .why-row,.invbox .why-chain>li{grid-template-columns:1fr}.invbox .why-chain>li:not(:last-child)::before{display:none}}
+    @media (max-width:560px){.invbox .inv-card{padding:16px}.invbox .v-key>.inv-head{margin:0 -16px 16px;padding:12px 16px}.invbox .inv-head{flex-wrap:wrap}.invbox .why-row,.invbox .why-chain>li{grid-template-columns:1fr}.invbox .why-chain>li:not(:last-child)::before{display:none}}
     .invbox dl.ro{display:grid;grid-template-columns:minmax(8rem,12rem) 1fr;gap:.25rem .8rem;margin:.4rem 0}
     .invbox dl.ro dt{font-weight:600}.invbox dl.ro dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
     .invbox .dlist{margin:.4rem 0;padding:0;list-style:none}
@@ -1201,14 +1233,41 @@
     // ---------- B23: การสอบสวน (5 Why + Root cause + สรุป) และการมอบหมายสิทธิ์สอบสวน ----------
     // สิทธิ์จริงตัดสินที่ฐานข้อมูล (RPC ตรวจสิทธิ์ทุกครั้ง) — หน้านี้เพียงซ่อน/แสดงกล่องตามสิทธิ์ (OWASP A01)
     // ข้อความจากผู้ใช้ทั้งหมดแสดงด้วย textContent (OWASP A03)
+    // ---- B23 UI: ไอคอน SVG ชุดเดียว (ไม่ใช้ emoji) + การ์ดขั้นตอน ----
+    const ICO = { check: "M5 13l4 4L19 7", alert: "M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z", plus: "M12 5v14M5 12h14", x: "M6 6l12 12M18 6L6 18",
+      trash: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3", circle: "M12 21a9 9 0 100-18 9 9 0 000 18z", link: "M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1" };
+    function ico(name) {
+      const ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"), p = document.createElementNS(ns, "path");
+      s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("class", "ic"); s.setAttribute("aria-hidden", "true"); s.setAttribute("fill", "none");
+      s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "2"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
+      p.setAttribute("d", ICO[name] || ICO.circle); s.append(p); return s;
+    }
+    const pill = (tone, icon, text) => h("span", { class: "pill " + tone }, ico(icon), h("span", { text }));
+    // ป้ายสถานะของแต่ละขั้น (ไอคอน + ข้อความเสมอ — ไม่พึ่งสีอย่างเดียว) อิงข้อมูลที่บันทึกแล้ว
+    function invStat(d, whys, rcs) {
+      const allCapa = rcs.length > 0 && rcs.every((c) => (c.capas || []).some((a) => a.status !== "cancelled"));
+      return {
+        1: d.problem ? pill("ok", "check", "บันทึกแล้ว") : pill("idle", "circle", "ยังไม่กรอก"),
+        2: whys.length ? pill("ok", "check", whys.length + " ชั้น") : pill("idle", "circle", "ยังไม่กรอก"),
+        3: !rcs.length ? pill("idle", "circle", "ยังไม่กรอก") : allCapa ? pill("ok", "check", rcs.length + " รายการ") : pill("idle", "alert", rcs.length + " รายการ"),
+        4: d.conclusion ? pill("ok", "check", "บันทึกแล้ว") : pill("new", "circle", "ไม่บังคับ") };
+    }
+    const VARIANT = { 1: "v-plain", 2: "v-chain", 3: "v-key", 4: "v-end" };
+    function stepCard(n, title, sub, badge, kids) {
+      return h("section", { class: "inv-card " + VARIANT[n] },
+        h("header", { class: "inv-head" }, h("span", { class: "inv-num", text: String(n), "aria-hidden": "true" }),
+          h("div", { class: "inv-ttl" }, h("div", { class: "inv-kick", text: "ขั้นที่ " + n + " จาก 4" }), h("h5", { text: title }), sub ? h("div", { class: "hint", text: sub }) : null), badge),
+        h("div", { class: "inv-body" }, kids));
+    }
     async function investigationPanel(wrap, inc, deleted, closed) {
       if (deleted || !(isMgrRole() || hasP("incident.investigate"))) return;
       const r = await sb.rpc("incident_investigation_get", { p_incident: inc.id });
       if (r.error || !r.data) return;                       // ไม่มีสิทธิ์/ยังไม่ได้รัน SQL B23 -> ไม่แสดงกล่อง
       const d = r.data, whys = Array.isArray(d.whys) ? d.whys : [];
       if (!wrap.isConnected) return;                        // แผงถูกวาดใหม่ระหว่างรอ
+      const STAT = invStat(d, whys, Array.isArray(d.root_causes) ? d.root_causes : []);
       wrap.append(h("h4", { text: "การสอบสวน (Investigation)" }),
-        h("div", { class: "warnbox", role: "note", text: "⚠️ ห้ามใส่ชื่อ รหัสพนักงาน หรือข้อมูลสุขภาพของผู้บาดเจ็บในช่องนี้ ให้เขียนเฉพาะข้อเท็จจริงของเหตุการณ์/กระบวนการ (PDPA, ISO/IEC 27001:2022 A.5.34) — อ้างอิงการสอบสวนตาม ISO 45001:2018 ข้อ 10.2" }));
+        h("div", { class: "warnbox", role: "note" }, ico("alert"), h("span", { text: "ห้ามใส่ชื่อ รหัสพนักงาน หรือข้อมูลสุขภาพของผู้บาดเจ็บในช่องนี้ ให้เขียนเฉพาะข้อเท็จจริงของเหตุการณ์/กระบวนการ (PDPA, ISO/IEC 27001:2022 A.5.34) — อ้างอิงการสอบสวนตาม ISO 45001:2018 ข้อ 10.2" })));
 
       if (!d.started) {
         wrap.append(h("p", { text: "เคสนี้ยังไม่ได้เริ่มสอบสวน กดเมื่อ SHE ตรวจรายงานเบื้องต้นเสร็จและต้องการหาสาเหตุ (เคสเล็ก เช่น Near miss ปิดเคสได้เลยโดยไม่ต้องสอบสวน)" }),
@@ -1216,14 +1275,14 @@
             onclick: () => act(sb.rpc("incident_investigation_start", { p_incident: inc.id }), "เริ่มสอบสวนแล้ว") })));
       } else if (!d.can_edit) {
         // อ่านอย่างเดียว (เคสปิดแล้ว): แสดงเป็นลำดับ ปัญหา → Why → Root cause → สรุป
-        const card = (n, title, ...kids) => h("section", { class: "inv-card" }, h("div", { class: "inv-head" }, h("span", { class: "inv-num", text: n }), h("h5", { text: title })), kids);
+        const card = (n, title, ...kids) => stepCard(Number(n), title, null, STAT[n], kids);
         wrap.append(card("1", "ปัญหาที่พบ", h("p", { class: "inv-ro", text: d.problem || "-" })));
         const chain = h("ol", { class: "why-chain" });
         whys.forEach((w) => chain.append(h("li", {}, h("span", { class: "why-badge", text: "Why " + w.step }), h("span", { class: "inv-ro", text: w.text }))));
         wrap.append(card("2", "5 Why", whys.length ? chain : h("p", { class: "inv-ro", text: "-" })));
         const rcsD = Array.isArray(d.root_causes) ? d.root_causes : [];
         const rcRo = h("ol", { class: "rc-list" });
-        rcsD.forEach((c, n) => rcRo.append(h("li", { class: "rc-item" },
+        rcsD.forEach((c, n) => rcRo.append(h("li", { class: "rc-item " + ((c.capas || []).some((a) => a.status !== "cancelled") ? "s-ok" : "s-need") },
           h("div", { class: "rc-head" }, h("span", { class: "rc-no", text: "Root cause " + (n + 1) }), h("span", { class: "chip", text: lkName("root_cause", c.category) })),
           h("p", { class: "inv-ro inv-rc-ro", text: c.text }),
           h("div", { class: "rc-capas" }, (c.capas || []).length ? c.capas.map((a) => h("span", { class: "chip" + (a.status === "cancelled" ? " off" : "") }, h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }))) : h("span", { class: "hint", text: "ไม่มี Action" })))));
@@ -1240,8 +1299,7 @@
           return h("div", { class: "inv-field" }, ta, c);
         };
         const mkTa = (id, max, rows, ph, val) => { const t = h("textarea", { id, maxlength: String(max), rows: String(rows), placeholder: ph || null }); t.value = val || ""; return t; };
-        const card = (n, title, sub, ...kids) => h("section", { class: "inv-card" }, h("div", { class: "inv-head" }, h("span", { class: "inv-num", text: n }),
-          h("div", {}, h("h5", { text: title }), sub ? h("div", { class: "hint", text: sub }) : null)), kids);
+        const card = (n, title, sub, ...kids) => stepCard(Number(n), title, sub, STAT[n], kids);
 
         // 1) ปัญหา
         const problem = mkTa("inv-problem", 1000, 3, "เช่น พนักงานลื่นล้มบริเวณทางเดินหน้าโรงอาหาร ขณะพื้นเปียก", d.problem);
@@ -1257,10 +1315,11 @@
           rows.push(li); chain.append(li);
         }
         let shown = Math.max(1, whys.length);
-        const addBtn = h("button", { type: "button", class: "secondary small", id: "inv-addwhy", onclick: () => { if (shown < 5) { shown++; refresh(); tas[shown - 1].focus(); markDirty(); } } });
+        const addLbl = h("span");
+        const addBtn = h("button", { type: "button", class: "secondary small", id: "inv-addwhy", onclick: () => { if (shown < 5) { shown++; refresh(); tas[shown - 1].focus(); markDirty(); } } }, ico("plus"), addLbl);
         const refresh = () => {
           rows.forEach((li, i) => { li.hidden = i >= shown; });
-          addBtn.hidden = shown >= 5; addBtn.textContent = "+ เพิ่ม Why ชั้นที่ " + (shown + 1);
+          addBtn.hidden = shown >= 5; addLbl.textContent = "เพิ่ม Why ชั้นที่ " + (shown + 1);
         };
         refresh();
         wrap.append(card("2", "ถามซ้ำ \"ทำไม\" (5 Why)", "ถามต่อเนื่องจนถึงสาเหตุที่แก้ได้ที่ระบบ/กระบวนการ ไม่ต้องครบ 5 ชั้น แต่ต้องมีอย่างน้อย 1 ชั้นก่อนปิดเคส", chain, h("div", { class: "rowbtns" }, addBtn)));
@@ -1289,7 +1348,7 @@
         };
         const items = []; let seq = 0;
         const rcList = h("ol", { class: "rc-list" });
-        const addBtnRc = h("button", { type: "button", class: "secondary small", id: "inv-addrc", text: "+ เพิ่ม Root cause" });
+        const addBtnRc = h("button", { type: "button", class: "secondary small", id: "inv-addrc" }, ico("plus"), h("span", { text: "เพิ่ม Root cause" }));
         const renum = () => { items.forEach((it, n) => { it.no.textContent = "Root cause " + (n + 1); it.rm.disabled = it.locked; }); addBtnRc.disabled = items.length >= 10; };
         const addItem = (src) => {
           const k = ++seq;
@@ -1298,16 +1357,16 @@
           const no = h("span", { class: "rc-no" });
           const capas = (src && src.capas) || [];
           const it = { id: src && src.id, cat, ta, no, locked: capas.length > 0 };
-          it.rm = h("button", { type: "button", class: "secondary small rc-rm", text: "ลบรายการนี้", title: it.locked ? "มี Action ผูกอยู่ — ถอน Action ก่อนจึงลบได้" : null, onclick: () => { const x = items.indexOf(it); if (x >= 0) items.splice(x, 1); it.li.remove(); renum(); markDirty(); } });
+          it.rm = h("button", { type: "button", class: "secondary small rc-rm", title: it.locked ? "มี Action ผูกอยู่ — ถอน Action ก่อนจึงลบได้" : null, onclick: () => { const x = items.indexOf(it); if (x >= 0) items.splice(x, 1); it.li.remove(); renum(); markDirty(); } }, ico("trash"), h("span", { text: "ลบรายการนี้" }));
           const foot = h("div", { class: "rc-capas" });
           if (it.id) {
             const live = capas.filter((a) => a.status !== "cancelled").length;
             capas.forEach((a) => foot.append(h("span", { class: "chip" + (a.status === "cancelled" ? " off" : "") },
               h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }), " ",
-              h("button", { type: "button", class: "chip-x", "aria-label": "ถอน Action ออกจาก Root cause นี้", text: "✕ ถอน", onclick: () => { if (dirtyGuard()) return; act(sb.rpc("incident_root_cause_unlink_capa", { p_capa: a.id }), "ถอน Action แล้ว"); } }))));
-            if (!live) foot.append(h("p", { class: "rc-warn", text: "⚠️ ยังไม่มี Action — ต้องมีอย่างน้อย 1 รายการก่อนปิดเคส" }));
+              h("button", { type: "button", class: "chip-x", "aria-label": "ถอน Action ออกจาก Root cause นี้", onclick: () => { if (dirtyGuard()) return; act(sb.rpc("incident_root_cause_unlink_capa", { p_capa: a.id }), "ถอน Action แล้ว"); } }, ico("x"), h("span", { text: "ถอน" })))));
+            if (!live) foot.append(h("p", { class: "rc-warn" }, ico("alert"), h("span", { text: "ยังไม่มี Action — ต้องมีอย่างน้อย 1 รายการก่อนปิดเคส" })));
             const row = h("div", { class: "rowbtns" }, h("a", { class: "btn-link", href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") + "&rc=" + encodeURIComponent(it.id),
-              text: "+ สร้าง Action จาก Root cause นี้", onclick: (ev) => { if (dirtyGuard()) ev.preventDefault(); } }));
+              onclick: (ev) => { if (dirtyGuard()) ev.preventDefault(); } }, ico("plus"), h("span", { text: "สร้าง Action จาก Root cause นี้" })));
             if (cands.length) {
               const ex = h("select", { "aria-label": "เลือก Action ที่มีอยู่เพื่อผูก" }, h("option", { value: "", text: "— ผูก Action ที่มีอยู่ —" }), cands.map((a) => h("option", { value: a.id, text: a.action_no + " · " + a.title })));
               ex.addEventListener("change", () => { if (!ex.value) return; if (dirtyGuard()) { ex.value = ""; return; } act(sb.rpc("incident_root_cause_link_capa", { p_root_cause: it.id, p_capa: ex.value }), "ผูก Action แล้ว"); });
@@ -1315,7 +1374,9 @@
             }
             foot.append(row);
           } else foot.append(h("p", { class: "hint", text: "บันทึกการสอบสวนก่อน จึงจะสร้าง/ผูก Action ได้" }));
-          it.li = h("li", { class: "rc-item" }, h("div", { class: "rc-head" }, no, it.rm),
+          const live0 = capas.filter((a) => a.status !== "cancelled").length;
+          const st = !it.id ? ["s-new", pill("new", "circle", "ใหม่ — ยังไม่บันทึก")] : live0 ? ["s-ok", pill("ok", "check", "มี Action " + live0)] : ["s-need", pill("idle", "alert", "ต้องมี Action")];
+          it.li = h("li", { class: "rc-item " + st[0] }, h("div", { class: "rc-head" }, no, h("div", { class: "rc-tools" }, st[1], it.rm)),
             h("label", { for: cat.id, class: "inv-sublabel", text: "หมวดสาเหตุ (บังคับ)" }), cat,
             h("label", { for: ta.id, class: "inv-sublabel", text: "คำอธิบาย Root cause (บังคับ)" }), withCount(ta, 1000), foot);
           items.push(it); rcList.append(it.li); renum();
@@ -1333,12 +1394,14 @@
         // ความพร้อมปิดเคส (อิงข้อมูลที่บันทึกแล้ว)
         const okWhy = whys.length > 0, okRc = savedRcs.length > 0;
         const okCapa = okRc && savedRcs.every((c) => (c.capas || []).some((a) => a.status !== "cancelled"));
-        const chk = (ok, t) => h("li", { class: ok ? "ok" : "todo" }, h("span", { class: "mark", "aria-hidden": "true", text: ok ? "✓" : "○" }), h("span", { text: t }), h("span", { class: "sr", text: ok ? "ครบแล้ว" : "ยังไม่ครบ" }));
-        wrap.append(h("section", { class: "inv-ready", "aria-label": "ความพร้อมปิดเคส" }, h("h5", { text: "ความพร้อมปิดเคส (ตามข้อมูลที่บันทึกแล้ว)" }),
-          h("ul", {}, chk(okWhy, "มี Why อย่างน้อย 1 ชั้น"), chk(okRc, "มี Root cause อย่างน้อย 1 รายการ"), chk(okCapa, "ทุก Root cause มี Action (CAPA) อย่างน้อย 1 รายการ"))));
+        const left = [okWhy, okRc, okCapa].filter((x) => !x).length;
+        const gRow = (ok, t) => h("li", {}, ok ? pill("ok", "check", "ครบ") : pill("idle", "alert", "ยังไม่ครบ"), h("span", { text: t }));
+        wrap.append(h("section", { class: "inv-gate " + (left ? "is-block" : "is-ok"), role: "status", "aria-label": "ความพร้อมปิดเคส" },
+          h("h5", {}, ico(left ? "alert" : "check"), h("span", { text: left ? "ยังปิดเคสไม่ได้ — เหลือ " + left + " ข้อ" : "พร้อมปิดเคส" })),
+          h("ul", {}, gRow(okWhy, "มี Why อย่างน้อย 1 ชั้น"), gRow(okRc, "มี Root cause อย่างน้อย 1 รายการ"), gRow(okCapa, "ทุก Root cause มี Action (CAPA) อย่างน้อย 1 รายการ"))));
 
         // แถบบันทึก
-        wrap.append(h("div", { class: "inv-savebar" }, h("button", { type: "button", text: "บันทึกการสอบสวน", onclick: () => {
+        wrap.append(h("div", { class: "inv-savebar" }, h("button", { type: "button", onclick: () => {
           const vals = tas.map((t) => t.value.trim());
           let last = -1; vals.forEach((v, i) => { if (v) last = i; });
           const arr = vals.slice(0, last + 1);
@@ -1348,7 +1411,7 @@
           if (bad) { showMsg("Root cause ทุกรายการต้องเลือกหมวดและกรอกคำอธิบาย (หรือลบรายการที่ไม่ใช้)", false); return; }
           act(sb.rpc("incident_investigation_save", { p_incident: inc.id, p_problem: problem.value.trim() || null,
             p_whys: arr, p_root_cause: null, p_conclusion: concl.value.trim() || null, p_root_cause_text: null, p_root_causes: rcs }), "บันทึกการสอบสวนแล้ว");
-        } }), dirty));
+        } }, ico("check"), h("span", { text: "บันทึกการสอบสวน" })), dirty));
         wrap.append(h("p", { class: "hint", text: "ขั้นต่อไป: เมื่อได้สาเหตุแล้ว กด \"+ สร้าง Action (CAPA) จากเคสนี้\" ด้านล่างเพื่อกำหนดมาตรการแก้ไข/ป้องกัน แล้วกด \"ปิดเคส\"" }));
       }
       if (isMgrRole() && !closed) delegationBox(wrap, inc);
