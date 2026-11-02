@@ -11,7 +11,7 @@
   --teal:#00a3ad; --teal-ink:#00656b; --navy:#0b3b60; --grey:#eef2f6;
   --ok:#14602d; --ok-dark:#0f4a23; --danger:#b3261e; --danger-dark:#8c1d18; --warn:#8a5a00;
   --focus:#005a9c; --radius:16px;
-  --shadow:0 1px 2px rgba(11,59,96,.05),0 4px 12px rgba(11,59,96,.06);
+  --shadow:none; /* L1 = border 1px ไม่มี shadow (uxui-design) */
   --grad:none;
 }
 body{background:var(--bg);color:var(--ink);font-family:"Inter","Leelawadee UI","Noto Sans Thai","Sarabun","Thonburi","Segoe UI",system-ui,sans-serif;line-height:1.6}
@@ -19,7 +19,7 @@ body{background:var(--bg);color:var(--ink);font-family:"Inter","Leelawadee UI","
 header{background:#fff;color:var(--ink);padding:.7rem 2rem 0;box-shadow:none;border-bottom:1px solid var(--line);overflow:visible;gap:0 1.5rem;align-items:center}
 header::before{display:none}
 header h1{color:var(--navy);font-size:1.25rem;display:flex;align-items:center;gap:.7rem}
-header h1::before{content:"S";display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;font-size:1.2rem}
+header h1::before{content:"S";display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:var(--brand);color:#fff;font-weight:700;font-size:1.2rem}
 header h1::after{content:none}
 nav{border-top:0;margin:.4rem 0 0;padding:0;gap:.2rem 1.4rem}
 nav a{color:var(--muted);border-radius:0;padding:.7rem .15rem;font-weight:500;border-bottom:3px solid transparent;min-height:48px;display:inline-flex;align-items:center}
@@ -32,7 +32,7 @@ main h2{color:var(--navy);font-size:1.75rem;font-weight:700}
 main h3{color:var(--navy)}
 main>h3::before{background:var(--teal)}
 /* Buttons: สูง 48px มุม 8px */
-button,.btn{min-height:48px;border-radius:8px;box-shadow:0 1px 2px rgba(11,59,96,.15)}
+button,.btn{min-height:48px;border-radius:8px;box-shadow:none}
 button:hover{background:var(--brand-dark);border-color:var(--brand-dark)}
 button.secondary,button.small.secondary{background:#fff;color:var(--navy);border-color:var(--ctl);box-shadow:none}
 button.secondary:hover{background:var(--accent);border-color:var(--brand);color:var(--brand)}
@@ -94,10 +94,10 @@ header h1{order:1}header .tools{order:2;margin-left:auto}header nav{order:3}
 .toolwrap{position:relative}
 .toolbtn{min-width:48px;min-height:48px;padding:.3rem .6rem;background:#fff;color:var(--navy);border:1px solid transparent;box-shadow:none;border-radius:999px;gap:.3rem}
 .toolbtn svg{width:24px;height:24px;fill:currentColor}
-.toolbtn .tl{font-weight:700;font-size:.85rem}
+.toolbtn .tl{font-weight:700;font-size:.875rem}
 .toolbtn:hover,.toolbtn[aria-expanded="true"]{background:var(--accent);color:var(--brand);border-color:var(--line)}
-.toolpop{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:min(300px,86vw);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(11,59,96,.18);padding:.9rem 1rem;color:var(--ink)}
-.tpnote{margin:.4rem 0 0}.tpnote.small{font-size:.85rem;color:var(--muted)}
+.toolpop{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:min(300px,86vw);background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 24px rgba(11,59,96,.18);padding:.9rem 1rem;color:var(--ink)}
+.tpnote{margin:.4rem 0 0}.tpnote.small{font-size:.875rem;color:var(--muted)}
 .tpitem{padding:.55rem .6rem;border-radius:8px;margin-top:.3rem;min-height:44px;display:flex;align-items:center}
 .tpitem.on{background:var(--accent);color:var(--brand);font-weight:700}.tpitem.off{color:var(--muted)}
 .tprow{display:flex;gap:.4rem;margin-top:.4rem}
@@ -130,7 +130,7 @@ nav a svg.ni{width:18px;height:18px;margin-right:.4rem;fill:none;stroke:currentC
 a.card{position:relative;padding:1.25rem;border:1px solid var(--line);border-top:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);min-height:180px}
 a.card:hover{border-color:var(--brand);transform:none;box-shadow:0 4px 14px rgba(0,90,156,.16)}
 a.card::after{content:"→";position:absolute;right:1.1rem;top:1rem;color:var(--muted);font-size:1.2rem}
-a.card .icon{width:48px;height:48px;border-radius:12px;background:var(--accent)}
+a.card .icon{width:48px;height:48px;border-radius:16px;background:var(--accent)}
 a.card .icon svg{stroke:var(--brand);width:26px;height:26px}
 a.card:nth-child(2) .icon{background:#e6f6f7}a.card:nth-child(2) .icon svg{stroke:var(--teal-ink)}
 a.card:nth-child(3) .icon{background:#fff4d6}a.card:nth-child(3) .icon svg{stroke:var(--warn)}
@@ -143,10 +143,10 @@ a.card strong{margin:.9rem 0 .25rem}
 .todaypanel .kpi span{color:var(--muted);font-size:.92rem}
 .todaypanel .kpi a{display:inline-block;margin-top:.2rem;font-weight:600;color:var(--brand)}
 /* หน้า Admin: การ์ดผู้ใช้ + แท็บ */
-.userbox{background:#fff;border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:12px;box-shadow:var(--shadow)}
+.userbox{background:#fff;border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:16px;box-shadow:var(--shadow)}
 .userbox.editbox{border-left-color:var(--brand)}
 .summary .chip{background:#fff;border:1px solid var(--line);color:var(--navy);font-weight:600;min-height:40px}
-.tabs{background:var(--grey);border-radius:12px}
+.tabs{background:var(--grey);border-radius:16px}
 .tabs button{border-radius:8px;box-shadow:none;color:var(--muted);min-height:48px}
 .tabs button[aria-selected="true"]{background:var(--brand);color:#fff}
 .tabs button:hover{background:#fff;color:var(--brand)}
@@ -156,7 +156,7 @@ a.card strong{margin:.9rem 0 .25rem}
 .msg.ok{background:#e6f4ea;color:#14602d;border-left-color:var(--ok)}
 .msg.error{background:#fdecea;color:#8c1d18}
 .plantline{background:var(--accent)!important;color:var(--navy);border-radius:8px!important;border-left:4px solid var(--brand)}
-fieldset{border-color:var(--line);border-radius:12px}
+fieldset{border-color:var(--line);border-radius:16px}
 .group{background:#fff}
 /* หน้า Login */
 main.authsplit{background:transparent;border:0;box-shadow:none;max-width:none}
@@ -164,7 +164,7 @@ main.authsplit{background:transparent;border:0;box-shadow:none;max-width:none}
 .authform{background:var(--bg)}
 .authform .inner{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:2rem}
 /* Footer แบบ Stitch */
-.sitefoot{margin-top:2rem;border-top:1px solid var(--line);background:#fff;color:var(--muted);font-size:.85rem;padding:.9rem 2rem;display:flex;flex-wrap:wrap;gap:.4rem 1.5rem;justify-content:space-between}
+.sitefoot{margin-top:2rem;border-top:1px solid var(--line);background:#fff;color:var(--muted);font-size:.875rem;padding:.9rem 2rem;display:flex;flex-wrap:wrap;gap:.4rem 1.5rem;justify-content:space-between}
 .sitefoot b{color:var(--brand)}
 .sitefoot .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:.4rem}
 body.authpage .sitefoot{margin-top:0}
@@ -180,21 +180,21 @@ body.authpage .sitefoot{margin-top:0}
 .bellitem:hover{background:var(--accent)}.bellitem b{font-size:1.4rem;color:var(--brand);min-width:2rem}
 /* หน้าแรก: รายการงานค้าง (For You Today) */
 .tasklist{display:grid;gap:.8rem}
-.taskcard{display:grid;grid-template-columns:1fr auto;gap:.5rem 1rem;align-items:center;background:#fff;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:12px;padding:1rem 1.2rem;box-shadow:var(--shadow);text-decoration:none;color:var(--ink)}
+.taskcard{display:grid;grid-template-columns:1fr auto;gap:.5rem 1rem;align-items:center;background:#fff;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:16px;padding:1rem 1.2rem;box-shadow:var(--shadow);text-decoration:none;color:var(--ink)}
 .taskcard.warn{border-left-color:var(--warn)}
 .taskcard:hover{border-color:var(--brand)}
 .taskcard .tt{font-weight:700;color:var(--navy);margin:.25rem 0 0;overflow-wrap:anywhere}
 .taskcard .tm{color:var(--muted);font-size:.9rem}
 .taskcard .go{font-weight:700;color:var(--brand);white-space:nowrap}
-.taskempty{background:#fff;border:1px dashed var(--ctl);border-radius:12px;padding:1rem 1.2rem;color:var(--muted)}
+.taskempty{background:#fff;border:1px dashed var(--ctl);border-radius:16px;padding:1rem 1.2rem;color:var(--muted)}
 /* Admin: การ์ดรออนุมัติเรียงเป็นคอลัมน์บนจอกว้าง */
 #pending{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:1rem;align-items:start}
 #pending>.userbox{margin:0}
 @media(max-width:520px){#pending{grid-template-columns:1fr}}
 
 /* ===== v4.1 — ปรับให้ใกล้ Stitch: segmented language, subtabs, การ์ดอนุมัติ, แผงแจ้งเตือน, Export dialog ===== */
-.langseg{display:inline-flex;background:var(--grey);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
-.langseg button{min-height:38px;min-width:44px;padding:.2rem .7rem;border:0;border-radius:8px;background:transparent;color:var(--muted);font-weight:700;font-size:.85rem;box-shadow:none;cursor:pointer}
+.langseg{display:inline-flex;background:var(--grey);border:1px solid var(--line);border-radius:8px;padding:3px;gap:2px}
+.langseg button{min-height:38px;min-width:44px;padding:.2rem .7rem;border:0;border-radius:8px;background:transparent;color:var(--muted);font-weight:700;font-size:.875rem;box-shadow:none;cursor:pointer}
 .langseg button.on{background:#fff;color:var(--brand);box-shadow:0 1px 3px rgba(11,59,96,.18)}
 .langseg button.off{cursor:not-allowed;opacity:.75}
 .subtabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--line)}
@@ -217,7 +217,7 @@ main.wide>#adminarea>h2,main h2{letter-spacing:-.01em}
 .alertcard{display:block;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:.9rem 1rem;text-decoration:none;color:var(--ink,#14213d);box-shadow:var(--shadow)}
 .alertcard:hover{border-color:var(--brand)}
 .alertcard .ac-top{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-bottom:.4rem}
-.alertcard time{color:var(--muted);font-size:.85rem}
+.alertcard time{color:var(--muted);font-size:.875rem}
 .alertcard .tt{margin:.1rem 0 .4rem;font-weight:600}
 .alertcard .go{color:var(--brand);font-weight:700;font-size:.9rem}
 /* Export dialog */
@@ -225,8 +225,8 @@ dialog#expdlg{border-radius:16px;border:1px solid var(--line);box-shadow:0 24px 
 dialog#expdlg::backdrop{background:rgba(11,59,96,.45);backdrop-filter:blur(3px)}
 .expcols{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 @media(max-width:640px){.expcols{grid-template-columns:1fr!important}}
-details.grp{border-radius:12px;background:#fff}
-.modecard{border-radius:12px}
+details.grp{border-radius:16px;background:#fff}
+.modecard{border-radius:16px}
 
 nav .navsoon{display:inline-flex;align-items:center;min-height:48px;padding:.7rem .15rem;color:#64748b;font-weight:500;cursor:not-allowed;border-bottom:3px solid transparent}
 nav .navsoon::after{content:"เร็ว ๆ นี้";margin-left:.4rem;font-size:.7rem;background:var(--grey);color:var(--muted);border-radius:999px;padding:.05rem .5rem;font-weight:600}
@@ -258,18 +258,18 @@ main.formcard form,main.flash form{max-width:none}
 .ann.critical{border-color:#e0a4a0;background:#fdecea;color:#6e1712}
 .ann .annmain{flex:1;min-width:16rem}
 .ann .annhead{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.3rem}
-.ann .annchip{display:inline-flex;align-items:center;gap:.3rem;border-radius:6px;padding:.1rem .6rem;font-size:.78rem;font-weight:800;letter-spacing:.04em;background:#fff;border:1px solid currentColor}
+.ann .annchip{display:inline-flex;align-items:center;gap:.3rem;border-radius:6px;padding:.1rem .6rem;font-size:.875rem;font-weight:800;letter-spacing:.04em;background:#fff;border:1px solid currentColor}
 .ann .anntitle{font-weight:700;font-size:1.05rem;margin:0}
 .ann .annbody{margin:.3rem 0 0;white-space:pre-line;overflow-wrap:anywhere}
-.ann .annmeta{font-size:.82rem;opacity:.85;margin:.4rem 0 0}
+.ann .annmeta{font-size:.875rem;opacity:.85;margin:.4rem 0 0}
 .ann button.ackbtn{min-height:48px;padding:.4rem 1.2rem;border-radius:8px;border:1px solid currentColor;background:#fff;color:inherit;font-weight:700;cursor:pointer}
 .annmgr{margin:-.5rem 0 1rem;font-size:.9rem}
 .herometric{margin-top:1.2rem;display:flex;gap:1.5rem;align-items:flex-end;flex-wrap:wrap}
 .herometric .big{font-size:3rem;font-weight:800;line-height:1.05;letter-spacing:-.02em}
 .herometric .bigsub{font-size:1.05rem;color:#e6f0f8;margin:.2rem 0 0}
 .herometric .facts{display:flex;gap:.6rem;flex-wrap:wrap;margin:0}
-.herometric .fact{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:.2rem .8rem;font-size:.85rem;color:#fff}
-.herometric .hnote{flex-basis:100%;font-size:.8rem;color:#cfe3f3;margin:0}
+.herometric .fact{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:.2rem .8rem;font-size:.875rem;color:#fff}
+.herometric .hnote{flex-basis:100%;font-size:.875rem;color:#cfe3f3;margin:0}
 @media(max-width:640px){.herometric .big{font-size:2.2rem}}
 .annmgr a{color:var(--brand);font-weight:700}
 
@@ -303,10 +303,10 @@ ol.flowsteps li.soon{opacity:.7}
 .fl-side .formactions{display:grid;gap:.6rem;margin:.2rem 0 .6rem}
 .fl-side .formactions button{width:100%;margin:0;min-height:48px}
 .fl-side .formactions .dstatus{text-align:center;font-size:.88rem}
-.sidecard .helper{margin:.2rem 0 0;font-size:.85rem}
+.sidecard .helper{margin:.2rem 0 0;font-size:.875rem}
 .sidecard.guide{background:#EFF4FF;border-color:#D2E4FF}
 .sidecard.guide p{margin:.2rem 0 .6rem;font-size:.92rem}
-.sidecard.guide .refline{font-size:.8rem;color:#414750;margin-bottom:0}
+.sidecard.guide .refline{font-size:.875rem;color:#414750;margin-bottom:0}
 @media(max-width:1000px){.flashgrid{grid-template-columns:1fr}.fl-side{position:static}ol.flowsteps li:not(:last-child)::after{display:none}ol.flowsteps li{min-width:46%}}
 @media(max-width:560px){main.flash.v2{padding:.75rem .5rem 2rem}.fl-cards .stepcard{padding:1rem 1rem .4rem}}
 
@@ -323,9 +323,9 @@ ol.flowsteps li.soon{opacity:.7}
   .sendcard .formactions #btn-save{order:2;flex:1 1 56%;width:auto}
 }
 @media(max-width:640px){
-  .crumb{font-size:.8rem;margin-bottom:.25rem}
+  .crumb{font-size:.875rem;margin-bottom:.25rem}
   .flashtitle{gap:.5rem;margin-bottom:.6rem}.flashtitle h2{font-size:1.25rem;line-height:1.3}
-  ol.flowsteps{flex-wrap:nowrap;gap:0;padding:.7rem .5rem;border-radius:12px}
+  ol.flowsteps{flex-wrap:nowrap;gap:0;padding:.7rem .5rem;border-radius:16px}
   ol.flowsteps li{flex:1 1 0;min-width:0;flex-direction:column;gap:.3rem;text-align:center;align-items:center}
   ol.flowsteps li:not(:last-child)::after{display:none}
   ol.flowsteps .dot{width:1.8rem;height:1.8rem;font-size:.85rem}
@@ -365,3 +365,30 @@ html[lang="en"] ol.flowsteps li.soon .lbl::after{content:"Coming soon"}
   main.flash.v2{max-width:none}
   header{padding-left:2rem;padding-right:2rem}
 }
+
+/* ===== UX/UI รอบ A (2 พ.ย. 2026) — ปรับให้ตรง skill uxui-design: token alias, mono, tabular-nums, ขนาดข้อความ, ชั้น L1/L2, focus ===== */
+:root{
+  /* alias ตามชื่อใน skill (ค่าเดิมของระบบไม่เปลี่ยน) */
+  --canvas:var(--bg); --surface:var(--card); --primary:var(--brand); --secondary:var(--navy); --tertiary:var(--teal);
+  --border:var(--line); --border-strong:#cbd5e1; --ink-muted:var(--muted);
+  --r-sm:8px; --r-md:16px; --r-lg:24px;
+  --s1:4px; --s2:8px; --s3:16px; --s4:24px; --s5:32px;
+  --shadow-2:0 4px 6px -1px rgba(11,59,96,.07),0 2px 4px -2px rgba(11,59,96,.05);
+  --mono:ui-monospace,"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,monospace;
+}
+/* ตัวเลขเทียบกันได้: ใช้กับตาราง, KPI, วันที่, badge */
+table,td,th,time,.badge,.kpi,.num,.herometric,.todaypanel{font-variant-numeric:tabular-nums}
+/* ID / เลขอ้างอิง / วันที่ที่ต้องเทียบ: ใส่ class="mono" (ไม่แปลงอัตโนมัติ เพื่อไม่กระทบข้อความทั่วไป) */
+.mono,code,kbd,samp{font-family:var(--mono);font-variant-numeric:tabular-nums}
+/* ข้อความอธิบาย/ตัวช่วย ไม่เล็กกว่า 14px (style.css เดิมใช้ .9–.95rem บางจุดต่ำกว่า) */
+.helper,.userbox .meta,.userbox .hint,.show-pw,.chip,button.small,.toprow button.link{font-size:.875rem}
+table{font-size:.9375rem}
+/* ชั้น L1 = border ไม่มี shadow; L2 = border เข้ม + shadow บาง เมื่อ hover/active */
+a.card:hover,.card.is-active,.taskcard:hover,.alertcard:hover{border-color:var(--border-strong);box-shadow:var(--shadow-2)}
+/* chip/badge สถานะ: มุม 8px สูงอย่างน้อย 28px (skill) — count badge ยังคงมนเต็ม */
+.badge,.stbadge{border-radius:8px;min-height:28px}
+.filterbar button.chip,.toolbtn,.tools .role-badge{border-radius:8px}
+/* focus: เติมวงนอกบางๆ ต่อจาก outline เดิมของ style.css (:focus-visible) */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 4px rgba(0,90,156,.15)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
