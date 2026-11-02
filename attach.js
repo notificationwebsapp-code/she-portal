@@ -41,6 +41,8 @@
   function fmtTime(v) { try { return new Date(v).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" }); } catch (e) { return ""; } }
   function extOf(name) { var m = /\.([A-Za-z0-9]+)$/.exec(name || ""); return m ? m[1].toLowerCase() : ""; }
   function isImage(m) { return m === "image/jpeg" || m === "image/png" || m === "image/webp" || m === "image/heic"; }
+  // ป้ายชนิดไฟล์บนกรอบขนาดเดียวกับภาพตัวอย่าง (กวาดสายตาแยก PDF / Word / Excel ได้ทันที)
+  function ftag(m) { return m === "application/pdf" ? "PDF" : m === EXT.docx ? "DOCX" : m === EXT.xlsx ? "XLSX" : "FILE"; }
   function icon(m) { return m === "application/pdf" ? "📄" : isImage(m) ? "🖼" : m === EXT.docx ? "📝" : m === EXT.xlsx ? "📊" : "📎"; }
 
   function css() {
@@ -64,6 +66,7 @@
       ".att li.it .thbtn:focus-visible{outline:2px solid #005A9C;outline-offset:2px}" +
       ".att li.it .thph{width:96px;height:96px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.78rem;line-height:1.3;padding:6px;border:1px dashed #94A3B8;border-radius:8px;background:#F4F6F9;color:#414750}" +
       ".att li.it button.thpii{cursor:pointer;border:1.5px dashed #D97706;background:#FFFBEB;color:#92400E;font-weight:600}" +
+      ".att li.it .ic.ftile{width:96px;height:96px;border:1px solid #CBD5E1;border-radius:8px;background:#F4F8FC;color:#0B3B60;font:700 1rem/1 var(--mono,ui-monospace,monospace);letter-spacing:.04em}" +
       ".att li.it .ic{width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex:none}" +
       ".att li.it .nm{flex:1 1 12rem;min-width:0;overflow-wrap:anywhere}" +
       ".att li.it .nm small{display:block;color:var(--muted,#5b6577)}" +
@@ -385,7 +388,7 @@
       rows.forEach(function (row) {
         var li = el("li", { class: "it" });
         var isImg = /^image\/(jpeg|png|webp)$/.test(row.mime_type || "") && row.status === "ready" && !row.deleted_at;
-        if (isImg) li.append(thumb(row)); else li.append(el("span", { class: "ic", "aria-hidden": "true", text: icon(row.mime_type) }));
+        if (isImg) li.append(thumb(row)); else li.append(el("span", { class: "ic ftile", "aria-hidden": "true", text: ftag(row.mime_type) }));
         var nm = el("div", { class: "nm" }, noI18n(el("span", { text: row.original_name })));
         if (row.contains_person) nm.append(el("span", { class: "badge2 pii", text: "มีบุคคลปรากฏ" }));
         if (row.status !== "ready") nm.append(el("span", { class: "badge2", text: "รอยืนยัน" }));
