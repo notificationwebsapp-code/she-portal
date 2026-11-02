@@ -189,18 +189,50 @@
       const DRAFT_FORMS = { incident: ["รายงานอุบัติเหตุ", "incident.html"], checklist: ["เช็กลิสต์ตรวจ", "checklist.html"], training: ["บันทึกการอบรม", "training.html"], capa: ["สร้าง Action (CAPA)", "capa.html?new=1"] };
       async function loadDrafts() {
         const sec = $("draftsec"), box = $("drafts"); sec.hidden = true;
-        const r = await sb.from("drafts").select("id, form_type, title, updated_at, expires_at").order("updated_at", { ascending: false }).limit(10);
-        if (r.error || !(r.data || []).length) return;
+        const me = session && session.user ? session.user.id : null;
+        const r = await sb.from("drafts").select("id, form_type, title, updated_at, expires_at, owner_id").order("updated_at", { ascending: false }).limit(50);
+        if (r.error || !(r.data || []).length) { box.replaceChildren(); return; }
+        const groups = {}; r.data.forEach((d) => { (groups[d.form_type] = groups[d.form_type] || []).push(d); });
         box.replaceChildren();
-        r.data.forEach((d) => {
-          const f = DRAFT_FORMS[d.form_type] || [d.form_type, "index.html"];
-          const a = mk("a", "taskcard"); a.href = f[1]; const l = mk("div");
-          l.appendChild(mk("span", "badge pend", "ร่าง · " + f[0]));
+        const card = (d, f) => {
+          const wrap = mk("div", "taskcard"); wrap.style.cssText = "display:flex;align-items:center;gap:.6rem";
+          const a = mk("a", null); a.href = f[1]; a.style.cssText = "flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:.6rem;text-decoration:none;color:inherit";
+          const l = mk("div"); l.style.minWidth = "0";
           const t = mk("p", "tt", d.title || "(ไม่มีชื่อ)"); t.setAttribute("data-no-i18n", ""); l.appendChild(t);
           const left = Math.max(0, Math.ceil((Date.parse(d.expires_at) - Date.now()) / 86400000));
           const m = mk("p", "tm", "แก้ไขล่าสุด " + new Date(d.updated_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) + " · จะถูกลบใน " + left + " วัน");
           m.style.margin = ".2rem 0 0"; l.appendChild(m);
-          a.appendChild(l); a.appendChild(mk("span", "go", "ทำต่อ →")); box.appendChild(a);
+          a.appendChild(l); a.appendChild(mk("span", "go", "ทำต่อ →"));
+          const del = mk("button", "secondary", "ลบ"); del.type = "button"; del.setAttribute("aria-label", "ลบร่างนี้");
+          del.addEventListener("click", async () => {
+            if (!window.confirm("ลบร่างนี้ถาวรใช่หรือไม่")) return;
+            del.disabled = true; const w = await sb.from("drafts").delete().eq("id", d.id);
+            if (w.error) { del.disabled = false; alert("ลบร่างไม่สำเร็จ"); return; } loadDrafts();
+          });
+          wrap.appendChild(a); wrap.appendChild(del); return wrap;
+        };
+        Object.keys(groups).forEach((k) => {
+          const f = DRAFT_FORMS[k] || [k, "index.html"], list = groups[k];
+          const head = mk("div", "tm"); head.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin:.9rem 0 .3rem";
+          head.appendChild(mk("strong", null, f[0] + " (" + list.length + ")"));
+          const mine = list.filter((d) => d.owner_id === me);
+          if (mine.length > 1) {
+            const all = mk("button", "secondary", "ลบร่างของฉันทั้งหมดในกลุ่มนี้ (" + mine.length + ")"); all.type = "button";
+            all.addEventListener("click", async () => {
+              if (!window.confirm("ลบร่างของคุณในกลุ่ม \"" + f[0] + "\" ทั้ง " + mine.length + " ฉบับถาวรใช่หรือไม่ (ร่างของเพื่อนร่วมทีมจะไม่ถูกลบ)")) return;
+              all.disabled = true; const w = await sb.from("drafts").delete().eq("form_type", k).eq("owner_id", me);
+              if (w.error) { all.disabled = false; alert("ลบร่างไม่สำเร็จ"); return; } loadDrafts();
+            });
+            head.appendChild(all);
+          }
+          box.appendChild(head);
+          list.slice(0, 3).forEach((d) => box.appendChild(card(d, f)));
+          if (list.length > 3) {
+            const rest = mk("div"); rest.hidden = true; list.slice(3).forEach((d) => rest.appendChild(card(d, f)));
+            const more = mk("button", "secondary", "ดูทั้งหมด (" + list.length + ")"); more.type = "button"; more.setAttribute("aria-expanded", "false");
+            more.addEventListener("click", () => { rest.hidden = !rest.hidden; more.setAttribute("aria-expanded", String(!rest.hidden)); more.textContent = rest.hidden ? "ดูทั้งหมด (" + list.length + ")" : "ย่อรายการ"; });
+            box.appendChild(more); box.appendChild(rest);
+          }
         });
         $("draftsub").textContent = "ทั้งหมด " + r.data.length + " ฉบับ · ร่างยังไม่ใช่การรายงาน — กดเพื่อทำต่อ";
         sec.hidden = false;

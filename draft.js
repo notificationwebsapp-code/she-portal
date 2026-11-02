@@ -23,7 +23,7 @@
 const SheDraft = (function () {
   const AUTOSAVE_MS = 30000;
   let cfg = null, currentId = null, currentVersion = null, currentOwnerId = null, myId = null;
-  let dirty = false, saving = false, timer = null;
+  let dirty = false, saving = false, timer = null, baseline = null;
   let el = {};
 
   function injectStyle() {
@@ -116,6 +116,9 @@ const SheDraft = (function () {
     const state = cfg.getState();
     const json = JSON.stringify(state);
     if (json.length > 95000) { status("ร่างมีขนาดใหญ่เกินกำหนด", "err"); return; }
+    if (!currentId && baseline !== null && json === baseline) {            // ฟอร์มยังเหมือนตอนเปิด: ไม่สร้างร่างเปล่า
+      dirty = false; status("ยังไม่มีข้อมูลที่แก้ไข จึงยังไม่สร้างร่าง", ""); return;
+    }
     saving = true; if (el.btn) el.btn.disabled = true;
     const title = (cfg.getTitle ? cfg.getTitle() : "") || ("ร่าง " + fmt(new Date()));
     const plant = (cfg.getPlantId ? cfg.getPlantId() : "") || null;
@@ -187,7 +190,7 @@ const SheDraft = (function () {
     if (onUnload) { window.removeEventListener("beforeunload", onUnload); onUnload = null; }
     if (barEl && barEl.parentNode) barEl.parentNode.removeChild(barEl);
     barEl = null; el = {}; cfg = null;
-    currentId = null; currentVersion = null; currentOwnerId = null; dirty = false; saving = false;
+    currentId = null; currentVersion = null; currentOwnerId = null; dirty = false; saving = false; baseline = null;
   }
 
   // บันทึกร่างทันทีถ้ามีการแก้ไขค้าง (ใช้ตอนปิดกล่องฟอร์ม/ออกจากหน้า) และรอให้เสร็จก่อน
@@ -226,8 +229,10 @@ const SheDraft = (function () {
     det.appendChild(sum); det.appendChild(el.list); bar.appendChild(det);
     cfg.form.parentNode.insertBefore(bar, cfg.form);
 
-    cfg.form.addEventListener("input", markDirty);
-    cfg.form.addEventListener("change", markDirty);
+    cfg.form.addEventListener("input", (e) => { if (e.isTrusted) markDirty(); });   // เฉพาะการกระทำของผู้ใช้จริง ไม่ใช่โค้ดที่เติมค่าเอง
+    cfg.form.addEventListener("change", (e) => { if (e.isTrusted) markDirty(); });
+    baseline = null;
+    setTimeout(() => { try { if (cfg && !currentId && !dirty) baseline = JSON.stringify(cfg.getState()); } catch (e) { baseline = null; } }, 2500);
     timer = setInterval(() => { if (dirty) save(false); }, AUTOSAVE_MS);
     // สลับแอป/แท็บ (เช่น มีงานด่วนเข้า) = บันทึกร่างให้ทันที
     onVis = () => { if (document.hidden && dirty) save(false); };
