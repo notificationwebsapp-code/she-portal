@@ -221,7 +221,9 @@
       if (a.status === "closed") box.append(h("p", { class: "msg", role: "status", text: "ปิดงานแล้ว — รอผู้มีสิทธิ์ตรวจสอบ (ต้องไม่ใช่ผู้ปิดงาน)" }));
       const acts = h("div", { class: "actrow" });
       if (canStart) acts.append(h("button", { type: "button", onclick: () => doStatus("in_progress", false) }, "เริ่มดำเนินการ"));
-      if (canClose) acts.append(h("button", { type: "button", onclick: () => doStatus("closed", false) }, "ปิดงาน (ส่งตรวจสอบ)"));
+      const evLack = (a.evidence_count || 0) < (a.min_evidence || 0);
+      if (canClose) acts.append(h("button", Object.assign({ type: "button", onclick: () => { if (!evLack) doStatus("closed", false); } }, evLack ? { disabled: true, title: "ต้องแนบไฟล์หลักฐานก่อน" } : {}), "ปิดงาน (ส่งตรวจสอบ)"));
+      if (canClose && evLack) box.append(h("p", { class: "msg err", role: "alert", text: "⚠ ยังปิดงานไม่ได้ — ต้องแนบไฟล์หลักฐานก่อน (แนบแล้ว " + (a.evidence_count || 0) + " จาก " + a.min_evidence + " ไฟล์) แล้วปุ่มนี้จะใช้งานได้" }));
       if (canVerify) acts.append(h("button", { type: "button", onclick: () => doStatus("verified", false) }, "ตรวจสอบผ่าน"),
         h("button", { type: "button", class: "secondary", onclick: () => doStatus("returned", true) }, "ส่งกลับให้แก้"));
       if (canEdit) acts.append(h("button", { type: "button", class: "secondary", onclick: () => openForm(a) }, "แก้ไขข้อมูล"),

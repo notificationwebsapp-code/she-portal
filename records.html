@@ -77,7 +77,22 @@
     .invbox .inv-card:nth-of-type(n) .inv-ro{white-space:pre-wrap;overflow-wrap:anywhere;margin:.2rem 0}
     .invbox .inv-rc-ro{border-left:4px solid var(--brand,#1a3a8a);background:#f3f6fd;padding:.5rem .8rem;border-radius:0 8px 8px 0}
     .invbox .chip{display:inline-block;background:#eef1f6;border:1px solid var(--line,#dfe3ea);border-radius:999px;padding:.2rem .7rem;font-size:.9rem}
-        .invbox .ev-ok{color:#166534;font-weight:600;font-size:.85em}.invbox .ev-need{color:#8a4b00;font-weight:600;font-size:.85em}
+        /* ===== ระดับสถานะไล่สี (หลักการถาวรของ SHE Portal): เหลือง = ยังไม่ทำขั้นถัดไป · เขียวอ่อน = ทำแล้วรอหลักฐาน · เขียวเข้ม = ครบสมบูรณ์ — ใช้ไอคอน+ข้อความกำกับเสมอ ===== */
+        .invbox .rc-item.s-need{background:#FEF9C3;border-color:#FACC15;border-left-color:#CA8A04}
+        .invbox .rc-item.s-link{background:#F0FDF4;border-color:#BBF7D0;border-left-color:#4ADE80}
+        .invbox .rc-item.s-done{background:#DCFCE7;border-color:#15803D;border-left-color:#15803D;border-left-width:10px}
+        .invbox .pill.t-need{background:#FEF08A;border-color:#CA8A04;color:#713F12}
+        .invbox .pill.t-link{background:#DCFCE7;border-color:#4ADE80;color:#166534}
+        .invbox .pill.t-done{background:#15803D;border-color:#15803D;color:#fff}
+        .invbox .chip{display:inline-flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+        .invbox .chip.t-link{background:#DCFCE7;border-color:#4ADE80;color:#166534}
+        .invbox .chip.t-done{background:#15803D;border-color:#15803D;color:#fff}.invbox .chip.t-done a{color:#fff}
+        .invbox .chip .ev{font-weight:700;font-size:.85em}
+        .invbox .chip .chip-x{margin-left:.2rem}
+        .invbox .chip.t-done .chip-x{color:#fff;background:rgba(255,255,255,.18);border-radius:6px}
+        .invbox .pill.idle{background:#FEF9C3;border-color:#CA8A04;color:#713F12}
+        .invbox .inv-gate.is-block{background:#FEF9C3;border-color:#FACC15;border-left-color:#CA8A04}
+        .invbox .inv-gate.is-ok{background:#DCFCE7;border-color:#15803D;border-left-color:#15803D}
         .invbox .inv-savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:16px;align-items:center;background:#fff;border:1px solid var(--ib-bd2);border-radius:12px;padding:12px 16px;margin:24px 0 8px;box-shadow:0 10px 15px -3px rgba(11,59,96,.12),0 4px 6px -4px rgba(11,59,96,.08)}
     .invbox .inv-dirty{color:#9a5b00;font-size:.9rem}
     .invbox .rc-list{list-style:none;margin:.3rem 0;padding:0;display:grid;gap:.8rem}
@@ -1236,7 +1251,7 @@
     // สิทธิ์จริงตัดสินที่ฐานข้อมูล (RPC ตรวจสิทธิ์ทุกครั้ง) — หน้านี้เพียงซ่อน/แสดงกล่องตามสิทธิ์ (OWASP A01)
     // ข้อความจากผู้ใช้ทั้งหมดแสดงด้วย textContent (OWASP A03)
     // ---- B23 UI: ไอคอน SVG ชุดเดียว (ไม่ใช้ emoji) + การ์ดขั้นตอน ----
-    const ICO = { check: "M5 13l4 4L19 7", alert: "M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z", plus: "M12 5v14M5 12h14", x: "M6 6l12 12M18 6L6 18",
+    const ICO = { check: "M5 13l4 4L19 7", checks: "M2 13l4 4 8-9M10 16l1.5 1.5L22 7", alert: "M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z", plus: "M12 5v14M5 12h14", x: "M6 6l12 12M18 6L6 18",
       trash: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3", circle: "M12 21a9 9 0 100-18 9 9 0 000 18z", link: "M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1" };
     function ico(name) {
       const ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"), p = document.createElementNS(ns, "path");
@@ -1245,14 +1260,17 @@
       p.setAttribute("d", ICO[name] || ICO.circle); s.append(p); return s;
     }
     const evOk = (a) => a.status === "cancelled" || ((a.evidence_count || 0) >= (a.evidence_needed || 1));
+    // ระดับสถานะ 3 ขั้น (เหลือง → เขียวอ่อน → เขียวเข้ม) ใช้เหมือนกันทุกที่ในหน้านี้
+    const rcTone = (capas) => { const live = (capas || []).filter((a) => a.status !== "cancelled"); return !live.length ? "need" : live.every(evOk) ? "done" : "link"; };
     const pill = (tone, icon, text) => h("span", { class: "pill " + tone }, ico(icon), h("span", { text }));
     // ป้ายสถานะของแต่ละขั้น (ไอคอน + ข้อความเสมอ — ไม่พึ่งสีอย่างเดียว) อิงข้อมูลที่บันทึกแล้ว
     function invStat(d, whys, rcs) {
       const allCapa = rcs.length > 0 && rcs.every((c) => (c.capas || []).some((a) => a.status !== "cancelled"));
+      const allEv = allCapa && rcs.every((c) => rcTone(c.capas) === "done");
       return {
         1: d.problem ? pill("ok", "check", "บันทึกแล้ว") : pill("idle", "circle", "ยังไม่กรอก"),
         2: whys.length ? pill("ok", "check", whys.length + " ชั้น") : pill("idle", "circle", "ยังไม่กรอก"),
-        3: !rcs.length ? pill("idle", "circle", "ยังไม่กรอก") : allCapa ? pill("ok", "check", rcs.length + " รายการ") : pill("idle", "alert", rcs.length + " รายการ"),
+        3: !rcs.length ? pill("idle", "circle", "ยังไม่กรอก") : allEv ? pill("t-done", "checks", rcs.length + " รายการ · มีหลักฐานครบ") : allCapa ? pill("t-link", "circle", rcs.length + " รายการ · รอหลักฐาน") : pill("t-need", "alert", rcs.length + " รายการ"),
         4: d.conclusion ? pill("ok", "check", "บันทึกแล้ว") : pill("new", "circle", "ไม่บังคับ") };
     }
     const VARIANT = { 1: "v-plain", 2: "v-chain", 3: "v-key", 4: "v-end" };
@@ -1285,10 +1303,10 @@
         wrap.append(card("2", "5 Why", whys.length ? chain : h("p", { class: "inv-ro", text: "-" })));
         const rcsD = Array.isArray(d.root_causes) ? d.root_causes : [];
         const rcRo = h("ol", { class: "rc-list" });
-        rcsD.forEach((c, n) => rcRo.append(h("li", { class: "rc-item " + ((c.capas || []).some((a) => a.status !== "cancelled") ? "s-ok" : "s-need") },
-          h("div", { class: "rc-head" }, h("span", { class: "rc-no", text: "Root cause " + (n + 1) }), h("span", { class: "chip", text: lkName("root_cause", c.category) })),
+        rcsD.forEach((c, n) => rcRo.append(h("li", { class: "rc-item s-" + rcTone(c.capas) },
+          h("div", { class: "rc-head" }, h("span", { class: "rc-no", text: "Root cause " + (n + 1) }), h("span", { class: "rc-tools" }, h("span", { class: "chip", text: lkName("root_cause", c.category) }), { need: pill("t-need", "alert", "ไม่มี Action"), link: pill("t-link", "circle", "รอหลักฐาน"), done: pill("t-done", "checks", "มีหลักฐานครบ") }[rcTone(c.capas)])),
           h("p", { class: "inv-ro inv-rc-ro", text: c.text }),
-          h("div", { class: "rc-capas" }, (c.capas || []).length ? c.capas.map((a) => h("span", { class: "chip" + (a.status === "cancelled" ? " off" : "") }, h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }), a.status === "cancelled" ? null : h("span", { class: "ev-" + (evOk(a) ? "ok" : "need") }, " · ", h("span", { text: "หลักฐาน" }), " " + (a.evidence_count || 0) + "/" + (a.evidence_needed || 1)))) : h("span", { class: "hint", text: "ไม่มี Action" })))));
+          h("div", { class: "rc-capas" }, (c.capas || []).length ? c.capas.map((a) => h("span", { class: "chip" + (a.status === "cancelled" ? " off" : evOk(a) ? " t-done" : " t-link") }, h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }), a.status === "cancelled" ? null : h("span", { class: "ev" }, " · ", (evOk(a) ? "✓ " : "○ "), h("span", { text: "หลักฐาน" }), " " + (a.evidence_count || 0) + "/" + (a.evidence_needed || 1)))) : h("span", { class: "hint", text: "ไม่มี Action" })))));
         wrap.append(card("3", "Root cause (สาเหตุที่แท้จริง)", rcsD.length ? rcRo : h("p", { class: "inv-ro", text: d.root_cause_text || "-" })));
         wrap.append(card("4", "สรุปผลสอบสวน", h("p", { class: "inv-ro", text: d.conclusion || "-" })));
       } else {
@@ -1364,9 +1382,9 @@
           const foot = h("div", { class: "rc-capas" });
           if (it.id) {
             const live = capas.filter((a) => a.status !== "cancelled").length;
-            capas.forEach((a) => foot.append(h("span", { class: "chip" + (a.status === "cancelled" ? " off" : "") },
+            capas.forEach((a) => foot.append(h("span", { class: "chip" + (a.status === "cancelled" ? " off" : evOk(a) ? " t-done" : " t-link") },
               h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }), " ",
-              a.status === "cancelled" ? null : h("span", { class: "ev-" + (evOk(a) ? "ok" : "need") }, (evOk(a) ? "✓ " : "⚠ "), h("span", { text: "หลักฐาน" }), " " + (a.evidence_count || 0) + "/" + (a.evidence_needed || 1)), " ",
+              a.status === "cancelled" ? null : h("span", { class: "ev" }, (evOk(a) ? "✓ " : "○ "), h("span", { text: "หลักฐาน" }), " " + (a.evidence_count || 0) + "/" + (a.evidence_needed || 1)), " ",
               h("button", { type: "button", class: "chip-x", "aria-label": "ถอน Action ออกจาก Root cause นี้", onclick: () => { if (dirtyGuard()) return; act(sb.rpc("incident_root_cause_unlink_capa", { p_capa: a.id }), "ถอน Action แล้ว"); } }, ico("x"), h("span", { text: "ถอน" })))));
             if (!live) foot.append(h("p", { class: "rc-warn" }, ico("alert"), h("span", { text: "ยังไม่มี Action — ต้องมีอย่างน้อย 1 รายการก่อนปิดเคส" })));
             const row = h("div", { class: "rowbtns" }, h("a", { class: "btn-link", href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") + "&rc=" + encodeURIComponent(it.id),
@@ -1379,7 +1397,8 @@
             foot.append(row);
           } else foot.append(h("p", { class: "hint", text: "บันทึกการสอบสวนก่อน จึงจะสร้าง/ผูก Action ได้" }));
           const live0 = capas.filter((a) => a.status !== "cancelled").length;
-          const st = !it.id ? ["s-new", pill("new", "circle", "ใหม่ — ยังไม่บันทึก")] : live0 ? ["s-ok", pill("ok", "check", "มี Action " + live0)] : ["s-need", pill("idle", "alert", "ต้องมี Action")];
+          const tn = !it.id ? "new" : rcTone(capas);
+          const st = { new: ["s-new", pill("new", "circle", "ใหม่ — ยังไม่บันทึก")], need: ["s-need", pill("t-need", "alert", "ต้องมี Action")], link: ["s-link", pill("t-link", "circle", "มี Action " + live0 + " · รอหลักฐาน")], done: ["s-done", pill("t-done", "checks", "มีหลักฐานครบ")] }[tn];
           it.li = h("li", { class: "rc-item " + st[0] }, h("div", { class: "rc-head" }, no, h("div", { class: "rc-tools" }, st[1], it.rm)),
             h("label", { for: cat.id, class: "inv-sublabel", text: "หมวดสาเหตุ (บังคับ)" }), cat,
             h("label", { for: ta.id, class: "inv-sublabel", text: "คำอธิบาย Root cause (บังคับ)" }), withCount(ta, 1000), foot);

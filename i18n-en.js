@@ -1604,4 +1604,9 @@ I18N.add({
  "ต้องมีหลักฐานขั้นต่ำอย่างน้อย 1 ไฟล์ ตั้งเป็น 0 ไม่ได้": "At least 1 evidence file is required; it cannot be set to 0",
  "ต้องมีหลักฐานขั้นต่ำอย่างน้อย 1 ไฟล์": "At least 1 evidence file is required",
  "จำนวนหลักฐานขั้นต่ำก่อนปิดงาน (อย่างน้อย 1 ไฟล์)": "Minimum evidence files before closing (at least 1)",
+ "ต้องแนบไฟล์หลักฐานก่อน": "Attach evidence files first",
+ "มีหลักฐานครบ": "Evidence complete",
+ "รอหลักฐาน": "Awaiting evidence",
+ "⚠ ไม่สามารถดำเนินการได้": "⚠ Unable to continue",
+ "เข้าใจแล้ว": "Got it",
 });
