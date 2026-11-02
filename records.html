@@ -37,7 +37,7 @@
     /* ขั้น 3: Root cause = หัวใจของหน้า — แถบหัวสี Navy ตัดจากการ์ดอื่นชัดเจน */
     .invbox .v-key{border:2px solid var(--ib-navy);padding-top:0;overflow:hidden}
     .invbox .v-key>.inv-head{background:var(--ib-navy);margin:0 -24px 24px;padding:16px 24px}
-    .invbox .v-key .inv-kick,.invbox .v-key .hint{color:#C9D8E6}
+    .invbox .v-key>.inv-head .inv-kick,.invbox .v-key>.inv-head .hint{color:#C9D8E6}
     .invbox .v-key .inv-head h5{color:#fff}
     .invbox .v-key .inv-num{background:#fff;border-color:#fff}
     .invbox .v-key .pill{border-color:transparent}
@@ -77,7 +77,7 @@
     .invbox .inv-card:nth-of-type(n) .inv-ro{white-space:pre-wrap;overflow-wrap:anywhere;margin:.2rem 0}
     .invbox .inv-rc-ro{border-left:4px solid var(--brand,#1a3a8a);background:#f3f6fd;padding:.5rem .8rem;border-radius:0 8px 8px 0}
     .invbox .chip{display:inline-block;background:#eef1f6;border:1px solid var(--line,#dfe3ea);border-radius:999px;padding:.2rem .7rem;font-size:.9rem}
-    .invbox .inv-savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:.8rem;align-items:center;background:rgba(255,255,255,.96);border-top:1px solid var(--line,#dfe3ea);padding:.65rem .2rem;margin-top:.6rem;backdrop-filter:blur(4px)}
+        .invbox .inv-savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:16px;align-items:center;background:#fff;border:1px solid var(--ib-bd2);border-radius:12px;padding:12px 16px;margin:24px 0 8px;box-shadow:0 10px 15px -3px rgba(11,59,96,.12),0 4px 6px -4px rgba(11,59,96,.08)}
     .invbox .inv-dirty{color:#9a5b00;font-size:.9rem}
     .invbox .rc-list{list-style:none;margin:.3rem 0;padding:0;display:grid;gap:.8rem}
     .invbox .rc-head{display:flex;gap:.6rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -1255,7 +1255,7 @@
     const VARIANT = { 1: "v-plain", 2: "v-chain", 3: "v-key", 4: "v-end" };
     function stepCard(n, title, sub, badge, kids) {
       return h("section", { class: "inv-card " + VARIANT[n] },
-        h("header", { class: "inv-head" }, h("span", { class: "inv-num", text: String(n), "aria-hidden": "true" }),
+        h("div", { class: "inv-head" }, h("span", { class: "inv-num", text: String(n), "aria-hidden": "true" }),
           h("div", { class: "inv-ttl" }, h("div", { class: "inv-kick", text: "ขั้นที่ " + n + " จาก 4" }), h("h5", { text: title }), sub ? h("div", { class: "hint", text: sub }) : null), badge),
         h("div", { class: "inv-body" }, kids));
     }
