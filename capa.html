@@ -118,6 +118,7 @@
     const EVT = { created: "สร้าง Action", status: "เปลี่ยนสถานะ", due_changed: "เลื่อนกำหนดเสร็จ", edited: "แก้ไขข้อมูล" };
 
     const ERRS = [
+      [/Evidence is mandatory/i, "ต้องมีหลักฐานขั้นต่ำอย่างน้อย 1 ไฟล์ ตั้งเป็น 0 ไม่ได้"],
       [/Evidence incomplete/i, "หลักฐานยังไม่ครบตามจำนวนที่กำหนด — แนบไฟล์หลักฐานก่อนปิดงาน"],
       [/Evidence is no longer complete/i, "หลักฐานไม่ครบแล้ว (อาจมีไฟล์ถูกลบ) — ให้ผู้รับผิดชอบแนบใหม่"],
       [/verifier must be different/i, "ผู้ตรวจสอบต้องไม่ใช่คนเดียวกับผู้ปิดงาน (หลักการ 4 eyes)"],
@@ -319,7 +320,7 @@
       const rct = h("textarea", { id: "fm-rct", maxlength: "2000" });
       const cor = h("textarea", { id: "fm-cor", maxlength: "2000" });
       const prv = h("textarea", { id: "fm-prv", maxlength: "2000" });
-      const ev = h("input", { type: "number", id: "fm-ev", min: "0", max: "20", value: "1" });
+      const ev = h("input", { type: "number", id: "fm-ev", min: "1", max: "20", value: "1" });
       const err = h("p", { class: "errtxt", role: "alert" });
       let src = pre && pre.source_type === "incident" ? pre : null;
       let rcId = src && pre.rc ? pre.rc : null;          // มาจากปุ่ม "+ สร้าง Action จาก Root cause นี้" ในหน้าดูข้อมูล
@@ -343,7 +344,7 @@
         h("label", { for: "fm-prv", text: "มาตรการป้องกัน (Preventive action)" }), prv,
         h("label", { for: "fm-cl", text: "ระดับมาตรการควบคุม (Hierarchy of Controls)" }), cl,
         h("label", { for: "fm-sv", text: "ระดับความรุนแรง" }), sv);
-      if (!edit) rows.push(h("label", { for: "fm-ev", text: "จำนวนหลักฐานขั้นต่ำก่อนปิดงาน" }), ev);
+      if (!edit) rows.push(h("label", { for: "fm-ev", text: "จำนวนหลักฐานขั้นต่ำก่อนปิดงาน (อย่างน้อย 1 ไฟล์)" }), ev);
       const form = h("form", { method: "dialog", class: "capaform", novalidate: "" },
         h("h3", { id: "formdlg-t", text: edit ? "แก้ไข " + a.action_no : "สร้าง Action ใหม่" }),
         src ? h("p", { class: "msg", text: "สร้างจากรายงานอุบัติเหตุที่เลือก" }) : null,
@@ -359,6 +360,7 @@
         if (!edit && !plant.value) { err.textContent = "กรุณาเลือก Plant"; return; }
         if (title.value.trim().length < 3) { err.textContent = "ชื่อเรื่องต้องยาวอย่างน้อย 3 ตัวอักษร"; return; }
         if (!ou && !on) { err.textContent = "กรุณาระบุผู้รับผิดชอบ"; return; }
+        if (!edit && !(parseInt(ev.value, 10) >= 1)) { err.textContent = "ต้องมีหลักฐานขั้นต่ำอย่างน้อย 1 ไฟล์"; return; }
         if (!edit && !due.value) { err.textContent = "กรุณาระบุกำหนดเสร็จ"; return; }
         let res;
         if (edit) {

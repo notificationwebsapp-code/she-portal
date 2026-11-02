@@ -1599,4 +1599,9 @@ I18N.add({
  "มีแบบร่างค้างอยู่": "Unfinished drafts",
  "ร่างยังไม่ใช่การรายงาน — กดเพื่อทำต่อ": "Drafts are not reports — click to continue",
  "ทำต่อ →": "Continue →",
+ "ทุก Action มีไฟล์หลักฐานแนบครบ (ที่หน้า Action)": "Every action has its evidence files attached (on the Action page)",
+ "ปิดเคสไม่ได้ — ทุก Action ที่ผูกต้องมีไฟล์หลักฐานแนบอย่างน้อย 1 ไฟล์ (แนบที่หน้า Action แล้วกลับมาปิดเคส)": "Cannot close the case — every linked action needs at least 1 evidence file (attach it on the Action page, then come back to close)",
+ "ต้องมีหลักฐานขั้นต่ำอย่างน้อย 1 ไฟล์ ตั้งเป็น 0 ไม่ได้": "At least 1 evidence file is required; it cannot be set to 0",
+ "ต้องมีหลักฐานขั้นต่ำอย่างน้อย 1 ไฟล์": "At least 1 evidence file is required",
+ "จำนวนหลักฐานขั้นต่ำก่อนปิดงาน (อย่างน้อย 1 ไฟล์)": "Minimum evidence files before closing (at least 1)",
 });

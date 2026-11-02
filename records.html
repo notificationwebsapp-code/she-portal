@@ -77,6 +77,7 @@
     .invbox .inv-card:nth-of-type(n) .inv-ro{white-space:pre-wrap;overflow-wrap:anywhere;margin:.2rem 0}
     .invbox .inv-rc-ro{border-left:4px solid var(--brand,#1a3a8a);background:#f3f6fd;padding:.5rem .8rem;border-radius:0 8px 8px 0}
     .invbox .chip{display:inline-block;background:#eef1f6;border:1px solid var(--line,#dfe3ea);border-radius:999px;padding:.2rem .7rem;font-size:.9rem}
+        .invbox .ev-ok{color:#166534;font-weight:600;font-size:.85em}.invbox .ev-need{color:#8a4b00;font-weight:600;font-size:.85em}
         .invbox .inv-savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:16px;align-items:center;background:#fff;border:1px solid var(--ib-bd2);border-radius:12px;padding:12px 16px;margin:24px 0 8px;box-shadow:0 10px 15px -3px rgba(11,59,96,.12),0 4px 6px -4px rgba(11,59,96,.08)}
     .invbox .inv-dirty{color:#9a5b00;font-size:.9rem}
     .invbox .rc-list{list-style:none;margin:.3rem 0;padding:0;display:grid;gap:.8rem}
@@ -548,6 +549,7 @@
       const m = (e && e.message) || "";
       const map = [
         [/at least 1 root cause/i, "ต้องมี Root cause อย่างน้อย 1 รายการก่อนปิดเคส (ดูหัวข้อ \"การสอบสวน\" ด้านบน)"],
+        [/Every action \(CAPA\) needs attached evidence/i, "ปิดเคสไม่ได้ — ทุก Action ที่ผูกต้องมีไฟล์หลักฐานแนบอย่างน้อย 1 ไฟล์ (แนบที่หน้า Action แล้วกลับมาปิดเคส)"],
         [/Every root cause needs/i, "ทุก Root cause ต้องมี Action (CAPA) อย่างน้อย 1 รายการก่อนปิดเคส — กด \"+ สร้าง Action\" ในแต่ละ Root cause"],
         [/linked actions/i, "Root cause นี้มี Action ผูกอยู่ — ให้ถอน Action ออกก่อนจึงลบได้"],
         [/At most 10 root causes/i, "เพิ่ม Root cause ได้ไม่เกิน 10 รายการ"],
@@ -1242,6 +1244,7 @@
       s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "2"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
       p.setAttribute("d", ICO[name] || ICO.circle); s.append(p); return s;
     }
+    const evOk = (a) => a.status === "cancelled" || ((a.evidence_count || 0) >= (a.evidence_needed || 1));
     const pill = (tone, icon, text) => h("span", { class: "pill " + tone }, ico(icon), h("span", { text }));
     // ป้ายสถานะของแต่ละขั้น (ไอคอน + ข้อความเสมอ — ไม่พึ่งสีอย่างเดียว) อิงข้อมูลที่บันทึกแล้ว
     function invStat(d, whys, rcs) {
@@ -1285,7 +1288,7 @@
         rcsD.forEach((c, n) => rcRo.append(h("li", { class: "rc-item " + ((c.capas || []).some((a) => a.status !== "cancelled") ? "s-ok" : "s-need") },
           h("div", { class: "rc-head" }, h("span", { class: "rc-no", text: "Root cause " + (n + 1) }), h("span", { class: "chip", text: lkName("root_cause", c.category) })),
           h("p", { class: "inv-ro inv-rc-ro", text: c.text }),
-          h("div", { class: "rc-capas" }, (c.capas || []).length ? c.capas.map((a) => h("span", { class: "chip" + (a.status === "cancelled" ? " off" : "") }, h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }))) : h("span", { class: "hint", text: "ไม่มี Action" })))));
+          h("div", { class: "rc-capas" }, (c.capas || []).length ? c.capas.map((a) => h("span", { class: "chip" + (a.status === "cancelled" ? " off" : "") }, h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }), a.status === "cancelled" ? null : h("span", { class: "ev-" + (evOk(a) ? "ok" : "need") }, " · ", h("span", { text: "หลักฐาน" }), " " + (a.evidence_count || 0) + "/" + (a.evidence_needed || 1)))) : h("span", { class: "hint", text: "ไม่มี Action" })))));
         wrap.append(card("3", "Root cause (สาเหตุที่แท้จริง)", rcsD.length ? rcRo : h("p", { class: "inv-ro", text: d.root_cause_text || "-" })));
         wrap.append(card("4", "สรุปผลสอบสวน", h("p", { class: "inv-ro", text: d.conclusion || "-" })));
       } else {
@@ -1363,6 +1366,7 @@
             const live = capas.filter((a) => a.status !== "cancelled").length;
             capas.forEach((a) => foot.append(h("span", { class: "chip" + (a.status === "cancelled" ? " off" : "") },
               h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }), " ",
+              a.status === "cancelled" ? null : h("span", { class: "ev-" + (evOk(a) ? "ok" : "need") }, (evOk(a) ? "✓ " : "⚠ "), h("span", { text: "หลักฐาน" }), " " + (a.evidence_count || 0) + "/" + (a.evidence_needed || 1)), " ",
               h("button", { type: "button", class: "chip-x", "aria-label": "ถอน Action ออกจาก Root cause นี้", onclick: () => { if (dirtyGuard()) return; act(sb.rpc("incident_root_cause_unlink_capa", { p_capa: a.id }), "ถอน Action แล้ว"); } }, ico("x"), h("span", { text: "ถอน" })))));
             if (!live) foot.append(h("p", { class: "rc-warn" }, ico("alert"), h("span", { text: "ยังไม่มี Action — ต้องมีอย่างน้อย 1 รายการก่อนปิดเคส" })));
             const row = h("div", { class: "rowbtns" }, h("a", { class: "btn-link", href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") + "&rc=" + encodeURIComponent(it.id),
@@ -1394,11 +1398,12 @@
         // ความพร้อมปิดเคส (อิงข้อมูลที่บันทึกแล้ว)
         const okWhy = whys.length > 0, okRc = savedRcs.length > 0;
         const okCapa = okRc && savedRcs.every((c) => (c.capas || []).some((a) => a.status !== "cancelled"));
-        const left = [okWhy, okRc, okCapa].filter((x) => !x).length;
+        const okEv = okCapa && savedRcs.every((c) => (c.capas || []).every(evOk));
+        const left = [okWhy, okRc, okCapa, okEv].filter((x) => !x).length;
         const gRow = (ok, t) => h("li", {}, ok ? pill("ok", "check", "ครบ") : pill("idle", "alert", "ยังไม่ครบ"), h("span", { text: t }));
         wrap.append(h("section", { class: "inv-gate " + (left ? "is-block" : "is-ok"), role: "status", "aria-label": "ความพร้อมปิดเคส" },
           h("h5", {}, ico(left ? "alert" : "check"), h("span", { text: left ? "ยังปิดเคสไม่ได้ — เหลือ " + left + " ข้อ" : "พร้อมปิดเคส" })),
-          h("ul", {}, gRow(okWhy, "มี Why อย่างน้อย 1 ชั้น"), gRow(okRc, "มี Root cause อย่างน้อย 1 รายการ"), gRow(okCapa, "ทุก Root cause มี Action (CAPA) อย่างน้อย 1 รายการ"))));
+          h("ul", {}, gRow(okWhy, "มี Why อย่างน้อย 1 ชั้น"), gRow(okRc, "มี Root cause อย่างน้อย 1 รายการ"), gRow(okCapa, "ทุก Root cause มี Action (CAPA) อย่างน้อย 1 รายการ"), gRow(okEv, "ทุก Action มีไฟล์หลักฐานแนบครบ (ที่หน้า Action)"))));
 
         // แถบบันทึก
         wrap.append(h("div", { class: "inv-savebar" }, h("button", { type: "button", onclick: () => {
