@@ -6,20 +6,20 @@
   <link rel="stylesheet" href="style.css">
   <title>Action (CAPA) | SHE Portal</title>
   <style>
-    .capabar{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:flex-end;margin:.8rem 0;padding:.8rem 1rem;background:#fff;border:1px solid var(--line);border-radius:12px}
+    .capabar{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:flex-end;margin:.8rem 0;padding:.8rem 1rem;background:#fff;border:1px solid var(--line);border-radius:16px}
     .capabar label{display:block;font-weight:600;font-size:.9rem;margin-bottom:.15rem}
     .capabar select{min-height:44px;min-width:9rem}
     .capabar .chk{display:inline-flex;align-items:center;gap:.4rem;min-height:44px;font-weight:400}
     .sumrow{display:flex;flex-wrap:wrap;gap:.5rem;margin:.4rem 0 1rem}
-    .sumchip{padding:.35rem .9rem;border-radius:999px;border:1px solid var(--line);background:#fff;font-weight:600;font-size:.9rem}
+    .sumchip{padding:.35rem .9rem;border-radius:8px;border:1px solid var(--line);background:#fff;font-weight:600;font-size:.9rem}
     .sumchip.bad{background:#fdecec;border-color:#c62828;color:#8a1010}
     .sumchip.wait{background:#fff8e1;border-color:#e0a100;color:#6b4200}
     #capalist{display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:.8rem}
-    .capacard{border:1px solid var(--line);border-left:6px solid #8a94a6;border-radius:10px;background:#fff!important;padding:.8rem 1rem;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+    .capacard{border:1px solid var(--line);border-left:4px solid #8a94a6;border-radius:8px;background:#fff!important;padding:.8rem 1rem;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
     .capacard:hover,.capacard:focus-visible{outline:2px solid var(--brand);outline-offset:1px;background:#f4f0fb!important;color:#1b2430!important;box-shadow:0 2px 8px rgba(0,0,0,.12)}
     .capacard:hover.od,.capacard.od:focus-visible{background:#ffecec!important}
     .capacard:hover .no,.capacard:hover .meta{color:#394150!important}
-    .capacard{display:block}.capacard>span{display:block}.capacard>span.no{margin-bottom:.1rem}.capacard .no{font-size:.82rem;color:#4b5565;font-weight:600}
+    .capacard{display:block}.capacard>span{display:block}.capacard>span.no{margin-bottom:.1rem}.capacard .no{font-size:.875rem;color:#4b5565;font-weight:600}
     .capacard .tt{display:block;font-weight:700;margin:.15rem 0 .35rem;overflow-wrap:anywhere}
     .capacard .meta{display:block;font-size:.88rem;color:#394150;margin-top:.15rem;overflow-wrap:anywhere}
     .capacard.s-open,.capacard.s-in_progress{border-left-color:#1565c0}
@@ -28,10 +28,10 @@
     .capacard.s-verified{border-left-color:#1b7a3d}
     .capacard.s-cancelled{border-left-color:#8a94a6;opacity:.8}
     .capacard.od{border-left-color:#c62828;background:#fff7f7}
-    .stbadge{display:inline-block;padding:.1rem .65rem;border-radius:999px;font-size:.82rem;font-weight:700;color:#fff!important;margin-right:.3rem}
+    .stbadge{display:inline-block;padding:.1rem .65rem;border-radius:8px;font-size:.82rem;font-weight:700;color:#fff!important;margin-right:.3rem}
     .stbadge.open,.stbadge.in_progress{background:#0d47a1}.stbadge.returned{background:#8a5a00}.stbadge.closed{background:#7b3fa0}
     .stbadge.verified{background:#1b7a3d}.stbadge.cancelled{background:#6b7385}.stbadge.od{background:#c62828}
-    #capadetail{border:1px solid var(--line);border-radius:12px;padding:1rem;margin:1.2rem 0;background:#fff}
+    #capadetail{border:1px solid var(--line);border-radius:16px;padding:1rem;margin:1.2rem 0;background:#fff}
     #capadetail h4{margin:1.2rem 0 .4rem}
     #capadetail dl{display:grid;grid-template-columns:minmax(8rem,13rem) 1fr;gap:.25rem .8rem;margin:0}
     #capadetail dt{font-weight:600}#capadetail dd{margin:0;overflow-wrap:anywhere}
