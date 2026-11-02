@@ -228,6 +228,18 @@
     details.editcard>summary:focus-visible{outline:2px solid #005A9C;outline-offset:2px}
     .ec-cta .on-open{display:none}details.editcard[open] .ec-cta .on-open{display:inline}details.editcard[open] .ec-cta .on-closed{display:none}
     details.editcard>div{padding:16px}
+
+    #detail .evleft{display:flex;flex-direction:column;gap:16px;min-width:0}
+    #detail .evleft .group{margin:0}
+    #detail .evgrid{align-items:start}
+    #detail .evphoto{position:sticky;top:16px}
+    .whatcard .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:4px 0 16px}
+    .whatcard .fact{background:#F4F8FC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+    .whatcard .fl{font-size:.74rem;font-weight:700;letter-spacing:.03em;color:#414750;text-transform:uppercase}
+    .whatcard .fv{font-weight:600;color:#0B1C30;overflow-wrap:anywhere}
+    .whatcard .narr{padding:10px 0;border-top:1px solid #E2E8F0}
+    .whatcard .narr p{margin:4px 0 0;line-height:1.7;overflow-wrap:anywhere;white-space:pre-line}
+    .whatcard .narr.is-empty p{color:#64748B;font-style:italic}
     .editgrid .steps123{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0;margin:0 0 16px}
     .steps123 li{display:flex;gap:10px;align-items:flex-start;background:#F4F8FC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;font-size:.92rem}
     .steps123 li b{flex:none;width:24px;height:24px;border-radius:50%;background:#005A9C;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem}
@@ -239,7 +251,7 @@
     .personedit{background:#FAFCFE;border:1px solid #CBD5E1;border-radius:10px;padding:12px 14px}
     .editfoot{margin-top:20px;background:#F4F8FC;border:1px solid #CBD5E1;border-radius:12px;padding:4px 16px 16px}
     .editfoot .previewbox{border:1.5px dashed #005A9C;background:#fff}
-    @media (max-width:900px){#detail .evgrid{grid-template-columns:1fr}.fldgrid{grid-template-columns:1fr}.editgrid .steps123{grid-template-columns:1fr}.ec-cta{display:none}}
+    @media (max-width:900px){#detail .evgrid{grid-template-columns:1fr}#detail .evphoto{position:static}.fldgrid{grid-template-columns:1fr}.editgrid .steps123{grid-template-columns:1fr}.ec-cta{display:none}}
 
     .previewbox{background:#fff;border:2px dashed var(--brand);border-radius:8px;padding:.5rem .9rem;margin:1rem 0}
     .previewbox .t{font-weight:700;color:var(--brand)}
@@ -1226,11 +1238,18 @@
         canAp ? "มีคำขอแก้ไข " + pend.length + " รายการรอคุณพิจารณา (ดูด้านล่าง)" : "คุณมีคำขอแก้ไขที่รอ SHE พิจารณาอยู่ ข้อมูลจะเปลี่ยนเมื่อ SHE อนุมัติ" }));
 
       // ข้อมูลปัจจุบัน แบ่งกลุ่มให้อ่านง่าย
-      const evGrid = h("div", { class: "evgrid" }, groupOf("เกิดอะไรขึ้น", ["occurred_on", "occurred_time", "location", "description", "incident_type_id", "department_text", "how_text", "why_text", "immediate_action"]));
+      const fv = (k) => withOther(k, inc[k], inc.other_notes, fmtVal(k, inc[k]));
+      const tile = (lbl, val) => h("div", { class: "fact" }, h("span", { class: "fl", text: lbl }), h("span", { class: "fv", text: val }));
+      const para = (k) => { const v = fv(k), empty = !v || v === "—"; return h("div", { class: "narr" + (empty ? " is-empty" : "") }, h("span", { class: "fl", text: LBL[k] }), h("p", { text: empty ? "ไม่ได้ระบุ" : v })); };
+      const whatCard = h("section", { class: "group whatcard" }, h("h4", { text: "เกิดอะไรขึ้น" }),
+        h("div", { class: "facts" }, tile("วันที่ · เวลา", fv("occurred_on") + (inc.occurred_time ? " · " + fv("occurred_time") : "")), tile(LBL.location, fv("location")),
+          tile(LBL.incident_type_id, fv("incident_type_id")), tile(LBL.department_text, fv("department_text"))),
+        para("description"), para("how_text"), para("why_text"), para("immediate_action"));
+      const evLeft = h("div", { class: "evleft" }, whatCard);
+      const evGrid = h("div", { class: "evgrid" }, evLeft);
       const photoBox = h("div", { class: "attbox" });
       evGrid.append(h("aside", { class: "evphoto", "aria-label": "ภาพที่เกิดเหตุและไฟล์หลักฐาน" },
         h("div", { class: "evphoto-h" }, ico("image"), h("div", {}, h("h4", { text: "ภาพที่เกิดเหตุ / ไฟล์หลักฐาน" }), h("small", { text: "แนบรูป เอกสาร หรือไฟล์ที่เกี่ยวกับเหตุการณ์นี้" }))), photoBox));
-      box.append(evGrid);
       const pg = h("div", { class: "group" }, h("h4", { text: "ผู้เกี่ยวข้อง" }));
       if (!state.persons.length) pg.append(h("p", { text: inc.persons_status === "none_confirmed" ? "ผู้รายงานยืนยันแล้วว่า ไม่มีผู้เกี่ยวข้อง" : "ไม่มีข้อมูลผู้เกี่ยวข้อง" + (inc.persons_status === "has_persons" ? " (ผู้รายงานระบุว่ามี แต่ยังไม่มีข้อมูล — ควรตรวจสอบ)" : "") }));
       state.persons.forEach((p, i) => pg.append(h("p", {}, h("strong", { text: "คนที่ " + (i + 1) + ": " }),
@@ -1238,11 +1257,12 @@
         " | ชนิดการบาดเจ็บ: " + withOther("injury_type_code", p.injury_type_code, p.other_notes, fmtVal("injury_type_code", p.injury_type_code)) +
         " | ตำแหน่ง: " + withOther("body_part_codes", p.body_part_codes, p.other_notes, fmtVal("body_part_codes", p.body_part_codes)) +
         (isOth(p.gender) || isOth(p.person_type) ? " | " + [isOth(p.gender) ? "เพศ" + ": " + withOther("gender", p.gender, p.other_notes, "อื่น ๆ") : "", isOth(p.person_type) ? "ประเภทบุคคล: " + withOther("person_type", p.person_type, p.other_notes, "อื่น ๆ") : ""].filter(Boolean).join(" | ") : ""))));
-      box.append(pg);
+      evLeft.append(pg);
       const cls = ["high_hazard_code", "system_failure_code", "root_cause_code", "is_recordable", "is_serious_potential"];
       const cg = groupOf("การจัดประเภทโดย SHE", cls);
       if (cls.every((k) => inc[k] === null || inc[k] === undefined)) cg.append(h("small", { text: "SHE ยังไม่ได้จัดประเภท (ปกติจะทำในขั้น \"SHE ตรวจสอบ\")" }));
-      box.append(cg);
+      evLeft.append(cg);
+      box.append(evGrid);
       const invBox = h("div", { class: "invbox" }); box.append(invBox);
       investigationPanel(invBox, inc, deleted, closed);
 
