@@ -1628,4 +1628,5 @@ I18N.add({
  "ภาพมีบุคคลปรากฏ — กดเพื่อดูตัวอย่าง": "Image shows people — click to preview",
  "เปิดดูภาพเต็ม": "Open full image",
  "แสดงภาพไม่ได้": "Cannot display image",
+ "ไม่มีชื่อในโปรไฟล์": "No name in profile",
 });

@@ -237,7 +237,7 @@
         ["สาเหตุหลัก (Root cause)", lkName("root_cause", a.root_cause_code)],
         ["ระดับมาตรการ (Hierarchy of Controls)", lkName("control_level", a.control_level_code)],
         ["ระดับความรุนแรง", lkName("capa_severity", a.severity_code)],
-        ["สร้างโดย", a.created_by_name, 1], ["ปิดงานโดย", a.closed_by_name, 1], ["ตรวจสอบโดย", a.verified_by_name, 1]]));
+        ["สร้างโดย", a.created_by_name || "ไม่มีชื่อในโปรไฟล์", 1], ["ปิดงานโดย", a.closed_by_name, 1], ["ตรวจสอบโดย", a.verified_by_name, 1]]));
       box.append(h("h4", { text: "รายละเอียด" }), h("p", { "data-no-i18n": true, text: a.description || "-" }));
       [["ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis)", a.root_cause_text], ["มาตรการแก้ไข (Corrective action)", a.corrective_action], ["มาตรการป้องกัน (Preventive action)", a.preventive_action]].forEach(([t, v]) => {
         box.append(h("h4", { text: t }), h("p", { class: "prewrap", "data-no-i18n": true, text: v || "-" }));
@@ -253,7 +253,7 @@
         const extra = x.event === "status" ? [" : ", h("span", { text: ST[x.from_status] || "-" }), " → ", h("span", { text: ST[x.to_status] || "-" })]
           : x.event === "due_changed" ? [" : " + x.old_due + " → " + x.new_due] : [];
         ul.append(h("li", {}, h("strong", {}, h("span", { text: EVT[x.event] || x.event }), ...extra), h("br"),
-          h("small", { "data-no-i18n": true, text: (x.actor_name || "-") + " · " + new Date(x.at).toLocaleString(EN ? "en-GB" : "th-TH") + (x.reason ? " · " + x.reason : "") })));
+          h("small", { "data-no-i18n": true, text: (x.actor_name || "ไม่มีชื่อในโปรไฟล์") + " · " + new Date(x.at).toLocaleString("en-GB", { hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) + (x.reason ? " · " + x.reason : "") })));
       });
       box.append(ul);
     }
