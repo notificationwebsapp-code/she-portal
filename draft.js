@@ -68,7 +68,7 @@ const SheDraft = (function () {
     if (c === "42501") return "ไม่มีสิทธิ์บันทึกร่าง (ตรวจสอบสถานะบัญชีหรือ Plant)";
     if (c === "54000") return "มีร่างครบ 50 ฉบับแล้ว กรุณาลบร่างเก่าก่อน";
     if (c === "23514") return "ร่างมีขนาดใหญ่เกินกำหนด";
-    return "บันทึกร่างไม่สำเร็จ";
+    return "บันทึกร่างไม่สำเร็จ" + (c ? " (รหัส " + c + ")" : "");
   }
   const CONFLICT = "ร่างนี้ถูกแก้ไขหรือถูกลบโดยผู้อื่นไปก่อน — ระบบไม่เขียนทับ กรุณาเปิดร่างล่าสุดจากรายการ “ร่างของฉันและทีม” (ข้อมูลที่คุณกรอกยังอยู่ในฟอร์มนี้ ให้คัดลอกส่วนที่ต้องการเก็บไว้ก่อน)";
 
@@ -142,7 +142,7 @@ const SheDraft = (function () {
     }
     saving = false; if (el.btn) el.btn.disabled = false;
     if (conflict) { status(CONFLICT, "err"); refreshList(); return; }
-    if (error) { status(thaiErr(error), "err"); return; }
+    if (error) { try { console.error("[SheDraft] save failed", error.code, error.message, error.details); } catch (e) { /* ไม่เป็นไร */ } status(thaiErr(error), "err"); return; }
     dirty = false;
     status((manual ? "บันทึกร่างแล้ว " : "บันทึกร่างอัตโนมัติ ") + fmt(new Date()) + " (ยังไม่ได้ส่งรายงาน)", "ok");
     refreshList();
