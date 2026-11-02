@@ -130,6 +130,7 @@
       [/Description too long|Text too long/i, "ข้อความยาวเกิน 2,000 ตัวอักษรต่อช่อง"],
       [/Reason must be|reason of at least|note of at least/i, "ต้องระบุเหตุผล/หมายเหตุอย่างน้อย 5 ตัวอักษร"],
       [/Incident not found/i, "ไม่พบรายงานอุบัติเหตุต้นทางใน Plant นี้"],
+      [/Action must be an active action|Investigation is not open/i, "ผูก Action กับ Root cause ไม่ได้ (เคสไม่อยู่ในขั้นสอบสวน หรือ Action ไม่ตรงกับเคสนี้)"],
       [/audit actions are created/i, "Action จาก Audit จะสร้างจากรอบ Audit (ยังไม่เปิดใช้)"],
       [/Invalid master-list code/i, "ค่าในรายการตัวเลือกไม่ถูกต้อง"],
       [/Only super admin can waive/i, "เฉพาะ Super admin เท่านั้นที่ตั้งจำนวนหลักฐานเป็น 0 ได้"],
@@ -249,38 +250,6 @@
           h("small", { "data-no-i18n": true, text: (x.actor_name || "-") + " · " + new Date(x.at).toLocaleString(EN ? "en-GB" : "th-TH") + (x.reason ? " · " + x.reason : "") })));
       });
       box.append(ul);
-      box.append(h("h4", { text: "ความคิดเห็น" }));
-      const cbox = h("div"); box.append(cbox);
-      renderComments(cbox, a.id);
-    }
-
-    // ---------- ความคิดเห็น (เพิ่มอย่างเดียว แก้/ลบไม่ได้ — ISO/IEC 27001:2022 A.8.15) ----------
-    // ทำไมใช้ textContent: ความคิดเห็นเป็นข้อความที่ผู้ใช้พิมพ์เอง ต้องไม่ถูกตีความเป็น HTML (OWASP A03)
-    async function renderComments(box, id) {
-      box.replaceChildren(h("p", { class: "tpnote", text: "กำลังโหลด…" }));
-      const { data, error } = await sb.rpc("capa_comments_list", { p_id: id });
-      box.replaceChildren();
-      if (error) { box.append(h("p", { class: "errtxt", text: "โหลดความคิดเห็นไม่สำเร็จ" })); return; }
-      const ul = h("ul", { class: "hist" });
-      (data || []).forEach((c) => ul.append(h("li", {},
-        h("small", { "data-no-i18n": true, text: (c.mine ? (EN ? "You" : "คุณ") : (c.author_name || "-")) + " · " + new Date(c.created_at).toLocaleString(EN ? "en-GB" : "th-TH") }),
-        h("br"), h("span", { class: "prewrap", "data-no-i18n": true, text: c.body }))));
-      if (!(data || []).length) box.append(h("p", { text: "ยังไม่มีความคิดเห็น" }));
-      else box.append(ul);
-      const ta = h("textarea", { id: "cm-ta", maxlength: "1000", "aria-label": "เขียนความคิดเห็น" });
-      const err = h("p", { class: "errtxt", role: "alert" });
-      const btn = h("button", { type: "button" }, "ส่งความคิดเห็น");
-      btn.addEventListener("click", async () => {
-        err.textContent = "";
-        const v = ta.value.trim();
-        if (!v) { err.textContent = "กรุณาพิมพ์ความคิดเห็น"; ta.focus(); return; }
-        btn.disabled = true;
-        const r = await sb.rpc("capa_comment_add", { p_id: id, p_body: v });
-        btn.disabled = false;
-        if (r.error) { err.textContent = /1-1000/.test(r.error.message || "") ? "ความคิดเห็นต้องยาว 1–1,000 ตัวอักษร" : errTh(r.error); return; }
-        await renderComments(box, id);
-      });
-      box.append(h("div", { class: "capaform" }, ta, err, h("div", { class: "actrow" }, btn)));
     }
 
     // ---------- เปลี่ยนสถานะ / เลื่อนกำหนด ----------
@@ -351,6 +320,7 @@
       const ev = h("input", { type: "number", id: "fm-ev", min: "0", max: "20", value: "1" });
       const err = h("p", { class: "errtxt", role: "alert" });
       const src = pre && pre.source_type === "incident" ? pre : null;
+      const rcId = src && pre.rc ? pre.rc : null;          // มาจากปุ่ม "+ สร้าง Action จาก Root cause นี้" ในหน้าดูข้อมูล
       if (edit) {
         title.value = a.title; desc.value = a.description || "";
         const cu = a.owner_user_id && USERS.find((u) => u.id === a.owner_user_id);
@@ -374,7 +344,8 @@
       if (!edit) rows.push(h("label", { for: "fm-ev", text: "จำนวนหลักฐานขั้นต่ำก่อนปิดงาน" }), ev);
       const form = h("form", { method: "dialog", class: "capaform", novalidate: "" },
         h("h3", { id: "formdlg-t", text: edit ? "แก้ไข " + a.action_no : "สร้าง Action ใหม่" }),
-        src ? h("p", { class: "msg", text: "สร้างจากรายงานอุบัติเหตุที่เลือก" }) : null, ...rows, err,
+        src ? h("p", { class: "msg", text: "สร้างจากรายงานอุบัติเหตุที่เลือก" }) : null,
+        rcId ? h("p", { class: "msg", id: "fm-rcnote", role: "status", text: "กำลังโหลด Root cause ที่จะผูก..." }) : null, ...rows, err,
         h("div", { class: "actrow" }, h("button", { type: "submit" }, "บันทึก"), h("button", { type: "button", class: "secondary", onclick: () => dlg.close() }, "ยกเลิก")));
       form.addEventListener("submit", async (ev2) => {
         ev2.preventDefault(); err.textContent = "";
@@ -401,10 +372,24 @@
             p_root_cause_text: rct.value.trim() || null, p_corrective: cor.value.trim() || null, p_preventive: prv.value.trim() || null });
         }
         if (res.error) { err.textContent = errTh(res.error); return; }
-        dlg.close(); say(edit ? "แก้ไขเรียบร้อย" : "สร้าง Action เรียบร้อย");
+        let linkErr = "";
+        if (!edit && rcId && res.data) { const lk = await sb.rpc("incident_root_cause_link_capa", { p_root_cause: rcId, p_capa: res.data }); if (lk.error) linkErr = errTh(lk.error); }
+        dlg.close();
+        if (linkErr) say("สร้าง Action แล้ว แต่ผูกกับ Root cause ไม่สำเร็จ: " + linkErr + " — ผูกเองได้ในหน้า \"ดูข้อมูล\"", true);
+        else say(edit ? "แก้ไขเรียบร้อย" : rcId ? "สร้าง Action และผูกกับ Root cause เรียบร้อย" : "สร้าง Action เรียบร้อย");
         await loadList(); const id = edit ? a.id : res.data; if (id) await openDetail(id, true);
       });
       dlg.append(form); dlg.showModal(); title.focus();
+      if (rcId) (async () => {                       // เติมหมวด/คำอธิบายจาก Root cause ที่เลือก (ผู้ใช้แก้ได้)
+        const note = $("fm-rcnote");
+        const r = await sb.rpc("incident_investigation_get", { p_incident: src.source_id });
+        const it = !r.error && r.data && (r.data.root_causes || []).find((x) => x.id === rcId);
+        if (!it) { note.textContent = "ไม่พบ Root cause ที่เลือก — สร้าง Action ได้ แต่จะไม่ถูกผูกอัตโนมัติ"; return; }
+        note.textContent = "ผูกกับ Root cause: " + it.text.slice(0, 120);
+        if (it.category && [...rc.options].some((o) => o.value === it.category)) rc.value = it.category;
+        if (!rct.value) rct.value = it.text;
+        if (!title.value) title.value = ("แก้ไข/ป้องกัน: " + it.text).slice(0, 200);
+      })();
     }
 
     // ---------- เริ่มต้น ----------
@@ -431,7 +416,7 @@
       await loadList();
       const q = new URLSearchParams(location.search);
       if (q.get("id")) await openDetail(q.get("id"));
-      else if (q.get("new") === "1" && canCreate) openForm(null, { source_type: q.get("source") === "incident" ? "incident" : "other", source_id: q.get("sid"), plant: q.get("plant") });
+      else if (q.get("new") === "1" && canCreate) openForm(null, { source_type: q.get("source") === "incident" ? "incident" : "other", source_id: q.get("sid"), plant: q.get("plant"), rc: q.get("rc") });
     }
     init().catch((e) => say(errTh(e), true));
   </script>

@@ -36,6 +36,24 @@
     .invbox .chip{display:inline-block;background:#eef1f6;border:1px solid var(--line,#dfe3ea);border-radius:999px;padding:.2rem .7rem;font-size:.9rem}
     .invbox .inv-savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:.8rem;align-items:center;background:rgba(255,255,255,.96);border-top:1px solid var(--line,#dfe3ea);padding:.65rem .2rem;margin-top:.6rem;backdrop-filter:blur(4px)}
     .invbox .inv-dirty{color:#9a5b00;font-size:.9rem}
+    .invbox .rc-list{list-style:none;margin:.3rem 0;padding:0;display:grid;gap:.8rem}
+    .invbox .rc-item{border:1px solid var(--line,#dfe3ea);border-left:5px solid var(--brand,#1a3a8a);border-radius:10px;padding:.7rem .9rem .8rem;background:#fbfcff}
+    .invbox .rc-head{display:flex;gap:.6rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .invbox .rc-no{font-weight:700;color:var(--brand,#1a3a8a)}
+    .invbox .rc-capas{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.4rem .5rem;align-items:center}
+    .invbox .rc-capas .rowbtns{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;width:100%}
+    .invbox .rc-capas .chip.off{opacity:.55;text-decoration:line-through}
+    .invbox .rc-capas p{margin:.2rem 0;width:100%}
+    .invbox .rc-warn{color:#9a5b00;font-weight:600;font-size:.92rem}
+    .invbox .chip-x{border:0;background:transparent;color:#8a1010;cursor:pointer;font:inherit;font-size:.82rem;padding:.1rem .3rem;min-height:24px}
+    .invbox .btn-link{display:inline-block;background:var(--brand,#1a3a8a);color:#fff;border-radius:8px;padding:.45rem .8rem;text-decoration:none;font-weight:600;min-height:24px}
+    .invbox .btn-link:hover,.invbox .btn-link:focus-visible{filter:brightness(1.12)}
+    .invbox .inv-ready{border:1px dashed var(--brand,#1a3a8a);border-radius:10px;padding:.6rem .9rem;margin:.8rem 0;background:#f7f9ff}
+    .invbox .inv-ready h5{margin:.1rem 0 .3rem}
+    .invbox .inv-ready ul{list-style:none;margin:0;padding:0}
+    .invbox .inv-ready li{display:flex;gap:.5rem;align-items:center;padding:.1rem 0}
+    .invbox .inv-ready li.ok{color:#1b6b3a}.invbox .inv-ready li.todo{color:#6b4200}
+    .invbox .inv-ready .mark{font-weight:700;width:1.2rem;text-align:center}
     @media (max-width:560px){.invbox .why-row,.invbox .why-chain>li{grid-template-columns:1fr}.invbox .why-chain>li:not(:last-child)::before{display:none}}
     .invbox dl.ro{display:grid;grid-template-columns:minmax(8rem,12rem) 1fr;gap:.25rem .8rem;margin:.4rem 0}
     .invbox dl.ro dt{font-weight:600}.invbox dl.ro dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -497,6 +515,13 @@
     function errTh(e) {
       const m = (e && e.message) || "";
       const map = [
+        [/at least 1 root cause/i, "ต้องมี Root cause อย่างน้อย 1 รายการก่อนปิดเคส (ดูหัวข้อ \"การสอบสวน\" ด้านบน)"],
+        [/Every root cause needs/i, "ทุก Root cause ต้องมี Action (CAPA) อย่างน้อย 1 รายการก่อนปิดเคส — กด \"+ สร้าง Action\" ในแต่ละ Root cause"],
+        [/linked actions/i, "Root cause นี้มี Action ผูกอยู่ — ให้ถอน Action ออกก่อนจึงลบได้"],
+        [/At most 10 root causes/i, "เพิ่ม Root cause ได้ไม่เกิน 10 รายการ"],
+        [/Root cause text is required|Root cause text too long|Invalid root cause category|Invalid root cause item|Root causes must be|Unknown root cause id/i, "Root cause ทุกรายการต้องเลือกหมวดและกรอกคำอธิบาย (ไม่เกิน 1,000 ตัวอักษร)"],
+        [/Action must be an active action/i, "ผูกไม่ได้: Action ต้องสร้างจากเคสนี้และยังไม่ถูกยกเลิก"],
+        [/incident_root_cause_capas_capa_id_key/i, "Action นี้ผูกกับ Root cause อื่นแล้ว"],
         [/at least 1 why/i, "ต้องบันทึก 5 Why อย่างน้อย 1 ชั้นก่อนปิดเคส (ดูหัวข้อ \"การสอบสวน\" ด้านบน)"],
         [/Investigation is not open/i, "ยังไม่ได้เริ่มสอบสวน หรือเคสถูกปิดแล้ว"],
         [/can start only from the flash/i, "เคสนี้เริ่มสอบสวนไปแล้วหรือปิดแล้ว"],
@@ -1196,8 +1221,13 @@
         const chain = h("ol", { class: "why-chain" });
         whys.forEach((w) => chain.append(h("li", {}, h("span", { class: "why-badge", text: "Why " + w.step }), h("span", { class: "inv-ro", text: w.text }))));
         wrap.append(card("2", "5 Why", whys.length ? chain : h("p", { class: "inv-ro", text: "-" })));
-        wrap.append(card("3", "Root cause (สาเหตุที่แท้จริง)", h("p", { class: "inv-ro inv-rc-ro", text: d.root_cause_text || "-" }),
-          d.root_cause_code ? h("p", {}, h("span", { class: "chip", text: lkName("root_cause", d.root_cause_code) })) : null));
+        const rcsD = Array.isArray(d.root_causes) ? d.root_causes : [];
+        const rcRo = h("ol", { class: "rc-list" });
+        rcsD.forEach((c, n) => rcRo.append(h("li", { class: "rc-item" },
+          h("div", { class: "rc-head" }, h("span", { class: "rc-no", text: "Root cause " + (n + 1) }), h("span", { class: "chip", text: lkName("root_cause", c.category) })),
+          h("p", { class: "inv-ro inv-rc-ro", text: c.text }),
+          h("div", { class: "rc-capas" }, (c.capas || []).length ? c.capas.map((a) => h("span", { class: "chip" + (a.status === "cancelled" ? " off" : "") }, h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }))) : h("span", { class: "hint", text: "ไม่มี Action" })))));
+        wrap.append(card("3", "Root cause (สาเหตุที่แท้จริง)", rcsD.length ? rcRo : h("p", { class: "inv-ro", text: d.root_cause_text || "-" })));
         wrap.append(card("4", "สรุปผลสอบสวน", h("p", { class: "inv-ro", text: d.conclusion || "-" })));
       } else {
         // ฟอร์มสอบสวน: 4 ขั้น (ปัญหา → Why → Root cause → สรุป) เพิ่ม Why ทีละชั้น นับตัวอักษร และมีแถบบันทึกค้างล่าง
@@ -1235,29 +1265,77 @@
         refresh();
         wrap.append(card("2", "ถามซ้ำ \"ทำไม\" (5 Why)", "ถามต่อเนื่องจนถึงสาเหตุที่แก้ได้ที่ระบบ/กระบวนการ ไม่ต้องครบ 5 ชั้น แต่ต้องมีอย่างน้อย 1 ชั้นก่อนปิดเคส", chain, h("div", { class: "rowbtns" }, addBtn)));
 
-        // 3) Root cause (ข้อความ) + หมวดสาเหตุ (จัดกลุ่ม)
-        const rct = mkTa("inv-rct", 1000, 3, "สรุปสาเหตุที่แท้จริงที่ได้จากการถาม Why เช่น ไม่มีขั้นตอนตรวจสอบพื้นเปียกก่อนเริ่มกะ", d.root_cause_text);
+        // 3) Root cause หลายรายการ: หมวด (บังคับ) + คำอธิบายที่พิมพ์เอง (บังคับ) — 1 รายการต้องมี Action (CAPA) ≥ 1 ก่อนปิดเคส
         const GROUPS = { MGT: "ระบบจัดการ", PRC: "ขั้นตอนงาน", HUM: "คน (Human)", EQP: "เครื่องจักร (Equipment)", MAT: "วัสดุ/สารเคมี (Material)", ENV: "สภาพแวดล้อม (Environment)", EXT: "ปัจจัยภายนอก (External)", OTH: "อื่น ๆ" };
-        const rc = h("select", { id: "inv-rc" }, h("option", { value: "", text: "— ยังไม่ระบุ —" }));
-        const opts = (LK.root_cause || []).slice();
-        if (d.root_cause_code && !opts.some((o) => o.code === d.root_cause_code)) opts.push({ code: d.root_cause_code, name_th: lkName("root_cause", d.root_cause_code) + " (ปิดใช้งานแล้ว)" });
-        const byG = {}, order = [];
-        opts.forEach((o) => { const g = GROUPS[(o.code.split("_")[0] || "")] ? o.code.split("_")[0] : "_CUSTOM"; if (!byG[g]) { byG[g] = []; order.push(g); } byG[g].push(o); });
-        order.forEach((g) => {
-          const og = h("optgroup", { label: (window.I18N && I18N.t ? I18N.t(GROUPS[g] || "หมวดที่ Admin เพิ่มเอง") : (GROUPS[g] || "หมวดที่ Admin เพิ่มเอง")) });
-          byG[g].forEach((o) => { const i = o.name_th.indexOf(": "); og.append(h("option", { value: o.code, text: GROUPS[g] && i > 0 ? o.name_th.slice(i + 2) : o.name_th })); });
-          rc.append(og);
-        });
-        rc.value = d.root_cause_code || "";
-        rc.addEventListener("change", markDirty);
-        wrap.append(card("3", "Root cause (สาเหตุที่แท้จริง)", "ข้อสรุปจากการถาม Why — เขียนเป็นข้อความของคุณเอง",
-          h("label", { for: "inv-rct", class: "sr", text: "Root cause (สาเหตุที่แท้จริง)" }), withCount(rct, 1000),
-          h("label", { for: "inv-rc", class: "inv-sublabel", text: "หมวดสาเหตุ (ไม่บังคับ — ใช้จัดกลุ่มทำสถิติ)" }), rc,
-          opts.length ? null : h("div", { class: "hint", text: "ยังไม่มีรายการหมวดสาเหตุ — ให้ Admin เพิ่มในหน้า \"ข้อมูลหลัก\" ก่อน" })));
+        const tr = (x) => (window.I18N && I18N.t ? I18N.t(x) : x);
+        const savedRcs = Array.isArray(d.root_causes) ? d.root_causes : [];
+        const candR = await sb.rpc("incident_root_cause_capa_candidates", { p_incident: inc.id });
+        const cands = candR.error ? [] : (candR.data || []);
+        let dirtyFlag = false;
+        const dirtyGuard = () => { if (dirtyFlag || dirty.textContent) { showMsg("กรุณากด \"บันทึกการสอบสวน\" ก่อน แล้วจึงสร้าง/ผูก/ถอน Action", false); return true; } return false; };
+        const mkCat = (val) => {
+          const sel = h("select", { class: "rc-cat", required: "" }, h("option", { value: "", text: "— เลือกหมวดสาเหตุ —" }));
+          const opts = (LK.root_cause || []).slice();
+          if (val && !opts.some((o) => o.code === val)) opts.push({ code: val, name_th: lkName("root_cause", val) + " (ปิดใช้งานแล้ว)" });
+          const byG = {}, order = [];
+          opts.forEach((o) => { const p = o.code.split("_")[0]; const g = GROUPS[p] ? p : "_CUSTOM"; if (!byG[g]) { byG[g] = []; order.push(g); } byG[g].push(o); });
+          order.forEach((g) => {
+            const og = h("optgroup", { label: tr(GROUPS[g] || "หมวดที่ Admin เพิ่มเอง") });
+            byG[g].forEach((o) => { const k = o.name_th.indexOf(": "); og.append(h("option", { value: o.code, text: GROUPS[g] && k > 0 ? o.name_th.slice(k + 2) : o.name_th })); });
+            sel.append(og);
+          });
+          sel.value = val || ""; sel.addEventListener("change", markDirty);
+          return sel;
+        };
+        const items = []; let seq = 0;
+        const rcList = h("ol", { class: "rc-list" });
+        const addBtnRc = h("button", { type: "button", class: "secondary small", id: "inv-addrc", text: "+ เพิ่ม Root cause" });
+        const renum = () => { items.forEach((it, n) => { it.no.textContent = "Root cause " + (n + 1); it.rm.disabled = it.locked; }); addBtnRc.disabled = items.length >= 10; };
+        const addItem = (src) => {
+          const k = ++seq;
+          const cat = mkCat(src && src.category); cat.id = "inv-rc-cat-" + k;
+          const ta = mkTa("inv-rc-txt-" + k, 1000, 3, "อธิบายสาเหตุที่แท้จริง เช่น ไม่มีขั้นตอนตรวจสอบพื้นเปียกก่อนเริ่มกะ", src && src.text);
+          const no = h("span", { class: "rc-no" });
+          const capas = (src && src.capas) || [];
+          const it = { id: src && src.id, cat, ta, no, locked: capas.length > 0 };
+          it.rm = h("button", { type: "button", class: "secondary small rc-rm", text: "ลบรายการนี้", title: it.locked ? "มี Action ผูกอยู่ — ถอน Action ก่อนจึงลบได้" : null, onclick: () => { const x = items.indexOf(it); if (x >= 0) items.splice(x, 1); it.li.remove(); renum(); markDirty(); } });
+          const foot = h("div", { class: "rc-capas" });
+          if (it.id) {
+            const live = capas.filter((a) => a.status !== "cancelled").length;
+            capas.forEach((a) => foot.append(h("span", { class: "chip" + (a.status === "cancelled" ? " off" : "") },
+              h("a", { href: "capa.html?id=" + encodeURIComponent(a.id), text: a.action_no + " · " + a.title }), " ",
+              h("button", { type: "button", class: "chip-x", "aria-label": "ถอน Action ออกจาก Root cause นี้", text: "✕ ถอน", onclick: () => { if (dirtyGuard()) return; act(sb.rpc("incident_root_cause_unlink_capa", { p_capa: a.id }), "ถอน Action แล้ว"); } }))));
+            if (!live) foot.append(h("p", { class: "rc-warn", text: "⚠️ ยังไม่มี Action — ต้องมีอย่างน้อย 1 รายการก่อนปิดเคส" }));
+            const row = h("div", { class: "rowbtns" }, h("a", { class: "btn-link", href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") + "&rc=" + encodeURIComponent(it.id),
+              text: "+ สร้าง Action จาก Root cause นี้", onclick: (ev) => { if (dirtyGuard()) ev.preventDefault(); } }));
+            if (cands.length) {
+              const ex = h("select", { "aria-label": "เลือก Action ที่มีอยู่เพื่อผูก" }, h("option", { value: "", text: "— ผูก Action ที่มีอยู่ —" }), cands.map((a) => h("option", { value: a.id, text: a.action_no + " · " + a.title })));
+              ex.addEventListener("change", () => { if (!ex.value) return; if (dirtyGuard()) { ex.value = ""; return; } act(sb.rpc("incident_root_cause_link_capa", { p_root_cause: it.id, p_capa: ex.value }), "ผูก Action แล้ว"); });
+              row.append(ex);
+            }
+            foot.append(row);
+          } else foot.append(h("p", { class: "hint", text: "บันทึกการสอบสวนก่อน จึงจะสร้าง/ผูก Action ได้" }));
+          it.li = h("li", { class: "rc-item" }, h("div", { class: "rc-head" }, no, it.rm),
+            h("label", { for: cat.id, class: "inv-sublabel", text: "หมวดสาเหตุ (บังคับ)" }), cat,
+            h("label", { for: ta.id, class: "inv-sublabel", text: "คำอธิบาย Root cause (บังคับ)" }), withCount(ta, 1000), foot);
+          items.push(it); rcList.append(it.li); renum();
+        };
+        savedRcs.forEach((c) => addItem(c));
+        if (!savedRcs.length) addItem(null);
+        addBtnRc.addEventListener("click", () => { if (items.length < 10) { addItem(null); items[items.length - 1].ta.focus(); markDirty(); } });
+        wrap.append(card("3", "Root cause (สาเหตุที่แท้จริง) — เพิ่มได้หลายรายการ", "แต่ละรายการเลือกหมวดและพิมพ์คำอธิบายเอง ถ้าไม่มีหมวดตรง ให้เลือก \"อื่น ๆ\" แล้วอธิบายเอง ทุก Root cause ต้องมี Action (CAPA) อย่างน้อย 1 รายการก่อนปิดเคส",
+          rcList, h("div", { class: "rowbtns" }, addBtnRc)));
 
         // 4) สรุป
         const concl = mkTa("inv-concl", 2000, 3, "สรุปผลการสอบสวน และข้อเสนอแนะเบื้องต้น", d.conclusion);
         wrap.append(card("4", "สรุปผลสอบสวน", null, h("label", { for: "inv-concl", class: "sr", text: "สรุปผลสอบสวน" }), withCount(concl, 2000)));
+
+        // ความพร้อมปิดเคส (อิงข้อมูลที่บันทึกแล้ว)
+        const okWhy = whys.length > 0, okRc = savedRcs.length > 0;
+        const okCapa = okRc && savedRcs.every((c) => (c.capas || []).some((a) => a.status !== "cancelled"));
+        const chk = (ok, t) => h("li", { class: ok ? "ok" : "todo" }, h("span", { class: "mark", "aria-hidden": "true", text: ok ? "✓" : "○" }), h("span", { text: t }), h("span", { class: "sr", text: ok ? "ครบแล้ว" : "ยังไม่ครบ" }));
+        wrap.append(h("section", { class: "inv-ready", "aria-label": "ความพร้อมปิดเคส" }, h("h5", { text: "ความพร้อมปิดเคส (ตามข้อมูลที่บันทึกแล้ว)" }),
+          h("ul", {}, chk(okWhy, "มี Why อย่างน้อย 1 ชั้น"), chk(okRc, "มี Root cause อย่างน้อย 1 รายการ"), chk(okCapa, "ทุก Root cause มี Action (CAPA) อย่างน้อย 1 รายการ"))));
 
         // แถบบันทึก
         wrap.append(h("div", { class: "inv-savebar" }, h("button", { type: "button", text: "บันทึกการสอบสวน", onclick: () => {
@@ -1265,8 +1343,11 @@
           let last = -1; vals.forEach((v, i) => { if (v) last = i; });
           const arr = vals.slice(0, last + 1);
           if (arr.some((v) => !v)) { showMsg("กรอก Why ให้เรียงลำดับ ไม่เว้นช่องระหว่างชั้น", false); return; }
+          const rcs = []; let bad = false;
+          items.forEach((it) => { const c = it.cat.value, t = it.ta.value.trim(); if (!c && !t) return; if (!c || !t) { bad = true; return; } rcs.push({ id: it.id || undefined, category: c, text: t }); });
+          if (bad) { showMsg("Root cause ทุกรายการต้องเลือกหมวดและกรอกคำอธิบาย (หรือลบรายการที่ไม่ใช้)", false); return; }
           act(sb.rpc("incident_investigation_save", { p_incident: inc.id, p_problem: problem.value.trim() || null,
-            p_whys: arr, p_root_cause: rc.value || null, p_conclusion: concl.value.trim() || null, p_root_cause_text: rct.value.trim() || null }), "บันทึกการสอบสวนแล้ว");
+            p_whys: arr, p_root_cause: null, p_conclusion: concl.value.trim() || null, p_root_cause_text: null, p_root_causes: rcs }), "บันทึกการสอบสวนแล้ว");
         } }), dirty));
         wrap.append(h("p", { class: "hint", text: "ขั้นต่อไป: เมื่อได้สาเหตุแล้ว กด \"+ สร้าง Action (CAPA) จากเคสนี้\" ด้านล่างเพื่อกำหนดมาตรการแก้ไข/ป้องกัน แล้วกด \"ปิดเคส\"" }));
       }
