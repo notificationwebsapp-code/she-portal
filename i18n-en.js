@@ -1625,4 +1625,7 @@ I18N.add({
  "ยืนยันการแก้ไข": "Confirm changes",
  "แก้เฉพาะช่องที่ต้องการ (ช่องที่แก้จะมีกรอบสีน้ำเงิน)": "Edit only the fields you need (changed fields get a blue outline)",
  "ภาพที่เกิดเหตุและไฟล์หลักฐาน": "Incident photos and evidence files",
+ "ภาพมีบุคคลปรากฏ — กดเพื่อดูตัวอย่าง": "Image shows people — click to preview",
+ "เปิดดูภาพเต็ม": "Open full image",
+ "แสดงภาพไม่ได้": "Cannot display image",
 });
