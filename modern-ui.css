@@ -174,3 +174,10 @@ html[data-ui="modern"] .cards a.card:focus-visible{outline:2px solid var(--brand
   html[data-ui="modern"] .cards a.card .icon{width:76px;height:76px}
   html[data-ui="modern"] .cards a.card .icon svg{width:38px;height:38px}
 }
+
+/* ไอคอน duotone: เงาเส้น + ประกายกระจกครึ่งบนของไอคอน */
+html[data-ui="modern"] .cards a.card .icon{position:relative;overflow:hidden}
+html[data-ui="modern"] .cards a.card .icon::after{content:"";position:absolute;left:0;right:0;top:0;height:52%;background:linear-gradient(rgba(255,255,255,.26),rgba(255,255,255,0));pointer-events:none}
+html[data-ui="modern"] .cards a.card .icon svg{position:relative;z-index:1;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.22));stroke-width:1.6;overflow:visible}
+html[data-ui="modern"] .cards a.card .icon svg[data-duo]{width:46px;height:46px;stroke-linecap:round;stroke-linejoin:round;fill:none}
+@media(max-width:640px){html[data-ui="modern"] .cards a.card .icon svg[data-duo]{width:42px;height:42px}}

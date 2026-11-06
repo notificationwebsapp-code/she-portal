@@ -249,7 +249,21 @@
   if(qu==="modern"||qu==="off")lset("she-ui",qu);else if(qu==="reset")lset("she-ui",null);
   var b=lget("she-brand")||DEFAULT_BRAND,u=lget("she-ui")||DEFAULT_UI;
   function css(h){var l=document.createElement("link");l.rel="stylesheet";l.href=h;document.head.appendChild(l)}
-  if(u==="modern"){document.documentElement.setAttribute("data-ui","modern");css("modern-ui.css")}
+  if(u==="modern"){document.documentElement.setAttribute("data-ui","modern");css("modern-ui.css");duo()}
+  /* ไอคอนเมนูหลักแบบ duotone (SVG วาดเอง): พื้นโปร่งแสง + เส้นขาวชัด — ใช้เฉพาะโหมด modern; ไม่ตรงชื่อไฟล์ = คงไอคอนเดิม */
+  function duo(){
+    var T='fill="rgba(255,255,255,.30)"',D={
+      "incident.html":'<path '+T+' d="M6 19v-6a6 6 0 0112 0v6z"/><rect x="4" y="19" width="16" height="2.6" rx="1.3" fill="#fff" stroke="none"/><path d="M9.6 13a2.4 2.4 0 012.4-2.4"/><path d="M12 3v2M4.9 5.9l1.4 1.4M19.1 5.9l-1.4 1.4M2.5 12h2M19.5 12h2"/>',
+      "checklist.html":'<rect '+T+' x="5" y="4.5" width="14" height="17" rx="3"/><rect x="9" y="2.5" width="6" height="4" rx="1.6" fill="#fff" stroke="none"/><path d="M8.6 11.4l1.4 1.4 2.4-2.8M14 12h2.4M8.6 16.6l1.4 1.4 2.4-2.8M14 17.2h2.4"/>',
+      "training.html":'<path '+T+' d="M12 4 2 9l10 5 10-5-10-5z"/><path d="M6 11.6V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.4M22 9v5"/>',
+      "records.html":'<rect '+T+' x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 16v-3.5M12 16V8M16 16v-5.5" stroke-width="2.2"/>'
+    };
+    var cs=document.querySelectorAll(".cards a.card");
+    for(var k=0;k<cs.length;k++){
+      var h=(cs[k].getAttribute("href")||"").split("?")[0],ic=cs[k].querySelector(".icon svg");
+      if(D[h]&&ic){ic.setAttribute("viewBox","0 0 24 24");ic.innerHTML=D[h];ic.setAttribute("data-duo","1")}
+    }
+  }
   if(b!=="tu")return;
   document.documentElement.setAttribute("data-brand","tu");css("brand-tu.css");
   var h=document.querySelector("header");if(!h||h.querySelector(".tulogo"))return;
