@@ -26,8 +26,10 @@ html[data-brand="tu"] header::after{content:"";display:block;position:absolute;l
 html[data-brand="tu"] header{position:relative}
 /* โลโก้ Thai Union (ไฟล์จริง พื้นโปร่งใส) มุมขวาบนของหัวเว็บ */
 .tulogo{display:none}
-html[data-brand="tu"] .tulogo{display:block;order:2;height:44px;width:auto;margin-left:.6rem;flex:none;align-self:center}
+html[data-brand="tu"] .tulogo{display:block;position:absolute;right:2rem;top:.55rem;height:44px;width:auto}
+html[data-brand="tu"] header{padding-right:calc(2rem + 76px)}
 @media(max-width:900px){
-  html[data-brand="tu"] .tulogo{order:1;height:36px;margin-left:auto}
+  html[data-brand="tu"] header{padding-right:1rem}
+  html[data-brand="tu"] .tulogo{position:static;order:1;height:36px;margin-left:auto}
   html[data-brand="tu"] header .tools{order:2;margin-left:0;flex:1 1 100%}
 }
