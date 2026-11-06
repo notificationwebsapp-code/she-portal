@@ -407,7 +407,7 @@
       const rs = document.getElementById("f-role");
       [...new Set(allUsers.map(u => u.role))].sort().forEach(r => { const o = document.createElement("option"); o.value = r; o.textContent = r; rs.appendChild(o); });
       const ps = document.getElementById("f-plant");
-      plants.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.code; ps.appendChild(o); });
+      plants.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.code + " — " + p.name; ps.appendChild(o); });
       ["f-q", "f-status", "f-role", "f-plant", "f-sort"].forEach(id => {
         document.getElementById(id).addEventListener(id === "f-q" ? "input" : "change", renderUsers);
       });

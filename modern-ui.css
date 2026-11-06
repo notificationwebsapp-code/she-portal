@@ -330,3 +330,11 @@ html[data-ui="modern"] .filterbar>label{display:flex;flex-direction:column;gap:6
 /* G23 — ตัวหนังสือในช่อง Plant (ค่า "All"/"ทั้งหมด") เข้มและหนาเท่า select อื่น */
 html[data-ui="modern"] [role="combobox"]::placeholder{color:var(--ink,#111);opacity:1;font-weight:600}
 html[data-ui="modern"] [role="combobox"]:not(:placeholder-shown){font-weight:600}
+/* G24 — แถบตัวกรอง (Admin ฯลฯ): กริดเดียว สูงเท่ากัน ไม่มีกรอบซ้อน; ลูกศรช่อง Plant ใหญ่ขึ้น */
+@media(min-width:1001px){html[data-ui="modern"] .filterbar{display:grid!important;grid-template-columns:1.3fr 1fr 1fr 1.4fr 1fr auto;gap:14px;align-items:end}}
+html[data-ui="modern"] .filterbar{background:#fff!important;border:0!important;border-radius:22px!important;padding:18px 20px}
+html[data-ui="modern"] .filterbar>label{font-size:.8125rem;font-weight:600;color:#6e6e73}
+html[data-ui="modern"] .filterbar input[type=search],html[data-ui="modern"] .filterbar select,html[data-ui="modern"] .filterbar [role="combobox"]{min-height:50px!important;height:50px;font-size:.9375rem!important;font-weight:600;border:0!important;border-radius:12px!important;background:#f0f0f3!important;box-sizing:border-box}
+html[data-ui="modern"] .filterbar input[type=search]{padding-left:1rem!important;font-weight:400}
+html[data-ui="modern"] .filterbar #f-clear{min-height:50px;border-radius:999px;padding:0 1.4rem;white-space:nowrap}
+html[data-ui="modern"] [role="combobox"]+span[aria-hidden="true"]{font-size:1.1rem!important;right:1rem!important;opacity:.6!important}
