@@ -390,3 +390,6 @@ html[data-ui="modern"] .filterbar .fb-search{flex-direction:row!important}
 html[data-ui="modern"] .filterbar .fb-grid{grid-template-columns:1fr 1fr!important}
 html[data-ui="modern"] .filterbar .fb-grid .fb-actions{grid-column:1/-1;justify-content:stretch}
 html[data-ui="modern"] .filterbar .fb-grid .fb-actions button{width:100%}}
+/* G30 — การ์ดรายการ Records บนจอแคบ: ทุกช่องชิดซ้ายเหมือนกัน (ช่อง "ตอนนี้อยู่ขั้นตอน" เคยชิดขวา) */
+@media(max-width:700px){
+html[data-ui="modern"] :is(#t-incident,#t-checklist,#t-training) tbody td{text-align:left!important;align-items:flex-start!important;justify-content:flex-start!important}}
