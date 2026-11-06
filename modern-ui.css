@@ -242,3 +242,6 @@ html[data-ui="modern"] .ed-kpi:not(.soon) .t::before{flex:none;margin-top:.45em}
 html[data-ui="modern"] .ed-kpi:not(.soon) .v{font-size:2.9rem;line-height:1.05;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin:.25rem 0 .35rem}
 html[data-ui="modern"] .ed-kpi:not(.soon) .u{line-height:1.4}
 @media(max-width:640px){html[data-ui="modern"] .ed-kpi:not(.soon) .v{font-size:2.3rem}}
+
+/* G11: การ์ด KPI เต็มแถว (จอ >1000px = 6 คอลัมน์เท่ากัน; เล็กกว่านั้นใช้กฎเดิมของหน้า) */
+@media(min-width:1001px){html[data-ui="modern"] .ed-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}}
