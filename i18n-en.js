@@ -633,6 +633,8 @@ I18N.add({
 "วันที่ไม่แน่นอน (เช่น ตรุษจีน ลอยกระทง) ให้เลือก \"ทั้งเดือน\" และระบุปีที่ใช้": "For dates that are not fixed (e.g. Chinese New Year, Loy Krathong), select “Whole month” and specify the years used",
 "วันที่ไม่ใช่สากลให้ต่อท้าย (ไทย)": "For non-international days, append (Thailand)",
 "วันปลอด LTI": "LTI-free days",
+"ปลอดอุบัติเหตุหยุดงานมาแล้ว": "Days without lost-time injury",
+"บาดเจ็บถึงขั้นหยุดงาน (ไม่รวมเสียชีวิต)": "Lost-time injury (excl. fatalities)",
 "วันพ่อแห่งชาติ (ไทย)": "Father’s Day (Thailand)",
 "วันวาเลนไทน์ (สากล)": "Valentine’s Day (international)",
 "วันสิ่งแวดล้อมโลก (สากล)": "World Environment Day (international)",

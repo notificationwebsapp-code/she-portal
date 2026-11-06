@@ -264,10 +264,10 @@
       var k = r.kpi, box = $("kpis"); box.replaceChildren();
       box.appendChild(kpi("", "เคสทั้งหมด", String(k.total), "ในช่วงที่เลือก"));
       box.appendChild(kpi("k-serious", "เคสรุนแรง (FAT/LTI)", String(k.serious), "เสียชีวิต + หยุดงาน"));
-      box.appendChild(kpi("k-lti", "LTI", String(k.lti), "เสียชีวิต " + k.fatal + " เคส"));
+      box.appendChild(kpi("k-lti", "LTI", String(k.lti), "บาดเจ็บถึงขั้นหยุดงาน (ไม่รวมเสียชีวิต)"));
       box.appendChild(kpi("k-rwc", "จำกัดงาน (RWC)", String((r.pyramid && r.pyramid.rwc) || 0), "Restricted work case"));
       box.appendChild(kpi("k-near", "Near miss", String(k.near_miss), "เหตุเกือบเกิดอุบัติเหตุ"));
-      box.appendChild(kpi("k-days", "วันปลอด LTI", k.days_since_lti == null ? "ไม่มีเคส" : String(k.days_since_lti), k.days_since_lti == null ? "ยังไม่มี LTI/เสียชีวิตที่บันทึก" : "วัน (นับจากเคสล่าสุด)"));
+      box.appendChild(kpi("k-days", "ปลอดอุบัติเหตุหยุดงานมาแล้ว", k.days_since_lti == null ? "ไม่มีเคส" : String(k.days_since_lti), k.days_since_lti == null ? "ยังไม่มี LTI/เสียชีวิตที่บันทึก" : "วัน (นับจากเคสล่าสุด)"));
       var soon = kpi("soon", "Open CAPA", "เร็ว ๆ นี้", ""); box.appendChild(soon);
 
       /* pyramid */
