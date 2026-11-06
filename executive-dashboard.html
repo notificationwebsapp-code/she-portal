@@ -20,7 +20,7 @@
     .ed-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin:0 0 1rem}
     @media(max-width:1000px){.ed-kpis{grid-template-columns:repeat(3,1fr)}}@media(max-width:520px){.ed-kpis{grid-template-columns:repeat(2,1fr)}}
     .ed-kpi{background:#fff;border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:var(--radius);box-shadow:var(--shadow);padding:.8rem 1rem}
-    .ed-kpi.k-serious{border-left-color:#7f1d1d}.ed-kpi.k-lti{border-left-color:#dc2626}.ed-kpi.k-near{border-left-color:#4ade80}.ed-kpi.k-days{border-left-color:#1b7a3a}
+    .ed-kpi.k-serious{border-left-color:#7f1d1d}.ed-kpi.k-rwc{border-left-color:#ea580c}.ed-kpi.k-lti{border-left-color:#dc2626}.ed-kpi.k-near{border-left-color:#4ade80}.ed-kpi.k-days{border-left-color:#1b7a3a}
     .ed-kpi .t{font-size:.875rem;color:var(--muted);font-weight:600}
     .ed-kpi .v{font-size:2rem;font-weight:700;line-height:1.2;color:var(--navy)}
     .ed-kpi .u{font-size:.875rem;color:var(--muted)}
@@ -265,6 +265,7 @@
       box.appendChild(kpi("", "เคสทั้งหมด", String(k.total), "ในช่วงที่เลือก"));
       box.appendChild(kpi("k-serious", "เคสรุนแรง (FAT/LTI)", String(k.serious), "เสียชีวิต + หยุดงาน"));
       box.appendChild(kpi("k-lti", "LTI", String(k.lti), "เสียชีวิต " + k.fatal + " เคส"));
+      box.appendChild(kpi("k-rwc", "จำกัดงาน (RWC)", String((r.pyramid && r.pyramid.rwc) || 0), "Restricted work case"));
       box.appendChild(kpi("k-near", "Near miss", String(k.near_miss), "เหตุเกือบเกิดอุบัติเหตุ"));
       box.appendChild(kpi("k-days", "วันปลอด LTI", k.days_since_lti == null ? "ไม่มีเคส" : String(k.days_since_lti), k.days_since_lti == null ? "ยังไม่มี LTI/เสียชีวิตที่บันทึก" : "วัน (นับจากเคสล่าสุด)"));
       var soon = kpi("soon", "Open CAPA", "เร็ว ๆ นี้", ""); box.appendChild(soon);

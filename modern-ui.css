@@ -181,3 +181,19 @@ html[data-ui="modern"] .cards a.card .icon::after{content:"";position:absolute;l
 html[data-ui="modern"] .cards a.card .icon svg{position:relative;z-index:1;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.22));stroke-width:1.6;overflow:visible}
 html[data-ui="modern"] .cards a.card .icon svg[data-duo]{width:46px;height:46px;stroke-linecap:round;stroke-linejoin:round;fill:none}
 @media(max-width:640px){html[data-ui="modern"] .cards a.card .icon svg[data-duo]{width:42px;height:42px}}
+
+/* ===== G4: ปุ่มที่ใช้เป็นการ์ด (CAPA), ช่องค้นหา, หัวข้อ ===== */
+html[data-ui="modern"] button.capacard{
+  --cc:#8a94a6;border:0;border-radius:var(--r-md);padding:1.1rem 1.3rem 1.1rem 1.5rem;min-height:0;font-weight:inherit;font-size:inherit;
+  background:#fff!important;box-shadow:inset 4px 0 0 var(--cc),0 1px 2px rgba(0,0,0,.04)}
+html[data-ui="modern"] button.capacard.s-open,html[data-ui="modern"] button.capacard.s-in_progress{--cc:#1565c0}
+html[data-ui="modern"] button.capacard.s-returned{--cc:#e0a100}
+html[data-ui="modern"] button.capacard.s-closed{--cc:#7b3fa0}
+html[data-ui="modern"] button.capacard.s-verified{--cc:#1b7a3d}
+html[data-ui="modern"] button.capacard.od{--cc:#c62828;background:#fff7f7!important}
+html[data-ui="modern"] button.capacard:hover,html[data-ui="modern"] button.capacard:focus-visible{outline:2px solid var(--brand);outline-offset:2px;
+  transform:translateY(-2px);box-shadow:inset 4px 0 0 var(--cc),var(--sh2);background:#fff!important}
+html[data-ui="modern"] button.capacard.od:hover{background:#fff7f7!important}
+html[data-ui="modern"] .filterbar input[type=search]{padding-left:2.9rem!important;border:1px solid transparent!important;border-radius:12px!important;background:var(--fill)}
+html[data-ui="modern"] .filterbar input[type=search]:focus{background:#fff;border-color:var(--brand)!important}
+html[data-ui="modern"] main h3,html[data-ui="modern"] main section>h3{border-left:0;padding-left:0}
