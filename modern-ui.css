@@ -331,20 +331,20 @@ html[data-ui="modern"] .filterbar>label{display:flex;flex-direction:column;gap:6
 html[data-ui="modern"] [role="combobox"]::placeholder{color:var(--ink,#111);opacity:1;font-weight:600}
 html[data-ui="modern"] [role="combobox"]:not(:placeholder-shown){font-weight:600}
 /* G24 — แถบตัวกรอง (Admin ฯลฯ): กริดเดียว สูงเท่ากัน ไม่มีกรอบซ้อน; ลูกศรช่อง Plant ใหญ่ขึ้น */
-@media(min-width:1001px){html[data-ui="modern"] .filterbar{display:grid!important;grid-template-columns:1.3fr 1fr 1fr 1.4fr 1fr auto;gap:14px;align-items:end}}
-html[data-ui="modern"] .filterbar{background:#fff!important;border:0!important;border-radius:22px!important;padding:18px 20px}
-html[data-ui="modern"] .filterbar>label{font-size:.8125rem;font-weight:600;color:#6e6e73}
-html[data-ui="modern"] .filterbar input[type=search],html[data-ui="modern"] .filterbar select,html[data-ui="modern"] .filterbar [role="combobox"]{min-height:50px!important;height:50px;font-size:.9375rem!important;font-weight:600;border:0!important;border-radius:12px!important;background:#f0f0f3!important;box-sizing:border-box}
-html[data-ui="modern"] .filterbar input[type=search]{padding-left:1rem!important;font-weight:400}
-html[data-ui="modern"] .filterbar #f-clear{min-height:50px;border-radius:999px;padding:0 1.4rem;white-space:nowrap}
+@media(min-width:1001px){html[data-ui="modern"] #ufilters{display:grid!important;grid-template-columns:1.3fr 1fr 1fr 1.4fr 1fr auto;gap:14px;align-items:end}}
+html[data-ui="modern"] #ufilters{background:#fff!important;border:0!important;border-radius:22px!important;padding:18px 20px}
+html[data-ui="modern"] #ufilters>label{font-size:.8125rem;font-weight:600;color:#6e6e73}
+html[data-ui="modern"] #ufilters input[type=search],html[data-ui="modern"] #ufilters select,html[data-ui="modern"] #ufilters [role="combobox"]{min-height:50px!important;height:50px;font-size:.9375rem!important;font-weight:600;border:0!important;border-radius:12px!important;background:#f0f0f3!important;box-sizing:border-box}
+html[data-ui="modern"] #ufilters input[type=search]{padding-left:1rem!important;font-weight:400}
+html[data-ui="modern"] #ufilters #f-clear{min-height:50px;border-radius:999px;padding:0 1.4rem;white-space:nowrap}
 html[data-ui="modern"] [role="combobox"]+span[aria-hidden="true"]{font-size:1.1rem!important;right:1rem!important;opacity:.6!important}
 /* G25 — แถบตัวกรองบนจอแคบ: ค้นหาเต็มแถว, ช่องอื่น 2 คอลัมน์เท่ากัน, ปุ่มล้างเต็มแถว */
 @media(max-width:1000px){
-html[data-ui="modern"] .filterbar{display:grid!important;grid-template-columns:1fr 1fr;gap:12px;align-items:end;padding:16px}
-html[data-ui="modern"] .filterbar>label{min-width:0;margin:0}
-html[data-ui="modern"] .filterbar>label:first-child{grid-column:1/-1}
-html[data-ui="modern"] .filterbar select,html[data-ui="modern"] .filterbar [role="combobox"],html[data-ui="modern"] .filterbar input[type=search]{width:100%;max-width:100%;min-width:0}
-html[data-ui="modern"] .filterbar #f-clear{grid-column:1/-1;width:100%}}
+html[data-ui="modern"] #ufilters{display:grid!important;grid-template-columns:1fr 1fr;gap:12px;align-items:end;padding:16px}
+html[data-ui="modern"] #ufilters>label{min-width:0;margin:0}
+html[data-ui="modern"] #ufilters>label:first-child{grid-column:1/-1}
+html[data-ui="modern"] #ufilters select,html[data-ui="modern"] #ufilters [role="combobox"],html[data-ui="modern"] #ufilters input[type=search]{width:100%;max-width:100%;min-width:0}
+html[data-ui="modern"] #ufilters #f-clear{grid-column:1/-1;width:100%}}
 /* G26 — ตารางผู้ใช้ (admin-users) บนจอแคบ: 1 คน = 1 การ์ด (ป้ายชื่อจาก data-label) */
 @media(max-width:700px){
 html[data-ui="modern"] #allusers{display:block;min-width:0!important;width:100%}
@@ -360,3 +360,33 @@ html[data-ui="modern"] #allusers tbody td:last-child::before{display:none}
 html[data-ui="modern"] #allusers tbody td[colspan]{display:block;text-align:left}
 html[data-ui="modern"] #allusers tbody td[colspan]::before{display:none}
 html[data-ui="modern"] .tablewrap:has(#allusers){background:transparent;border:0;box-shadow:none;overflow:visible}}
+/* G27 — ตาราง master / offboarding บนจอแคบเป็นการ์ด (ป้ายอยู่เหนือค่า รองรับเซลล์ที่มีหลายบรรทัด); ช่อง Plant ในฟอร์มสิทธิ์เต็มแถว */
+@media(max-width:700px){
+html[data-ui="modern"] :is(#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t){display:block;min-width:0!important;width:100%}
+html[data-ui="modern"] :is(#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t) thead{display:none}
+html[data-ui="modern"] :is(#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t) tbody{display:block}
+html[data-ui="modern"] :is(#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t) tbody tr{display:block;background:#fff;border-radius:18px;padding:14px 16px;margin:0 0 12px;border:0}
+html[data-ui="modern"] :is(#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t) tbody td{display:block;padding:5px 0!important;border:0!important;text-align:left;word-break:break-word;min-width:0}
+html[data-ui="modern"] :is(#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t) tbody td::before{content:attr(data-label);display:block;font-size:.75rem;font-weight:600;color:#6e6e73;margin-bottom:2px}
+html[data-ui="modern"] :is(#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t) tbody td:not([data-label])::before{display:none}
+html[data-ui="modern"] :is(#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t) tbody td:empty{display:none}
+html[data-ui="modern"] .tablewrap:has(:is(#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t)){background:transparent;border:0;box-shadow:none;overflow:visible}
+html[data-ui="modern"] .gform label:has([role="combobox"]){grid-column:1/-1}}
+/* G28 — ช่องวันที่/เวลาแบบ native หน้าตาเดียวกับช่องอื่น; จอแคบ: ฟอร์ม 2 คอลัมน์ (.grid2) ขึ้นแถวเดียว */
+html[data-ui="modern"] input[type="date"],html[data-ui="modern"] input[type="datetime-local"],html[data-ui="modern"] input[type="time"]{min-height:50px;border:0!important;border-radius:12px!important;background:#f0f0f3!important;padding:.5rem .9rem;font:inherit;box-sizing:border-box;width:100%;max-width:100%}
+html[data-ui="modern"] input[type="date"]:focus-visible,html[data-ui="modern"] input[type="datetime-local"]:focus-visible,html[data-ui="modern"] input[type="time"]:focus-visible{outline:2px solid #284499;outline-offset:2px}
+@media(max-width:700px){
+html[data-ui="modern"] .grid2{grid-template-columns:1fr!important}
+html[data-ui="modern"] .addform{border-style:solid;border-color:transparent}}
+/* G29 — ตัวกรองหน้า Records (.filterbar ที่มี .fb-search/.fb-chips/.fb-grid): การ์ดเรียบ, ช่องพื้นเทา, จอแคบ ค้นหาอยู่แถวเดียว + ช่องกรอง 2 คอลัมน์
+   (หมายเหตุ: G24/G25 จำกัดให้ใช้เฉพาะ #ufilters ของหน้า Admin เพื่อไม่ชนกับเลย์เอาต์นี้) */
+html[data-ui="modern"] .filterbar:has(.fb-search){background:#fff!important;border:0!important;border-radius:22px!important;padding:18px 20px}
+html[data-ui="modern"] .filterbar:has(.fb-search) input[type=search],html[data-ui="modern"] .filterbar .fb-grid input,html[data-ui="modern"] .filterbar .fb-grid select{border:0!important;background:#f0f0f3!important;border-radius:12px!important;min-height:50px!important;font-size:.9375rem}
+html[data-ui="modern"] .filterbar:has(.fb-search) input[type=search]{padding-left:2.9rem!important}
+html[data-ui="modern"] .filterbar .fb-search button[type=submit]{min-height:50px;border-radius:999px;padding:0 1.4rem}
+html[data-ui="modern"] .filterbar .fb-actions button{min-height:44px}
+@media(max-width:700px){
+html[data-ui="modern"] .filterbar .fb-search{flex-direction:row!important}
+html[data-ui="modern"] .filterbar .fb-grid{grid-template-columns:1fr 1fr!important}
+html[data-ui="modern"] .filterbar .fb-grid .fb-actions{grid-column:1/-1;justify-content:stretch}
+html[data-ui="modern"] .filterbar .fb-grid .fb-actions button{width:100%}}

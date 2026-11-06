@@ -273,3 +273,19 @@
   var i=document.createElement("img");i.className="tulogo";i.src="assets/thai-union-logo.png";i.alt="Thai Union";i.width=61;i.height=44;
   h.appendChild(i);
 })();
+/* G27 — ป้ายชื่อคอลัมน์สำหรับมุมมองการ์ดบนจอแคบ (ตาราง master / offboarding)
+ * ทำไมทำแบบนี้: โค้ดแต่ละหน้าสร้างแถวคนละแบบ จึงใส่ data-label กลางทางเดียวจากหัวตารางที่แสดงอยู่ (ตรงภาษาเสมอ)
+ * ปลอดภัย: ใช้ setAttribute/textContent เท่านั้น; ไม่แตะข้อมูลหรือสิทธิ์ */
+(function(){
+  var SEL="#t-plants,#t-departments,#t-lookup,#rt,#it,#et,#t-incident,#t-checklist,#t-training,#ack-t,#gt,table#t",pend=false;
+  function run(){pend=false;
+    var ts=document.querySelectorAll(SEL);
+    for(var i=0;i<ts.length;i++){var t=ts[i],hs=t.querySelectorAll("thead th"),rs=t.querySelectorAll("tbody tr");
+      var names=[];for(var j=0;j<hs.length;j++)names.push((hs[j].textContent||"").trim());
+      for(var r=0;r<rs.length;r++){var c=rs[r].children;if(c.length!==names.length)continue;
+        for(var k=0;k<c.length;k++){if(names[k]&&c[k].getAttribute("data-label")!==names[k])c[k].setAttribute("data-label",names[k])}}}}
+  function sched(){if(pend)return;pend=true;(window.requestAnimationFrame||setTimeout)(run)}
+  function start(){if(!document.querySelector(SEL))return;
+    new MutationObserver(sched).observe(document.body,{childList:true,subtree:true,characterData:true});run()}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
+})();
