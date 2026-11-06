@@ -338,3 +338,10 @@ html[data-ui="modern"] .filterbar input[type=search],html[data-ui="modern"] .fil
 html[data-ui="modern"] .filterbar input[type=search]{padding-left:1rem!important;font-weight:400}
 html[data-ui="modern"] .filterbar #f-clear{min-height:50px;border-radius:999px;padding:0 1.4rem;white-space:nowrap}
 html[data-ui="modern"] [role="combobox"]+span[aria-hidden="true"]{font-size:1.1rem!important;right:1rem!important;opacity:.6!important}
+/* G25 — แถบตัวกรองบนจอแคบ: ค้นหาเต็มแถว, ช่องอื่น 2 คอลัมน์เท่ากัน, ปุ่มล้างเต็มแถว */
+@media(max-width:1000px){
+html[data-ui="modern"] .filterbar{display:grid!important;grid-template-columns:1fr 1fr;gap:12px;align-items:end;padding:16px}
+html[data-ui="modern"] .filterbar>label{min-width:0;margin:0}
+html[data-ui="modern"] .filterbar>label:first-child{grid-column:1/-1}
+html[data-ui="modern"] .filterbar select,html[data-ui="modern"] .filterbar [role="combobox"],html[data-ui="modern"] .filterbar input[type=search]{width:100%;max-width:100%;min-width:0}
+html[data-ui="modern"] .filterbar #f-clear{grid-column:1/-1;width:100%}}
