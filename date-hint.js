@@ -39,7 +39,7 @@
   // ลำดับที่ช่องของเบราว์เซอร์ใช้ เช่น "เดือน/วัน/ปี"
   function orderText() {
     try {
-      const names = { month: "เดือน", day: "วัน", year: "ปี" };
+      const names = EN_UI() ? { month: "month", day: "day", year: "year" } : { month: "เดือน", day: "วัน", year: "ปี" };
       const parts = new Intl.DateTimeFormat(navigator.language || "en-US").formatToParts(new Date(2026, 10, 15))
         .filter((p) => names[p.type]).map((p) => names[p.type]);
       return parts.length === 3 ? parts.join("/") : "";

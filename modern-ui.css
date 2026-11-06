@@ -321,3 +321,9 @@ html[data-ui="modern"] .invbox .inv-gate.is-block{background:#fff6dc}
 html[data-ui="modern"] .invbox .inv-gate.is-ok{background:#dcf0e3}
 html[data-ui="modern"] .invbox .warnbox{background:#fff6dc;border:0;border-radius:14px}
 html[data-ui="modern"] .evphoto{background:#fff;border:1px solid #e8e8ed;border-radius:22px}
+/* G22 — Training/Admin: banner draft ไม่มีแถบซ้าย, ช่อง Plant (plant-search) หน้าตาเดียวกับช่องอื่น */
+html[data-ui="modern"] .draftbar{border:0!important;border-left:0!important;background:#fff6dc;border-radius:16px;padding:.95rem 1.2rem}
+html[data-ui="modern"] [role="combobox"]{border:0!important;background:#f0f0f3!important;border-radius:12px!important;min-height:50px!important;padding:.5rem 2.2rem .5rem .9rem!important;font:inherit;color:var(--ink,#111)!important}
+html[data-ui="modern"] [role="combobox"]:focus-visible{outline:2px solid #284499;outline-offset:2px}
+html[data-ui="modern"] [role="listbox"]{border:0!important;border-radius:14px!important;box-shadow:0 8px 28px rgba(0,0,0,.14)!important}
+html[data-ui="modern"] .filterbar>label{display:flex;flex-direction:column;gap:6px;justify-content:flex-end}
