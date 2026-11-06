@@ -283,3 +283,9 @@ html[data-ui="modern"] .ed-kpi:not(.soon) .t::before{background:#fff}
 html[data-ui="modern"] .tprow{gap:.4rem}
 html[data-ui="modern"] .tprow .tpbtn{flex:1 1 0;min-width:0;width:auto;padding:.4rem .5rem;font-size:.9375rem;line-height:1.2;text-align:center}
 html[data-ui="modern"] .tprow .tpbtn[aria-pressed="false"]{background:#f0f0f3;border-color:transparent}
+
+/* G17: บัญชีผู้ใช้ (ป้ายสิทธิ์ + ออกจากระบบ) อยู่ในเมนูตั้งค่า */
+html[data-ui="modern"] .tpacct{display:grid;gap:.5rem;margin:.6rem 0 .7rem;padding-bottom:.7rem;border-bottom:1px solid rgba(0,0,0,.08)}
+html[data-ui="modern"] .tpacct:empty{display:none}
+html[data-ui="modern"] .tpacct .role-badge,html[data-ui="modern"] .tpacct .userlink{width:100%;max-width:none;box-sizing:border-box;justify-content:center;text-align:center;margin:0;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
+html[data-ui="modern"] .tpacct .userlink{min-height:44px;background:#f0f0f3;color:var(--ink);font-weight:600}

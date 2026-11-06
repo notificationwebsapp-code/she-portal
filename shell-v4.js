@@ -12,7 +12,7 @@
   function icon(n){var s=document.createElementNS(NS,"svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.setAttribute("focusable","false");s.style.cssText="fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round";var p=document.createElementNS(NS,"path");p.setAttribute("d",ICONS[n]);s.appendChild(p);return s}
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
   var tools=el("div","tools");tools.setAttribute("role","group");tools.setAttribute("aria-label","เครื่องมือ");
-  var open=null,adminBox=null,mgrBox=null,themeBox=null;
+  var open=null,adminBox=null,mgrBox=null,themeBox=null,acctBox=null;
   function close(){if(open){open.btn.setAttribute("aria-expanded","false");open.pop.hidden=true;open=null}}
   function make(name,label,short,build){
     var w=el("div","toolwrap"),b=el("button","toolbtn");b.type="button";b.setAttribute("aria-label",label);b.setAttribute("aria-haspopup","true");b.setAttribute("aria-expanded","false");b.title=label;
@@ -130,6 +130,7 @@
   }catch(e){}})();
   make("gear","ตั้งค่า","",function(p){
     p.appendChild(el("strong",null,"ตั้งค่าการแสดงผล"));
+    acctBox=el("div","tpacct");p.appendChild(acctBox); /* บัญชี: ป้ายสิทธิ์ + ออกจากระบบ ย้ายมาไว้ในเมนูนี้ (relocate) */
     p.appendChild(el("p","tpnote small","ขนาดตัวอักษร"));
     var row=el("div","tprow"),cur="n";try{cur=localStorage.getItem("she-fs")||"n"}catch(e){}
     [["n","ปกติ"],["l","ใหญ่"],["xl","ใหญ่มาก"]].forEach(function(o){
@@ -155,8 +156,10 @@
     var s=document.createElementNS(NS,"svg");s.setAttribute("class","ni");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");
     var p=document.createElementNS(NS,"path");p.setAttribute("d",d.replace(/(\d)\.500/g,"$1.5"));s.appendChild(p);a.insertBefore(s,a.firstChild)})}
   function relocate(){var n=document.querySelector("header nav");if(!n)return;
-    var b=document.getElementById("role-badge");if(b&&b.parentNode!==tools)tools.insertBefore(b,tools.firstChild);
-    var u=n.querySelector('a[href="#"],a[href="login.html"]');if(u&&u.parentNode!==tools){u.classList.add("userlink");tools.appendChild(u)}}
+    var b=document.getElementById("role-badge");var bd=acctBox||tools;if(b&&b.parentNode!==bd){if(bd===tools)tools.insertBefore(b,tools.firstChild);else bd.insertBefore(b,bd.firstChild)}
+    /* ลิงก์ผู้ใช้: ล็อกอินแล้ว (href="#" = ออกจากระบบ) ไปอยู่ในเมนูตั้งค่า; ยังไม่ล็อกอิน ("เข้าสู่ระบบ") คงไว้บนแถบให้เห็นทันที */
+    var u=document.querySelector("header a.userlink")||n.querySelector('a[href="#"],a[href="login.html"]');
+    if(u){u.classList.add("userlink");var out=u.getAttribute("href")==="#";var dest=(out&&acctBox)?acctBox:tools;if(u.parentNode!==dest)dest.appendChild(u)}}
   /* เมนูหลักชุดเดียวกันทุกหน้า (ตามแบบ Stitch): หน้าแรก · รายงาน · เช็กลิสต์ · อบรม · ดูข้อมูล · Executive Dashboard (เร็ว ๆ นี้) · ผู้ดูแลระบบ (เฉพาะ Admin) */
   var ORDER=["index.html","incident.html","checklist.html","training.html","records.html","capa.html"];var capaOn=false;
   var ADM=["admin-users.html","admin-master.html","admin-permissions.html","admin-grants.html","admin-offboarding.html","admin-themes.html"];var hasTh=false,dashMode=null;
