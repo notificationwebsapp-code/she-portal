@@ -214,3 +214,7 @@ html[data-ui="modern"] button.capacard,html[data-ui="modern"] button.capacard:ho
 html[data-ui="modern"] button.capacard:hover{outline:1px solid var(--border-strong);outline-offset:-1px}
 html[data-ui="modern"] button.capacard:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 html[data-ui="modern"] button.capacard .no::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cc);margin-right:.55rem;vertical-align:middle}
+
+/* ===== G7: ไม่มีเงากล่องในทุกหน้า (การ์ด/แผง/KPI/กราฟ/แท็บ) — ยกเว้นวงโฟกัสของช่องกรอกและปุ่ม (WCAG 2.4.7) ===== */
+html[data-ui="modern"] :where(*):not(:focus):not(:focus-visible){box-shadow:none!important;text-shadow:none!important}
+html[data-ui="modern"] :where(dialog,.toolpop,#navmorepanel){border:1px solid var(--border-strong)}
