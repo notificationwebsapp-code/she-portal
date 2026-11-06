@@ -9,6 +9,15 @@
     /* ส่วนจัดการรายงาน (ขอแก้ไข / แก้ไขพร้อมเหตุผล / ประวัติ) */
     #detail{border:1px solid var(--line);border-radius:8px;padding:1rem;margin:0 0 1.5rem;background:#fff}
     #detail h4{margin:1.2rem 0 .4rem}
+    /* โซนงานท้ายหน้าสอบสวน: 1 บันทึก · 2 สร้าง Action (CAPA) · 3 ปิดเคส + หมวดจัดการเคส (พับไว้) */
+    .zone{border:1px solid #e8e8ed;border-radius:22px;padding:20px 24px;margin:20px 0;background:#fff}
+    .zone-h{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
+    .zone-n{flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:#eef1f8;color:#284499;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+    .zone-t h4{margin:0 0 2px;font-size:1.1rem}.zone-t p{margin:0;color:var(--muted);font-size:.95rem}
+    .zone .btn-link{display:inline-flex;align-items:center;min-height:48px;padding:0 20px;border-radius:999px;background:#284499;color:#fff;font-weight:600;text-decoration:none}
+    .zone .btn-link:hover{background:#2e3896}
+    .managedet{margin:20px 0}.managedet>div{margin-top:.6rem}
+    .inv-savehint{flex:1 1 12rem;color:var(--ib-muted,#414750);font-size:.92rem}
     .invbox{margin:1.2rem 0}
     .invbox .warnbox{background:#fff8e1;border:1px solid #f0c36d;border-radius:8px;padding:.6rem .8rem;margin:.4rem 0 .8rem;font-size:.95rem}
     .invbox label{display:block;font-weight:600;margin:.8rem 0 .25rem}
@@ -1283,13 +1292,15 @@
       evLeft.append(cg);
       box.append(evGrid);
       const invBox = h("div", { class: "invbox" }); box.append(invBox);
-      investigationPanel(invBox, inc, deleted, closed);
+      const manageBody = h("div"); // หมวด "จัดการเคส" (พับไว้): แก้ไขรายงาน / ผู้ได้รับมอบหมาย / ประวัติ
+      investigationPanel(invBox, inc, deleted, closed, manageBody);
 
       // B10b-2: ไฟล์แนบ (สิทธิ์จริงตัดสินที่ฐานข้อมูล — หน้านี้ซ่อน/แสดงปุ่มตามสิทธิ์เท่านั้น)
       const attBox = photoBox;
       Attach.panel(attBox, { entityType: "incident", entityId: inc.id, canUpload: !deleted && (reporter || sheLike), closed: closed && !deleted });
       if (!deleted && (sheLike || hasP("capa.create"))) {
-        box.append(h("p", {}, h("a", { href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") }, "+ สร้าง Action (CAPA) จากเคสนี้")));
+        box.append(zone("2", "สร้างมาตรการแก้ไข (Action / CAPA)", "ใช้เมื่อพบสาเหตุแล้ว — ทุก Root cause ต้องมี Action อย่างน้อย 1 รายการก่อนปิดเคส",
+          h("a", { class: "btn-link", href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") }, "+ สร้าง Action (CAPA) จากเคสนี้")));
       }
 
       // คำขอแก้ไข
@@ -1310,7 +1321,7 @@
             h("span", { class: "ec-cta" }, h("span", { class: "on-closed", text: "เปิดฟอร์มแก้ไข" }), h("span", { class: "on-open", text: "ซ่อนฟอร์ม" }))),
           h("div", {}, editForm(mgr, addOnly, sheLike)));
         if (pend.length && !mgr) det.open = false;
-        box.append(det);
+        manageBody.append(det);
       }
       if (!deleted && !closed && canCl) box.append(closeForm());
 
@@ -1324,8 +1335,10 @@
           h("small", { text: "  " + fmtTime(l.created_at) }), h("div", { text: "เหตุผล: " + l.reason }),
           lines.map((t) => h("div", { text: "• " + t }))));
       });
-      box.append(h("details", { class: "histdet" }, h("summary", { text: "ประวัติการแก้ไข (" + state.log.length + ")" }), hist));
-      box.append(h("div", { class: "rowbtns" }, h("button", { type: "button", class: "secondary small", text: "ปิดหน้านี้", onclick: () => { box.hidden = true; } })));
+      manageBody.append(h("details", { class: "histdet" }, h("summary", { text: "ประวัติการแก้ไข (" + state.log.length + ")" }), hist));
+      box.append(h("details", { class: "editdet managedet" }, h("summary", { text: "จัดการเคส" }),
+        h("p", { class: "hint", text: "แก้ไขรายงาน · ผู้ได้รับมอบหมายให้สอบสวน · ประวัติการแก้ไข" }), manageBody));
+      box.append(h("div", { class: "rowbtns" }, h("button", { type: "button", class: "secondary small", text: "กลับไปรายการเคส", onclick: () => { box.hidden = true; } })));
     }
 
     // ---------- B23: การสอบสวน (5 Why + Root cause + สรุป) และการมอบหมายสิทธิ์สอบสวน ----------
@@ -1361,7 +1374,7 @@
           h("div", { class: "inv-ttl" }, h("div", { class: "inv-kick", text: "ขั้นที่ " + n + " จาก 4" }), h("h5", { text: title }), sub ? h("div", { class: "hint", text: sub }) : null), badge),
         h("div", { class: "inv-body" }, kids));
     }
-    async function investigationPanel(wrap, inc, deleted, closed) {
+    async function investigationPanel(wrap, inc, deleted, closed, slot) {
       if (deleted || !(isMgrRole() || hasP("incident.investigate"))) return;
       const r = await sb.rpc("incident_investigation_get", { p_incident: inc.id });
       if (r.error || !r.data) return;                       // ไม่มีสิทธิ์/ยังไม่ได้รัน SQL B23 -> ไม่แสดงกล่อง
@@ -1508,7 +1521,7 @@
           h("ul", {}, gRow(okWhy, "มี Why อย่างน้อย 1 ชั้น"), gRow(okRc, "มี Root cause อย่างน้อย 1 รายการ"), gRow(okCapa, "ทุก Root cause มี Action (CAPA) อย่างน้อย 1 รายการ"), gRow(okEv, "ทุก Action มีไฟล์หลักฐานแนบครบ (ที่หน้า Action)"))));
 
         // แถบบันทึก
-        wrap.append(h("div", { class: "inv-savebar" }, h("button", { type: "button", onclick: () => {
+        wrap.append(h("div", { class: "inv-savebar" }, h("span", { class: "zone-n", "aria-hidden": "true", text: "1" }), h("button", { type: "button", onclick: () => {
           const vals = tas.map((t) => t.value.trim());
           let last = -1; vals.forEach((v, i) => { if (v) last = i; });
           const arr = vals.slice(0, last + 1);
@@ -1518,11 +1531,9 @@
           if (bad) { showMsg("Root cause ทุกรายการต้องเลือกหมวดและกรอกคำอธิบาย (หรือลบรายการที่ไม่ใช้)", false); return; }
           act(sb.rpc("incident_investigation_save", { p_incident: inc.id, p_problem: problem.value.trim() || null,
             p_whys: arr, p_root_cause: null, p_conclusion: concl.value.trim() || null, p_root_cause_text: null, p_root_causes: rcs }), "บันทึกการสอบสวนแล้ว");
-        } }, ico("check"), h("span", { text: "บันทึกการสอบสวน" })), dirty));
-        wrap.append(h("p", { class: "hint", text: "การบันทึกนี้ยังไม่ใช่การปิดเคส — บันทึกได้ทุกเมื่อแม้กรอกยังไม่ครบ กลับมาแก้ไขและบันทึกซ้ำได้จนกว่าจะกด \"ปิดเคส\"" }));
-        wrap.append(h("p", { class: "hint", text: "ขั้นต่อไป: เมื่อได้สาเหตุแล้ว กด \"+ สร้าง Action (CAPA) จากเคสนี้\" ด้านล่างเพื่อกำหนดมาตรการแก้ไข/ป้องกัน แล้วกด \"ปิดเคส\"" }));
+        } }, ico("check"), h("span", { text: "บันทึกการสอบสวน" })), h("span", { class: "inv-savehint", text: "บันทึกได้ทุกเมื่อแม้ยังไม่ครบ — ยังไม่ใช่การปิดเคส" }), dirty));
       }
-      if (isMgrRole() && !closed) delegationBox(wrap, inc);
+      if (isMgrRole() && !closed) delegationBox(slot || wrap, inc);
     }
 
     // SHE/Admin มอบสิทธิ์สอบสวน (ระดับ Plant) แก่ผู้ใช้ใน Plant เดียวกัน — ผู้รับมอบส่งต่อไม่ได้ ถอนได้ มี audit log
@@ -1724,11 +1735,17 @@
       return wrap;
     }
 
+    // กล่องโซนงาน: เลขขั้น + หัวข้อ + คำอธิบาย 1 บรรทัด + เนื้อหา (ข้อความทั้งหมดผ่าน textContent ผ่าน h())
+    function zone(n, title, desc, ...kids) {
+      return h("section", { class: "zone" },
+        h("div", { class: "zone-h" }, h("span", { class: "zone-n", "aria-hidden": "true", text: n }),
+          h("div", { class: "zone-t" }, h("h4", { text: title }), h("p", { text: desc }))), ...kids);
+    }
+
     function closeForm() {
       const r = h("input", { type: "text", placeholder: "หมายเหตุการปิด (ไม่บังคับ)", maxlength: "500", "aria-label": "หมายเหตุการปิด" });
-      return h("div", {}, h("h4", { text: "ปิดเคส (Close)" }),
-        h("p", { text: "กดเมื่อตรวจสอบและจัดประเภทครบแล้ว เมื่อปิดเคสแล้วจะแก้ไขไม่ได้ ต้องให้ Admin เปิดใหม่ (Reopen) พร้อมเหตุผล" }),
-        h("div", { class: "rowbtns" }, r, h("button", { type: "button", class: "btn-danger-outline", text: "ปิดเคส (Close)",
+      return zone("3", "ปิดเคส", "ปิดเมื่อสอบสวนและจัดประเภทครบแล้ว — ปิดแล้วแก้ไขไม่ได้ ต้องให้ Admin เปิดเคสใหม่ (Reopen) พร้อมเหตุผล",
+        h("div", { class: "rowbtns" }, r, h("button", { type: "button", class: "btn-danger-outline", text: "ปิดเคส",
           onclick: () => act(sb.rpc("close_incident", { inc: state.inc.id, reason: r.value.trim() || null }), "ปิดรายงานแล้ว") })));
     }
 

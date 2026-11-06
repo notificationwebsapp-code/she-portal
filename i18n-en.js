@@ -1634,4 +1634,11 @@ I18N.add({
  "เพิ่มเติม": "More",
  "รายงานเหตุการณ์ให้เร็ว": "Report incidents fast",
  "เพื่อความปลอดภัยของทุกคน": "for everyone's safety",
+ "บันทึกได้ทุกเมื่อแม้ยังไม่ครบ — ยังไม่ใช่การปิดเคส": "You can save at any time, even if incomplete — this does not close the case",
+ "สร้างมาตรการแก้ไข (Action / CAPA)": "Create corrective actions (Action / CAPA)",
+ "ใช้เมื่อพบสาเหตุแล้ว — ทุก Root cause ต้องมี Action อย่างน้อย 1 รายการก่อนปิดเคส": "Use once the cause is found — every root cause needs at least 1 Action before the case can be closed",
+ "ปิดเมื่อสอบสวนและจัดประเภทครบแล้ว — ปิดแล้วแก้ไขไม่ได้ ต้องให้ Admin เปิดเคสใหม่ (Reopen) พร้อมเหตุผล": "Close once the investigation and classification are complete — a closed case cannot be edited; an Admin must reopen it (Reopen) with a reason",
+ "จัดการเคส": "Manage case",
+ "แก้ไขรายงาน · ผู้ได้รับมอบหมายให้สอบสวน · ประวัติการแก้ไข": "Edit report · Investigation delegates · Edit history",
+ "กลับไปรายการเคส": "Back to case list",
 });
