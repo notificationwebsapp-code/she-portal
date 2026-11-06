@@ -245,3 +245,12 @@ html[data-ui="modern"] .ed-kpi:not(.soon) .u{line-height:1.4}
 
 /* G11: การ์ด KPI เต็มแถว (จอ >1000px = 6 คอลัมน์เท่ากัน; เล็กกว่านั้นใช้กฎเดิมของหน้า) */
 @media(min-width:1001px){html[data-ui="modern"] .ed-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}}
+
+/* G12: หน้า Login แบบสองฝั่ง (ซ้ายภาพ+หัวข้อ / ขวาฟอร์ม) */
+html[data-ui="modern"] .authhero{background:#fff;color:#1d1d1f;justify-content:flex-start;padding:clamp(1.5rem,4vw,3.5rem) clamp(1.5rem,5vw,4.5rem)}
+html[data-ui="modern"] .authhero h2{color:#1d1d1f;font-size:clamp(1.9rem,3.2vw,3rem);line-height:1.25;font-weight:700;letter-spacing:-.02em;max-width:20ch;margin:0 0 .75rem}
+html[data-ui="modern"] .authhero h2 .hl{color:#284499}
+html[data-ui="modern"] .authhero p{color:#515154;opacity:1;font-size:1.0625rem;max-width:34rem;margin:0 0 1rem}
+html[data-ui="modern"] .authhero .heroimg{display:block;width:100%;max-width:560px;height:auto;margin:0 auto;align-self:center}
+html[data-ui="modern"] .authform{background:#f5f5f7}
+@media(max-width:820px){html[data-ui="modern"] .authhero .heroimg{display:none}html[data-ui="modern"] .authhero{padding:1.25rem 1.5rem .5rem}html[data-ui="modern"] .authhero h2{font-size:1.5rem;max-width:none;margin:0}}

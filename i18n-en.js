@@ -1632,4 +1632,6 @@ I18N.add({
  "แสดงภาพไม่ได้": "Cannot display image",
  "ไม่มีชื่อในโปรไฟล์": "No name in profile",
  "เพิ่มเติม": "More",
+ "รายงานเหตุการณ์ให้เร็ว": "Report incidents fast",
+ "เพื่อความปลอดภัยของทุกคน": "for everyone's safety",
 });
