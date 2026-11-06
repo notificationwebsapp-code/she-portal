@@ -327,3 +327,6 @@ html[data-ui="modern"] [role="combobox"]{border:0!important;background:#f0f0f3!i
 html[data-ui="modern"] [role="combobox"]:focus-visible{outline:2px solid #284499;outline-offset:2px}
 html[data-ui="modern"] [role="listbox"]{border:0!important;border-radius:14px!important;box-shadow:0 8px 28px rgba(0,0,0,.14)!important}
 html[data-ui="modern"] .filterbar>label{display:flex;flex-direction:column;gap:6px;justify-content:flex-end}
+/* G23 — ตัวหนังสือในช่อง Plant (ค่า "All"/"ทั้งหมด") เข้มและหนาเท่า select อื่น */
+html[data-ui="modern"] [role="combobox"]::placeholder{color:var(--ink,#111);opacity:1;font-weight:600}
+html[data-ui="modern"] [role="combobox"]:not(:placeholder-shown){font-weight:600}
