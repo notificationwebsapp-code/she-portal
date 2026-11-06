@@ -278,3 +278,8 @@ html[data-ui="modern"] .ed-kpi.k-days{--kf:#14532d}
 html[data-ui="modern"] .ed-kpi:not(.soon){background:var(--kf)}
 html[data-ui="modern"] .ed-kpi:not(.soon) .t,html[data-ui="modern"] .ed-kpi:not(.soon) .v,html[data-ui="modern"] .ed-kpi:not(.soon) .u{color:#fff}
 html[data-ui="modern"] .ed-kpi:not(.soon) .t::before{background:#fff}
+
+/* G16: ตั้งค่าการแสดงผล — ปุ่มขนาดตัวอักษร 3 ปุ่มกว้างเท่ากัน ไม่ล้นกล่อง (ปุ่มแคปซูลของธีม Modern เดิมกว้างเกิน) */
+html[data-ui="modern"] .tprow{gap:.4rem}
+html[data-ui="modern"] .tprow .tpbtn{flex:1 1 0;min-width:0;width:auto;padding:.4rem .5rem;font-size:.9375rem;line-height:1.2;text-align:center}
+html[data-ui="modern"] .tprow .tpbtn[aria-pressed="false"]{background:#f0f0f3;border-color:transparent}
