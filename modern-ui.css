@@ -295,3 +295,29 @@ html[data-ui="modern"] .toolpop:has(.tpacct){width:min(310px,calc(100vw - 2rem))
 html[data-ui="modern"] .tpacct{justify-items:stretch}
 html[data-ui="modern"] .tpacct .role-badge,html[data-ui="modern"] .tpacct .userlink{margin:0!important;position:static;transform:none;min-width:0;overflow-wrap:break-word}
 html[data-ui="modern"] .tpacct .userlink{font-size:.8125rem}
+
+/* G19: หน้า Records — การ์ดสอบสวนแบบเรียบ (ไม่มีแถบหัวสีเข้ม/แถบสีข้าง/พื้นเหลืองจัด)
+   คงความหมายสีสถานะเดิม: เหลือง = ยังไม่ทำขั้นถัดไป · เขียวอ่อน = ทำแล้วรอหลักฐาน · เขียวเข้ม = ครบ
+   ทำให้อ่อนลง + จุดสี + ข้อความกำกับ (WCAG 1.4.1) */
+html[data-ui="modern"] .invbox .inv-card{background:#fff;border:1px solid #e8e8ed;border-radius:22px;padding:28px}
+html[data-ui="modern"] .invbox .v-chain{background:#fff}
+html[data-ui="modern"] .invbox .v-end{border-left:1px solid #e8e8ed}
+html[data-ui="modern"] .invbox .v-key{border:1.5px solid #284499;padding-top:28px;overflow:visible}
+html[data-ui="modern"] .invbox .v-key>.inv-head{background:transparent;margin:0 0 16px;padding:0}
+html[data-ui="modern"] .invbox .v-key>.inv-head h5{color:var(--ib-ink)}
+html[data-ui="modern"] .invbox .v-key>.inv-head .inv-kick,html[data-ui="modern"] .invbox .v-key>.inv-head .hint{color:var(--ib-muted)}
+html[data-ui="modern"] .invbox .inv-num{background:#eef1f8;border:0;color:#284499}
+html[data-ui="modern"] .invbox .v-key .inv-num{background:#284499;color:#fff}
+html[data-ui="modern"] .invbox .inv-field textarea,html[data-ui="modern"] .invbox select{background:#f0f0f3;border:0;border-radius:12px}
+html[data-ui="modern"] .invbox .v-chain textarea{background:#f0f0f3}
+html[data-ui="modern"] .invbox .pill{border:0;border-radius:999px}
+html[data-ui="modern"] .invbox .rc-item{--sc:#9aa0aa;background:#f5f5f7;border:0;border-radius:18px}
+html[data-ui="modern"] .invbox .rc-item.s-need{--sc:#d97706;background:#fff6dc;border:0}
+html[data-ui="modern"] .invbox .rc-item.s-link{--sc:#2e9e5b;background:#eaf6ee;border:0}
+html[data-ui="modern"] .invbox .rc-item.s-done{--sc:#15803d;background:#dcf0e3;border:0}
+html[data-ui="modern"] .invbox .rc-item .rc-no::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:.5rem;background:var(--sc);vertical-align:middle}
+html[data-ui="modern"] .invbox .inv-gate{border:0;border-radius:18px}
+html[data-ui="modern"] .invbox .inv-gate.is-block{background:#fff6dc}
+html[data-ui="modern"] .invbox .inv-gate.is-ok{background:#dcf0e3}
+html[data-ui="modern"] .invbox .warnbox{background:#fff6dc;border:0;border-radius:14px}
+html[data-ui="modern"] .evphoto{background:#fff;border:1px solid #e8e8ed;border-radius:22px}
