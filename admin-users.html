@@ -435,6 +435,9 @@
       const tb = document.querySelector("#allusers tbody");
       tb.replaceChildren();
       rows.forEach(u => tb.appendChild(buildRow(u, myUid)));
+      // ป้ายชื่อคอลัมน์สำหรับมุมมองการ์ดบนจอแคบ (CSS อ่านจาก data-label; คัดลอกจากหัวตารางเพื่อให้ตรงภาษาที่แสดงอยู่)
+      const heads = [...document.querySelectorAll("#allusers thead th")].map(th => th.textContent.trim());
+      tb.querySelectorAll("tr").forEach(tr => { if (tr.children.length === heads.length) [...tr.children].forEach((td, i) => td.setAttribute("data-label", heads[i])); });
       document.getElementById("f-count").textContent = "แสดง " + rows.length + " จาก " + allUsers.length + " บัญชี";
     }
     load();
