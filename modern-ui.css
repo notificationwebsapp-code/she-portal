@@ -218,3 +218,13 @@ html[data-ui="modern"] button.capacard .no::before{content:"";display:inline-blo
 /* ===== G7: ไม่มีเงากล่องในทุกหน้า (การ์ด/แผง/KPI/กราฟ/แท็บ) — ยกเว้นวงโฟกัสของช่องกรอกและปุ่ม (WCAG 2.4.7) ===== */
 html[data-ui="modern"] :where(*):not(:focus):not(:focus-visible){box-shadow:none!important;text-shadow:none!important}
 html[data-ui="modern"] :where(dialog,.toolpop,#navmorepanel){border:1px solid var(--border-strong)}
+
+/* ===== G8: การ์ด KPI ของ Executive Dashboard — ไม่ใช้แถบสีโค้งด้านซ้าย ใช้จุดสีหน้าชื่อตัวชี้วัดแทน (สีไล่ระดับคงเดิม) ===== */
+html[data-ui="modern"] .ed-kpi{--kc:#284499;border:0;border-left:0}
+html[data-ui="modern"] .ed-kpi.k-serious{--kc:#7f1d1d}
+html[data-ui="modern"] .ed-kpi.k-lti{--kc:#dc2626}
+html[data-ui="modern"] .ed-kpi.k-rwc{--kc:#ea580c}
+html[data-ui="modern"] .ed-kpi.k-near{--kc:#16a34a}
+html[data-ui="modern"] .ed-kpi.k-days{--kc:#1b7a3a}
+html[data-ui="modern"] .ed-kpi.soon{--kc:#94a3b8}
+html[data-ui="modern"] .ed-kpi .t::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--kc);margin-right:.5rem;vertical-align:middle}
