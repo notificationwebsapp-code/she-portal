@@ -1,0 +1,33 @@
+/* brand-tu.css — ธีมแบรนด์ Thai Union (v4.9, 2026-11-06)
+   ใช้เมื่อ <html data-brand="tu"> (shell-v4.js ตั้งให้จาก ?brand=tu หรือค่าที่จำไว้) · ไม่แตะสีสถานะ (ok/danger/warn) และสีไล่ระดับของ badge
+   ที่มาสี: Official = วัดจากไฟล์โลโก้ (skill thai-union-ci); Proposed = neutral/ฟอนต์/layout — ยังไม่มี Brand Guideline ทางการ ต้องยืนยันกับ Corporate Communications */
+html[data-brand="tu"]{
+  --brand:#284499;           /* Wordmark Blue (Official) */
+  --brand-dark:#2e3896;      /* Indigo (Official) */
+  --navy:#284499;            /* headline */
+  --ink:#1b1f24;             /* ข้อความ (Proposed) */
+  --muted:#4b5563;
+  --bg:#eef1f6; --canvas:#eef1f6;
+  --accent:#e8edf8; --line:#dde3ee; --grey:#eef1f6;
+  --teal:#00a9ea; --teal-ink:#017ab6;   /* Sky Blue / Ocean Blue (Official) */
+  --focus:#284499;
+  --grad:linear-gradient(120deg,#2e3896 0%,#017ab6 60%,#00a9ea 100%);
+  --warm:#e56c0c;
+}
+html[data-brand="tu"] .hero{background:linear-gradient(120deg,#2e3896 0%,#017ab6 62%,#00a9ea 100%)}
+html[data-brand="tu"] .hero p{color:#fff}
+html[data-brand="tu"] header h1::before{background:var(--brand)}
+html[data-brand="tu"] a:focus-visible,html[data-brand="tu"] button:focus-visible,html[data-brand="tu"] input:focus-visible,
+html[data-brand="tu"] select:focus-visible,html[data-brand="tu"] textarea:focus-visible,html[data-brand="tu"] summary:focus-visible,
+html[data-brand="tu"] [tabindex]:focus-visible{box-shadow:0 0 0 4px rgba(40,68,153,.18)}
+/* เส้น accent ส้มบางใต้ header (สีอุ่นเป็น accent เท่านั้น) */
+html[data-brand="tu"] header{border-bottom:1px solid var(--line);box-shadow:inset 0 -3px 0 0 transparent}
+html[data-brand="tu"] header::after{content:"";display:block;position:absolute;left:0;right:0;bottom:-1px;height:3px;background:linear-gradient(90deg,#284499 0%,#017ab6 55%,#00a9ea 100%);pointer-events:none}
+html[data-brand="tu"] header{position:relative}
+/* โลโก้ Thai Union (ไฟล์จริง พื้นโปร่งใส) มุมขวาบนของหัวเว็บ */
+.tulogo{display:none}
+html[data-brand="tu"] .tulogo{display:block;order:2;height:44px;width:auto;margin-left:.6rem;flex:none;align-self:center}
+@media(max-width:900px){
+  html[data-brand="tu"] .tulogo{order:1;height:36px;margin-left:auto}
+  html[data-brand="tu"] header .tools{order:2;margin-left:0;flex:1 1 100%}
+}

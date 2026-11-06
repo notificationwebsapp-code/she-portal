@@ -3,12 +3,13 @@
 (function(){
   var NS="http://www.w3.org/2000/svg";
   var ICONS={
-    pin:"M12 22s7-6.2 7-12a7 7 0 10-14 0c0 5.8 7 12 7 12zm0-9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z",
-    bell:"M12 22a2 2 0 002-2h-4a2 2 0 002 2zm6-6V11a6 6 0 10-12 0v5l-2 2v1h16v-1l-2-2z",
-    globe:"M12 2a10 10 0 100 20 10 10 0 000-20zm6.9 9h-3a15 15 0 00-1.2-5A8 8 0 0118.9 11zM12 4c.8 1 1.6 3 1.9 7h-3.8C10.4 7 11.2 5 12 4zM4.1 13h3a15 15 0 001.2 5A8 8 0 014.1 13zm3-2h-3A8 8 0 018.3 6a15 15 0 00-1.2 5zM12 20c-.8-1-1.6-3-1.9-7h3.8c-.3 4-1.1 6-1.9 7zm3.7-2a15 15 0 001.2-5h3a8 8 0 01-4.2 5z",
-    gear:"M19.4 13a7.7 7.7 0 000-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 00-1.7-1L15 3.3h-4L10.7 6a7.6 7.6 0 00-1.7 1l-2.5-1-2 3.5L6.6 11a7.7 7.7 0 000 2l-2.1 1.6 2 3.5 2.5-1a7.6 7.6 0 001.7 1l.3 2.7h4l.3-2.7a7.6 7.6 0 001.7-1l2.5 1 2-3.5L19.4 13zM12.5 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"
+    pin:"M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0116 0zM12 7.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5z",
+    bell:"M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 003.4 0",
+    globe:"M12 22a10 10 0 100-20 10 10 0 000 20zM2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z",
+    gear:"M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"
   };
-  function icon(n){var s=document.createElementNS(NS,"svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.setAttribute("focusable","false");var p=document.createElementNS(NS,"path");p.setAttribute("d",ICONS[n]);s.appendChild(p);return s}
+
+  function icon(n){var s=document.createElementNS(NS,"svg");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.setAttribute("focusable","false");s.style.cssText="fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round";var p=document.createElementNS(NS,"path");p.setAttribute("d",ICONS[n]);s.appendChild(p);return s}
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
   var tools=el("div","tools");tools.setAttribute("role","group");tools.setAttribute("aria-label","เครื่องมือ");
   var open=null,adminBox=null,mgrBox=null,themeBox=null;
@@ -236,3 +237,26 @@
 
 /* popup แจ้งข้อผิดพลาดกลางจอ (notice.js) ใช้ร่วมทุกหน้า */
 (function(){try{var s=document.createElement("script");s.src="notice.js?v=1";s.defer=true;document.head.appendChild(s)}catch(e){}})();
+
+/* ธีมแบรนด์ (v4.9): เปิดดูตัวอย่างด้วย ?brand=tu · ปิดด้วย ?brand=off · ค่าจำไว้ในเบราว์เซอร์ (localStorage she-brand)
+   ยังไม่เป็นค่าเริ่มต้นของระบบ — เมื่อยืนยันแล้วค่อยเปลี่ยน DEFAULT_BRAND เป็น "tu" */
+(function(){
+  var DEFAULT_BRAND="";
+  var KEY="she-brand";
+  function lget(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+  function lset(v){try{if(v)localStorage.setItem(KEY,v);else localStorage.removeItem(KEY)}catch(e){}}
+  var q=(location.search.match(/[?&]brand=([a-z]+)/)||[])[1];
+  if(q==="tu")lset("tu");else if(q==="off")lset(null);
+  var b=lget()||DEFAULT_BRAND;
+  var uq=(location.search.match(/[?&]ui=([a-z]+)/)||[])[1],UK="she-ui";
+  function uget(){try{return localStorage.getItem(UK)}catch(e){return null}}
+  function uset(v){try{if(v)localStorage.setItem(UK,v);else localStorage.removeItem(UK)}catch(e){}}
+  if(uq==="modern")uset("modern");else if(uq==="off")uset(null);
+  if(uget()==="modern"){document.documentElement.setAttribute("data-ui","modern");var ml=document.createElement("link");ml.rel="stylesheet";ml.href="modern-ui.css";document.head.appendChild(ml)}
+  if(b!=="tu")return;
+  document.documentElement.setAttribute("data-brand","tu");
+  var l=document.createElement("link");l.rel="stylesheet";l.href="brand-tu.css";document.head.appendChild(l);
+  var h=document.querySelector("header");if(!h||h.querySelector(".tulogo"))return;
+  var i=document.createElement("img");i.className="tulogo";i.src="assets/thai-union-logo.png";i.alt="Thai Union";i.width=61;i.height=44;
+  h.appendChild(i);
+})();

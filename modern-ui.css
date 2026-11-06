@@ -1,0 +1,88 @@
+/* modern-ui.css — ชั้นสไตล์ Minimal / Modern (แนว Apple + Stripe) v4.10, 2026-11-06
+   ใช้เมื่อ <html data-ui="modern"> (shell-v4.js ตั้งจาก ?ui=modern, ปิดด้วย ?ui=off) · ใช้ร่วมกับ data-brand="tu" ได้ (อ้างอิง token --brand)
+   หลักการ: พื้นสว่างโปร่ง เว้นระยะกว้าง การ์ดไม่มีกรอบหนัก เงาบาง ตัวอักษรชัด มุมโค้งนุ่ม ปุ่มแคปซูล ตารางเส้นบางไม่มีสีแถบ
+   คงไว้: ปุ่ม/ช่องกรอกสูง >= 44px (WCAG 2.2 SC 2.5.8), ข้อความ >= 14px, focus ring ชัด, สีสถานะและ icon+ข้อความของ badge, prefers-reduced-motion */
+html[data-ui="modern"]{
+  --bg:#f5f5f7; --canvas:#f5f5f7; --card:#fff; --surface:#fff;
+  --ink:#1d1d1f; --muted:#5f6368; --ink-muted:#5f6368;
+  --line:rgba(0,0,0,.08); --border:rgba(0,0,0,.08); --border-strong:rgba(0,0,0,.16); --ctl:#8e8e93;
+  --grey:#f5f5f7; --accent:color-mix(in srgb,var(--brand) 8%,#fff);
+  --radius:20px; --r-sm:12px; --r-md:20px; --r-lg:28px;
+  --sh1:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.05);
+  --sh2:0 2px 4px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.09);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+html[data-ui="modern"] body{background:var(--bg);letter-spacing:-.003em;-webkit-font-smoothing:antialiased}
+html[data-ui="modern"] main{padding-top:2rem;padding-bottom:3rem}
+/* หัวข้อ: หนา กระชับ */
+html[data-ui="modern"] h1,html[data-ui="modern"] h2,html[data-ui="modern"] h3{letter-spacing:-.02em;font-weight:700;color:var(--ink)}
+html[data-ui="modern"] h2{font-size:1.5rem}
+html[data-ui="modern"] .hero h1,html[data-ui="modern"] .hero h2,html[data-ui="modern"] .hero h3,html[data-ui="modern"] .authhero h2{color:#fff}
+html[data-ui="modern"] .secthead h2,html[data-ui="modern"] main>h2{font-size:1.35rem}
+html[data-ui="modern"] .secthead span,html[data-ui="modern"] th{letter-spacing:.06em}
+/* Header: ขาวโปร่ง เส้นล่างบาง; เบลอพื้นเฉพาะจอกว้าง (เพราะ backdrop-filter ทำให้ nav แบบ fixed บนมือถือพัง) */
+html[data-ui="modern"] header{background:rgba(255,255,255,.86);border-bottom:1px solid var(--line)}
+@media(min-width:901px){html[data-ui="modern"] header{position:sticky;top:0;z-index:60;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}}
+html[data-ui="modern"] header h1{font-size:1.15rem}
+html[data-ui="modern"] header h1::before{border-radius:12px}
+html[data-ui="modern"] nav a{font-weight:500;transition:color .18s var(--ease),border-color .18s var(--ease)}
+html[data-ui="modern"] nav a[aria-current="page"]{border-bottom-width:2px}
+/* การ์ด / แผง: ไม่มีกรอบเข้ม เงาบาง มุมนุ่ม */
+html[data-ui="modern"] .card,html[data-ui="modern"] .taskcard,html[data-ui="modern"] .alertcard,html[data-ui="modern"] .sidecard,
+html[data-ui="modern"] .kpi,html[data-ui="modern"] .stepcard,html[data-ui="modern"] .modecard,html[data-ui="modern"] .todaypanel,
+html[data-ui="modern"] .userbox,html[data-ui="modern"] .authform .inner,html[data-ui="modern"] .nextbox,html[data-ui="modern"] .guide{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--sh1)}
+html[data-ui="modern"] a.card,html[data-ui="modern"] .taskcard,html[data-ui="modern"] .alertcard{transition:transform .22s var(--ease),box-shadow .22s var(--ease),border-color .22s var(--ease)}
+html[data-ui="modern"] a.card:hover,html[data-ui="modern"] .taskcard:hover,html[data-ui="modern"] .alertcard:hover{transform:translateY(-2px);box-shadow:var(--sh2);border-color:var(--line)}
+html[data-ui="modern"] a.card:active{transform:translateY(0)}
+html[data-ui="modern"] .card .icon{border-radius:14px}
+/* Hero: มุมโค้งใหญ่ ตัวหนังสือใหญ่ ลดลวดลายประดับ */
+html[data-ui="modern"] .hero{border-radius:var(--r-lg);padding:2.6rem 2.4rem 2.8rem;box-shadow:none}
+html[data-ui="modern"] .hero h2{font-size:2.4rem;letter-spacing:-.03em;color:#fff}
+html[data-ui="modern"] .hero::after{opacity:.06}
+/* ปุ่ม: แคปซูล, ปุ่มรองเป็นเส้นบาง; ไม่มีเงา */
+html[data-ui="modern"] button,html[data-ui="modern"] .btn{border-radius:999px;padding-left:1.4rem;padding-right:1.4rem;font-weight:600;transition:background .18s var(--ease),transform .12s var(--ease),border-color .18s var(--ease)}
+html[data-ui="modern"] button:active{transform:scale(.98)}
+html[data-ui="modern"] button.secondary,html[data-ui="modern"] button.small.secondary{background:#fff;border-color:var(--border-strong);color:var(--ink)}
+html[data-ui="modern"] button.secondary:hover{background:var(--accent);border-color:var(--brand);color:var(--brand)}
+html[data-ui="modern"] .toolbtn,html[data-ui="modern"] .tools .role-badge,html[data-ui="modern"] .filterbar button.chip,html[data-ui="modern"] .tools .userlink{border-radius:999px}
+html[data-ui="modern"] .toolbtn{box-shadow:none;border:1px solid var(--line)}
+html[data-ui="modern"] .langseg{border-radius:999px;background:#ececf0;border:0}
+html[data-ui="modern"] .langseg button{border-radius:999px}
+/* ช่องกรอก: พื้นขาว เส้นบาง มุม 12px focus ring นุ่ม */
+html[data-ui="modern"] input[type=text],html[data-ui="modern"] input[type=email],html[data-ui="modern"] input[type=password],
+html[data-ui="modern"] input[type=date],html[data-ui="modern"] input[type=time],html[data-ui="modern"] input[type=number],
+html[data-ui="modern"] input[type=search],html[data-ui="modern"] select,html[data-ui="modern"] textarea{
+  border:1px solid var(--border-strong);border-radius:12px;background:#fff;min-height:48px;transition:border-color .18s var(--ease),box-shadow .18s var(--ease)}
+html[data-ui="modern"] input:focus,html[data-ui="modern"] select:focus,html[data-ui="modern"] textarea:focus{border-color:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%,transparent)}
+html[data-ui="modern"] label,html[data-ui="modern"] .lbl{font-weight:600}
+/* ตาราง: ไม่มีสีหัว/แถบ เส้นแบ่งบาง hover จาง */
+html[data-ui="modern"] table{border-collapse:collapse}
+html[data-ui="modern"] th{background:transparent;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)!important}
+html[data-ui="modern"] td{border-bottom:1px solid var(--line)}
+html[data-ui="modern"] tbody tr:nth-child(even){background:transparent}
+html[data-ui="modern"] tbody tr:hover{background:rgba(0,0,0,.025)}
+/* Badge: แคปซูลนุ่ม (ยังมี icon + ข้อความ และสีไล่ระดับเดิม) */
+html[data-ui="modern"] .badge,html[data-ui="modern"] .stbadge{border-radius:999px;padding-left:.75rem;padding-right:.75rem}
+/* Popover / แผงเมนู / Footer */
+html[data-ui="modern"] .toolpop,html[data-ui="modern"] #navmorepanel{border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--sh2)}
+html[data-ui="modern"] .sitefoot{background:transparent;border-top:1px solid var(--line)}
+/* แถบเมนูล่างบนมือถือ: ขาวโปร่ง เส้นบน */
+@media(max-width:900px){
+  html[data-ui="modern"] header nav{background:rgba(255,255,255,.94);border-top:1px solid var(--line);box-shadow:none}
+  html[data-ui="modern"] .hero{padding:1.8rem 1.4rem 2rem}
+  html[data-ui="modern"] .hero h2{font-size:1.75rem}
+}
+
+/* ===== Icon (G2): เส้นบางสม่ำเสมอ 1.75px ปลายมน ใน tile สีอ่อน; hover เติมสีหลัก ===== */
+html[data-ui="modern"] .toolbtn svg{width:22px;height:22px}
+html[data-ui="modern"] nav a svg.ni,html[data-ui="modern"] #navmorepanel a svg.ni{stroke-width:1.75}
+html[data-ui="modern"] a.card .icon{width:52px;height:52px;border-radius:16px;transition:background .22s var(--ease)}
+html[data-ui="modern"] a.card .icon svg{width:26px;height:26px;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;transition:stroke .22s var(--ease)}
+html[data-ui="modern"] a.card:hover .icon{background:var(--brand)}
+html[data-ui="modern"] a.card:hover .icon svg{stroke:#fff}
+html[data-ui="modern"] a.card>span:last-child svg,html[data-ui="modern"] a.card .go{transition:transform .22s var(--ease)}
+html[data-ui="modern"] a.card:hover .go{transform:translateX(3px)}
+@media(max-width:900px){
+  html[data-ui="modern"] header nav a.on svg.ni,html[data-ui="modern"] header nav a[aria-current="page"] svg.ni{stroke-width:2.1}
+}
