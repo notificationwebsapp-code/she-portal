@@ -266,3 +266,15 @@ html[data-ui="modern"] .authform .inner .lead{font-size:1.0625rem}
 html[data-ui="modern"] #authlang{display:none!important}
 /* G14: มือถือ — ลายประดับเทศกาลในฝั่งซ้ายทับหัวข้อ ให้ซ่อนเฉพาะในกล่องหัวข้อ */
 @media(max-width:820px){html[data-ui="modern"] .authhero::before,html[data-ui="modern"] .authhero::after{display:none!important}}
+
+/* G15: การ์ด KPI สีทึบเข้ม ตัวอักษรขาว (คอนทราสต์ขาว/พื้น: 4.83–10.0, ผ่าน >=4.5:1)
+   RWC ใช้ #c2410c และ Near miss ใช้ #15803d (เข้มกว่าสีพีระมิด) เพื่อให้ตัวอักษรเล็กอ่านผ่าน */
+html[data-ui="modern"] .ed-kpi{--kf:#284499}
+html[data-ui="modern"] .ed-kpi.k-serious{--kf:#7f1d1d}
+html[data-ui="modern"] .ed-kpi.k-lti{--kf:#dc2626}
+html[data-ui="modern"] .ed-kpi.k-rwc{--kf:#c2410c}
+html[data-ui="modern"] .ed-kpi.k-near{--kf:#15803d}
+html[data-ui="modern"] .ed-kpi.k-days{--kf:#14532d}
+html[data-ui="modern"] .ed-kpi:not(.soon){background:var(--kf)}
+html[data-ui="modern"] .ed-kpi:not(.soon) .t,html[data-ui="modern"] .ed-kpi:not(.soon) .v,html[data-ui="modern"] .ed-kpi:not(.soon) .u{color:#fff}
+html[data-ui="modern"] .ed-kpi:not(.soon) .t::before{background:#fff}
