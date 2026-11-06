@@ -289,3 +289,9 @@ html[data-ui="modern"] .tpacct{display:grid;gap:.5rem;margin:.6rem 0 .7rem;paddi
 html[data-ui="modern"] .tpacct:empty{display:none}
 html[data-ui="modern"] .tpacct .role-badge,html[data-ui="modern"] .tpacct .userlink{width:100%;max-width:none;box-sizing:border-box;justify-content:center;text-align:center;margin:0;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
 html[data-ui="modern"] .tpacct .userlink{min-height:44px;background:#f0f0f3;color:var(--ink);font-weight:600}
+
+/* G18: เมนูตั้งค่า — ปุ่มออกจากระบบไม่ล้นขอบ/ไม่ตัดอีเมลกลางคำ: ขยายกล่องเมนูที่มีกล่องบัญชี, ฟอนต์เล็กลงเล็กน้อย */
+html[data-ui="modern"] .toolpop:has(.tpacct){width:min(310px,calc(100vw - 2rem));box-sizing:border-box}
+html[data-ui="modern"] .tpacct{justify-items:stretch}
+html[data-ui="modern"] .tpacct .role-badge,html[data-ui="modern"] .tpacct .userlink{margin:0!important;position:static;transform:none;min-width:0;overflow-wrap:break-word}
+html[data-ui="modern"] .tpacct .userlink{font-size:.8125rem}
