@@ -238,24 +238,20 @@
 /* popup แจ้งข้อผิดพลาดกลางจอ (notice.js) ใช้ร่วมทุกหน้า */
 (function(){try{var s=document.createElement("script");s.src="notice.js?v=1";s.defer=true;document.head.appendChild(s)}catch(e){}})();
 
-/* ธีมแบรนด์ (v4.9): เปิดดูตัวอย่างด้วย ?brand=tu · ปิดด้วย ?brand=off · ค่าจำไว้ในเบราว์เซอร์ (localStorage she-brand)
-   ยังไม่เป็นค่าเริ่มต้นของระบบ — เมื่อยืนยันแล้วค่อยเปลี่ยน DEFAULT_BRAND เป็น "tu" */
+/* ธีมแบรนด์ + สไตล์ Modern (v4.11): เป็นค่าเริ่มต้นของระบบแล้ว
+   ปิดดูแบบเดิมด้วย ?brand=off และ/หรือ ?ui=off (จำไว้ในเบราว์เซอร์) · เปิดกลับด้วย ?brand=tu / ?ui=modern · ล้างค่าที่จำ: ?brand=reset / ?ui=reset */
 (function(){
-  var DEFAULT_BRAND="";
-  var KEY="she-brand";
-  function lget(){try{return localStorage.getItem(KEY)}catch(e){return null}}
-  function lset(v){try{if(v)localStorage.setItem(KEY,v);else localStorage.removeItem(KEY)}catch(e){}}
-  var q=(location.search.match(/[?&]brand=([a-z]+)/)||[])[1];
-  if(q==="tu")lset("tu");else if(q==="off")lset(null);
-  var b=lget()||DEFAULT_BRAND;
-  var uq=(location.search.match(/[?&]ui=([a-z]+)/)||[])[1],UK="she-ui";
-  function uget(){try{return localStorage.getItem(UK)}catch(e){return null}}
-  function uset(v){try{if(v)localStorage.setItem(UK,v);else localStorage.removeItem(UK)}catch(e){}}
-  if(uq==="modern")uset("modern");else if(uq==="off")uset(null);
-  if(uget()==="modern"){document.documentElement.setAttribute("data-ui","modern");var ml=document.createElement("link");ml.rel="stylesheet";ml.href="modern-ui.css";document.head.appendChild(ml)}
+  var DEFAULT_BRAND="tu",DEFAULT_UI="modern";
+  function lget(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function lset(k,v){try{if(v)localStorage.setItem(k,v);else localStorage.removeItem(k)}catch(e){}}
+  var qb=(location.search.match(/[?&]brand=([a-z]+)/)||[])[1],qu=(location.search.match(/[?&]ui=([a-z]+)/)||[])[1];
+  if(qb==="tu"||qb==="off")lset("she-brand",qb);else if(qb==="reset")lset("she-brand",null);
+  if(qu==="modern"||qu==="off")lset("she-ui",qu);else if(qu==="reset")lset("she-ui",null);
+  var b=lget("she-brand")||DEFAULT_BRAND,u=lget("she-ui")||DEFAULT_UI;
+  function css(h){var l=document.createElement("link");l.rel="stylesheet";l.href=h;document.head.appendChild(l)}
+  if(u==="modern"){document.documentElement.setAttribute("data-ui","modern");css("modern-ui.css")}
   if(b!=="tu")return;
-  document.documentElement.setAttribute("data-brand","tu");
-  var l=document.createElement("link");l.rel="stylesheet";l.href="brand-tu.css";document.head.appendChild(l);
+  document.documentElement.setAttribute("data-brand","tu");css("brand-tu.css");
   var h=document.querySelector("header");if(!h||h.querySelector(".tulogo"))return;
   var i=document.createElement("img");i.className="tulogo";i.src="assets/thai-union-logo.png";i.alt="Thai Union";i.width=61;i.height=44;
   h.appendChild(i);
