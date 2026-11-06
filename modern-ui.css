@@ -399,3 +399,14 @@ html[data-ui="modern"] .filterbar button.chip:hover{background:#e4e6ee!important
 html[data-ui="modern"] .filterbar button.chip[aria-pressed="true"]{background:#284499!important;color:#fff!important}
 html[data-ui="modern"] .filterbar button.chip.warn[aria-pressed="true"]{background:#8a5a00!important;color:#fff!important}
 html[data-ui="modern"] .filterbar button.chip:focus-visible{outline:2px solid #284499;outline-offset:2px}
+/* G32 — ป้ายสถานะ CAPA (.stbadge) เป็นชุดเดียวกัน: พื้นอ่อน + ตัวอักษรเข้ม + จุดสีสถานะ (เดิมปนกันระหว่างพื้นทึบเข้มกับพื้นอ่อน)
+   สีสถานะ (ความหมาย) คงเดิมที่จุดหน้าป้าย; contrast ตัวอักษรเทียบพื้น >= 4.5:1 (WCAG 2.2 SC 1.4.3) */
+html[data-ui="modern"] .stbadge{--d:#6b7385;display:inline-flex;align-items:center;gap:.4rem;background:#eceef2;color:#4a5160!important;box-shadow:none;font-size:.8125rem;font-weight:600;padding:.2rem .75rem;border-radius:999px;line-height:1.4}
+html[data-ui="modern"] .stbadge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--d);flex:none}
+html[data-ui="modern"] .stbadge.open{--d:#017ab6;background:#e3f2fb;color:#0b3b7a!important}
+html[data-ui="modern"] .stbadge.in_progress{--d:#284499;background:#e6ebf9;color:#1e3478!important}
+html[data-ui="modern"] .stbadge.returned{--d:#e0a100;background:#fff1cf;color:#6b4200!important}
+html[data-ui="modern"] .stbadge.closed{--d:#7b3fa0;background:#f1e6f7;color:#5a2b78!important}
+html[data-ui="modern"] .stbadge.verified{--d:#1b7a3d;background:#dcf0e3;color:#14602d!important}
+html[data-ui="modern"] .stbadge.cancelled{--d:#6b7385;background:#eceef2;color:#4a5160!important}
+html[data-ui="modern"] .stbadge.od{--d:#c62828;background:#fde3e3;color:#8c1d18!important}
