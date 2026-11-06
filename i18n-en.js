@@ -1641,4 +1641,6 @@ I18N.add({
  "จัดการเคส": "Manage case",
  "แก้ไขรายงาน · ผู้ได้รับมอบหมายให้สอบสวน · ประวัติการแก้ไข": "Edit report · Investigation delegates · Edit history",
  "กลับไปรายการเคส": "Back to case list",
+ "+ สร้าง Action ระดับเคส (ไม่ผูก Root cause)": "+ Create a case-level Action (not tied to a root cause)",
+ "ถ้าต้องการให้นับว่า Root cause มี Action แล้ว ให้สร้างจากปุ่มในการ์ด Root cause แต่ละรายการ": "To count toward a root cause's Action requirement, create it from the button in that root cause's card",
 });

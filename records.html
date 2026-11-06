@@ -17,6 +17,11 @@
     .zone .btn-link{display:inline-flex;align-items:center;min-height:48px;padding:0 20px;border-radius:999px;background:#284499;color:#fff;font-weight:600;text-decoration:none}
     .zone .btn-link:hover{background:#2e3896}
     .managedet{margin:20px 0}.managedet>div{margin-top:.6rem}
+    #detail .zone-t h4{margin:0 0 2px}.zone-h{align-items:center}
+    .zone>:not(.zone-h){margin-left:50px}
+    .zone .rowbtns input{flex:1 1 280px;max-width:560px}
+    .invbox .inv-savebar{border:1px solid #e8e8ed;border-radius:22px;padding:14px 20px;box-shadow:none}
+    .mg-row{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:.4rem 0 1rem}.mg-row small{color:var(--muted);flex:1 1 18rem}
     .inv-savehint{flex:1 1 12rem;color:var(--ib-muted,#414750);font-size:.92rem}
     .invbox{margin:1.2rem 0}
     .invbox .warnbox{background:#fff8e1;border:1px solid #f0c36d;border-radius:8px;padding:.6rem .8rem;margin:.4rem 0 .8rem;font-size:.95rem}
@@ -1299,8 +1304,8 @@
       const attBox = photoBox;
       Attach.panel(attBox, { entityType: "incident", entityId: inc.id, canUpload: !deleted && (reporter || sheLike), closed: closed && !deleted });
       if (!deleted && (sheLike || hasP("capa.create"))) {
-        box.append(zone("2", "สร้างมาตรการแก้ไข (Action / CAPA)", "ใช้เมื่อพบสาเหตุแล้ว — ทุก Root cause ต้องมี Action อย่างน้อย 1 รายการก่อนปิดเคส",
-          h("a", { class: "btn-link", href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") }, "+ สร้าง Action (CAPA) จากเคสนี้")));
+        manageBody.append(h("div", { class: "mg-row" }, h("a", { class: "btn-link", href: "capa.html?new=1&source=incident&sid=" + encodeURIComponent(inc.id) + "&plant=" + encodeURIComponent(inc.plant_id || "") }, "+ สร้าง Action ระดับเคส (ไม่ผูก Root cause)"),
+          h("small", { text: "ถ้าต้องการให้นับว่า Root cause มี Action แล้ว ให้สร้างจากปุ่มในการ์ด Root cause แต่ละรายการ" })));
       }
 
       // คำขอแก้ไข
@@ -1744,7 +1749,7 @@
 
     function closeForm() {
       const r = h("input", { type: "text", placeholder: "หมายเหตุการปิด (ไม่บังคับ)", maxlength: "500", "aria-label": "หมายเหตุการปิด" });
-      return zone("3", "ปิดเคส", "ปิดเมื่อสอบสวนและจัดประเภทครบแล้ว — ปิดแล้วแก้ไขไม่ได้ ต้องให้ Admin เปิดเคสใหม่ (Reopen) พร้อมเหตุผล",
+      return zone("2", "ปิดเคส", "ปิดเมื่อสอบสวนและจัดประเภทครบแล้ว — ปิดแล้วแก้ไขไม่ได้ ต้องให้ Admin เปิดเคสใหม่ (Reopen) พร้อมเหตุผล",
         h("div", { class: "rowbtns" }, r, h("button", { type: "button", class: "btn-danger-outline", text: "ปิดเคส",
           onclick: () => act(sb.rpc("close_incident", { inc: state.inc.id, reason: r.value.trim() || null }), "ปิดรายงานแล้ว") })));
     }
