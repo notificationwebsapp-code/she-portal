@@ -188,6 +188,12 @@
     #t-incident td.desc{max-width:18rem}
     #t-incident td.desc>div{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
     #t-incident td small.sub{display:block;color:#555;margin-top:.15rem}
+    /* สีตามระดับความรุนแรง (ชุดเดียวกับ Dashboard) — ใช้ทั้งแถบสีด้านซ้ายและป้ายใต้ชื่อประเภท; ป้ายไม่ใช้ .badge เพราะ modern-ui.css บังคับเป็นสีเทา */
+    .sevlegend .sevlg{font-size:.8rem;padding:.05rem .6rem;border-radius:999px;font-weight:700;background:var(--svc);color:#fff}
+    .sevlegend .sevlg[style*="#fb923c"]{color:#431407}.sevlegend .sevlg[style*="#fcd34d"]{color:#422006}.sevlegend .sevlg[style*="#bef264"]{color:#1a2e05}.sevlegend .sevlg[style*="#86efac"]{color:#052e16}
+    #t-incident .tcell{border-left:5px solid var(--svc,#9ca3af);padding-left:.6rem}
+    #t-incident td .svp{display:inline-block;padding:.05rem .55rem;border-radius:999px;font-weight:700;font-size:.78rem;font-family:inherit;background:#9ca3af;color:#fff}
+    #t-incident td .svp-FAT{background:#7f1d1d;color:#fff}#t-incident td .svp-LTI{background:#dc2626;color:#fff}#t-incident td .svp-RWC{background:#c2410c;color:#fff}#t-incident td .svp-MTC{background:#fb923c;color:#431407}#t-incident td .svp-FAC{background:#fcd34d;color:#422006}#t-incident td .svp-PD{background:#bef264;color:#1a2e05}#t-incident td .svp-NEAR{background:#86efac;color:#052e16}
     .sr{position:absolute;left:-9999px}
     #t-incident td button{white-space:nowrap}
     #t-incident td small.sub{font-family:var(--mono,ui-monospace,Consolas,monospace);font-variant-numeric:tabular-nums}
@@ -461,6 +467,8 @@
       return out;
     }
     const sevName = (id) => { const f = SEVS.find((x) => x.id === id); return f ? dbName(f) : ""; };
+    const SEV_COLOR = { FAT: "#7f1d1d", LTI: "#dc2626", RWC: "#c2410c", MTC: "#fb923c", FAC: "#fcd34d", PD: "#bef264", NEAR: "#86efac" };
+    const sevCode = (id) => { const f = SEVS.find((x) => x.id === id); return f && SEV_COLOR[f.code] ? f.code : ""; };
     const partyName = (id) => { const f = PARTIES.find((x) => x.id === id); return f ? dbName(f) : ""; };
     const lkName = (kind, code) => { const f = (LKALL[kind] || []).find((x) => x.code === code); return f ? dbName(f) : code; };   // รวมรหัสที่ปิดใช้งาน เพื่อแสดงชื่อข้อมูลเก่าได้
     const typeName = (id) => { const f = TYPES_ALL.find((x) => x.id === id); return f ? dbName(f) : "(ประเภทที่ไม่พบ/ปิดใช้งาน)"; };
@@ -796,6 +804,10 @@
         if (flt.body) addChip(flt.body === "any" ? "มีตำแหน่งที่บาดเจ็บ" : "ตำแหน่งที่บาดเจ็บ " + flt.body + " (สูงสุด 400 เคสแรก)", "body");
         f.append(note);
       }
+      // คำอธิบายสี (ผู้ใช้ใหม่เข้าใจได้เอง; มีข้อความกำกับ ไม่ใช้สีอย่างเดียว ตาม WCAG 2.2 ข้อ 1.4.1)
+      const lg = h("div", { class: "fb-chips sevlegend", role: "note", "aria-label": "คำอธิบายสีระดับความรุนแรง" }, h("span", { class: "lbl", text: "สีที่แถบและป้ายในตาราง = ระดับความรุนแรง:" }));
+      [["FAT", "เสียชีวิต"], ["LTI", "หยุดงาน"], ["RWC", "จำกัดงาน"], ["MTC", "รักษาพยาบาล"], ["FAC", "ปฐมพยาบาล"], ["PD", "ทรัพย์สิน"], ["NEAR", "Near miss"]].forEach(([c, t]) => lg.append(h("span", { class: "sevlg", style: "--svc:" + SEV_COLOR[c], text: c + " " + t })));
+      f.append(lg);
       f.onsubmit = (e) => { e.preventDefault(); flt.q = q.value.trim(); apply(); };
     }
     function renderPager() {
@@ -1209,8 +1221,8 @@
         data.map((r) => [
           h("div", {}, r.occurred_on + (r.occurred_time ? " " + r.occurred_time.slice(0, 5) : ""),
             h("small", { class: "sub", text: r.plants ? r.plants.code : "" })),
-          h("div", {}, typeChain(r.incident_type_id).length ? dbName(typeChain(r.incident_type_id).slice(-1)[0]) : (r.incident_types ? r.incident_types.name_th : r.type),
-            h("small", { class: "sub", text: (sevName(r.severity_id) || "ความรุนแรง: ไม่ระบุ") + " · " + (partyName(r.involved_party_id) || "ผู้เกี่ยวข้อง: ไม่ระบุ") })),
+          h("div", { class: "tcell", style: "--svc:" + (SEV_COLOR[sevCode(r.severity_id)] || "#9ca3af") }, typeChain(r.incident_type_id).length ? dbName(typeChain(r.incident_type_id).slice(-1)[0]) : (r.incident_types ? r.incident_types.name_th : r.type),
+            h("small", { class: "sub" }, h("span", { class: "svp" + (sevCode(r.severity_id) ? " svp-" + sevCode(r.severity_id) : ""), text: sevName(r.severity_id) || "ความรุนแรง: ไม่ระบุ" }), " · " + (partyName(r.involved_party_id) || "ผู้เกี่ยวข้อง: ไม่ระบุ"))),
           r.location,
           h("div", { title: r.description || "", text: r.description || "" }),
           statusBadge(r),

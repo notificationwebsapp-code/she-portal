@@ -55,6 +55,9 @@
     .ed-hm{border-spacing:2px;font-size:.8rem}
     .ed-hm td.pl{padding:.1rem .3rem;white-space:nowrap}
     .ed-hm td.c{padding:.15rem .2rem;min-width:56px;height:24px}
+    .b1{background:#dbeafe;color:#1e3a8a}.b2{background:#60a5fa;color:#0b1f4d}.b3{background:#2563eb;color:#fff}.b4{background:#1e3a8a;color:#fff}
+    .ed-bt{border-collapse:separate;border-spacing:2px;width:100%;font-size:.8rem}.ed-bt th{font-weight:600;color:var(--muted);font-size:.78rem;text-align:center;padding:.15rem}.ed-bt th:first-child,.ed-bt td:first-child{text-align:left}
+    .ed-bt td.c{text-align:center;border-radius:6px;font-weight:700;min-width:56px;height:24px;padding:.15rem .2rem}.ed-bt td.pl{padding:.1rem .3rem;white-space:nowrap}
     .h0{background:#f8fafc;color:#cbd5e1;font-weight:400}.hm{background:#cbd5e1;color:#334155;font-weight:400}.h1{background:#fde68a;color:#78350f}.h2{background:#fb923c;color:#431407}.h3{background:#dc2626;color:#fff}.h4{background:#7f1d1d;color:#fff}
     .ed-pyr{display:flex;flex-direction:column;align-items:center;gap:4px;margin:.4rem 0}
     .ed-pl{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem .9rem;border-radius:6px;color:#fff;font-weight:700;font-size:.9rem;min-width:175px;max-width:100%}
@@ -109,6 +112,10 @@
     .ed-tbl td.z{color:#94a3b8;font-weight:400}.ed-tbl td.nz{font-weight:700;color:var(--navy)}
     a.drill{color:inherit;text-decoration:none;cursor:pointer}
     a.drill:hover{filter:brightness(.95);text-decoration:underline}
+    a.drill.ed-pl,a.drill.ed-seg{color:#fff}
+    a.drill.pl-mtc{color:#431407}a.drill.pl-fac{color:#422006}a.drill.pl-pd{color:#1a2e05}a.drill.pl-near{color:#052e16}   /* พื้นสีเข้ม ต้องคงตัวอักษรขาว (a.drill ที่ inherit ทำให้ตัวอักษรเป็นสีเข้มจนมองไม่ชัด) */
+    a.drill.ed-pl:hover,a.drill.ed-seg:hover,a.drill.ed-kpi:hover,a.drill.ed-tc:hover{text-decoration:none;filter:brightness(1.12)}
+    a.drill.ed-pl:focus-visible{outline-color:#FDD100}
     a.drill:focus-visible{outline:3px solid #284499;outline-offset:2px}
     a.ed-kpi{display:block}a.ed-kpi:hover{box-shadow:0 2px 10px rgba(40,68,153,.25);text-decoration:none}
     td a.drill,.ed-bar a.drill{display:block}
@@ -243,7 +250,8 @@
       <div class="ed-grid" style="grid-template-columns:1fr">
         <section class="ed-card"><h3>เปรียบเทียบแต่ละ Plant</h3><p class="sub">ใช้เรียนรู้จาก Plant อื่นและปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน) เรียงจากเคสมากไปน้อย</p>
           <div class="ed-tool"><label><input type="checkbox" class="only-active"> แสดงเฉพาะ Plant ที่มีเหตุการณ์</label><span class="cnt" id="bench-cnt"></span></div>
-          <div class="ed-scroll ed-vscroll"><table class="ed-tbl" id="bench"></table></div></section>
+          <div class="ed-hmw" id="bench"></div>
+          <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="hm"></i>&lt;3 (ปิดบัง)</span><span><i class="h1"></i>1–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10–19</span><span><i class="h4"></i>20 ขึ้นไป</span><span><i class="b2"></i>Near miss (สีน้ำเงิน = รายงานเชิงป้องกัน ยิ่งมากยิ่งดี)</span></div></section>
       </div>
 
       <section class="ed-soon" aria-label="ส่วนที่กำลังพัฒนา">
@@ -447,19 +455,24 @@
       }
 
       /* benchmark */
-      var bt = $("bench"); bt.replaceChildren();
-      var bh = el("tr"); ["Plant", "ทั้งหมด", "รุนแรง", "LTI", "Near miss"].forEach(function (h, i) { bh.appendChild(el("th", i ? "n" : "", h)); }); bt.appendChild(bh);
+      var bw0 = $("bench"); bw0.replaceChildren();
       function bw(v) { return v == null ? 1.5 : v; }
+      function hcls(v, blue) { return v == null ? "hm" : v === 0 ? "h0" : blue ? (v < 6 ? "b1" : v < 10 ? "b2" : v < 20 ? "b3" : "b4") : (v < 6 ? "h1" : v < 10 ? "h2" : v < 20 ? "h3" : "h4"); }
       var bp = r.by_plant.slice().sort(function (a, b) { return bw(b.total) - bw(a.total) || bw(b.serious) - bw(a.serious) || String(a.code).localeCompare(String(b.code)); });
       var bShow = bp.filter(function (p) { return !onlyActive || bw(p.total) > 0; });
       $("bench-cnt").textContent = "แสดง " + bShow.length + " จาก " + bp.length + " Plant";
-      if (!bShow.length) { var be = el("tr"), bc = el("td", "", "ไม่มีเหตุการณ์ในช่วงที่เลือก (Plant ทั้งหมด " + bp.length + " แห่งเป็น 0)"); bc.colSpan = 5; be.appendChild(bc); bt.appendChild(be); }
-      bShow.forEach(function (p) {
-        var tr4 = el("tr"), td0 = el("td"); td0.appendChild(link("", p.code + " " + p.name, drill({ plant: p.id }))); if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr4.appendChild(td0);
-        [[p.total, null], [p.serious, ["FAT", "LTI"]], [p.lti, ["LTI"]], [p.near_miss, ["NEAR"]]].forEach(function (g) {
-          var td = el("td", "n " + (g[0] === 0 ? "z" : "nz")); td.appendChild(link("", numOrMask(g[0]), drill(g[1] ? { plant: p.id, sev: g[1] } : { plant: p.id }))); tr4.appendChild(td);
-        }); bt.appendChild(tr4);
-      });
+      if (!bShow.length) bw0.appendChild(el("p", "sub", "ไม่มีเหตุการณ์ในช่วงที่เลือก (Plant ทั้งหมด " + bp.length + " แห่งเป็น 0)"));
+      var bSize = Math.max(1, Math.ceil(bShow.length / (bShow.length > 12 ? 2 : 1)));
+      for (var bi = 0; bi < bShow.length; bi += bSize) {
+        var bt = el("table", "ed-bt"), bh = el("tr"); ["Plant", "ทั้งหมด", "รุนแรง", "LTI", "Near miss"].forEach(function (h) { bh.appendChild(el("th", "", h)); }); bt.appendChild(bh);
+        bShow.slice(bi, bi + bSize).forEach(function (p) {
+          var tr4 = el("tr"), td0 = el("td", "pl"); td0.appendChild(link("", p.code, drill({ plant: p.id }), p.code + " " + p.name + " — ดูรายการเคส")); td0.title = p.name; if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr4.appendChild(td0);
+          [[p.total, null, false], [p.serious, ["FAT", "LTI"], false], [p.lti, ["LTI"], false], [p.near_miss, ["NEAR"], true]].forEach(function (g) {
+            var td = el("td", "c " + hcls(g[0], g[2])); td.appendChild(link("", g[0] === 0 ? "·" : numOrMask(g[0]), drill(g[1] ? { plant: p.id, sev: g[1] } : { plant: p.id }))); tr4.appendChild(td);
+          }); bt.appendChild(tr4);
+        });
+        bw0.appendChild(bt);
+      }
 
       /* latest */
       renderLatest(r.latest);
@@ -512,8 +525,8 @@
       $("b-csv").addEventListener("click", function () {
         var msg = $("export-msg"); if (!data || !cur) { msg.textContent = "กด \"แสดงผล\" ก่อนส่งออก"; return; }
         var r = data, rows = [["หมวด", "Plant", "ช่วง/รายการ", "ตัวชี้วัด", "ค่า", "หมายเหตุ"]];
-        function v(n, sup) { return n == null ? "<3" : n; }
-        function add(sec, plant, item, metric, n, sup) { rows.push([sec, plant || "", item || "", metric, v(n), n == null ? "ปิดบังค่าน้อยกว่า 3" : ""]); }
+        function v(n) { return n == null ? "<3" : n; }
+        function add(sec, plant, item, metric, n) { rows.push([sec, plant || "", item || "", metric, v(n), n == null ? "ปิดบังค่าน้อยกว่า 3" : ""]); }
         rows.push(["ช่วงข้อมูล", "", cur.from + " ถึง " + cur.to, "ตัวกรอง", "", "Plant: " + (cur.pl.length ? cur.pl.length + " แห่ง" : "ทั้งหมด") + " | ประเภท: " + (cur.ty.join(" ") || "ทั้งหมด") + " | ความรุนแรง: " + (cur.sv.join(" ") || "ทั้งหมด") + " | ผู้เกี่ยวข้อง: " + (cur.pt.join(" ") || "ทั้งหมด") + " | สถานะ: " + (cur.ph || "ทั้งหมด")]);
         var k = r.kpi, py = r.pyramid || {};
         [["เคสทั้งหมด", k.total], ["เคสรุนแรง (FAT/LTI)", k.serious], ["เสียชีวิต (FAT)", k.fatal], ["LTI", k.lti], ["Near miss", k.near_miss], ["วันนับจาก LTI/FAT ล่าสุด", k.days_since_lti]].forEach(function (x) { rows.push(["KPI", "", "", x[0], x[1] == null ? "" : x[1], ""]); });
