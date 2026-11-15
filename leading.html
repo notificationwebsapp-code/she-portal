@@ -19,6 +19,22 @@
     .bar{display:inline-block;height:10px;border-radius:5px;background:#284499;vertical-align:middle;margin-right:.4rem}
     .heat td.h{text-align:center;font-variant-numeric:tabular-nums}
     .hd{background:#EEF1F6}
+    .lkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.8rem;margin:1rem 0}
+    .lk{background:#fff;border-radius:18px;padding:.9rem 1rem;border:1px solid #e3e8f2}
+    .lk b{display:block;font-size:2rem;line-height:1.1;color:#284499;font-variant-numeric:tabular-nums}
+    .lk span{display:block;font-size:.9rem;color:#1B1F24;margin-top:.2rem}
+    .lk small{display:block;color:#6B7280;font-size:.8rem;margin-top:.15rem}
+    .lk.warn b{color:#E56C0C}
+    .lcharts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem}
+    .lcharts .card{margin:0}
+    .hb{display:grid;grid-template-columns:5.5rem 1fr 5rem;align-items:center;gap:.5rem;margin:.35rem 0;font-size:.92rem}
+    .hb .t{background:#EEF1F6;border-radius:6px;height:16px;overflow:hidden}
+    .hb .f{display:block;height:100%;background:#284499;border-radius:6px}
+    .hb.top .f{background:#E56C0C}
+    .hb .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+    .hb .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .howto{background:#EEF1F6;border-radius:14px;padding:.7rem 1rem;font-size:.92rem;margin:.6rem 0}
+    @media print{.lcharts{display:block}.lcharts .card{break-inside:avoid;margin:.5rem 0}}
     [hidden]{display:none!important}
     h3{color:var(--navy)}
   </style>
@@ -58,6 +74,19 @@
         <label>ถึง<input type="date" id="to" required></label>
         <button type="submit" style="min-height:50px">แสดงผล</button>
       </form>
+
+      <section aria-labelledby="sum-h">
+        <h3 id="sum-h">ภาพรวมเปรียบเทียบ Plant</h3>
+        <p class="howto">วิธีอ่าน: แถบยาว = ค่ามาก · แถบสีส้มพร้อมคำว่า "สูงสุด" = Plant ที่มีค่าพลาด/เกิดซ้ำมากที่สุด (ไม่ใช้กับร้อยละปิดทันเวลา ซึ่งยิ่งสูงยิ่งดี) · ตัวเลขทางขวาคือค่าจริง · ตัวย่อ SLA คือเกณฑ์เวลาที่ต้องทำให้ทัน (ตั้งที่หน้า "เกณฑ์ SLA / Repeat") · ตารางละเอียดอยู่ด้านล่าง</p>
+        <div class="lkpis" id="lkpis" role="status"></div>
+        <div class="lcharts">
+          <div class="card"><h4>SLA ที่พลาด (จำนวนครั้ง) แยกตาม Plant</h4><div id="c-sla"></div><p id="ce-sla" class="hint" hidden>ไม่มีข้อมูลในช่วงที่เลือก</p></div>
+          <div class="card"><h4>ปิด Action ทันเวลา (ร้อยละ) แยกตาม Plant</h4><div id="c-ot"></div><p id="ce-ot" class="hint" hidden>ยังไม่มี Action ที่ปิดแล้วในช่วงที่เลือก</p></div>
+          <div class="card"><h4>เหตุการณ์เกิดซ้ำ (Repeat case) แยกตาม Plant</h4><div id="c-rep"></div><p id="ce-rep" class="hint" hidden>ไม่มีเหตุการณ์เกิดซ้ำในช่วงที่เลือก</p></div>
+          <div class="card"><h4>แนวโน้ม Repeat รายเดือน (เคส)</h4><div id="c-tr"></div><p id="ce-tr" class="hint" hidden>ไม่มีข้อมูลแนวโน้ม</p></div>
+        </div>
+      </section>
+      <h3>ตารางละเอียด</h3>
 
       <section class="card"><h3>1) SLA ที่พลาด แยกตาม Plant และขั้นตอน</h3>
         <p class="hint">ตัวเลข = พลาดเกณฑ์ (ปิดแล้วเกินเวลา + ยังเปิดอยู่แต่เกินเวลา) · "ไม่มีเกณฑ์" = ยังไม่ตั้งเกณฑ์ จึงไม่ถูกนับว่าพลาด</p>
@@ -155,6 +184,31 @@
       fill("#t-tr", mt, "e-tr", (r) => { const tr = el("tr"); tr.appendChild(td(String(r.month).slice(0, 7))); tr.appendChild(td(KIND_TH[r.kind] || r.kind));
         const c = el("td"); c.setAttribute("data-no-i18n", ""); const b = el("span", "bar"); b.style.width = Math.min(200, 12 * r.cases) + "px"; c.appendChild(b); c.appendChild(document.createTextNode(String(r.cases))); tr.appendChild(c); return tr; });
 
+
+      /* ภาพรวม: KPI + กราฟแท่ง (สร้างด้วย textContent) */
+      function bars(host, empty, items, fmt, flag) {
+        const h = $(host); h.replaceChildren(); const rows = items.filter((x) => x.v != null);
+        $(empty).hidden = rows.length > 0; if (!rows.length) return;
+        rows.sort((a, b) => b.v - a.v); const mx = Math.max(1, ...rows.map((x) => x.v));
+        rows.forEach((x) => { const top = flag && x.v > 0 && x.v === mx; const r = el("div", "hb" + (top ? " top" : "")); const l = el("span", "l", x.label); l.setAttribute("data-no-i18n", ""); l.title = x.label;
+          const t = el("span", "t"); const f = el("span", "f"); f.style.width = (100 * x.v / mx).toFixed(1) + "%"; t.appendChild(f);
+          const v = el("span", "v", fmt(x.v) + (top ? " สูงสุด" : "")); v.setAttribute("data-no-i18n", ""); r.appendChild(l); r.appendChild(t); r.appendChild(v); h.appendChild(r); });
+      }
+      const miss = {}; sla.forEach((r) => { miss[r.plant_code] = (miss[r.plant_code] || 0) + (r.miss_total || 0); });
+      const li = get(1) || [];
+      const totMiss = Object.values(miss).reduce((a, b) => a + b, 0);
+      const totOver = li.reduce((a, r) => a + (r.capa_overdue_open || 0), 0), totClosed = li.reduce((a, r) => a + (r.capa_closed_total || 0), 0), totOn = li.reduce((a, r) => a + (r.capa_closed_on_time || 0), 0);
+      const totRep = rs.reduce((a, r) => a + (r.repeat_case || 0), 0);
+      const kp = $("lkpis"); kp.replaceChildren();
+      [[totMiss, "SLA ที่พลาดทั้งหมด", "ครั้ง (ปิดเกินเวลา + ยังเปิดเกินเวลา)", totMiss > 0], [totOver, "Action เกินกำหนดที่ยังเปิด", "รายการ", totOver > 0], [totClosed ? Math.round(100 * totOn / totClosed) + "%" : "–", "ปิด Action ทันเวลา", totClosed ? totOn + " จาก " + totClosed + " รายการ" : "ยังไม่มี Action ที่ปิดแล้ว", false], [totRep, "Repeat case", "เคสที่เกิดซ้ำ", totRep > 0]].forEach((k) => {
+        const d = el("div", "lk" + (k[3] ? " warn" : "")); const b = el("b", null, String(k[0])); d.appendChild(b); d.appendChild(el("span", null, k[1])); d.appendChild(el("small", null, k[2])); kp.appendChild(d); });
+      bars("c-sla", "ce-sla", Object.keys(miss).map((c) => ({ label: c, v: miss[c] })), (v) => String(v), true);
+      bars("c-ot", "ce-ot", li.filter((r) => r.capa_closed_total > 0).map((r) => ({ label: r.plant_code, v: Math.round(100 * r.capa_closed_on_time / r.capa_closed_total) })), (v) => v + "%", false);
+      bars("c-rep", "ce-rep", rs.map((r) => ({ label: r.plant_code, v: r.repeat_case || 0 })).filter((x) => x.v > 0), (v) => String(v), true);
+      const mo = {}; (get(5) || []).forEach((r) => { const m = String(r.month).slice(0, 7); mo[m] = (mo[m] || 0) + (r.cases || 0); });
+      const ml = Object.keys(mo).sort(); const th2 = $("c-tr"); th2.replaceChildren(); $("ce-tr").hidden = ml.length > 0;
+      const mmx = Math.max(1, ...ml.map((m) => mo[m]));
+      ml.forEach((m) => { const r = el("div", "hb"); const l = el("span", "l", m); l.setAttribute("data-no-i18n", ""); const t = el("span", "t"); const f = el("span", "f"); f.style.width = (100 * mo[m] / mmx).toFixed(1) + "%"; t.appendChild(f); const v = el("span", "v", String(mo[m])); v.setAttribute("data-no-i18n", ""); r.appendChild(l); r.appendChild(t); r.appendChild(v); th2.appendChild(r); });
       /* 4) LSR */
       fill("#t-lsr", get(6) || [], "e-lsr", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code)); tr.appendChild(td(r.item_code)); tr.appendChild(td(dbName(r))); tr.appendChild(td(r.cases, "num")); return tr; });
     }
