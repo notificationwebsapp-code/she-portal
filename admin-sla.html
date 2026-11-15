@@ -29,7 +29,8 @@
     .grid .wide{grid-column:1/-1}
     .hint{color:var(--muted);font-size:.9rem;font-weight:400}
     table.mx{min-width:760px}
-    table.mx td.cell button{min-height:44px;width:100%;margin:0;white-space:normal}
+    table.mx td.cell button{min-height:44px;width:100%;margin:0;white-space:normal;border-radius:12px;padding:.4rem .6rem;font-size:.9rem;line-height:1.3}
+    @media(max-width:900px){table.mx td.cell button{text-align:left;min-height:48px}table.mx td.cell{padding:.3rem 0!important}}
     table.mx td.cell .sub{display:block;font-size:.85rem;color:var(--muted)}
     .tag{display:inline-block;border-radius:999px;padding:.1rem .65rem;font-size:.85rem;font-weight:700;background:#eee;color:#333}
     .tag.ok{background:#e3f6e8;color:#14532d}.tag.warn{background:#fff4d6;color:#6b4200}.tag.bad{background:#fdecea;color:#8c1d18}

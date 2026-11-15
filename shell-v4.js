@@ -153,7 +153,7 @@
   /* มือถือ: ตารางหน้า admin เป็นการ์ดซ้อนแถว (ไม่ต้องเลื่อนซ้าย-ขวา) — ใส่ data-label จากหัวคอลัมน์ให้ทุกเซลล์ แล้ว CSS จัดการแสดงผลที่ <=900px
      ทำไม: ตารางกว้างอ่านบนจอ 420px ไม่ได้ (WCAG 2.2 SC 1.4.10 Reflow); ข้ามตารางแบบเมทริกซ์ (สิทธิ์ / เกณฑ์ SLA) ที่ต้องดูเป็นตาราง */
   function stackTables(){if(!/\/(admin-[^/]*)$/.test(location.pathname))return;
-    document.querySelectorAll(".tablewrap table,.imp .cols table.ct").forEach(function(t){if(t.id==="pm"||t.id==="s-mx"||t.id==="t-heat"||t.id==="t-rv"||t.classList.contains("pm")||t.dataset.stackInit)return;t.dataset.stackInit="1";t.classList.add("stack");
+    document.querySelectorAll(".tablewrap table,.imp .cols table.ct").forEach(function(t){if(t.id==="pm"||t.id==="t-heat"||t.id==="t-rv"||t.classList.contains("pm")||t.dataset.stackInit)return;t.dataset.stackInit="1";t.classList.add("stack");
       var run=function(){var hs=[].map.call(t.querySelectorAll("thead th"),function(th){return th.textContent.trim()});
         t.querySelectorAll("tbody tr").forEach(function(tr){[].forEach.call(tr.children,function(td,i){var v=hs[i]||"";if(td.getAttribute("data-label")!==v)td.setAttribute("data-label",v)})})};
       run();var pend=false;new MutationObserver(function(){if(pend)return;pend=true;setTimeout(function(){pend=false;run()},60)}).observe(t,{childList:true,subtree:true,characterData:true})})}
