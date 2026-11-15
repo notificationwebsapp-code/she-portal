@@ -41,7 +41,7 @@
       <a href="incident.html">รายงานอุบัติเหตุ</a>
       <a href="checklist.html">เช็กลิสต์ตรวจ</a>
       <a href="training.html">บันทึกการอบรม</a>
-      <a href="records.html">ดูข้อมูล</a>
+      <a href="records.html">รายการรายงาน</a>
       <a href="login.html">เข้าสู่ระบบ</a>
     </nav>
   </header>
@@ -610,7 +610,7 @@
       if (attQ.count()) {
         show("กำลังอัปโหลดไฟล์แนบ…", "ok");
         const ar = await attQ.flush(inc.id);
-        if (ar.failed) warn += " (แนบไฟล์ไม่สำเร็จ " + ar.failed + " ไฟล์ — เพิ่มใหม่ได้ที่หน้า \"ดูข้อมูล\" > รายงานนี้)";
+        if (ar.failed) warn += " (แนบไฟล์ไม่สำเร็จ " + ar.failed + " ไฟล์ — เพิ่มใหม่ได้ที่หน้า \"รายการรายงาน\" > รายงานนี้)";
         attQ.clear();
       }
       await SheDraft.clear();
@@ -625,7 +625,37 @@
       setType(""); refreshSerious();
       loadShifts();
       show("ส่ง Flash Report เรียบร้อยแล้ว" + warn, warn ? "error" : "ok");
+      showSent(inc.id, warn);
     });
+
+    /* หน้าต่างยืนยันหลังส่ง: บอกว่าส่งสำเร็จ ต่อไปจะเกิดอะไร และผู้ใช้ต้องทำอะไร (ใช้ textContent เท่านั้น — OWASP A03) */
+    function showSent(id, warn) {
+      let d = document.getElementById("sentdlg"); if (d) d.remove();
+      d = document.createElement("dialog"); d.id = "sentdlg"; d.setAttribute("aria-labelledby", "sentdlg-t");
+      d.style.cssText = "max-width:min(560px,94vw);width:100%;border:2px solid #284499;border-radius:14px;padding:0;font-family:inherit";
+      const mk = (tag, txt, css) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (css) e.style.cssText = css; return e; };
+      const box = mk("div", null, "padding:1.3rem 1.4rem 1.1rem");
+      const h = mk("h3", null, "margin:0 0 .3rem;color:#166534;font-size:1.25rem;display:flex;align-items:center;gap:.5rem"); h.id = "sentdlg-t";
+      const ok = document.createElementNS("http://www.w3.org/2000/svg", "svg"); ok.setAttribute("viewBox", "0 0 24 24"); ok.setAttribute("width", "26"); ok.setAttribute("height", "26"); ok.setAttribute("aria-hidden", "true"); ok.setAttribute("fill", "none"); ok.setAttribute("stroke", "currentColor"); ok.setAttribute("stroke-width", "1.75"); ok.setAttribute("stroke-linecap", "round"); ok.setAttribute("stroke-linejoin", "round");
+      const okc = document.createElementNS("http://www.w3.org/2000/svg", "circle"); okc.setAttribute("cx", "12"); okc.setAttribute("cy", "12"); okc.setAttribute("r", "9"); const okp = document.createElementNS("http://www.w3.org/2000/svg", "path"); okp.setAttribute("d", "M8 12.5l2.8 2.8L16.5 9.5"); ok.append(okc, okp);
+      h.append(ok, document.createTextNode("ส่ง Flash Report เรียบร้อยแล้ว"));
+      box.append(h, mk("p", "รหัสอ้างอิง: " + String(id).slice(0, 8).toUpperCase() + " · SHE ของ Plant เห็นรายงานนี้แล้ว", "margin:0 0 .9rem;color:#6B7280;font-size:.92rem"));
+      box.append(mk("p", "คุณต้องทำอะไรต่อ?", "margin:0 0 .3rem;font-weight:700;color:#284499"));
+      box.append(mk("p", "ไม่ต้องทำอะไรเพิ่มในตอนนี้ หากต้องการแก้ไขข้อมูลหรือแนบไฟล์เพิ่ม ให้ติดต่อ SHE ของ Plant หรือเปิดรายงานนี้ที่หน้า \"รายการรายงาน\"", "margin:0 0 .9rem;line-height:1.5"));
+      box.append(mk("p", "ขั้นตอนต่อไปของรายงานนี้", "margin:0 0 .3rem;font-weight:700;color:#284499"));
+      const ol = mk("ol", null, "margin:0 0 .9rem;padding-left:1.3rem;line-height:1.6");
+      ["SHE ตรวจสอบรายงานและเพิ่มรายละเอียด (ขั้นที่ 2)", "สอบสวนหาสาเหตุ (Root cause) และกำหนด Action แก้ไข/ป้องกัน (ขั้นที่ 3)", "ปิดเคสเมื่อดำเนินการครบ (ขั้นที่ 4) — ดูสถานะได้ที่หน้า \"รายการรายงาน\""].forEach((x) => ol.append(mk("li", x)));
+      box.append(ol);
+      if (warn) box.append(mk("p", "หมายเหตุ:" + warn, "margin:0 0 .9rem;padding:.6rem .8rem;background:#FFF4D6;border-radius:8px;color:#6b4200"));
+      const row = mk("div", null, "display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end");
+      const a1 = mk("a", "ดูรายงานที่ส่ง", "min-height:46px;display:inline-flex;align-items:center;padding:.5rem 1.1rem;border-radius:999px;background:#284499;color:#fff;font-weight:700;text-decoration:none"); a1.href = "records.html?open=" + encodeURIComponent(id);
+      const a2 = mk("a", "กลับหน้าแรก", "min-height:46px;display:inline-flex;align-items:center;padding:.5rem 1.1rem;border-radius:999px;background:#EEF1F6;color:#284499;font-weight:700;text-decoration:none"); a2.href = "index.html";
+      const b = mk("button", "รายงานเหตุการณ์ใหม่", "min-height:46px;padding:.5rem 1.1rem;border-radius:999px;background:#EEF1F6;color:#284499;font-weight:700;border:0;cursor:pointer"); b.type = "button";
+      b.addEventListener("click", () => d.close());
+      row.append(a1, a2, b); box.append(row); d.append(box); document.body.append(d);
+      d.addEventListener("close", () => d.remove());
+      d.showModal(); a1.focus();
+    }
 
     // ---------- ร่าง (Save draft) ----------
     function getState() {

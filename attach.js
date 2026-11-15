@@ -299,7 +299,7 @@
       box.hidden = false;
       if (opts && opts.onReady) opts.onReady();
       var st = stager(box, cfg, { onChange: opts && opts.onChange });
-      box.append(el("p", { class: "hint", text: "ไฟล์ที่เลือกไว้จะอัปโหลดหลังกดส่งรายงาน และไม่ถูกบันทึกในร่าง หากเปิดร่างภายหลังต้องเลือกไฟล์ใหม่ (หรือเพิ่มไฟล์ทีหลังได้ที่หน้า \"ดูข้อมูล\")" }));
+      box.append(el("p", { class: "hint", text: "ไฟล์ที่เลือกไว้จะอัปโหลดหลังกดส่งรายงาน และไม่ถูกบันทึกในร่าง หากเปิดร่างภายหลังต้องเลือกไฟล์ใหม่ (หรือเพิ่มไฟล์ทีหลังได้ที่หน้า \"รายการรายงาน\")" }));
       api.count = st.count;
       api.flush = function (entityId) { return st.count() ? st.uploadAll(opts && opts.entityType || "incident", entityId) : Promise.resolve({ ok: 0, failed: 0 }); };
       api.clear = st.clear;

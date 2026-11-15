@@ -19,22 +19,33 @@
     .bar{display:inline-block;height:10px;border-radius:5px;background:#284499;vertical-align:middle;margin-right:.4rem}
     .heat td.h{text-align:center;font-variant-numeric:tabular-nums}
     .hd{background:#EEF1F6}
-    .lkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.8rem;margin:1rem 0}
-    .lk{background:#fff;border-radius:18px;padding:.9rem 1rem;border:1px solid #e3e8f2}
-    .lk b{display:block;font-size:2rem;line-height:1.1;color:#284499;font-variant-numeric:tabular-nums}
-    .lk span{display:block;font-size:.9rem;color:#1B1F24;margin-top:.2rem}
-    .lk small{display:block;color:#6B7280;font-size:.8rem;margin-top:.15rem}
-    .lk.warn b{color:#E56C0C}
-    .lcharts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:stretch}@media(max-width:900px){.lcharts{grid-template-columns:1fr}}
-    .lcharts .card{margin:0}
-    .hb{display:grid;grid-template-columns:5.5rem 1fr 5rem;align-items:center;gap:.5rem;margin:.35rem 0;font-size:.92rem}
-    .hb .t{background:#EEF1F6;border-radius:6px;height:16px;overflow:hidden}
-    .hb .f{display:block;height:100%;background:#284499;border-radius:6px}
-    .hb.top .f{background:#E56C0C}
-    .hb .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
-    .hb .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .howto{background:#EEF1F6;border-radius:14px;padding:.7rem 1rem;font-size:.92rem;margin:.6rem 0}
-    @media print{.lcharts{display:grid;grid-template-columns:1fr 1fr}.ltwo .full{grid-column:1/-1}.ltwo .hint{min-height:2.6em;margin:.2rem 0 .6rem}.lcharts .card{break-inside:avoid;margin:.3rem 0}h3{break-after:avoid}}
+    /* ใช้ชุด class เดียวกับ Executive Dashboard (ed-*) เพื่อให้สี/การ์ดตรงนโยบายดีไซน์ของระบบ (modern-ui.css) */
+    .ed-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin:1rem 0}
+    @media(min-width:1001px){html[data-ui="modern"] .ed-kpis{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+    .ed-kpi{background:#fff;border-radius:var(--radius,22px);padding:.8rem 1rem}
+    .ed-kpi .t{font-size:.875rem;font-weight:600}.ed-kpi .v{font-size:2rem;font-weight:700;line-height:1.2}.ed-kpi .u{font-size:.875rem}
+    .ed-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:stretch;margin:0 0 1rem}
+    @media(max-width:900px){.ed-grid2{grid-template-columns:1fr}}
+    .ed-card{background:#fff;border-radius:22px;padding:1.1rem 1.3rem;min-width:0}
+    .ed-card h3{margin:0 0 .15rem;font-size:1.05rem;color:var(--navy,#0B3B60)}
+    .ed-card .sub{margin:0 0 .8rem;font-size:.875rem;color:var(--muted,#6B7280)}
+    .ed-bar{display:grid;grid-template-columns:minmax(70px,26%) 1fr auto;gap:.6rem;align-items:center;margin:.4rem 0;font-size:.95rem}
+    .ed-bar .trk{background:#EEF1F6;border-radius:6px;height:14px;overflow:hidden}
+    .ed-bar .fil{display:block;height:100%;background:#284499;border-radius:6px}
+    .ed-bar.top .fil{background:#E56C0C}
+    .ed-bar .num{font-weight:700;min-width:3.5rem;text-align:right;font-variant-numeric:tabular-nums}
+    .ed-bar .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ed-fact{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+    .ed-fact svg{width:18px;height:18px;margin-right:.4rem;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+    .ed-hint{font-size:.875rem;color:var(--muted,#6B7280)}
+    .pl-btn{background:none!important;border:0!important;padding:0!important;min-height:0!important;color:#284499!important;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;border-radius:4px!important}
+    .pl-btn:focus-visible{outline:2px solid #284499;outline-offset:2px}
+    #drill{background:#fff;border-radius:22px;padding:1.1rem 1.3rem;margin:1rem 0}
+    #drill h3{margin:0 0 .3rem}#drill .dsum{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
+    #drill .dchip{background:#eef1f6;border-radius:999px;padding:.25rem .8rem;font-size:.9rem}#drill .dchip.bad{background:#7f1d1d;color:#fff}
+    #drill table{width:100%}#drill .dtop{display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start;flex-wrap:wrap}
+    @media print{#drill{display:none!important}}
+    @media print{.ed-grid2{display:grid;grid-template-columns:1fr 1fr}.ed-card,.ed-kpi{break-inside:avoid}}
     .ltwo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:stretch}.ltwo .full{grid-column:1/-1}
     .ltwo .card{margin:0;min-width:0}
     .ltwo table{font-size:.8rem;width:100%;min-width:0!important;table-layout:auto;margin:0}.ltwo th,.ltwo td{padding:.3rem .3rem!important;white-space:normal;overflow-wrap:normal;line-height:1.25}.ltwo th:first-child,.ltwo td:first-child{white-space:nowrap}.ltwo th{font-size:.76rem}.ltwo .tablewrap{overflow-x:auto}
@@ -56,7 +67,7 @@
       <a href="incident.html">รายงานอุบัติเหตุ</a>
       <a href="checklist.html">เช็กลิสต์ตรวจ</a>
       <a href="training.html">บันทึกการอบรม</a>
-      <a href="records.html">ดูข้อมูล</a>
+      <a href="records.html">รายการรายงาน</a>
       <a href="login.html">เข้าสู่ระบบ</a>
     </nav>
   </header>
@@ -78,26 +89,40 @@
         <label>ตั้งแต่<input type="date" id="from" required></label>
         <label>ถึง<input type="date" id="to" required></label>
         <button type="submit" style="min-height:50px">แสดงผล</button>
-      <div id="export-row" style="grid-column:1/-1;border-top:1px solid #e3e8f2;padding-top:.8rem;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem">
-        <b>ส่งออกเพื่อนำเสนอ</b> <span class="hint">ตามช่วงวันที่และมุมมองที่เลือกอยู่ (ตัวเลขเดียวกับหน้านี้)</span>
-        <button type="button" class="secondary" id="b-pptx">⭳ PowerPoint (Thai Union CI)</button>
-        <button type="button" class="secondary" id="b-csv">⭳ CSV (ตัวเลขทั้งหมด)</button>
-        <button type="button" class="secondary" id="b-print">🖨 พิมพ์ / บันทึก PDF</button>
-        <span class="hint" id="export-msg" role="status"></span>
+      <div id="export-row" class="ed-fact" style="grid-column:1/-1;border-top:1px solid #e3e8f2;padding-top:.8rem">
+        <b>ส่งออกเพื่อนำเสนอ</b> <span class="ed-hint">ตามช่วงวันที่และมุมมองที่เลือกอยู่ (ตัวเลขเดียวกับหน้านี้)</span>
+        <button type="button" class="secondary" id="b-pptx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 11 12 15.5 16.5 11M5 19.5h14"/></svg>PowerPoint (Thai Union CI)</button>
+        <button type="button" class="secondary" id="b-csv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 11 12 15.5 16.5 11M5 19.5h14"/></svg>CSV (ตัวเลขทั้งหมด)</button>
+        <button type="button" class="secondary" id="b-print"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4M7 17H5v-6h14v6h-2M7 14h10v6H7z"/></svg>พิมพ์ / บันทึก PDF</button>
+        <span class="ed-hint" id="export-msg" role="status"></span>
       </div>
       </form>
 
       <section aria-labelledby="sum-h">
         <h3 id="sum-h">ภาพรวมเปรียบเทียบ Plant</h3>
-        <p class="howto">วิธีอ่าน: แถบยาว = ค่ามาก · แถบสีส้มพร้อมคำว่า "สูงสุด" = Plant ที่มีค่าพลาด/เกิดซ้ำมากที่สุด (ไม่ใช้กับร้อยละปิดทันเวลา ซึ่งยิ่งสูงยิ่งดี) · ตัวเลขทางขวาคือค่าจริง · ตัวย่อ SLA คือเกณฑ์เวลาที่ต้องทำให้ทัน (ตั้งที่หน้า "เกณฑ์ SLA / Repeat") · ตารางละเอียดอยู่ด้านล่าง</p>
-        <div class="lkpis" id="lkpis" role="status"></div>
-        <div class="lcharts">
-          <div class="card"><h4>SLA ที่พลาด (จำนวนครั้ง) แยกตาม Plant</h4><div id="c-sla"></div><p id="ce-sla" class="hint" hidden>ไม่มี SLA ที่พลาดในช่วงที่เลือก (ทุก Plant เป็น 0)</p></div>
-          <div class="card"><h4>ปิด Action ทันเวลา (ร้อยละ) แยกตาม Plant</h4><div id="c-ot"></div><p id="ce-ot" class="hint" hidden>ยังไม่มี Action ที่ปิดแล้วในช่วงที่เลือก</p></div>
-          <div class="card"><h4>เหตุการณ์เกิดซ้ำ (Repeat case) แยกตาม Plant</h4><div id="c-rep"></div><p id="ce-rep" class="hint" hidden>ไม่มีเหตุการณ์เกิดซ้ำในช่วงที่เลือก</p></div>
-          <div class="card"><h4>แนวโน้ม Repeat รายเดือน (เคส)</h4><div id="c-tr"></div><p id="ce-tr" class="hint" hidden>ไม่มีข้อมูลแนวโน้ม</p></div>
+        <p class="ed-hint">แถบยาว = ค่ามาก · แถบสีส้มพร้อมคำว่า "สูงสุด" = Plant ที่พลาด/เกิดซ้ำมากที่สุด (ร้อยละปิดทันเวลายิ่งสูงยิ่งดี จึงไม่ไฮไลต์) · ตัวย่อ SLA = เกณฑ์เวลาที่ต้องทำให้ทัน ตั้งที่หน้า "เกณฑ์ SLA / Repeat"</p>
+        <div class="ed-kpis" id="lkpis" role="status"></div>
+        <div class="ed-grid2">
+          <div class="ed-card"><h3>SLA ที่พลาด (จำนวนครั้ง)</h3><p class="sub">แยกตาม Plant</p><div id="c-sla"></div><p id="ce-sla" class="ed-hint" hidden>ไม่มี SLA ที่พลาดในช่วงที่เลือก (ทุก Plant เป็น 0)</p></div>
+          <div class="ed-card"><h3>ปิด Action ทันเวลา (ร้อยละ)</h3><p class="sub">แยกตาม Plant</p><div id="c-ot"></div><p id="ce-ot" class="ed-hint" hidden>ยังไม่มี Action ที่ปิดแล้วในช่วงที่เลือก</p></div>
+          <div class="ed-card"><h3>เหตุการณ์เกิดซ้ำ (Repeat case)</h3><p class="sub">แยกตาม Plant</p><div id="c-rep"></div><p id="ce-rep" class="ed-hint" hidden>ไม่มีเหตุการณ์เกิดซ้ำในช่วงที่เลือก</p></div>
+          <div class="ed-card"><h3>แนวโน้ม Repeat รายเดือน</h3><p class="sub">จำนวนเคส</p><div id="c-tr"></div><p id="ce-tr" class="ed-hint" hidden>ไม่มีข้อมูลแนวโน้ม</p></div>
         </div>
       </section>
+
+      <section id="drill" tabindex="-1" aria-live="polite" hidden>
+        <div class="dtop"><div><h3 id="d-title">รายละเอียด</h3><p class="ed-hint" id="d-sub"></p></div><button type="button" id="d-close">ปิดรายละเอียด</button></div>
+        <div id="d-sum" class="dsum"></div>
+        <h4>Action ของ Plant นี้</h4>
+        <label class="chk"><input type="checkbox" id="d-all"> แสดงทุกสถานะ (ปกติแสดงเฉพาะที่เกินกำหนด)</label>
+        <div class="tablewrap"><table id="t-d-act"><thead><tr><th>เลข Action</th><th>หัวข้อ</th><th>ผู้รับผิดชอบ</th><th>สถานะ</th><th>กำหนดเสร็จ</th><th class="num">เกินกำหนด (วัน)</th><th></th></tr></thead><tbody></tbody></table></div>
+        <p id="d-act-e" class="ed-hint" hidden>ไม่มี Action ตามเงื่อนไข</p>
+        <h4>เคสที่เกิดซ้ำหลังปิดเคสเดิม (Repeat after closure)</h4>
+        <div class="tablewrap"><table id="t-d-ac"><thead><tr><th>Root cause</th><th>เคสเดิม</th><th>เคสใหม่</th><th class="num">วันหลังปิด</th><th></th></tr></thead><tbody></tbody></table></div>
+        <p id="d-ac-e" class="ed-hint" hidden>ไม่มีเคสในกลุ่มนี้</p>
+        <p><a id="d-rec" href="records.html">ดูรายการรายงานทั้งหมดของ Plant นี้ในช่วงที่เลือก</a></p>
+      </section>
+
       <h3>ตารางละเอียด</h3>
       <div class="ltwo">
 
@@ -147,6 +172,7 @@
     function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
     function td(text, cls) { const c = el("td", cls, text == null ? "" : String(text)); c.setAttribute("data-no-i18n", ""); return c; }
     function errText(e) { return e && e.code === "42501" ? "คุณไม่มีสิทธิ์ดูข้อมูลชุดนี้" : e && e.code === "22023" ? "ตัวเลือกไม่ถูกต้อง" : "โหลดข้อมูลไม่สำเร็จ"; }
+    function plbtn(code, extra) { const b = el("button", "pl-btn", code + (extra || "")); b.type = "button"; b.setAttribute("data-pl", code); b.setAttribute("data-no-i18n", ""); b.title = "คลิกเพื่อดูรายละเอียดของ Plant " + code; return b; }
     function fill(tb, rows, empty, build) { const t = document.querySelector(tb + " tbody"); t.replaceChildren(); $(empty).hidden = rows.length > 0; rows.forEach((r) => t.appendChild(build(r))); }
     function scopeLabel(a) {
       if (a.p_scope === "all") return "ทุก Plant"; if (a.p_scope === "priority") return "เฉพาะ Priority site";
@@ -178,19 +204,19 @@
       const th = document.querySelector("#t-sla thead"); th.replaceChildren();
       const hr = el("tr"); hr.appendChild(el("th", null, "Plant")); STAGE_ORDER.forEach((s) => hr.appendChild(el("th", "num", STAGE_TH[s]))); hr.appendChild(el("th", "num", "ไม่มีเกณฑ์")); th.appendChild(hr);
       fill("#t-sla", Object.values(byPlant), "e-sla", (p) => {
-        const tr = el("tr"); const c = td(p.code + (p.pr ? " ★" : "")); c.title = p.name; tr.appendChild(c);
+        const tr = el("tr"); const c = td(""); c.appendChild(plbtn(p.code, p.pr ? " ★" : "")); c.title = p.name; tr.appendChild(c);
         let nr = 0;
         STAGE_ORDER.forEach((s) => { const r = p.s[s]; const miss = r ? r.miss_total : 0; if (r) nr += r.no_rule; const cell = td(r ? miss : "—", "num" + (miss > 0 ? " miss" : "")); if (r) cell.title = "ทัน " + r.met + " · พลาด " + r.missed + " · เกินเวลาที่ยังเปิด " + r.overdue + " · ใกล้ครบ " + r.due_soon + " · อยู่ในเวลา " + r.on_track + " · ข้อมูลไม่ครบ " + r.data_gap; tr.appendChild(cell); });
         tr.appendChild(td(nr, "num")); return tr;
       });
 
       /* 2) leading */
-      fill("#t-li", get(1) || [], "e-li", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code + (r.is_priority_site ? " ★" : ""))); [r.capa_overdue_open, r.capa_closed_total, r.capa_closed_on_time, r.capa_due_shifted_2plus, r.serious_potential_no_action].forEach((v) => tr.appendChild(td(v, "num"))); return tr; });
+      fill("#t-li", get(1) || [], "e-li", (r) => { const tr = el("tr"); { const c0 = td(""); c0.appendChild(plbtn(r.plant_code, r.is_priority_site ? " ★" : "")); tr.appendChild(c0); } [r.capa_overdue_open, r.capa_closed_total, r.capa_closed_on_time, r.capa_due_shifted_2plus, r.serious_potential_no_action].forEach((v) => tr.appendChild(td(v, "num"))); return tr; });
 
       /* 3) repeat */
       const rs = get(2) || [];
       $("h-rep").textContent = rs.length && rs.every((r) => !r.rules_enabled) ? "ยังไม่ได้เปิดกฎ Repeat ที่หน้า \"เกณฑ์ SLA / Repeat\" ตัวเลขจึงเป็น 0" : "นับตามกฎ N/K ที่ตั้งไว้ · ผู้สอบสวนยืนยัน/ปฏิเสธรายเคสได้";
-      fill("#t-rep", rs, "e-rep", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code + (r.is_priority_site ? " ★" : ""))); [r.cases_total, r.repeat_root_cause, r.repeat_case, r.repeat_after_closure, r.confirmed_total].forEach((v) => tr.appendChild(td(v, "num"))); tr.appendChild(td(r.rules_enabled ? "เปิด" : "ยังไม่เปิด")); return tr; });
+      fill("#t-rep", rs, "e-rep", (r) => { const tr = el("tr"); { const c0 = td(""); c0.appendChild(plbtn(r.plant_code, r.is_priority_site ? " ★" : "")); tr.appendChild(c0); } [r.cases_total, r.repeat_root_cause, r.repeat_case, r.repeat_after_closure, r.confirmed_total].forEach((v) => tr.appendChild(td(v, "num"))); tr.appendChild(td(r.rules_enabled ? "เปิด" : "ยังไม่เปิด")); return tr; });
 
       const hm = get(3) || [], rcs = [...new Set(hm.map((r) => r.root_cause_code))], pls = [...new Set(hm.map((r) => r.plant_code))];
       const hh = document.querySelector("#t-heat thead"); hh.replaceChildren(); const h1 = el("tr"); h1.appendChild(el("th", null, "Root cause")); pls.forEach((p) => { const c = el("th", "num", p); c.setAttribute("data-no-i18n", ""); h1.appendChild(c); }); hh.appendChild(h1);
@@ -216,10 +242,10 @@
         $(empty).hidden = rows.length > 0; if (!rows.length) return;
         rows.sort((a, b) => asc ? a.v - b.v : b.v - a.v); const more = Math.max(0, rows.length - 10); rows = rows.slice(0, 10);
         const mx = Math.max(1, ...rows.map((x) => x.v));
-        rows.forEach((x) => { const top = flag && x.v > 0 && x.v === mx; const r = el("div", "hb" + (top ? " top" : "")); const l = el("span", "l", x.label); l.setAttribute("data-no-i18n", ""); l.title = x.label;
-          const t = el("span", "t"); const f = el("span", "f"); f.style.width = (100 * x.v / mx).toFixed(1) + "%"; t.appendChild(f);
-          const v = el("span", "v", fmt(x.v) + (top ? " สูงสุด" : "")); v.setAttribute("data-no-i18n", ""); r.appendChild(l); r.appendChild(t); r.appendChild(v); h.appendChild(r); });
-        h.appendChild(el("p", "hint", (asc ? "เรียงจากต่ำสุดก่อน · " : "แสดงเฉพาะ Plant ที่มีค่ามากกว่า 0 · ") + (more ? "แสดง 10 อันดับแรก อีก " + more + " Plant ดูในตารางละเอียด" : "ครบทุก Plant ที่เกี่ยวข้อง")));
+        rows.forEach((x) => { const top = flag && x.v > 0 && x.v === mx; const r = el("div", "ed-bar" + (top ? " top" : "")); const l = el("span", "lbl"); l.appendChild(plbtn(x.label)); l.setAttribute("data-no-i18n", ""); l.title = x.label;
+          const t = el("span", "trk"); const f = el("span", "fil"); f.style.width = (100 * x.v / mx).toFixed(1) + "%"; t.appendChild(f);
+          const v = el("span", "num", fmt(x.v) + (top ? " สูงสุด" : "")); v.setAttribute("data-no-i18n", ""); r.appendChild(l); r.appendChild(t); r.appendChild(v); h.appendChild(r); });
+        h.appendChild(el("p", "ed-hint", (asc ? "เรียงจากต่ำสุดก่อน · " : "แสดงเฉพาะ Plant ที่มีค่ามากกว่า 0 · ") + (more ? "แสดง 10 อันดับแรก อีก " + more + " Plant ดูในตารางละเอียด" : "ครบทุก Plant ที่เกี่ยวข้อง")));
       }
       const miss = {}; sla.forEach((r) => { miss[r.plant_code] = (miss[r.plant_code] || 0) + (r.miss_total || 0); });
       const li = get(1) || [];
@@ -227,21 +253,53 @@
       const totOver = li.reduce((a, r) => a + (r.capa_overdue_open || 0), 0), totClosed = li.reduce((a, r) => a + (r.capa_closed_total || 0), 0), totOn = li.reduce((a, r) => a + (r.capa_closed_on_time || 0), 0);
       const totRep = rs.reduce((a, r) => a + (r.repeat_case || 0), 0);
       const kp = $("lkpis"); kp.replaceChildren();
-      [[totMiss, "SLA ที่พลาดทั้งหมด", "ครั้ง (ปิดเกินเวลา + ยังเปิดเกินเวลา)", totMiss > 0], [totOver, "Action เกินกำหนดที่ยังเปิด", "รายการ", totOver > 0], [totClosed ? Math.round(100 * totOn / totClosed) + "%" : "–", "ปิด Action ทันเวลา", totClosed ? totOn + " จาก " + totClosed + " รายการ" : "ยังไม่มี Action ที่ปิดแล้ว", false], [totRep, "Repeat case", "เคสที่เกิดซ้ำ", totRep > 0]].forEach((k) => {
-        const d = el("div", "lk" + (k[3] ? " warn" : "")); const b = el("b", null, String(k[0])); d.appendChild(b); d.appendChild(el("span", null, k[1])); d.appendChild(el("small", null, k[2])); kp.appendChild(d); });
+      [["k-rwc", totMiss, "SLA ที่พลาดทั้งหมด", "ครั้ง (ปิดเกินเวลา + ยังเปิดเกินเวลา)"], ["k-serious", totOver, "Action เกินกำหนดที่ยังเปิด", "รายการ"], ["k-near", totClosed ? Math.round(100 * totOn / totClosed) + "%" : "–", "ปิด Action ทันเวลา", totClosed ? totOn + " จาก " + totClosed + " รายการ" : "ยังไม่มี Action ที่ปิดแล้ว"], ["", totRep, "Repeat case", "เคสที่เกิดซ้ำ"]].forEach((k) => {
+        const d = el("div", "ed-kpi " + k[0]); d.appendChild(el("div", "t", k[2])); d.appendChild(el("div", "v", String(k[1]))); d.appendChild(el("div", "u", k[3])); kp.appendChild(d); });
       bars("c-sla", "ce-sla", Object.keys(miss).map((c) => ({ label: c, v: miss[c] })), (v) => String(v), true);
       bars("c-ot", "ce-ot", li.filter((r) => r.capa_closed_total > 0).map((r) => ({ label: r.plant_code, v: Math.round(100 * r.capa_closed_on_time / r.capa_closed_total) })), (v) => v + "%", false, true);
       bars("c-rep", "ce-rep", rs.map((r) => ({ label: r.plant_code, v: r.repeat_case || 0 })).filter((x) => x.v > 0), (v) => String(v), true);
       const mo = {}; (get(5) || []).forEach((r) => { const m = String(r.month).slice(0, 7); mo[m] = (mo[m] || 0) + (r.cases || 0); });
       const ml = Object.keys(mo).sort(); const th2 = $("c-tr"); th2.replaceChildren(); $("ce-tr").hidden = ml.length > 0;
       const mmx = Math.max(1, ...ml.map((m) => mo[m]));
-      ml.forEach((m) => { const r = el("div", "hb"); const l = el("span", "l", m); l.setAttribute("data-no-i18n", ""); const t = el("span", "t"); const f = el("span", "f"); f.style.width = (100 * mo[m] / mmx).toFixed(1) + "%"; t.appendChild(f); const v = el("span", "v", String(mo[m])); v.setAttribute("data-no-i18n", ""); r.appendChild(l); r.appendChild(t); r.appendChild(v); th2.appendChild(r); });
+      ml.forEach((m) => { const r = el("div", "ed-bar"); const l = el("span", "lbl", m); l.setAttribute("data-no-i18n", ""); const t = el("span", "trk"); const f = el("span", "fil"); f.style.width = (100 * mo[m] / mmx).toFixed(1) + "%"; t.appendChild(f); const v = el("span", "num", String(mo[m])); v.setAttribute("data-no-i18n", ""); r.appendChild(l); r.appendChild(t); r.appendChild(v); th2.appendChild(r); });
       /* 4) LSR */
       window.__lead = { sla: sla, li: li, rs: rs, hm: hm, ac: ac, mt: mt, lsr: get(6) || [], range: { from: a.p_from, to: a.p_to }, scope: scopeLabel(a), kpi: { miss: totMiss, over: totOver, closed: totClosed, on: totOn, rep: totRep }, miss: miss };
       fill("#t-lsr", get(6) || [], "e-lsr", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code)); tr.appendChild(td(r.item_code)); tr.appendChild(td(dbName(r))); tr.appendChild(td(r.cases, "num")); return tr; });
     }
     $("f").addEventListener("submit", (ev) => { ev.preventDefault(); refresh(); });
 
+
+    /* Drill-down: คลิกชื่อ Plant เพื่อดูรายการ Action และเคสเบื้องหลังตัวเลข (ใช้ RPC เดิม ตามสิทธิ์ของผู้ใช้ ไม่ต้องแก้ฐานข้อมูล) */
+    const PID = {}; let DRILL = null;
+    async function drill(code) {
+      const d = window.__lead; if (!d) return;
+      const sr = d.sla.find((r) => r.plant_code === code); const pid = (sr && sr.plant_id) || PID[code];
+      const box = $("drill"); box.hidden = false;
+      $("d-title").textContent = "รายละเอียด Plant " + code; $("d-sub").textContent = "ช่วงข้อมูล " + d.range.from + " ถึง " + d.range.to + " · ตัวเลขด้านล่างตรงกับตารางสรุป";
+      const li = d.li.find((r) => r.plant_code === code) || {}, rp = d.rs.find((r) => r.plant_code === code) || {};
+      const mi = d.miss[code] || 0, sm = $("d-sum"); sm.replaceChildren();
+      [["SLA ที่พลาด " + mi + " ครั้ง", mi > 0], ["Action เกินกำหนดที่ยังเปิด " + (li.capa_overdue_open || 0) + " รายการ", (li.capa_overdue_open || 0) > 0], ["Repeat case " + (rp.repeat_case || 0), (rp.repeat_case || 0) > 0], ["Serious potential ที่ไม่มี Action " + (li.serious_potential_no_action || 0), (li.serious_potential_no_action || 0) > 0]].forEach((c) => sm.appendChild(el("span", "dchip" + (c[1] ? " bad" : ""), c[0])));
+      const rl = $("d-rec"); rl.href = "records.html?plant=" + encodeURIComponent(code) + "&from=" + d.range.from + "&to=" + d.range.to;
+      const ac = d.ac.filter((r) => r.plant_code === code);
+      fill("#t-d-ac", ac, "d-ac-e", (r) => { const tr = el("tr"); [r.root_cause_code, r.related_occurred_on, r.occurred_on].forEach((v) => tr.appendChild(td(v))); tr.appendChild(td(r.days_after_closure, "num")); const c = el("td"); const l = el("a", null, "เปิดเคส"); l.href = "records.html?open=" + encodeURIComponent(r.incident_id); c.appendChild(l); tr.appendChild(c); return tr; });
+      DRILL = { code: code, rows: null }; $("d-all").checked = false;
+      fill("#t-d-act", [], "d-act-e", () => el("tr")); $("d-act-e").textContent = "กำลังโหลด…"; $("d-act-e").hidden = false;
+      box.scrollIntoView({ behavior: "smooth", block: "start" }); box.focus({ preventScroll: true });
+      if (!pid) { $("d-act-e").textContent = "ไม่พบรหัส Plant สำหรับดึง Action"; return; }
+      try { DRILL.rows = await rpc("capa_list", { p_id: null, p_plant: pid, p_status: null, p_source: null, p_mine: false, p_limit: 300 }); drawActs(); }
+      catch (e) { $("d-act-e").textContent = "โหลด Action ไม่สำเร็จ: " + errText(e); }
+    }
+    function drawActs() {
+      if (!DRILL || !DRILL.rows) return; const all = $("d-all").checked;
+      const rows = DRILL.rows.filter((r) => all || r.is_overdue).sort((a, b) => (b.is_overdue ? 1 : 0) - (a.is_overdue ? 1 : 0) || (b.days_overdue || 0) - (a.days_overdue || 0) || String(a.due_date).localeCompare(String(b.due_date)));
+      fill("#t-d-act", rows, "d-act-e", (r) => { const tr = el("tr"); [r.action_no, r.title, r.owner_name || "-", ST_TH[r.status] || r.status, r.due_date].forEach((v) => tr.appendChild(td(v))); tr.appendChild(td(r.is_overdue ? r.days_overdue : "", "num"));
+        const c = el("td"); const l = el("a", null, "เปิด Action"); l.href = "capa.html?id=" + encodeURIComponent(r.id); c.appendChild(l); tr.appendChild(c); return tr; });
+      $("d-act-e").textContent = all ? "Plant นี้ยังไม่มี Action" : "ไม่มี Action ที่เกินกำหนดใน Plant นี้";
+    }
+    const ST_TH = { open: "เปิดใหม่", in_progress: "กำลังดำเนินการ", returned: "ส่งกลับให้แก้", closed: "รอตรวจสอบ", verified: "ตรวจสอบแล้ว", cancelled: "ยกเลิก" };
+    document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-pl]"); if (b) drill(b.getAttribute("data-pl")); });
+    $("d-all").addEventListener("change", drawActs);
+    $("d-close").addEventListener("click", () => { $("drill").hidden = true; });
 
     /* ส่งออก: CSV / PowerPoint / พิมพ์ (ใช้ตัวเลขชุดเดียวกับหน้านี้ ประมวลผลในเบราว์เซอร์ ไม่ส่งข้อมูลออกนอกระบบ) */
     const exMsg = (t) => { $("export-msg").textContent = t; };
@@ -276,7 +334,7 @@
       try { opts = await rpc("scope_options", {}); } catch (e) { gate.textContent = "คุณไม่มีสิทธิ์เข้าหน้านี้ (ต้องมีสิทธิ์ดู Dashboard)"; return; }
       const bus = [...new Set(opts.map((o) => o.business_unit).filter(Boolean))];
       bus.forEach((b) => { const o = el("option", null, b); o.value = b; o.setAttribute("data-no-i18n", ""); $("bu").appendChild(o); });
-      opts.forEach((p) => { const o = el("option", null, p.code + " — " + p.name); o.value = p.plant_id; o.setAttribute("data-no-i18n", ""); $("pl").appendChild(o); });
+      opts.forEach((p) => { PID[p.code] = p.plant_id; const o = el("option", null, p.code + " — " + p.name); o.value = p.plant_id; o.setAttribute("data-no-i18n", ""); $("pl").appendChild(o); });
       const t = new Date(), f = new Date(t.getFullYear(), t.getMonth() - 2, 1), iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
       $("from").value = iso(f); $("to").value = iso(t);
       gate.hidden = true; $("area").hidden = false; syncScope(); refresh();

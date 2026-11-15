@@ -161,14 +161,18 @@
     var u=document.querySelector("header a.userlink")||n.querySelector('a[href="#"],a[href="login.html"]');
     if(u){u.classList.add("userlink");var out=u.getAttribute("href")==="#";var dest=(out&&acctBox)?acctBox:tools;if(u.parentNode!==dest)dest.appendChild(u)}}
   /* เมนูหลักชุดเดียวกันทุกหน้า (ตามแบบ Stitch): หน้าแรก · รายงาน · เช็กลิสต์ · อบรม · ดูข้อมูล · Executive Dashboard (เร็ว ๆ นี้) · ผู้ดูแลระบบ (เฉพาะ Admin) */
-  var ORDER=["index.html","incident.html","checklist.html","training.html","records.html","capa.html"];var capaOn=false;
+  var ORDER=["index.html","incident.html","checklist.html","training.html","capa.html","records.html"];var capaOn=false;
   var ADM=["admin-users.html","admin-master.html","admin-permissions.html","admin-grants.html","admin-offboarding.html","admin-sla.html","admin-masterlists.html","admin-incident-types.html","leading.html","admin-themes.html"];var hasTh=false,dashMode=null;
+  /* จัดหมวดเมนูบน (หน้าจอกว้าง): สี + ชื่อหมวดกำกับเสมอ (ไม่ใช้สีอย่างเดียว — WCAG 2.2 SC 1.4.1) มือถือใช้แถบล่างเดิม */
+  var GRP={"incident.html":["work","บันทึกและรายงาน"],"checklist.html":["work",""],"training.html":["work",""],"capa.html":["fix","ติดตามแก้ไข"],"records.html":["view","ดูข้อมูลและสรุป"],"executive-dashboard.html":["view",""],"leading.html":["view",""],"admin-users.html":["sys","จัดการระบบ"]};
+  function markGroups(n){n.querySelectorAll("a").forEach(function(a){a.removeAttribute("data-g");a.removeAttribute("data-gl");a.classList.remove("ngf");var k=(a.getAttribute("href")||"").split("/").pop();var g=GRP[k];if(a.classList.contains("navdash"))g=GRP["executive-dashboard.html"];if(!g)return;a.setAttribute("data-g",g[0]);if(g[1]){a.setAttribute("data-gl",g[1]);a.classList.add("ngf")}})}
   var obs=null;
   function normalizeNav(){var n=document.querySelector("header nav");if(!n)return;if(obs)obs.disconnect();
     var f=(location.pathname.split("/").pop()||"index.html");var by={};
     document.querySelectorAll("header a").forEach(function(a){if(a.closest(".tpadmin")||a.classList.contains("navlead"))return;var k=(a.getAttribute("href")||"").split("/").pop();if(n.contains(a)||ADM.indexOf(k)>-1)by[k]=by[k]||a});
     if(capaOn&&!by["capa.html"]){var cl=el("a",null,"Action (CAPA)");cl.href="capa.html";by["capa.html"]=cl}
     ORDER.forEach(function(k){if(by[k])n.appendChild(by[k])});
+    var rl=by["records.html"];if(rl){for(var ci=0;ci<rl.childNodes.length;ci++){var cn=rl.childNodes[ci];if(cn.nodeType===3&&/\S/.test(cn.nodeValue)){cn.nodeValue="รายการรายงาน";break}}}
     var dl=n.querySelector("a.navdash");if(!dl&&dashMode==="yes"){dl=el("a","navdash","Executive Dashboard");dl.href="executive-dashboard.html"}
     if(dl&&by["index.html"])n.appendChild(dl);var ll=n.querySelector("a.navlead");if(!ll&&dashMode==="yes"){ll=el("a","navlead","Leading Indicator");ll.href="leading.html"}if(ll)n.appendChild(ll);
     if(by["admin-themes.html"])hasTh=true;if(hasTh){var st=document.querySelector("nav.subtabs");if(st&&!st.querySelector('a[href="admin-themes.html"]')){var ta=el("a",null,"ธีมเทศกาล");ta.href="admin-themes.html";if(f==="admin-themes.html")ta.setAttribute("aria-current","page");st.appendChild(ta)}}var isAdmin=!!(by[ADM[0]]||by[ADM[1]]||by[ADM[2]]);
@@ -180,6 +184,7 @@
     if(by[ADM[0]]){var a=by[ADM[0]];a.textContent="ผู้ดูแลระบบ";n.appendChild(a)}
     n.querySelectorAll("a").forEach(function(a){var k=(a.getAttribute("href")||"").split("/").pop();
       var cur=(k===f)||(ADM.indexOf(f)>-1&&k===ADM[0]);if(cur)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+    markGroups(n);
     decorateNav();relocate();setupMore();
     if(obs)obs.observe(document.querySelector("header"),{childList:true,subtree:true})}
   /* มือถือ/แท็บเล็ตแคบ (<=900px): แถบเมนูล่างแสดง 4 หน้าหลัก + ปุ่ม "เพิ่มเติม" (ที่เหลือ) — ทำไม: 7 ปุ่มในแถบเดียวแคบเกินกด/อ่านไม่ได้ (WCAG 2.2 SC 2.5.8)

@@ -421,3 +421,13 @@ header nav button.navmore{display:none}
 @media(max-width:900px){
   .tools .userlink{flex:1 1 100%;max-width:100%;width:100%;box-sizing:border-box;justify-content:center;text-align:center;line-height:1.4;padding:.5rem .9rem;white-space:normal;overflow-wrap:anywhere}
 }
+
+/* B30: จัดหมวดเมนูบน (เฉพาะจอกว้าง) — สีของหมวด + ชื่อหมวดเป็นตัวอักษรกำกับ */
+@media(min-width:901px){
+  header nav{padding-top:1.05rem}
+  html header nav a[data-g],html[data-ui="modern"] header nav a[data-g]{border-top:3px solid var(--gc,#6B7280);border-radius:0!important;position:relative}
+  header nav a[data-g="work"]{--gc:#284499}header nav a[data-g="fix"]{--gc:#E56C0C}header nav a[data-g="view"]{--gc:#017AB6}header nav a[data-g="sys"]{--gc:#6B7280}
+  header nav a.ngf{margin-left:1.1rem}
+  header nav a.ngf::before{content:attr(data-gl);position:absolute;top:-1.15rem;left:0;font-size:.68rem;font-weight:700;color:var(--gc);white-space:nowrap;letter-spacing:.01em}
+}
+@media(max-width:900px){header nav a::before{content:none!important}}

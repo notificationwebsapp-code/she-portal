@@ -46,7 +46,12 @@
     .prewrap{white-space:pre-wrap;overflow-wrap:anywhere}
     .errtxt{color:#8a1010;font-weight:600}
     @media(max-width:640px){#capadetail dl{grid-template-columns:1fr}#capadetail dt{margin-top:.5rem}.capabar select{width:100%}}
-  </style>
+      .actwrap{position:sticky;bottom:0;z-index:6;background:#fff;border-top:2px solid #284499;margin:1.2rem -1rem -1rem;padding:.7rem 1rem;box-shadow:0 -6px 14px rgba(40,68,153,.08)}
+    .acthint{margin:0 0 .5rem;font-size:.92rem;color:#1B1F24;font-weight:700}
+    .actbar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+    .actbar button{min-height:46px}
+    .actbar button:disabled{opacity:.6}
+</style>
   <script src="i18n.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
@@ -59,7 +64,7 @@
       <a href="incident.html">รายงานอุบัติเหตุ</a>
       <a href="checklist.html">เช็กลิสต์ตรวจ</a>
       <a href="training.html">บันทึกการอบรม</a>
-      <a href="records.html">ดูข้อมูล</a>
+      <a href="records.html">รายการรายงาน</a>
       <a href="capa.html">Action (CAPA)</a>
       <a href="login.html">เข้าสู่ระบบ</a>
     </nav>
@@ -228,9 +233,9 @@
         h("button", { type: "button", class: "secondary", onclick: () => doStatus("returned", true) }, "ส่งกลับให้แก้"));
       if (canEdit) acts.append(h("button", { type: "button", class: "secondary", onclick: () => openForm(a) }, "แก้ไขข้อมูล"),
         h("button", { type: "button", class: "secondary", onclick: () => doDue(a) }, "เลื่อนกำหนดเสร็จ"));
-      if (canCancel) acts.append(h("button", { type: "button", class: "secondary", onclick: () => doStatus("cancelled", true) }, "ยกเลิก Action"));
+      if (canCancel) acts.append(h("button", { type: "button", class: "secondary", style: "color:#991B1B;border:2px solid #DC2626;background:#fff", onclick: () => doStatus("cancelled", true) }, "ยกเลิก Action"));
       acts.append(h("button", { type: "button", class: "secondary", onclick: () => { box.hidden = true; CUR = null; } }, "ปิดรายละเอียด"));
-      box.append(acts, dl([
+      box.append(dl([
         ["Plant", a.plant_code], ["แหล่งที่มา", SRC[a.source_type] || a.source_type],
         ["ผู้รับผิดชอบ", a.owner_name, 1], ["แผนก", (DEPTS.find((d) => d.id === a.department_id) || {}).name || "-", 1],
         ["กำหนดเสร็จ", a.due_date], ["หลักฐาน (แนบแล้ว / ขั้นต่ำ)", a.evidence_count + " / " + a.min_evidence],
@@ -242,7 +247,7 @@
       [["ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis)", a.root_cause_text], ["มาตรการแก้ไข (Corrective action)", a.corrective_action], ["มาตรการป้องกัน (Preventive action)", a.preventive_action]].forEach(([t, v]) => {
         box.append(h("h4", { text: t }), h("p", { class: "prewrap", "data-no-i18n": true, text: v || "-" }));
       });
-      if (a.source_type === "incident" && a.source_id) box.append(h("p", {}, h("a", { href: "records.html" }, "ดูรายงานอุบัติเหตุต้นทางในหน้า \"ดูข้อมูล\"")));
+      if (a.source_type === "incident" && a.source_id) box.append(h("p", {}, h("a", { href: "records.html" }, "ดูรายงานอุบัติเหตุต้นทางในหน้า \"รายการรายงาน\"")));
       box.append(h("h4", { text: "หลักฐานการแก้ไข" }));
       const attBox = h("div"); box.append(attBox);
       Attach.panel(attBox, { entityType: "capa", entityId: a.id, canUpload: live && (own || hasP("capa.create") || hasP("capa.close")), closed: !live,
@@ -256,6 +261,10 @@
           h("small", { "data-no-i18n": true, text: (x.actor_name || "ไม่มีชื่อในโปรไฟล์") + " · " + new Date(x.at).toLocaleString("en-GB", { hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) + (x.reason ? " · " + x.reason : "") })));
       });
       box.append(ul);
+      const nextHint = a.status === "closed" ? "ขั้นถัดไป: รอผู้มีสิทธิ์ตรวจสอบ (ต้องไม่ใช่ผู้ปิดงาน)" : a.status === "verified" ? "งานนี้ตรวจสอบผ่านแล้ว" : a.status === "cancelled" ? "งานนี้ถูกยกเลิกแล้ว"
+        : evLack ? "ขั้นถัดไป: แนบไฟล์หลักฐานด้านบนให้ครบ แล้วกด \"ปิดงาน (ส่งตรวจสอบ)\"" : "ขั้นถัดไป: ทำตามมาตรการให้เสร็จ แล้วกด \"ปิดงาน (ส่งตรวจสอบ)\"";
+      acts.classList.add("actbar");
+      box.append(h("div", { class: "actwrap" }, h("p", { class: "acthint", role: "status", text: nextHint }), acts));
     }
 
     // ---------- เปลี่ยนสถานะ / เลื่อนกำหนด ----------
@@ -329,7 +338,7 @@
       const ev = h("input", { type: "number", id: "fm-ev", min: "1", max: "20", value: "1" });
       const err = h("p", { class: "errtxt", role: "alert" });
       let src = pre && pre.source_type === "incident" ? pre : null;
-      let rcId = src && pre.rc ? pre.rc : null;          // มาจากปุ่ม "+ สร้าง Action จาก Root cause นี้" ในหน้าดูข้อมูล
+      let rcId = src && pre.rc ? pre.rc : null;          // มาจากปุ่ม "+ สร้าง Action จาก Root cause นี้" ในหน้ารายการรายงาน
       if (edit) {
         title.value = a.title; desc.value = a.description || "";
         const cu = a.owner_user_id && USERS.find((u) => u.id === a.owner_user_id);
@@ -387,7 +396,7 @@
         let linkErr = "";
         if (!edit && rcId && res.data) { const lk = await sb.rpc("incident_root_cause_link_capa", { p_root_cause: rcId, p_capa: res.data }); if (lk.error) linkErr = errTh(lk.error); }
         dlg.close();
-        if (linkErr) say("สร้าง Action แล้ว แต่ผูกกับ Root cause ไม่สำเร็จ: " + linkErr + " — ผูกเองได้ในหน้า \"ดูข้อมูล\"", true);
+        if (linkErr) say("สร้าง Action แล้ว แต่ผูกกับ Root cause ไม่สำเร็จ: " + linkErr + " — ผูกเองได้ในหน้า \"รายการรายงาน\"", true);
         else say(edit ? "แก้ไขเรียบร้อย" : rcId ? "สร้าง Action และผูกกับ Root cause เรียบร้อย" : "สร้าง Action เรียบร้อย");
         await loadList(); const id = edit ? a.id : res.data; if (id) await openDetail(id, true);
       });
