@@ -43,6 +43,8 @@
     .invbox .pill.ok{background:#F0FDF4;border-color:#BBF7D0;color:#166534}
     .invbox .pill.idle{background:#FFFBEB;border-color:#FDE68A;color:#B45309}
     .invbox .pill.new{background:var(--ib-canvas);border-style:dashed}
+    .pill.bad{background:#B42318;border:1px solid #B42318;color:#fff}
+    .pill.warn{background:#FEF08A;border:1px solid #CA8A04;color:#713F12}
     /* ขั้น 1: ข้อเท็จจริง — การ์ดพื้นขาวเรียบ */
     .invbox .v-plain{background:#fff}
     /* ขั้น 2: ห่วงโซ่ Why — พื้นเทาอ่อน ช่องกรอกสีขาวเด่นขึ้นมา */
@@ -1538,7 +1540,49 @@
             p_whys: arr, p_root_cause: null, p_conclusion: concl.value.trim() || null, p_root_cause_text: null, p_root_causes: rcs }), "บันทึกการสอบสวนแล้ว");
         } }, ico("check"), h("span", { text: "บันทึกการสอบสวน" })), h("span", { class: "inv-savehint", text: "บันทึกได้ทุกเมื่อแม้ยังไม่ครบ — ยังไม่ใช่การปิดเคส" }), dirty));
       }
+      await b26Panel(wrap, inc, closed, d);
       if (isMgrRole() && !closed) delegationBox(slot || wrap, inc);
+    }
+
+    /* B26: SLA ต่อเคส + เหตุการณ์เกิดซ้ำ + ปุ่มปิดการสอบสวน (ฝั่งหน้าจอเท่านั้น สิทธิ์จริงบังคับที่ RPC; ข้อความแสดงด้วย textContent) */
+    const SLA_STAGE = { flash_report: "ส่ง Flash report", investigation_start: "เริ่มสอบสวน", investigation_done: "สอบสวนเสร็จ", actions_closed: "ปิด Action ครบ", case_closed: "ปิดเคส" };
+    const SLA_ST = { met: ["ok", "ทันเวลา"], missed: ["bad", "เกินเวลา"], overdue: ["bad", "เกินเวลา (ยังเปิดอยู่)"], due_soon: ["warn", "ใกล้ครบเวลา"], on_track: ["ok", "อยู่ในเวลา"],
+      no_rule: ["idle", "ยังไม่กำหนดเกณฑ์"], not_started: ["idle", "ยังไม่เริ่ม"], not_applicable: ["idle", "ไม่เกี่ยวข้อง"], no_data: ["idle", "ไม่มีข้อมูล"], data_issue: ["warn", "ข้อมูลเวลาผิดปกติ"] };
+    const REP_KIND = { root_cause: "Root cause เดียวกันใน Plant", case: "ประเภทและพื้นที่เดียวกัน", after_closure: "Root cause เดิมเกิดอีกหลังปิด Action" };
+    function minTxt(m) { if (m == null) return "-"; if (m >= 1440 && m % 1440 === 0) return (m / 1440) + " วัน"; if (m >= 60) return Math.floor(m / 60) + " ชม." + (m % 60 ? " " + (m % 60) + " นาที" : ""); return m + " นาที"; }
+    async function b26Panel(wrap, inc, closed, d) {
+      const box = h("details", { class: "editdet" }, h("summary", { text: "SLA และเหตุการณ์เกิดซ้ำ" }));
+      const body = h("div"); box.append(body);
+      const sr = await sb.rpc("incident_sla_status", { p_incident: inc.id });
+      if (!sr.error && Array.isArray(sr.data) && sr.data.length) {
+        const tb = h("table", { style: "min-width:520px" }, h("thead", {}, h("tr", {}, h("th", { text: "ขั้นตอน" }), h("th", { text: "เวลาที่ใช้ / เกณฑ์" }), h("th", { text: "สถานะ" }))));
+        const tbd = h("tbody");
+        sr.data.forEach((x) => { const st = SLA_ST[x.status] || ["idle", x.status];
+          tbd.append(h("tr", {}, h("td", { text: SLA_STAGE[x.stage] || x.stage }),
+            h("td", { text: x.elapsed_minutes == null ? "-" : minTxt(x.elapsed_minutes) + (x.max_minutes != null ? " / " + minTxt(x.max_minutes) : "") }),
+            h("td", {}, pill(st[0], st[0] === "ok" ? "check" : st[0] === "bad" ? "alert" : "circle", st[1])))); });
+        tb.append(tbd); body.append(h("div", { class: "tablewrap" }, tb));
+        body.append(h("p", { class: "hint", text: "นับตามนาฬิกาจริง เกณฑ์ตั้งที่หน้า \"เกณฑ์ SLA / Repeat\" (ISO 45001:2018 ข้อ 9.1)" }));
+      }
+      const cr = await sb.rpc("incident_repeat_candidates", { p_incident: inc.id });
+      if (!cr.error && Array.isArray(cr.data) && cr.data.length) {
+        body.append(h("h5", { text: "พบเหตุการณ์ที่อาจเกิดซ้ำ" }));
+        const ul = h("ul", { class: "dlist" });
+        cr.data.forEach((c) => {
+          const why = h("input", { type: "text", maxlength: "200", placeholder: "เหตุผล (5–200 ตัวอักษร)", "aria-label": "เหตุผลการพิจารณา" });
+          const dec = (status) => () => { const r = why.value.trim(); if (r.length < 5) { showMsg("กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร", false); why.focus(); return; }
+            act(sb.rpc("incident_repeat_decide", { p_incident: inc.id, p_related: c.related_id, p_kind: c.kind, p_status: status, p_reason: r }), status === "confirmed" ? "ยืนยันว่าเป็นเหตุซ้ำแล้ว" : "บันทึกว่าไม่ใช่เหตุซ้ำแล้ว"); };
+          ul.append(h("li", {}, h("strong", { text: REP_KIND[c.kind] || c.kind }),
+            h("span", { text: "เหตุครั้งก่อน " + c.related_occurred_on + " · ห่างกัน " + c.gap_days + " วัน" + (c.key_text ? " · " + c.key_text : "") }),
+            h("small", { text: c.decision ? "ผลพิจารณา: " + (c.decision === "confirmed" ? "ยืนยันว่าซ้ำ" : "ไม่ใช่เหตุซ้ำ") : "ยังไม่ได้พิจารณา" }),
+            ...(closed ? [] : [why, h("button", { type: "button", text: "ยืนยันว่าซ้ำ", onclick: dec("confirmed") }), h("button", { type: "button", class: "btn-danger-outline", text: "ไม่ใช่เหตุซ้ำ", onclick: dec("dismissed") })])));
+        });
+        body.append(ul);
+      } else if (!cr.error) body.append(h("p", { class: "hint", text: "ยังไม่พบเหตุการณ์ที่เข้าเงื่อนไข Repeat (หรือยังไม่ได้ตั้งกฎ N/K)" }));
+      if (d && d.started && d.can_edit && !closed)
+        body.append(h("div", { class: "rowbtns" }, h("button", { type: "button", class: "btn-ok", text: "ปิดการสอบสวน (บันทึกเวลาสอบสวนเสร็จ)",
+          onclick: () => { if (confirm("ยืนยันว่าสอบสวนเสร็จแล้ว? ระบบจะบันทึกเวลานี้ไว้วัด SLA")) act(sb.rpc("incident_investigation_complete", { p_incident: inc.id }), "บันทึกว่าสอบสวนเสร็จแล้ว"); } })));
+      wrap.append(box);
     }
 
     // SHE/Admin มอบสิทธิ์สอบสวน (ระดับ Plant) แก่ผู้ใช้ใน Plant เดียวกัน — ผู้รับมอบส่งต่อไม่ได้ ถอนได้ มี audit log
