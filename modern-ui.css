@@ -48,7 +48,8 @@ html[data-ui="modern"] .userbox,html[data-ui="modern"] .authform .inner,html[dat
 html[data-ui="modern"] .stepcard{padding:1.6rem 1.6rem .7rem;margin-bottom:1.25rem}
 html[data-ui="modern"] .stepcard>h3{font-size:1.15rem;color:var(--ink);margin-bottom:1.2rem}
 html[data-ui="modern"] .stepcard>h3 .no{background:var(--ink);color:#fff;width:1.7rem;height:1.7rem;font-size:.85rem}
-html[data-ui="modern"] .personbox{background:var(--fill)}
+/* กล่องผู้เกี่ยวข้องอยู่ในการ์ดขาวอยู่แล้ว: ใช้พื้นขาว+ขอบบาง เพื่อให้ช่องกรอกสีเทา (filled) มองเห็นชัด (เดิมพื้นเทาเท่าช่องกรอก ทำให้ช่องหายไป) */
+html[data-ui="modern"] .personbox{background:#fff;border:1px solid #D9DDE6}
 html[data-ui="modern"] .sidecard{padding:1.4rem}
 html[data-ui="modern"] .sidecard .sidetitle,html[data-ui="modern"] .sidehead{font-size:.95rem;font-weight:700;letter-spacing:-.01em}
 html[data-ui="modern"] a.card,html[data-ui="modern"] .taskcard,html[data-ui="modern"] .alertcard{transition:transform .25s var(--ease),box-shadow .25s var(--ease)}

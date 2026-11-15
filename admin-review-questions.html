@@ -51,7 +51,7 @@
           <li><b>บังคับก่อนปิดการสอบสวน:</b> ถ้าเลือก ระบบจะไม่ให้กด "ปิดการสอบสวน" จนกว่าจะตอบข้อนี้ (ตอบ "ยังไม่ทราบ" ได้) ควรบังคับให้น้อยที่สุด เพื่อไม่ให้งานสะดุด</li>
           <li><b>ชนิดคำถาม:</b> "ใช่/ไม่ใช่" หรือ "ใช่/ไม่ใช่ + เลือกข้อ" (ใช้กับรายการมาตรฐาน เช่น Life Saving Rules) คำถามที่มีคำตอบแล้วจะเปลี่ยนชนิดหรือรายการไม่ได้ ให้ปิดใช้งานแล้วสร้างข้อใหม่แทน</li>
           <li><b>รหัสคำถาม (code):</b> ตัวพิมพ์เล็ก ตัวเลข และ _ เท่านั้น ตั้งแล้วไม่ควรเปลี่ยน เพราะใช้อ้างอิงในรายงาน</li>
-          <li>ทุกการแก้ไขต้องใส่เหตุผล และถูกบันทึกใน audit log · ปิดใช้งานแทนการลบ คำตอบเดิมยังอยู่</li>
+          <li>ทุกการแก้ไขต้องใส่เหตุผล และถูกบันทึกใน audit log · ลบได้เฉพาะคำถามที่ยังไม่มีคำตอบ ถ้ามีคำตอบแล้วให้ปิดใช้งานแทน คำตอบเดิมยังอยู่</li>
         </ul>
       </details>
       <div id="msg" class="msg" hidden role="status"></div>
@@ -63,7 +63,7 @@
         <h3 id="f-title">คำถาม</h3>
         <div class="grid">
           <label>รหัสคำถาม (code)<input id="q-code" maxlength="40" pattern="[a-z0-9_]{1,40}" autocomplete="off" required><span class="fhelp">เช่น lsr, work_related</span></label>
-          <label>ลำดับแสดง<input id="q-sort" type="number" min="0" step="1" value="10" required></label>
+          <label>ลำดับแสดง (เลขน้อยแสดงก่อน)<input id="q-sort" type="number" min="0" step="1" value="10" required><span class="fhelp">ใช้จัดลำดับเท่านั้น ไม่ต้องต่อเนื่อง เช่น 10, 20, 30 เพื่อแทรกข้อใหม่ภายหลัง · เลขในตารางด้านบนนับจาก 1 อัตโนมัติ</span></label>
           <label class="wide">คำถาม (ไทย)<input id="q-th" maxlength="300" autocomplete="off" required></label>
           <label class="wide">คำถาม (English)<input id="q-en" maxlength="300" autocomplete="off"></label>
           <label class="wide">คำอธิบายช่วยผู้ตอบ (ไม่บังคับ)<input id="q-help" maxlength="500" autocomplete="off"></label>
@@ -94,10 +94,20 @@
       const tb = $("t-q").querySelector("tbody"); tb.replaceChildren();
       if (r.error) { $("e-q").hidden = false; $("e-q").textContent = "โหลดไม่สำเร็จ (ถ้ายังไม่ได้รัน migration B32 ให้รันก่อน)"; return; }
       qs = r.data || []; $("e-q").hidden = qs.length > 0;
-      qs.forEach((q) => { const tr = el("tr"); const add = (x) => { const c = el("td", null, x); c.setAttribute("data-no-i18n", ""); tr.appendChild(c); return c; };
-        add(q.sort_order); add(q.code); add(q.text_th); add(KIND[q.kind] + (q.list_key ? " · " + q.list_key : "")); add(STG[q.ask_stage]); add(q.required_by ? "บังคับ" : "-");
+      qs.forEach((q, qi) => { const tr = el("tr"); const add = (x) => { const c = el("td", null, x); c.setAttribute("data-no-i18n", ""); tr.appendChild(c); return c; };
+        add(qi + 1); add(q.code); add(q.text_th); add(KIND[q.kind] + (q.list_key ? " · " + q.list_key : "")); add(STG[q.ask_stage]); add(q.required_by ? "บังคับ" : "-");
         const st = el("td"); st.appendChild(el("span", "tag " + (q.active ? "ok" : "warn"), q.active ? "ใช้งาน" : "ปิดใช้งาน")); tr.appendChild(st);
-        const a = el("td"); const b = el("button", "secondary", "แก้ไข"); b.type = "button"; b.addEventListener("click", () => edit(q)); a.appendChild(b); tr.appendChild(a); tb.appendChild(tr); });
+        const a = el("td"); const b = el("button", "secondary", "แก้ไข"); b.type = "button"; b.addEventListener("click", () => edit(q)); a.appendChild(b); const d = el("button", "danger", "ลบ"); d.type = "button"; d.addEventListener("click", () => del(q)); a.appendChild(d); tr.appendChild(a); tb.appendChild(tr); });
+    }
+    async function del(q) {
+      msgEl.hidden = true;
+      const why = prompt("ลบคำถาม " + q.code + " ถาวร (ลบได้เฉพาะข้อที่ยังไม่มีคำตอบ) — พิมพ์เหตุผล 5–200 ตัวอักษร:");
+      if (why == null) return;
+      if (why.trim().length < 5) { show("เหตุผลต้อง 5–200 ตัวอักษร", false); return; }
+      if (!confirm("ยืนยันลบคำถาม " + q.code + " ? การลบกู้คืนไม่ได้")) return;
+      const r = await sb.rpc("review_question_delete", { p_code: q.code, p_reason: why.trim() });
+      if (r.error) { show(/already has answers/i.test(r.error.message || "") ? "ลบไม่ได้ เพราะคำถามนี้มีคำตอบแล้ว ให้ใช้ \"ปิดใช้งาน\" แทน (คำตอบเดิมยังอยู่)" : /not found/i.test(r.error.message || "") ? "ไม่พบคำถามนี้ (อาจถูกลบแล้ว)" : errText(r.error), false); return; }
+      show("ลบคำถามแล้ว", true); $("f").hidden = true; await load();
     }
     function sync() { $("w-list").hidden = $("q-kind").value !== "yes_no_item"; }
     function edit(q) { $("f").hidden = false; $("f-title").textContent = q ? "แก้ไขคำถาม: " + q.code : "เพิ่มคำถามใหม่";

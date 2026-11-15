@@ -166,6 +166,7 @@
     .badge.review{background:#e8f1fc;border-color:#8fb8e8;color:#004c99}.badge.invest{background:#fff4d6;border-color:#e0b43a;color:#6b4200}
     .badge.done{background:#e6f4ea;border-color:#8cc5a0;color:#14532d}
     /* แถบค้นหา/กรอง: ช่องค้นหาใหญ่ + ปุ่มเลือกขั้นตอน (กดแล้วกรองทันที) + ตัวกรองละเอียดจัดเป็นตาราง */
+    .toptools{display:flex;justify-content:flex-end;margin:.2rem 0 .5rem}.toptools:empty{display:none}
     .filterbar{display:grid;gap:.85rem;padding:1rem 1.1rem;margin:0 0 1rem;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#f8faff,#f1f5fc);max-width:none!important}
     .fb-search{display:flex;gap:.6rem;align-items:stretch}
     .fb-search .sbox{position:relative;flex:1}
@@ -364,6 +365,7 @@
     <p><small>ระบบแสดงเฉพาะข้อมูลที่คุณมีสิทธิ์ดู พนักงานทั่วไปเห็นเฉพาะรายงานของตัวเอง</small></p>
 
     <h3>รายงานอุบัติเหตุ</h3>
+    <div id="exporttop" class="toptools"></div>
     <form id="filterbar" class="filterbar" aria-label="ตัวกรองรายงานอุบัติเหตุ"></form>
     <div class="tablewrap"><table id="t-incident"></table></div>
     <nav id="pager" class="pager" aria-label="เปลี่ยนหน้า"></nav>
@@ -816,7 +818,9 @@
       const nav = document.getElementById("pager"); nav.replaceChildren();
       const pages = Math.max(1, Math.ceil(totalRows / PAGE));
       nav.append(h("span", { class: "info", text: totalRows ? "ทั้งหมด " + totalRows + " รายการ · หน้า " + (flt.page + 1) + " / " + pages : "ไม่พบรายการตามเงื่อนไข" }));
-      if (totalRows && canExport()) nav.append(h("button", { type: "button", class: "secondary small", id: "btn-export", text: "⭳ ส่งออก CSV…", onclick: openExport }));
+      /* ปุ่มส่งออกอยู่ด้านบนเสมอ (เหนือตัวกรอง/ตาราง) เหมือนหน้าอื่น — ไม่ซ่อนไว้ท้ายตาราง */
+      const top = document.getElementById("exporttop"); top.replaceChildren();
+      if (totalRows && canExport()) top.append(h("button", { type: "button", class: "secondary small", id: "btn-export", text: "⭳ ส่งออก CSV…", onclick: openExport }));
       if (pages > 1) nav.append(
         h("button", { type: "button", class: "secondary small", text: "← ก่อนหน้า", disabled: flt.page <= 0, onclick: () => { flt.page--; loadIncidents(); } }),
         h("button", { type: "button", class: "secondary small", text: "ถัดไป →", disabled: flt.page >= pages - 1, onclick: () => { flt.page++; loadIncidents(); } }));

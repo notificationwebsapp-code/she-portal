@@ -53,7 +53,14 @@
     @media print{header,nav,#f,#export-row,#gate,#msg,footer,.howto{display:none!important}body,main,main.wide{background:#fff!important;padding:0!important;margin:0!important;max-width:none!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}#area{zoom:.72}.ltwo{grid-template-columns:repeat(2,minmax(0,1fr))}.card,.lk{break-inside:avoid}.tablewrap{overflow:visible}.ltwo th,.ltwo td{padding:.12rem .25rem!important;font-size:.72rem}@page{size:A4 landscape;margin:8mm}}
     [hidden]{display:none!important}
     h3{color:var(--navy)}
-  </style>
+      #t-rv .rv-toggle{background:none;border:0;padding:.2rem .1rem;min-height:36px;font-weight:700;color:#284499;cursor:pointer;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;gap:.4rem}
+    #t-rv .rv-toggle::before{content:"";width:.55rem;height:.55rem;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s}
+    #t-rv .rv-toggle[aria-expanded="true"]::before{transform:rotate(45deg)}
+    #t-rv tr.rv-p td{background:#F4F7FF;font-weight:600}
+    #t-rv tr.rv-q td:first-child{border-left:3px solid #C9D5F5}
+    #t-rv .rv-pct{color:#4B5563;font-size:.9rem}
+    .rv-tools{margin:.3rem 0 .6rem}
+</style>
   <script src="i18n.js"></script>
   <script src="i18n-b26.js"></script>
   <script src="theme.js"></script>
@@ -153,7 +160,8 @@
         <div class="tablewrap"><table id="t-lsr"><thead><tr><th>Plant</th><th>รหัส</th><th>ข้อกำหนด</th><th class="num">เคส</th></tr></thead><tbody></tbody></table></div><p id="e-lsr" hidden>ยังไม่มีรายการ Life Saving Rules หรือยังไม่มีเคสที่ผูกข้อ</p></section>
 
       <section class="card full"><h4>8) ความครบถ้วนของแบบทวนข้อมูลเคส (ต่อ Plant × คำถาม)</h4>
-        <p class="hint">นับเคสในช่วงที่เลือกว่าตอบ ใช่ / ไม่ใช่ / ยังไม่ทราบ / ไม่เกี่ยวข้อง หรือยังไม่ตอบ · "ครบ %" = (ตอบแล้วที่ไม่ใช่ "ยังไม่ทราบ") ÷ เคสทั้งหมด · กดตัวเลขเพื่อดูรายเคส</p>
+        <p class="hint">กดชื่อ Plant เพื่อขยายดูทีละคำถาม · แต่ละช่องแสดงจำนวนเคส และ (% ของเคสทั้งหมดใน Plant) · กดตัวเลขเพื่อดูรายการเคส · "ครบ %" = (ตอบแล้วที่ไม่ใช่ "ยังไม่ทราบ") ÷ เคสทั้งหมด</p>
+        <div class="rv-tools"><button type="button" id="rv-all" class="secondary">ขยายทั้งหมด</button></div>
         <div class="tablewrap"><table id="t-rv"><thead><tr><th>Plant</th><th>คำถาม</th><th class="num">เคส</th><th class="num">ใช่</th><th class="num">ไม่ใช่</th><th class="num">ยังไม่ทราบ</th><th class="num">ไม่เกี่ยวข้อง</th><th class="num">ยังไม่ตอบ</th><th class="num">ครบ %</th></tr></thead><tbody></tbody></table></div><p id="e-rv" hidden>ยังไม่มีคำถามทวนข้อมูล หรือยังไม่ได้รัน migration B32 (ตั้งคำถามที่หน้า "คำถามทวนข้อมูลเคส")</p></section>
 
       <section class="card"><h4>6) Action ปิดแล้วแต่ root cause เดิมเกิดอีก</h4>
@@ -280,10 +288,34 @@
     /* 8) แบบทวนข้อมูล (B32): โหลดแยก ถ้ายังไม่รัน migration จะแสดงข้อความแนะนำ ไม่กระทบส่วนอื่น */
     async function loadReview(a) {
       const rows = await rpc("review_answer_stats", a);
-      fill("#t-rv", rows, "e-rv", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code)); const q = td(dbName({ text_th: r.text_th, text_en: r.text_en }, "text")); tr.appendChild(q); tr.appendChild(td(r.cases_total, "num"));
-        [["yes", r.yes_cnt], ["no", r.no_cnt], ["unknown", r.unknown_cnt], ["na", r.na_cnt], ["unanswered", r.unanswered_cnt]].forEach((x) => { const c = td("", "num"); c.appendChild(nbtn(x[1], () => showCases("review", r.plant_code, { question: r.question_code, answer: x[0], qtext: r.text_th }), "ดูเคสที่ตอบข้อนี้")); tr.appendChild(c); });
-        tr.appendChild(td(r.cases_total ? Math.round(100 * (r.cases_total - r.unanswered_cnt - r.unknown_cnt) / r.cases_total) + "%" : "–", "num")); return tr; });
+      const tb = document.querySelector("#t-rv tbody"); tb.replaceChildren(); $("e-rv").hidden = rows.length > 0;
+      const tt = (x) => (window.I18N && I18N.t) ? I18N.t(x) : x;
+      const byP = {}; const order = [];
+      rows.forEach((r) => { if (!byP[r.plant_code]) { byP[r.plant_code] = []; order.push(r.plant_code); } byP[r.plant_code].push(r); });
+      const pct = (n, t) => t ? Math.round(100 * n / t) + "%" : "–";
+      order.forEach((code) => {
+        const list = byP[code], cases = list[0].cases_total;
+        const done = list.reduce((s2, r) => s2 + (r.cases_total - r.unanswered_cnt - r.unknown_cnt), 0);
+        const tr = el("tr", "rv-p"); const c1 = td(""); const b = el("button", "rv-toggle", code); b.type = "button"; b.setAttribute("aria-expanded", "false"); b.setAttribute("data-no-i18n", "");
+        c1.appendChild(b); tr.appendChild(c1);
+        const c2 = td(list.length + " " + tt("คำถาม")); tr.appendChild(c2);
+        tr.appendChild(td(cases, "num"));
+        for (let i = 0; i < 5; i++) tr.appendChild(td("", "num"));
+        tr.appendChild(td(pct(done, cases * list.length), "num")); tb.appendChild(tr);
+        const kids = list.map((r) => {
+          const k = el("tr", "rv-q"); k.hidden = true;
+          k.appendChild(td("")); k.appendChild(td(dbName({ text_th: r.text_th, text_en: r.text_en }, "text"))); k.appendChild(td(r.cases_total, "num"));
+          [["yes", r.yes_cnt], ["no", r.no_cnt], ["unknown", r.unknown_cnt], ["na", r.na_cnt], ["unanswered", r.unanswered_cnt]].forEach((x) => {
+            const c = td("", "num"); c.appendChild(nbtn(x[1], () => showCases("review", r.plant_code, { question: r.question_code, answer: x[0], qtext: r.text_th }), "ดูเคสที่ตอบข้อนี้"));
+            const sp = el("span", "rv-pct", " (" + pct(x[1], r.cases_total) + ")"); sp.setAttribute("data-no-i18n", ""); c.appendChild(sp); k.appendChild(c); });
+          k.appendChild(td(pct(r.cases_total - r.unanswered_cnt - r.unknown_cnt, r.cases_total), "num")); tb.appendChild(k); return k; });
+        b.addEventListener("click", () => { const open = b.getAttribute("aria-expanded") !== "true"; b.setAttribute("aria-expanded", String(open)); kids.forEach((k) => { k.hidden = !open; }); });
+      });
     }
+    $("rv-all").addEventListener("click", () => {
+      const btns = [...document.querySelectorAll("#t-rv .rv-toggle")]; const open = btns.some((b) => b.getAttribute("aria-expanded") !== "true");
+      btns.forEach((b) => { if ((b.getAttribute("aria-expanded") === "true") !== open) b.click(); });
+      $("rv-all").textContent = (window.I18N && I18N.t) ? I18N.t(open ? "ยุบทั้งหมด" : "ขยายทั้งหมด") : (open ? "ยุบทั้งหมด" : "ขยายทั้งหมด"); });
     $("f").addEventListener("submit", (ev) => { ev.preventDefault(); refresh(); });
 
 

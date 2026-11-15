@@ -165,7 +165,7 @@
   var ADM=["admin-users.html","admin-master.html","admin-permissions.html","admin-grants.html","admin-offboarding.html","admin-sla.html","admin-masterlists.html","admin-incident-types.html","admin-review-questions.html","leading.html","admin-themes.html"];var hasTh=false,dashMode=null;
   /* จัดหมวดเมนูบน (หน้าจอกว้าง): สี + ชื่อหมวดกำกับเสมอ (ไม่ใช้สีอย่างเดียว — WCAG 2.2 SC 1.4.1) มือถือใช้แถบล่างเดิม */
   var GRP={"incident.html":["work","บันทึกและรายงาน"],"checklist.html":["work",""],"training.html":["work",""],"capa.html":["fix","ติดตามแก้ไข"],"records.html":["view","ดูข้อมูลและสรุป"],"executive-dashboard.html":["view",""],"leading.html":["view",""],"admin-users.html":["sys","จัดการระบบ"]};
-  function markGroups(n){n.querySelectorAll("a").forEach(function(a){a.removeAttribute("data-g");a.removeAttribute("data-gl");a.classList.remove("ngf");var k=(a.getAttribute("href")||"").split("/").pop();var g=GRP[k];if(a.classList.contains("navdash"))g=GRP["executive-dashboard.html"];if(!g)return;a.setAttribute("data-g",g[0]);if(g[1]){a.setAttribute("data-gl",g[1]);a.classList.add("ngf")}})}
+  function markGroups(n){n.querySelectorAll("a").forEach(function(a){a.removeAttribute("data-g");a.removeAttribute("data-gl");a.classList.remove("ngf");var k=(a.getAttribute("href")||"").split("/").pop();var g=GRP[k];if(a.classList.contains("navdash"))g=GRP["executive-dashboard.html"];if(!g)return;a.setAttribute("data-g",g[0]);if(g[1]){a.setAttribute("data-gl",(window.I18N&&I18N.lang==="en"&&I18N.t)?I18N.t(g[1]):g[1]);a.classList.add("ngf")}})}
   var obs=null;
   function normalizeNav(){var n=document.querySelector("header nav");if(!n)return;if(obs)obs.disconnect();
     var f=(location.pathname.split("/").pop()||"index.html");var by={};

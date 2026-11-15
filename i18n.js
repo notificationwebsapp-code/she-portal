@@ -78,14 +78,18 @@
   var dictReady = false;
   try {
     if (document.readyState === "loading") {
-      document.write('<script src="i18n-en.js"><\/script>');
+      document.write('<script src="i18n-en.js"><\/script><script src="i18n-b26.js"><\/script>');
       dictReady = true;
     }
   } catch (e) {}
   if (!dictReady) {
     var s = document.createElement("script");
     s.src = "i18n-en.js";
-    s.onload = function () { applyTree(document.documentElement); };
+    s.onload = function () {
+      var s2 = document.createElement("script"); s2.src = "i18n-b26.js";
+      s2.onload = function () { applyTree(document.documentElement); };
+      document.head.appendChild(s2);
+    };
     document.head.appendChild(s);
   }
 

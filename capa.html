@@ -47,7 +47,17 @@
     .prewrap{white-space:pre-wrap;overflow-wrap:anywhere}
     .errtxt{color:#8a1010;font-weight:600}
     @media(max-width:640px){#capadetail dl{grid-template-columns:1fr}#capadetail dt{margin-top:.5rem}.capabar select{width:100%}}
-      .actwrap{position:sticky;bottom:0;z-index:6;background:#fff;border-top:2px solid #284499;margin:1.2rem -1rem -1rem;padding:.7rem 1rem;box-shadow:0 -6px 14px rgba(40,68,153,.08)}
+      /* ปุ่มสร้าง Action ใหญ่เด่น (ข้อเสนอคุณ Mixx): คอลัมน์ขวาของแถวตัวกรอง; มือถือขึ้นก่อนตัวกรอง */
+    .capatop{display:grid;grid-template-columns:minmax(0,1fr) minmax(16rem,26rem);gap:1rem;align-items:stretch}
+    .capatop .capabar{margin:0}
+    html[data-ui="modern"] button.capacta,button.capacta{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;text-align:center;min-height:9rem;padding:1.2rem 1.4rem;border:0;border-radius:22px;background:#284499;color:#fff;cursor:pointer;font:inherit}
+    button.capacta[hidden]{display:none!important}
+    button.capacta .ct{font-size:1.9rem;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+    button.capacta .cs{font-size:.95rem;font-weight:400;color:#E6ECFB;max-width:22rem}
+    button.capacta:hover{background:#1F3680}
+    button.capacta:focus-visible{outline:3px solid #FDD100;outline-offset:3px}
+    @media(max-width:900px){.capatop{grid-template-columns:1fr}button.capacta{order:-1;min-height:7rem}button.capacta .ct{font-size:1.6rem}}
+    .actwrap{position:sticky;bottom:0;z-index:6;background:#fff;border-top:2px solid #284499;margin:1.2rem -1rem -1rem;padding:.7rem 1rem;box-shadow:0 -6px 14px rgba(40,68,153,.08)}
     .acthint{margin:0 0 .5rem;font-size:.92rem;color:#1B1F24;font-weight:700}
     .actbar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
     .actbar button{min-height:46px}
@@ -77,14 +87,20 @@
     <p><small>ติดตามมาตรการแก้ไขและป้องกัน (Corrective and Preventive Action) ตั้งแต่สั่งการ ลงมือทำ แนบหลักฐาน จนถึงการตรวจสอบปิดงาน (อ้างอิงแนวทาง ISO 45001:2018 ข้อ 10.2)</small></p>
     <p id="msg" role="status" class="msg" hidden></p>
 
+    <div class="capatop">
     <form id="capabar" class="capabar" aria-label="ตัวกรอง Action" autocomplete="off">
       <div><label for="f-status">สถานะ</label><select id="f-status"></select></div>
       <div><label for="f-source">แหล่งที่มา</label><select id="f-source"></select></div>
       <div id="f-plant-wrap" hidden><label for="f-plant">Plant</label><select id="f-plant"></select></div>
       <div><label for="f-sort">เรียงลำดับ</label><select id="f-sort"><option value="urgent">เร่งด่วนก่อน (แบ่งกลุ่ม)</option><option value="due">กำหนดเสร็จ: ใกล้สุดก่อน</option><option value="new">สร้างล่าสุดก่อน</option></select></div>
       <label class="chk"><input type="checkbox" id="f-mine"> เฉพาะที่ฉันรับผิดชอบ</label>
-      <button type="button" id="btn-new" hidden>+ สร้าง Action</button>
     </form>
+    <button type="button" id="btn-new" class="capacta" hidden aria-label="สร้าง Action ใหม่">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" stroke-opacity=".55"/><path d="M12 7.5v9M7.5 12h9"/></svg>
+      <span class="ct">+ สร้าง Action ใหม่</span>
+      <span class="cs">เปิดแบบฟอร์มสั่งการแก้ไข/ป้องกัน กำหนดผู้รับผิดชอบและวันครบกำหนด</span>
+    </button>
+    </div>
     <div id="sumrow" class="sumrow" aria-live="polite"></div>
     <div id="capalist"></div>
     <p id="emptymsg" hidden>ไม่พบ Action ตามเงื่อนไขที่เลือก</p>
