@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>คำถามทวนข้อมูลเคส | SHE Portal</title>
+  <style>
+    .tablewrap{overflow-x:auto;max-width:100%}
+    .card{background:#fff;border-radius:22px;padding:1.1rem 1.2rem;margin:1rem 0}
+    .guide{background:#F4F7FF;border:1px solid #C9D5F5;border-radius:18px;padding:.9rem 1.1rem;margin:.9rem 0}
+    .guide summary{cursor:pointer;font-weight:700;color:var(--navy)}
+    .guide ul,.guide ol{margin:.3rem 0 .3rem 1.2rem;padding:0}
+    .howto{background:#FFFBEB;border:1px solid #F3E2A9;border-radius:14px;padding:.7rem .9rem;margin:.6rem 0;font-size:.95rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.8rem .9rem;align-items:end}
+    .grid label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.95rem}
+    .grid input,.grid select,.grid textarea{min-height:50px;font:inherit;font-weight:400}
+    .grid .wide{grid-column:1/-1}
+    .fhelp{font-weight:400;font-size:.85rem;color:#4B5563}
+    .tag{display:inline-block;border-radius:999px;padding:.1rem .65rem;font-size:.85rem;font-weight:700;background:#eee;color:#333}
+    .tag.ok{background:#e3f6e8;color:#14532d}.tag.warn{background:#fff4d6;color:#6b4200}
+    .row-actions{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.8rem}.row-actions button{min-height:44px}
+    table.q{min-width:760px}
+  </style>
+  <script src="i18n.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">รายการรายงาน</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- หน้านี้เป็นเพียงหน้าจอ: สิทธิ์จริงบังคับที่ RPC (Admin / Super admin) -->
+    <div id="area" hidden>
+      <h2>คำถามทวนข้อมูลเคส</h2>
+      <p>กำหนดคำถามที่ระบบจะถามผู้รายงานและ SHE เพื่อให้ข้อมูลเคสครบ (เช่น เป็นเคสที่ตรงกับ Life Saving Rule ข้อไหน) คำตอบถูกเก็บเป็นข้อมูลโครงสร้างและนำไปสรุปในหน้า Leading Indicator ได้ (ISO 45001:2018 ข้อ 9.1 และ 10.2)</p>
+      <details class="guide" open>
+        <summary>คู่มือเริ่มต้น</summary>
+        <ul>
+          <li><b>ถามช่วงไหน:</b> "ตอนส่งรายงาน" = ผู้รายงานตอบได้ทันทีหลังส่ง Flash Report (ไม่บังคับ) · "ตอนเริ่มสอบสวน" และ "ก่อนปิดการสอบสวน" = SHE/ผู้สอบสวนตอบในหน้ารายละเอียดเคส</li>
+          <li><b>บังคับก่อนปิดการสอบสวน:</b> ถ้าเลือก ระบบจะไม่ให้กด "ปิดการสอบสวน" จนกว่าจะตอบข้อนี้ (ตอบ "ยังไม่ทราบ" ได้) ควรบังคับให้น้อยที่สุด เพื่อไม่ให้งานสะดุด</li>
+          <li><b>ชนิดคำถาม:</b> "ใช่/ไม่ใช่" หรือ "ใช่/ไม่ใช่ + เลือกข้อ" (ใช้กับรายการมาตรฐาน เช่น Life Saving Rules) คำถามที่มีคำตอบแล้วจะเปลี่ยนชนิดหรือรายการไม่ได้ ให้ปิดใช้งานแล้วสร้างข้อใหม่แทน</li>
+          <li><b>รหัสคำถาม (code):</b> ตัวพิมพ์เล็ก ตัวเลข และ _ เท่านั้น ตั้งแล้วไม่ควรเปลี่ยน เพราะใช้อ้างอิงในรายงาน</li>
+          <li>ทุกการแก้ไขต้องใส่เหตุผล และถูกบันทึกใน audit log · ปิดใช้งานแทนการลบ คำตอบเดิมยังอยู่</li>
+        </ul>
+      </details>
+      <div id="msg" class="msg" hidden role="status"></div>
+      <div class="card"><div class="tablewrap"><table class="q" id="t-q"><thead><tr><th>ลำดับ</th><th>รหัส</th><th>คำถาม</th><th>ชนิด</th><th>ถามช่วง</th><th>บังคับ</th><th>สถานะ</th><th></th></tr></thead><tbody></tbody></table></div>
+        <p id="e-q" hidden>ยังไม่มีคำถาม — กด "เพิ่มคำถามใหม่" หรือรันไฟล์ seed-review-questions-DRAFT.sql</p>
+        <div class="row-actions"><button type="button" id="b-new">เพิ่มคำถามใหม่</button></div></div>
+
+      <form id="f" class="card" hidden>
+        <h3 id="f-title">คำถาม</h3>
+        <div class="grid">
+          <label>รหัสคำถาม (code)<input id="q-code" maxlength="40" pattern="[a-z0-9_]{1,40}" autocomplete="off" required><span class="fhelp">เช่น lsr, work_related</span></label>
+          <label>ลำดับแสดง<input id="q-sort" type="number" min="0" step="1" value="10" required></label>
+          <label class="wide">คำถาม (ไทย)<input id="q-th" maxlength="300" autocomplete="off" required></label>
+          <label class="wide">คำถาม (English)<input id="q-en" maxlength="300" autocomplete="off"></label>
+          <label class="wide">คำอธิบายช่วยผู้ตอบ (ไม่บังคับ)<input id="q-help" maxlength="500" autocomplete="off"></label>
+          <label>ชนิดคำถาม<select id="q-kind"><option value="yes_no">ใช่ / ไม่ใช่</option><option value="yes_no_item">ใช่ / ไม่ใช่ + เลือกข้อ</option></select></label>
+          <label id="w-list">รายการให้เลือก<select id="q-list"><option value="life_saving_rules">Life Saving Rules</option><option value="she_standards">SHE standards</option></select></label>
+          <label>ถามช่วง<select id="q-stage"><option value="reporter_submit">ตอนส่งรายงาน (ผู้รายงานตอบได้)</option><option value="investigation_start">ตอนเริ่มสอบสวน</option><option value="investigation_done">ก่อนปิดการสอบสวน</option></select></label>
+          <label>บังคับตอบ<select id="q-req"><option value="">ไม่บังคับ</option><option value="investigation_done">บังคับก่อนปิดการสอบสวน</option></select></label>
+          <label>สถานะ<select id="q-act"><option value="true">ใช้งาน</option><option value="false">ปิดใช้งาน</option></select></label>
+          <label class="wide">เหตุผลที่สร้าง/แก้ (5–200 ตัวอักษร)<input id="q-reason" maxlength="200" autocomplete="off" required><span class="fhelp">บันทึกใน audit log</span></label>
+        </div>
+        <div class="row-actions"><button type="submit">บันทึก</button><button type="button" id="b-cancel" class="secondary">ยกเลิก</button></div>
+      </form>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* แสดงข้อมูลด้วย textContent เท่านั้น (OWASP A03) | สิทธิ์จริงอยู่ที่ RPC */
+    const $ = (id) => document.getElementById(id), msgEl = $("msg");
+    const KIND = { yes_no: "ใช่/ไม่ใช่", yes_no_item: "ใช่/ไม่ใช่ + เลือกข้อ" }, STG = { reporter_submit: "ตอนส่งรายงาน", investigation_start: "ตอนเริ่มสอบสวน", investigation_done: "ก่อนปิดการสอบสวน" };
+    let qs = [];
+    function el(t, c, x) { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+    function show(t, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t; msgEl.scrollIntoView({ block: "nearest" }); }
+    function errText(e) { const m = (e && e.message) || ""; if (e && e.code === "42501") return "คุณไม่มีสิทธิ์ (เฉพาะ Admin)"; if (/Cannot change kind/i.test(m)) return "คำถามนี้มีคำตอบแล้ว เปลี่ยนชนิด/รายการไม่ได้ ให้ปิดใช้งานแล้วสร้างข้อใหม่"; if (/Invalid code/i.test(m)) return "รหัสต้องเป็นตัวพิมพ์เล็ก ตัวเลข หรือ _ (ไม่เกิน 40 ตัว)"; if (/Reason/i.test(m)) return "เหตุผลต้อง 5–200 ตัวอักษร"; if (/must not start/i.test(m)) return "ข้อความห้ามขึ้นต้นด้วย = + - @"; if (e && e.code === "23514") return "ค่าที่เลือกไม่ถูกต้อง"; return "บันทึกไม่สำเร็จ"; }
+    async function load() {
+      const r = await sb.rpc("review_questions_get", { p_include_inactive: true });
+      const tb = $("t-q").querySelector("tbody"); tb.replaceChildren();
+      if (r.error) { $("e-q").hidden = false; $("e-q").textContent = "โหลดไม่สำเร็จ (ถ้ายังไม่ได้รัน migration B32 ให้รันก่อน)"; return; }
+      qs = r.data || []; $("e-q").hidden = qs.length > 0;
+      qs.forEach((q) => { const tr = el("tr"); const add = (x) => { const c = el("td", null, x); c.setAttribute("data-no-i18n", ""); tr.appendChild(c); return c; };
+        add(q.sort_order); add(q.code); add(q.text_th); add(KIND[q.kind] + (q.list_key ? " · " + q.list_key : "")); add(STG[q.ask_stage]); add(q.required_by ? "บังคับ" : "-");
+        const st = el("td"); st.appendChild(el("span", "tag " + (q.active ? "ok" : "warn"), q.active ? "ใช้งาน" : "ปิดใช้งาน")); tr.appendChild(st);
+        const a = el("td"); const b = el("button", "secondary", "แก้ไข"); b.type = "button"; b.addEventListener("click", () => edit(q)); a.appendChild(b); tr.appendChild(a); tb.appendChild(tr); });
+    }
+    function sync() { $("w-list").hidden = $("q-kind").value !== "yes_no_item"; }
+    function edit(q) { $("f").hidden = false; $("f-title").textContent = q ? "แก้ไขคำถาม: " + q.code : "เพิ่มคำถามใหม่";
+      $("q-code").value = q ? q.code : ""; $("q-code").readOnly = !!q; $("q-sort").value = q ? q.sort_order : 10; $("q-th").value = q ? q.text_th : ""; $("q-en").value = q ? q.text_en || "" : ""; $("q-help").value = q ? q.help_th || "" : "";
+      $("q-kind").value = q ? q.kind : "yes_no"; $("q-list").value = q && q.list_key ? q.list_key : "life_saving_rules"; $("q-stage").value = q ? q.ask_stage : "reporter_submit"; $("q-req").value = q && q.required_by ? q.required_by : ""; $("q-act").value = q ? String(q.active) : "true"; $("q-reason").value = ""; sync(); $("f").scrollIntoView({ block: "nearest" }); $("q-th").focus(); }
+    $("q-kind").addEventListener("change", sync); $("b-new").addEventListener("click", () => edit(null)); $("b-cancel").addEventListener("click", () => { $("f").hidden = true; });
+    $("f").addEventListener("submit", async (ev) => { ev.preventDefault(); msgEl.hidden = true;
+      const item = $("q-kind").value === "yes_no_item";
+      if ($("q-req").value && $("q-stage").value === "reporter_submit" && !confirm("คำถามนี้ถามตอนส่งรายงาน แต่บังคับก่อนปิดการสอบสวน — ยืนยัน?")) return;
+      const r = await sb.rpc("review_question_upsert", { p_code: $("q-code").value.trim(), p_text_th: $("q-th").value.trim(), p_text_en: $("q-en").value.trim() || null, p_help_th: $("q-help").value.trim() || null, p_kind: $("q-kind").value, p_list_key: item ? $("q-list").value : null, p_ask_stage: $("q-stage").value, p_required_by: $("q-req").value || null, p_sort_order: parseInt($("q-sort").value, 10) || 0, p_active: $("q-act").value === "true", p_reason: $("q-reason").value.trim() });
+      if (r.error) { show(errText(r.error), false); return; }
+      show("บันทึกคำถามแล้ว", true); $("f").hidden = true; await load(); });
+    (async function init() {
+      const session = await requireLogin(); if (!session) return;
+      const me = await getMyProfile(); const gate = $("gate");
+      if (!me || me.status !== "active" || (me.role !== "admin" && me.role !== "super_admin")) { gate.textContent = "หน้านี้สำหรับ Admin เท่านั้น"; return; }
+      gate.hidden = true; $("area").hidden = false; await load();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>

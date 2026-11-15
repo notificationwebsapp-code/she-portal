@@ -382,6 +382,7 @@
   <script src="config.js"></script>
   <script src="auth.js"></script>
   <script src="attach.js"></script>
+  <script src="review.js"></script>
   <script src="shell-v4.js"></script>
   <script>
     requireLogin();
@@ -694,6 +695,7 @@
         [/Root cause text is required|Root cause text too long|Invalid root cause category|Invalid root cause item|Root causes must be|Unknown root cause id/i, "Root cause ทุกรายการต้องเลือกหมวดและกรอกคำอธิบาย (ไม่เกิน 1,000 ตัวอักษร)"],
         [/Action must be an active action/i, "ผูกไม่ได้: Action ต้องสร้างจากเคสนี้และยังไม่ถูกยกเลิก"],
         [/incident_root_cause_capas_capa_id_key/i, "Action นี้ผูกกับ Root cause อื่นแล้ว"],
+        [/Required review answers are missing/i, "ปิดการสอบสวนไม่ได้ — ยังมีคำถามบังคับหรือเหตุซ้ำที่ยังไม่พิจารณา (ดูหัวข้อ \"แบบทวนข้อมูลเคส\" และ \"SLA และเหตุการณ์เกิดซ้ำ\")"],
         [/at least 1 why/i, "ต้องบันทึก 5 Why อย่างน้อย 1 ชั้นก่อนปิดเคส (ดูหัวข้อ \"การสอบสวน\" ด้านบน)"],
         [/Investigation is not open/i, "ยังไม่ได้เริ่มสอบสวน หรือเคสถูกปิดแล้ว"],
         [/can start only from the flash/i, "เคสนี้เริ่มสอบสวนไปแล้วหรือปิดแล้ว"],
@@ -1692,6 +1694,12 @@
         });
         body.append(ul);
       } else if (!cr.error) body.append(h("p", { class: "hint", text: "ยังไม่พบเหตุการณ์ที่เข้าเงื่อนไข Repeat (หรือยังไม่ได้ตั้งกฎ N/K)" }));
+      /* B32: แบบทวนข้อมูลรายเคส + รายการที่ค้างก่อนปิดการสอบสวน */
+      const rvHost = h("div"); body.append(rvHost);
+      if (window.Review) { Review.mount(rvHost, inc.id, { title: "แบบทวนข้อมูลเคส", saveLabel: "บันทึกคำตอบ" }).catch(() => {});
+        Review.missing(inc.id).then((m) => { if (!m.length || closed) return;
+          const bn = h("div", { class: "howto", role: "status" }, h("b", { text: "ก่อนปิดการสอบสวน ต้องดำเนินการอีก " + m.length + " รายการ: " }), h("span", { text: m.map((x) => x.text_th || x.code || "-").join(", ") }));
+          body.insertBefore(bn, rvHost); }).catch(() => {}); }
       if (d && d.started && d.can_edit && !closed)
         body.append(h("div", { class: "rowbtns" }, h("button", { type: "button", class: "btn-ok", text: "ปิดการสอบสวน (บันทึกเวลาสอบสวนเสร็จ)",
           onclick: () => { if (confirm("ยืนยันว่าสอบสวนเสร็จแล้ว? ระบบจะบันทึกเวลานี้ไว้วัด SLA")) act(sb.rpc("incident_investigation_complete", { p_incident: inc.id }), "บันทึกว่าสอบสวนเสร็จแล้ว"); } })));

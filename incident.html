@@ -181,6 +181,7 @@
   <script src="config.js"></script>
   <script src="auth.js"></script>
   <script src="attach.js"></script>
+  <script src="review.js"></script>
   <script src="draft.js"></script>
   <script src="date-hint.js"></script>
   <script>requireLogin();</script>
@@ -647,6 +648,9 @@
       ["SHE ตรวจสอบรายงานและเพิ่มรายละเอียด (ขั้นที่ 2)", "สอบสวนหาสาเหตุ (Root cause) และกำหนด Action แก้ไข/ป้องกัน (ขั้นที่ 3)", "ปิดเคสเมื่อดำเนินการครบ (ขั้นที่ 4) — ดูสถานะได้ที่หน้า \"รายการรายงาน\""].forEach((x) => ol.append(mk("li", x)));
       box.append(ol);
       if (warn) box.append(mk("p", "หมายเหตุ:" + warn, "margin:0 0 .9rem;padding:.6rem .8rem;background:#FFF4D6;border-radius:8px;color:#6b4200"));
+      /* B32: คำถามทวนข้อมูลช่วงส่งรายงาน (ไม่บังคับ; ถ้ายังไม่รัน migration หรือไม่มีคำถามช่วงนี้ จะไม่แสดงอะไร) */
+      const rvHost = mk("div"); box.append(rvHost);
+      if (window.Review) Review.mount(rvHost, id, { stages: ["reporter_submit"], title: "ช่วยทวนข้อมูลเคสนี้ (ไม่บังคับ ใช้เวลาไม่ถึง 1 นาที)", saveLabel: "บันทึกคำตอบ" }).catch(() => {});
       const row = mk("div", null, "display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end");
       const a1 = mk("a", "ดูรายงานที่ส่ง", "min-height:46px;display:inline-flex;align-items:center;padding:.5rem 1.1rem;border-radius:999px;background:#284499;color:#fff;font-weight:700;text-decoration:none"); a1.href = "records.html?open=" + encodeURIComponent(id);
       const a2 = mk("a", "กลับหน้าแรก", "min-height:46px;display:inline-flex;align-items:center;padding:.5rem 1.1rem;border-radius:999px;background:#EEF1F6;color:#284499;font-weight:700;text-decoration:none"); a2.href = "index.html";

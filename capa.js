@@ -1,0 +1,392 @@
+/* SHE Portal — Action (CAPA) */
+    /* ใช้ร่วม capa.html (รายการติดตาม) และ capa-new.html (สร้าง Action) — ตั้งโหมดด้วย data-capa-new บน body */
+const NEWMODE = document.body.hasAttribute("data-capa-new");
+requireLogin();
+const $ = (id) => document.getElementById(id);
+const msg = $("msg");
+const EN = window.I18N && I18N.lang === "en";
+// ทำไมใช้ textContent ทั้งหมด: ชื่อเรื่อง/ผู้รับผิดชอบ/เหตุผลเป็นข้อความที่ผู้ใช้พิมพ์เอง ต้องไม่ถูกตีความเป็น HTML (OWASP A03)
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  Object.entries(attrs || {}).forEach(([k, v]) => {
+    if (v === false || v == null) return;
+    if (k === "text") e.textContent = v;
+    else if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? "" : v);
+  });
+  kids.flat().forEach((c) => { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c))); });
+  return e;
+}
+function say(t, bad) { msg.textContent = t || ""; msg.hidden = !t; msg.className = "msg" + (bad ? " error" : ""); if (t) msg.scrollIntoView({ block: "nearest" }); }
+
+const ST = { open: "เปิดใหม่", in_progress: "กำลังดำเนินการ", returned: "ส่งกลับให้แก้", closed: "รอตรวจสอบ", verified: "ตรวจสอบแล้ว", cancelled: "ยกเลิก" };
+const SRC = { incident: "รายงานอุบัติเหตุ", audit: "Audit", other: "อื่น ๆ" };
+const EVT = { created: "สร้าง Action", status: "เปลี่ยนสถานะ", due_changed: "เลื่อนกำหนดเสร็จ", edited: "แก้ไขข้อมูล" };
+
+const ERRS = [
+  [/Evidence is mandatory/i, "ต้องมีหลักฐานขั้นต่ำอย่างน้อย 1 ไฟล์ ตั้งเป็น 0 ไม่ได้"],
+  [/Evidence incomplete/i, "หลักฐานยังไม่ครบตามจำนวนที่กำหนด — แนบไฟล์หลักฐานก่อนปิดงาน"],
+  [/Evidence is no longer complete/i, "หลักฐานไม่ครบแล้ว (อาจมีไฟล์ถูกลบ) — ให้ผู้รับผิดชอบแนบใหม่"],
+  [/verifier must be different/i, "ผู้ตรวจสอบต้องไม่ใช่คนเดียวกับผู้ปิดงาน (หลักการ 4 eyes)"],
+  [/Due date must be today or later/i, "กำหนดเสร็จต้องเป็นวันนี้หรือหลังจากนี้ (ไม่เกิน 5 ปี)"],
+  [/Invalid due date/i, "กำหนดเสร็จไม่ถูกต้อง"],
+  [/due date is unchanged/i, "กำหนดเสร็จไม่เปลี่ยนแปลงจากเดิม"],
+  [/due date can no longer be changed/i, "Action นี้ปิดงานแล้ว ไม่สามารถเลื่อนกำหนดได้"],
+  [/can no longer be edited/i, "Action นี้ไม่สามารถแก้ไขได้แล้ว"],
+  [/Owner must be an active user/i, "ผู้รับผิดชอบต้องเป็นผู้ใช้ที่ใช้งานอยู่และมีสิทธิ์ใน Plant นี้"],
+  [/Owner is required/i, "ต้องระบุผู้รับผิดชอบ (เลือกผู้ใช้ หรือพิมพ์ชื่อ 2–100 ตัวอักษร)"],
+  [/Title must be/i, "ชื่อเรื่องต้องยาว 3–200 ตัวอักษร"],
+  [/Description too long|Text too long/i, "ข้อความยาวเกิน 2,000 ตัวอักษรต่อช่อง"],
+  [/Reason must be|reason of at least|note of at least/i, "ต้องระบุเหตุผล/หมายเหตุอย่างน้อย 5 ตัวอักษร"],
+  [/Incident not found/i, "ไม่พบรายงานอุบัติเหตุต้นทางใน Plant นี้"],
+  [/Action must be an active action|Investigation is not open/i, "ผูก Action กับ Root cause ไม่ได้ (เคสไม่อยู่ในขั้นสอบสวน หรือ Action ไม่ตรงกับเคสนี้)"],
+  [/audit actions are created/i, "Action จาก Audit จะสร้างจากรอบ Audit (ยังไม่เปิดใช้)"],
+  [/Invalid master-list code/i, "ค่าในรายการตัวเลือกไม่ถูกต้อง"],
+  [/Only super admin can waive/i, "เฉพาะ Super admin เท่านั้นที่ตั้งจำนวนหลักฐานเป็น 0 ได้"],
+  [/min_evidence/i, "จำนวนหลักฐานขั้นต่ำต้องอยู่ระหว่าง 0–20"],
+  [/Invalid transition|Invalid target/i, "สถานะปัจจุบันไม่รองรับการดำเนินการนี้ — โปรดรีเฟรชหน้า"],
+  [/No permission|permission denied|42501/i, "คุณไม่มีสิทธิ์ดำเนินการนี้"],
+];
+function errTh(e) {
+  const m = (e && (e.message || e.details)) || String(e || "");
+  for (const [re, t] of ERRS) if (re.test(m)) return t;
+  return "ดำเนินการไม่สำเร็จ กรุณาลองใหม่";
+}
+
+let me = null, MYPERMS = [], PLANTS = [], DEPTS = [], USERS = [], LK = { root_cause: [], control_level: [], capa_severity: [] };
+let ROWS = [], CUR = null;
+const hasP = (c) => MYPERMS.includes(c);       // ใช้ซ่อน/แสดงปุ่มเท่านั้น — การบังคับจริงอยู่ที่ RPC + RLS
+const lkName = (kind, code) => { if (!code) return "-"; const r = LK[kind].find((x) => x.code === code); return r ? (EN && r.name_en ? r.name_en : r.name_th) : code; };
+const fixedOpts = new Set(["f-status", "f-source"]);   // ตัวเลือกคงที่ของระบบ = แปลได้; ที่เหลือเป็นข้อมูลผู้ใช้ = ไม่แปล
+const userLabel = (u) => (u.full_name || u.email || u.id) + (u.employee_code ? " · " + u.employee_code : "");
+const plantLabel = (p) => (p.name ? p.code + " — " + p.name : p.code);
+
+function fillSel(sel, opts, first) {
+  sel.replaceChildren();
+  if (first != null) sel.append(h("option", { value: "", text: first }));
+  opts.forEach(([v, t]) => sel.append(h("option", { value: v, text: t, "data-no-i18n": fixedOpts.has(sel.id) ? false : true })));
+}
+function statusBadge(r) {
+  const frag = [h("span", { class: "stbadge " + r.status, text: ST[r.status] || r.status })];
+  if (r.is_overdue) frag.push(h("span", { class: "stbadge od", text: "เกินกำหนด " + r.days_overdue + " วัน" }));
+  return frag;
+}
+
+// ---------- รายการ ----------
+async function loadList() {
+  const { data, error } = await sb.rpc("capa_list", {
+    p_id: null, p_plant: $("f-plant").value || null, p_status: $("f-status").value || null,
+    p_source: $("f-source").value || null, p_mine: $("f-mine").checked, p_limit: 300 });
+  if (error) { say(errTh(error), true); return; }
+  ROWS = data || [];
+  renderList();
+}
+function renderList() {
+  const box = $("capalist"); box.replaceChildren();
+  $("emptymsg").hidden = ROWS.length > 0;
+  const od = ROWS.filter((r) => r.is_overdue).length, wt = ROWS.filter((r) => r.status === "closed").length;
+  const sr = $("sumrow"); sr.replaceChildren(...[
+    h("span", { class: "sumchip", text: "ทั้งหมด " + ROWS.length + " รายการ" }),
+    od ? h("span", { class: "sumchip bad", text: "เกินกำหนด " + od + " รายการ" }) : null,
+    wt ? h("span", { class: "sumchip wait", text: "รอตรวจสอบ " + wt + " รายการ" }) : null].filter(Boolean));   // replaceChildren แปลง null เป็นข้อความ "null" จึงต้องกรองออกก่อน
+  const mode = $("f-sort") ? $("f-sort").value : "urgent";
+  const rank = (r) => r.is_overdue ? 0 : r.status === "returned" ? 1 : (r.status === "open" || r.status === "in_progress") ? 2 : r.status === "closed" ? 3 : 4;
+  const GN = ["เกินกำหนด: ต้องเร่งก่อน", "ส่งกลับให้แก้: รอเจ้าของแก้ไข", "กำลังดำเนินการ / เปิดใหม่", "รอตรวจสอบ: รอผู้ตรวจสอบปิดงาน", "ปิดแล้ว (ตรวจสอบแล้ว / ยกเลิก)"];
+  const byDue = (a, b) => String(a.due_date).localeCompare(String(b.due_date));
+  const list = ROWS.slice();
+  if (mode === "urgent") list.sort((a, b) => rank(a) - rank(b) || (a.is_overdue && b.is_overdue ? (b.days_overdue || 0) - (a.days_overdue || 0) : byDue(a, b)));
+  else if (mode === "due") list.sort(byDue);
+  else list.sort((a, b) => String(b.created_at || b.action_no).localeCompare(String(a.created_at || a.action_no)));
+  let lastG = -1, seq = 0;
+  list.forEach((r) => {
+    if (mode === "urgent" && rank(r) !== lastG) {
+      lastG = rank(r);
+      const n = list.filter((x) => rank(x) === lastG).length;
+      box.append(h("h3", { class: "capagrp", text: GN[lastG] + " (" + n + ")" }));
+    }
+    const card = h("button", { type: "button", class: "capacard s-" + r.status + (r.is_overdue ? " od" : ""), onclick: () => openDetail(r.id) },
+      h("span", { class: "no", "data-no-i18n": true, text: r.action_no + " · " + r.plant_code }),
+      h("span", { class: "tt", "data-no-i18n": true, text: r.title }),
+      h("span", {}, statusBadge(r)),
+      h("span", { class: "meta" }, h("span", { text: "ผู้รับผิดชอบ:" }), " ", h("span", { "data-no-i18n": true, text: r.owner_name || "-" })),
+      h("span", { class: "meta" }, h("span", { text: "กำหนดเสร็จ:" }), " " + r.due_date + " · ", h("span", { text: "หลักฐาน" }), " " + r.evidence_count + "/" + r.min_evidence));
+    box.append(card);
+  });
+}
+
+// ---------- รายละเอียด ----------
+async function openDetail(id, keepScroll) {
+  const { data, error } = await sb.rpc("capa_list", { p_id: id, p_plant: null, p_status: null, p_source: null, p_mine: false, p_limit: 1 });
+  if (error || !data || !data[0]) { say(error ? errTh(error) : "ไม่พบ Action นี้ หรือคุณไม่มีสิทธิ์ดู", true); return; }
+  CUR = data[0];
+  const hist = await sb.rpc("capa_history", { p_id: id });
+  renderDetail(CUR, hist.data || []);
+  if (!keepScroll) $("capadetail").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function dl(pairs) {
+  const d = h("dl");
+  pairs.forEach(([k, v, u]) => { d.append(h("dt", { text: k }), h("dd", { "data-no-i18n": u ? true : false, text: v == null || v === "" ? "-" : String(v) })); });
+  return d;
+}
+function renderDetail(a, hist) {
+  const box = $("capadetail"); box.hidden = false; box.replaceChildren();
+  const live = ["open", "in_progress", "returned"].includes(a.status);
+  const own = a.i_am_owner;
+  const canEdit = live && (own || hasP("capa.create"));
+  const canStart = (a.status === "open" || a.status === "returned") && (own || hasP("capa.create") || hasP("capa.close"));
+  const canClose = live && (own || hasP("capa.close"));
+  const canVerify = a.status === "closed" && hasP("capa.verify");
+  const canCancel = live && hasP("capa.create");
+  box.append(h("h3", { "data-no-i18n": true, text: a.action_no + " — " + a.title }), h("div", {}, statusBadge(a)));
+  if (a.status === "closed") box.append(h("p", { class: "msg", role: "status", text: "ปิดงานแล้ว — รอผู้มีสิทธิ์ตรวจสอบ (ต้องไม่ใช่ผู้ปิดงาน)" }));
+  const acts = h("div", { class: "actrow" });
+  if (canStart) acts.append(h("button", { type: "button", onclick: () => doStatus("in_progress", false) }, "เริ่มดำเนินการ"));
+  const evLack = (a.evidence_count || 0) < (a.min_evidence || 0);
+  if (canClose) acts.append(h("button", Object.assign({ type: "button", onclick: () => { if (!evLack) doStatus("closed", false); } }, evLack ? { disabled: true, title: "ต้องแนบไฟล์หลักฐานก่อน" } : {}), "ปิดงาน (ส่งตรวจสอบ)"));
+  if (canClose && evLack) box.append(h("p", { class: "msg err", role: "alert", text: "⚠ ยังปิดงานไม่ได้ — ต้องแนบไฟล์หลักฐานก่อน (แนบแล้ว " + (a.evidence_count || 0) + " จาก " + a.min_evidence + " ไฟล์) แล้วปุ่มนี้จะใช้งานได้" }));
+  if (canVerify) acts.append(h("button", { type: "button", onclick: () => doStatus("verified", false) }, "ตรวจสอบผ่าน"),
+    h("button", { type: "button", class: "secondary", onclick: () => doStatus("returned", true) }, "ส่งกลับให้แก้"));
+  if (canEdit) acts.append(h("button", { type: "button", class: "secondary", onclick: () => openForm(a) }, "แก้ไขข้อมูล"),
+    h("button", { type: "button", class: "secondary", onclick: () => doDue(a) }, "เลื่อนกำหนดเสร็จ"));
+  if (canCancel) acts.append(h("button", { type: "button", class: "secondary", style: "color:#991B1B;border:2px solid #DC2626;background:#fff", onclick: () => doStatus("cancelled", true) }, "ยกเลิก Action"));
+  acts.append(h("button", { type: "button", class: "secondary", onclick: () => { box.hidden = true; CUR = null; } }, "ปิดรายละเอียด"));
+  box.append(dl([
+    ["Plant", a.plant_code], ["แหล่งที่มา", SRC[a.source_type] || a.source_type],
+    ["ผู้รับผิดชอบ", a.owner_name, 1], ["แผนก", (DEPTS.find((d) => d.id === a.department_id) || {}).name || "-", 1],
+    ["กำหนดเสร็จ", a.due_date], ["หลักฐาน (แนบแล้ว / ขั้นต่ำ)", a.evidence_count + " / " + a.min_evidence],
+    ["สาเหตุหลัก (Root cause)", lkName("root_cause", a.root_cause_code)],
+    ["ระดับมาตรการ (Hierarchy of Controls)", lkName("control_level", a.control_level_code)],
+    ["ระดับความรุนแรง", lkName("capa_severity", a.severity_code)],
+    ["สร้างโดย", a.created_by_name || "ไม่มีชื่อในโปรไฟล์", 1], ["ปิดงานโดย", a.closed_by_name, 1], ["ตรวจสอบโดย", a.verified_by_name, 1]]));
+  box.append(h("h4", { text: "รายละเอียด" }), h("p", { "data-no-i18n": true, text: a.description || "-" }));
+  [["ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis)", a.root_cause_text], ["มาตรการแก้ไข (Corrective action)", a.corrective_action], ["มาตรการป้องกัน (Preventive action)", a.preventive_action]].forEach(([t, v]) => {
+    box.append(h("h4", { text: t }), h("p", { class: "prewrap", "data-no-i18n": true, text: v || "-" }));
+  });
+  if (a.source_type === "incident" && a.source_id) box.append(h("p", {}, h("a", { href: "records.html" }, "ดูรายงานอุบัติเหตุต้นทางในหน้า \"รายการรายงาน\"")));
+  box.append(h("h4", { text: "หลักฐานการแก้ไข" }));
+  const attBox = h("div"); box.append(attBox);
+  Attach.panel(attBox, { entityType: "capa", entityId: a.id, canUpload: live && (own || hasP("capa.create") || hasP("capa.close")), closed: !live,
+    onChange: async () => { await loadList(); await openDetail(a.id, true); } });
+  box.append(h("h4", { text: "ประวัติ" }));
+  const ul = h("ul", { class: "hist" });
+  hist.forEach((x) => {
+    const extra = x.event === "status" ? [" : ", h("span", { text: ST[x.from_status] || "-" }), " → ", h("span", { text: ST[x.to_status] || "-" })]
+      : x.event === "due_changed" ? [" : " + x.old_due + " → " + x.new_due] : [];
+    ul.append(h("li", {}, h("strong", {}, h("span", { text: EVT[x.event] || x.event }), ...extra), h("br"),
+      h("small", { "data-no-i18n": true, text: (x.actor_name || "ไม่มีชื่อในโปรไฟล์") + " · " + new Date(x.at).toLocaleString("en-GB", { hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) + (x.reason ? " · " + x.reason : "") })));
+  });
+  box.append(ul);
+  const nextHint = a.status === "closed" ? "ขั้นถัดไป: รอผู้มีสิทธิ์ตรวจสอบ (ต้องไม่ใช่ผู้ปิดงาน)" : a.status === "verified" ? "งานนี้ตรวจสอบผ่านแล้ว" : a.status === "cancelled" ? "งานนี้ถูกยกเลิกแล้ว"
+    : evLack ? "ขั้นถัดไป: แนบไฟล์หลักฐานด้านบนให้ครบ แล้วกด \"ปิดงาน (ส่งตรวจสอบ)\"" : "ขั้นถัดไป: ทำตามมาตรการให้เสร็จ แล้วกด \"ปิดงาน (ส่งตรวจสอบ)\"";
+  acts.classList.add("actbar");
+  box.append(h("div", { class: "actwrap" }, h("p", { class: "acthint", role: "status", text: nextHint }), acts));
+}
+
+// ---------- เปลี่ยนสถานะ / เลื่อนกำหนด ----------
+function askNote(title, label, required, okText) {
+  return new Promise((resolve) => {
+    const dlg = $("notedlg"); dlg.replaceChildren();
+    const ta = h("textarea", { id: "note-ta", maxlength: "1000", required: required ? "" : false });
+    const err = h("p", { class: "errtxt", role: "alert" });
+    const form = h("form", { method: "dialog", class: "capaform" },
+      h("h3", { id: "notedlg-t", text: title }), h("label", { for: "note-ta", text: label + (required ? " (อย่างน้อย 5 ตัวอักษร)" : " (ไม่บังคับ)") }), ta, err,
+      h("div", { class: "actrow" }, h("button", { type: "submit", value: "ok" }, okText), h("button", { type: "button", class: "secondary", onclick: () => dlg.close() }, "ยกเลิก")));
+    form.addEventListener("submit", (ev) => {
+      const v = ta.value.trim();
+      if (required && v.length < 5) { ev.preventDefault(); err.textContent = "ต้องระบุอย่างน้อย 5 ตัวอักษร"; ta.focus(); return; }
+      dlg.dataset.val = v; dlg.dataset.ok = "1";
+    });
+    dlg.addEventListener("close", () => { const ok = dlg.dataset.ok === "1"; const v = dlg.dataset.val || ""; dlg.dataset.ok = ""; dlg.dataset.val = ""; resolve(ok ? v : null); }, { once: true });
+    dlg.append(form); dlg.showModal(); ta.focus();
+  });
+}
+async function doStatus(to, needNote) {
+  const titles = { in_progress: "เริ่มดำเนินการ", closed: "ปิดงาน (ส่งตรวจสอบ)", verified: "ตรวจสอบผ่าน", returned: "ส่งกลับให้แก้", cancelled: "ยกเลิก Action" };
+  const note = await askNote(titles[to], needNote ? "เหตุผล / หมายเหตุ" : "หมายเหตุ", needNote, "ยืนยัน");
+  if (note === null) return;
+  const { error } = await sb.rpc("capa_set_status", { p_id: CUR.id, p_to: to, p_note: note || null });
+  if (error) { say(errTh(error), true); return; }
+  say("บันทึกสถานะเรียบร้อย");
+  await loadList(); await openDetail(CUR.id, true);
+}
+function doDue(a) {
+  const dlg = $("notedlg"); dlg.replaceChildren();
+  const di = h("input", { type: "date", id: "due-in", value: a.due_date, required: "", "data-date-max": "today+1826" });
+  const ta = h("textarea", { id: "due-why", maxlength: "500", required: "" });
+  const err = h("p", { class: "errtxt", role: "alert" });
+  const form = h("form", { method: "dialog", class: "capaform" }, h("h3", { id: "notedlg-t", text: "เลื่อนกำหนดเสร็จ" }),
+    h("label", { for: "due-in", text: "กำหนดเสร็จใหม่" }), di, h("label", { for: "due-why", text: "เหตุผล (อย่างน้อย 5 ตัวอักษร)" }), ta, err,
+    h("div", { class: "actrow" }, h("button", { type: "submit" }, "บันทึก"), h("button", { type: "button", class: "secondary", onclick: () => dlg.close() }, "ยกเลิก")));
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault(); err.textContent = "";
+    if (ta.value.trim().length < 5) { err.textContent = "ต้องระบุเหตุผลอย่างน้อย 5 ตัวอักษร"; return; }
+    const { error } = await sb.rpc("capa_change_due", { p_id: a.id, p_due: di.value, p_reason: ta.value.trim() });
+    if (error) { err.textContent = errTh(error); return; }
+    dlg.close(); say("เลื่อนกำหนดเสร็จเรียบร้อย"); await loadList(); await openDetail(a.id, true);
+  });
+  dlg.append(form); dlg.showModal(); di.focus();
+}
+
+// ---------- ฟอร์มสร้าง / แก้ไข ----------
+function openForm(a, pre) {
+  const edit = !!a, dlg = $("formdlg"); dlg.replaceChildren();
+  const lkOpts = (k) => LK[k].map((r) => [r.code, EN && r.name_en ? r.name_en : r.name_th]);
+  const plant = h("select", { id: "fm-plant", required: "" });
+  fillSel(plant, PLANTS.map((p) => [p.id, plantLabel(p)]), PLANTS.length > 1 ? "-- เลือก --" : null);
+  const title = h("input", { type: "text", id: "fm-title", maxlength: "200", required: "" });
+  const desc = h("textarea", { id: "fm-desc", maxlength: "2000" });
+  // ช่องเดียว: พิมพ์ค้นหาชื่อผู้ใช้ในระบบ (datalist) หรือพิมพ์ชื่อคนนอกระบบ — ไม่ต้องเลื่อนรายการยาว ๆ
+  const ownerName = h("input", { type: "text", id: "fm-oname", maxlength: "100", list: "fm-ousers", autocomplete: "off" });
+  const ownerList = h("datalist", { id: "fm-ousers" });
+  USERS.forEach((u) => ownerList.append(h("option", { value: userLabel(u) })));
+  const dept = h("select", { id: "fm-dept" });
+  /* แผนกแยกต่อ Plant: ส่วนกลาง + แผนกของ Plant ที่เลือก (คงแผนกเดิมของ Action ที่กำลังแก้ไว้เสมอ) */
+  const refillDept = () => { const cur = dept.value, pid = plant.value || (a && a.plant_id) || ""; fillSel(dept, DEPTS.filter((d) => !d.plant_id || d.plant_id === pid || (a && d.id === a.department_id)).map((d) => [d.id, d.name]), "-- ไม่ระบุ --"); dept.value = cur; };
+  refillDept(); plant.addEventListener("change", refillDept);
+  const due = h("input", { type: "date", id: "fm-due", required: "", "data-date-min": "today", "data-date-max": "today+1826", "data-date-warn": "past" });
+  const rc = h("select", { id: "fm-rc" }); fillSel(rc, lkOpts("root_cause"), "-- ไม่ระบุ --");
+  const cl = h("select", { id: "fm-cl" }); fillSel(cl, lkOpts("control_level"), "-- ไม่ระบุ --");
+  const sv = h("select", { id: "fm-sv" }); fillSel(sv, lkOpts("capa_severity"), "-- ไม่ระบุ --");
+  const rct = h("textarea", { id: "fm-rct", maxlength: "2000" });
+  const cor = h("textarea", { id: "fm-cor", maxlength: "2000" });
+  const prv = h("textarea", { id: "fm-prv", maxlength: "2000" });
+  const ev = h("input", { type: "number", id: "fm-ev", min: "1", max: "20", value: "1" });
+  const err = h("p", { class: "errtxt", role: "alert" });
+  let src = pre && pre.source_type === "incident" ? pre : null;
+  let rcId = src && pre.rc ? pre.rc : null;          // มาจากปุ่ม "+ สร้าง Action จาก Root cause นี้" ในหน้ารายการรายงาน
+  if (edit) {
+    title.value = a.title; desc.value = a.description || "";
+    const cu = a.owner_user_id && USERS.find((u) => u.id === a.owner_user_id);
+    ownerName.value = cu ? userLabel(cu) : (a.owner_name || ""); dept.value = a.department_id || ""; due.value = a.due_date;
+    rct.value = a.root_cause_text || ""; cor.value = a.corrective_action || ""; prv.value = a.preventive_action || "";
+    rc.value = a.root_cause_code || ""; cl.value = a.control_level_code || ""; sv.value = a.severity_code || "";
+  } else if (pre && pre.plant) plant.value = pre.plant;
+  refillDept();
+  const rows = [];
+  if (!edit) rows.push(h("label", { for: "fm-plant", text: "Plant" }), plant);
+  rows.push(h("label", { for: "fm-title", text: "ชื่อเรื่อง Action (3–200 ตัวอักษร)" }), title,
+    h("label", { for: "fm-desc", text: "รายละเอียดมาตรการ" }), desc,
+    h("label", { for: "fm-oname", text: "ผู้รับผิดชอบ (พิมพ์ค้นหาชื่อผู้ใช้ในระบบ หรือพิมพ์ชื่อคนนอกระบบ)" }), ownerName, ownerList,
+    h("label", { for: "fm-dept", text: "แผนก" }), dept);
+  if (!edit) rows.push(h("label", { for: "fm-due", text: "กำหนดเสร็จ" }), due);
+  rows.push(h("label", { for: "fm-rc", text: "สาเหตุหลัก (Root cause)" }), rc,
+    h("label", { for: "fm-rct", text: "ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis เช่น 5 Whys)" }), rct,
+    h("label", { for: "fm-cor", text: "มาตรการแก้ไข (Corrective action)" }), cor,
+    h("label", { for: "fm-prv", text: "มาตรการป้องกัน (Preventive action)" }), prv,
+    h("label", { for: "fm-cl", text: "ระดับมาตรการควบคุม (Hierarchy of Controls)" }), cl,
+    h("label", { for: "fm-sv", text: "ระดับความรุนแรง" }), sv);
+  if (!edit) rows.push(h("label", { for: "fm-ev", text: "จำนวนหลักฐานขั้นต่ำก่อนปิดงาน (อย่างน้อย 1 ไฟล์)" }), ev);
+  const form = h("form", { method: "dialog", class: "capaform", novalidate: "" },
+    h("h3", { id: "formdlg-t", text: edit ? "แก้ไข " + a.action_no : "สร้าง Action ใหม่" }),
+    src ? h("p", { class: "msg", text: "สร้างจากรายงานอุบัติเหตุที่เลือก" }) : null,
+    rcId ? h("p", { class: "msg", id: "fm-rcnote", role: "status", text: "กำลังโหลด Root cause ที่จะผูก..." }) : null, ...rows, err,
+    h("div", { class: "actrow" }, h("button", { type: "submit" }, "บันทึก"), h("button", { type: "button", class: "secondary", onclick: () => { if (NEWMODE) location.href = "capa.html"; else dlg.close(); } }, edit ? "ยกเลิก" : "ปิด (เก็บเป็นร่าง)")));
+  form.addEventListener("submit", async (ev2) => {
+    ev2.preventDefault(); err.textContent = "";
+    const typed = ownerName.value.trim();
+    const hit = USERS.find((u) => userLabel(u) === typed);
+    // ถ้าไม่ได้แก้ชื่อเดิมของ Action ที่มีผู้รับผิดชอบเป็นผู้ใช้ ให้คงผู้ใช้คนเดิมไว้ (กรณีผู้ใช้ทั่วไปอ่านรายชื่อไม่ได้)
+    const keep = edit && a.owner_user_id && typed === a.owner_name;
+    const ou = hit ? hit.id : keep ? a.owner_user_id : null, on = ou ? null : (typed || null);
+    if (!edit && !plant.value) { err.textContent = "กรุณาเลือก Plant"; return; }
+    if (title.value.trim().length < 3) { err.textContent = "ชื่อเรื่องต้องยาวอย่างน้อย 3 ตัวอักษร"; return; }
+    if (!ou && !on) { err.textContent = "กรุณาระบุผู้รับผิดชอบ"; return; }
+    if (!edit && !(parseInt(ev.value, 10) >= 1)) { err.textContent = "ต้องมีหลักฐานขั้นต่ำอย่างน้อย 1 ไฟล์"; return; }
+    if (!edit && !due.value) { err.textContent = "กรุณาระบุกำหนดเสร็จ"; return; }
+    let res;
+    if (edit) {
+      res = await sb.rpc("capa_update", { p_id: a.id, p_changes: {
+        title: title.value.trim(), description: desc.value, owner_user_id: ou, owner_name: ou ? null : on,
+        department_id: dept.value || null, root_cause_code: rc.value || null, control_level_code: cl.value || null, severity_code: sv.value || null,
+        root_cause_text: rct.value, corrective_action: cor.value, preventive_action: prv.value } });
+    } else {
+      res = await sb.rpc("capa_create", { p_plant: plant.value, p_title: title.value.trim(), p_due: due.value, p_owner_user: ou, p_owner_name: ou ? null : on,
+        p_description: desc.value.trim() || null, p_source_type: src ? "incident" : "other", p_source_id: src ? src.source_id : null,
+        p_department: dept.value || null, p_root_cause: rc.value || null, p_control_level: cl.value || null, p_severity: sv.value || null,
+        p_min_evidence: parseInt(ev.value, 10),
+        p_root_cause_text: rct.value.trim() || null, p_corrective: cor.value.trim() || null, p_preventive: prv.value.trim() || null });
+    }
+    if (res.error) { err.textContent = errTh(res.error); return; }
+    if (!edit) await SheDraft.clear();
+    let linkErr = "";
+    if (!edit && rcId && res.data) { const lk = await sb.rpc("incident_root_cause_link_capa", { p_root_cause: rcId, p_capa: res.data }); if (lk.error) linkErr = errTh(lk.error); }
+    if (NEWMODE) {   // หน้าสร้างแยก: สร้างเสร็จแล้วไปดูรายละเอียดที่หน้ารายการติดตาม
+      const go = () => { location.href = "capa.html" + (res.data ? "?id=" + encodeURIComponent(res.data) : ""); };
+      if (linkErr) { say("สร้าง Action แล้ว แต่ผูกกับ Root cause ไม่สำเร็จ: " + linkErr + " — ผูกเองได้ในหน้า \"รายการรายงาน\"", true); setTimeout(go, 3000); } else go();
+      return;
+    }
+    dlg.close();
+    if (linkErr) say("สร้าง Action แล้ว แต่ผูกกับ Root cause ไม่สำเร็จ: " + linkErr + " — ผูกเองได้ในหน้า \"รายการรายงาน\"", true);
+    else say(edit ? "แก้ไขเรียบร้อย" : rcId ? "สร้าง Action และผูกกับ Root cause เรียบร้อย" : "สร้าง Action เรียบร้อย");
+    await loadList(); const id = edit ? a.id : res.data; if (id) await openDetail(id, true);
+  });
+  dlg.append(form); dlg.showModal(); title.focus();
+  if (!edit) {
+    // ร่าง (หลักการ: ไม่มี record ไหนเสร็จในครั้งเดียว) — ปิดกล่องแล้วเก็บร่างให้ ไม่ต้องกลัวข้อมูลหาย
+    SheDraft.destroy();
+    const ctl = { plant, title, desc, oname: ownerName, dept, due, rc, rct, cor, prv, cl, sv, ev };
+    SheDraft.init({
+      formType: "capa", form: form,
+      note: "ร่าง Action ยังไม่ใช่การสั่งการ — ผู้รับผิดชอบจะยังไม่เห็นจนกว่าจะกด “บันทึก” ระบบบันทึกร่างให้อัตโนมัติทุก 30 วินาที และเมื่อปิดกล่องนี้ ร่างเก็บไว้ 30 วัน",
+      getState: () => { const o = { src: src ? { source_id: src.source_id } : null, rcId: rcId || null };
+        Object.keys(ctl).forEach((k) => { o[k] = ctl[k].value; }); return o; },
+      setState: async (o) => {
+        Object.keys(ctl).forEach((k) => { if (o[k] !== undefined && o[k] !== null) ctl[k].value = o[k]; });
+        if (o.oname !== undefined) ownerName.value = o.oname || "";
+        src = o.src && o.src.source_id ? { source_type: "incident", source_id: o.src.source_id } : src;
+        rcId = o.rcId || rcId;
+        const nt = $("fm-rcnote"); if (nt && rcId) nt.textContent = "Action นี้จะถูกผูกกับ Root cause เดิมของร่าง (ถ้ายังใช้ได้)";
+      },
+      getTitle: () => title.value.trim() ? title.value.trim().slice(0, 100) : "Action (ยังไม่ตั้งชื่อ)",
+      getPlantId: () => plant.value || ""
+    });
+    dlg.addEventListener("close", () => { SheDraft.flush().finally(() => SheDraft.destroy()); }, { once: true });
+  }
+  if (rcId) (async () => {                       // เติมหมวด/คำอธิบายจาก Root cause ที่เลือก (ผู้ใช้แก้ได้)
+    const note = $("fm-rcnote");
+    const r = await sb.rpc("incident_investigation_get", { p_incident: src.source_id });
+    const it = !r.error && r.data && (r.data.root_causes || []).find((x) => x.id === rcId);
+    if (!it) { note.textContent = "ไม่พบ Root cause ที่เลือก — สร้าง Action ได้ แต่จะไม่ถูกผูกอัตโนมัติ"; return; }
+    note.textContent = "ผูกกับ Root cause: " + it.text.slice(0, 120);
+    if (it.category && [...rc.options].some((o) => o.value === it.category)) rc.value = it.category;
+    if (!rct.value) rct.value = it.text;
+    if (!title.value) title.value = ("แก้ไข/ป้องกัน: " + it.text).slice(0, 200);
+  })();
+}
+
+// ---------- เริ่มต้น ----------
+async function init() {
+  me = await getMyProfile();
+  if (!me || me.status !== "active") { say("บัญชีของคุณยังไม่ได้รับการอนุมัติ", true); return; }
+  try { const mp = await sb.rpc("my_permissions"); MYPERMS = Array.isArray(mp.data) ? mp.data : []; } catch (e) { MYPERMS = []; }
+  const [pl, dp, lk, us] = await Promise.all([
+    sb.from("plants").select("id, code, name").eq("active", true).order("code"),
+    sb.from("departments").select("id, name, plant_id").eq("active", true).order("name"),
+    sb.from("lookup_values").select("kind, code, name_th, name_en, sort_order").in("kind", ["root_cause", "control_level", "capa_severity"]).eq("active", true).order("sort_order"),
+    sb.from("profiles").select("id, full_name, email, employee_code").eq("status", "active").order("full_name")]);
+  PLANTS = pl.data || []; DEPTS = dp.data || [];
+  (lk.data || []).forEach((r) => { if (LK[r.kind]) LK[r.kind].push(r); });
+  USERS = (us.data || []).length > 1 ? us.data : [];      // RLS ของ profiles: ผู้ใช้ทั่วไปเห็นเฉพาะตัวเอง → ซ่อนตัวเลือก ให้พิมพ์ชื่อแทน
+  fillSel($("f-status"), Object.entries(ST), "ทุกสถานะ");
+  fillSel($("f-source"), Object.entries(SRC), "ทุกแหล่งที่มา");
+  if (PLANTS.length > 1) { fillSel($("f-plant"), PLANTS.map((p) => [p.id, plantLabel(p)]), "ทุก Plant"); $("f-plant-wrap").hidden = false; }
+  const canCreate = hasP("capa.create") || me.role === "admin" || me.role === "super_admin";
+  $("btn-new").hidden = !canCreate;
+  $("btn-new").addEventListener("click", () => { location.href = "capa-new.html"; });
+  if (NEWMODE) {
+    if (!canCreate) { say("คุณไม่มีสิทธิ์สร้าง Action (ต้องมีสิทธิ์ capa.create)", true); return; }
+    const q0 = new URLSearchParams(location.search);
+    $("formdlg").addEventListener("cancel", () => { location.href = "capa.html"; });
+    openForm(null, { source_type: q0.get("source") === "incident" ? "incident" : "other", source_id: q0.get("sid"), plant: q0.get("plant"), rc: q0.get("rc") });
+    return;
+  }
+  ["f-status", "f-source", "f-plant", "f-mine"].forEach((id) => $(id).addEventListener("change", loadList));
+  $("f-sort").addEventListener("change", renderList);
+  $("capabar").addEventListener("submit", (e) => e.preventDefault());
+  await loadList();
+  const q = new URLSearchParams(location.search);
+  if (q.get("id")) await openDetail(q.get("id"));
+  else if (q.get("new") === "1" && canCreate) location.replace("capa-new.html" + location.search);   // ลิงก์เดิมจากหน้ารายการรายงานยังใช้ได้
+}
+init().catch((e) => say(errTh(e), true));

@@ -162,7 +162,7 @@
     if(u){u.classList.add("userlink");var out=u.getAttribute("href")==="#";var dest=(out&&acctBox)?acctBox:tools;if(u.parentNode!==dest)dest.appendChild(u)}}
   /* เมนูหลักชุดเดียวกันทุกหน้า (ตามแบบ Stitch): หน้าแรก · รายงาน · เช็กลิสต์ · อบรม · ดูข้อมูล · Executive Dashboard (เร็ว ๆ นี้) · ผู้ดูแลระบบ (เฉพาะ Admin) */
   var ORDER=["index.html","incident.html","checklist.html","training.html","capa.html","records.html"];var capaOn=false;
-  var ADM=["admin-users.html","admin-master.html","admin-permissions.html","admin-grants.html","admin-offboarding.html","admin-sla.html","admin-masterlists.html","admin-incident-types.html","leading.html","admin-themes.html"];var hasTh=false,dashMode=null;
+  var ADM=["admin-users.html","admin-master.html","admin-permissions.html","admin-grants.html","admin-offboarding.html","admin-sla.html","admin-masterlists.html","admin-incident-types.html","admin-review-questions.html","leading.html","admin-themes.html"];var hasTh=false,dashMode=null;
   /* จัดหมวดเมนูบน (หน้าจอกว้าง): สี + ชื่อหมวดกำกับเสมอ (ไม่ใช้สีอย่างเดียว — WCAG 2.2 SC 1.4.1) มือถือใช้แถบล่างเดิม */
   var GRP={"incident.html":["work","บันทึกและรายงาน"],"checklist.html":["work",""],"training.html":["work",""],"capa.html":["fix","ติดตามแก้ไข"],"records.html":["view","ดูข้อมูลและสรุป"],"executive-dashboard.html":["view",""],"leading.html":["view",""],"admin-users.html":["sys","จัดการระบบ"]};
   function markGroups(n){n.querySelectorAll("a").forEach(function(a){a.removeAttribute("data-g");a.removeAttribute("data-gl");a.classList.remove("ngf");var k=(a.getAttribute("href")||"").split("/").pop();var g=GRP[k];if(a.classList.contains("navdash"))g=GRP["executive-dashboard.html"];if(!g)return;a.setAttribute("data-g",g[0]);if(g[1]){a.setAttribute("data-gl",g[1]);a.classList.add("ngf")}})}
@@ -177,7 +177,7 @@
     if(dl&&by["index.html"])n.appendChild(dl);var ll=n.querySelector("a.navlead");if(!ll&&dashMode==="yes"){ll=el("a","navlead","Leading Indicator");ll.href="leading.html"}if(ll)n.appendChild(ll);
     if(by["admin-themes.html"])hasTh=true;if(hasTh){var st=document.querySelector("nav.subtabs");if(st&&!st.querySelector('a[href="admin-themes.html"]')){var ta=el("a",null,"ธีมเทศกาล");ta.href="admin-themes.html";if(f==="admin-themes.html")ta.setAttribute("aria-current","page");st.appendChild(ta)}}var isAdmin=!!(by[ADM[0]]||by[ADM[1]]||by[ADM[2]]);
     ADM.slice(1).forEach(function(k){if(by[k]&&by[k].parentNode)by[k].parentNode.removeChild(by[k])});
-    if(adminBox){var labs={"admin-users.html":"จัดการผู้ใช้","admin-master.html":"ข้อมูลหลัก","admin-permissions.html":"สิทธิ์การใช้งาน","admin-grants.html":"สิทธิ์รายบุคคล","admin-offboarding.html":"ผู้ใช้ที่ลาออก / ทบทวนสิทธิ์","admin-sla.html":"เกณฑ์ SLA / Repeat","admin-masterlists.html":"Life Saving Rules / SHE std","admin-incident-types.html":"ประเภทเหตุการณ์ / ความรุนแรง","leading.html":"Leading Indicator","admin-themes.html":"ธีมเทศกาล"};
+    if(adminBox){var labs={"admin-users.html":"จัดการผู้ใช้","admin-master.html":"ข้อมูลหลัก","admin-permissions.html":"สิทธิ์การใช้งาน","admin-grants.html":"สิทธิ์รายบุคคล","admin-offboarding.html":"ผู้ใช้ที่ลาออก / ทบทวนสิทธิ์","admin-sla.html":"เกณฑ์ SLA / Repeat","admin-masterlists.html":"Life Saving Rules / SHE std","admin-incident-types.html":"ประเภทเหตุการณ์ / ความรุนแรง","admin-review-questions.html":"คำถามทวนข้อมูลเคส","leading.html":"Leading Indicator","admin-themes.html":"ธีมเทศกาล"};
       adminBox.querySelectorAll("a").forEach(function(x){x.remove()});
       ADM.forEach(function(k){if(k==="admin-themes.html"?(by[k]||hasTh||f===k):(by[k]||isAdmin)){var l=el("a","tplink",labs[k]);l.href=k;if(k===f)l.setAttribute("aria-current","page");adminBox.appendChild(l)}});
       adminBox.hidden=!isAdmin}
@@ -229,7 +229,7 @@
     f.appendChild(l);f.appendChild(r);document.body.appendChild(f)}
 
   /* แถบเมนูย่อยของส่วนผู้ดูแล (ตามแบบ Stitch: Pending Users / Master Lists / Permissions) */
-  (function(){var f=(location.pathname.split("/").pop()||"");var T=[["admin-users.html","ผู้ใช้รออนุมัติ"],["admin-master.html","ข้อมูลหลัก"],["admin-permissions.html","สิทธิ์การใช้งาน"],["admin-grants.html","สิทธิ์รายบุคคล"],["admin-offboarding.html","ลาออก / ทบทวนสิทธิ์"],["admin-sla.html","SLA / Repeat"],["admin-masterlists.html","รายการมาตรฐาน"],["admin-incident-types.html","ประเภทเหตุการณ์"]];if(hasTh||f==="admin-themes.html")T.push(["admin-themes.html","ธีมเทศกาล"]);
+  (function(){var f=(location.pathname.split("/").pop()||"");var T=[["admin-users.html","ผู้ใช้รออนุมัติ"],["admin-master.html","ข้อมูลหลัก"],["admin-permissions.html","สิทธิ์การใช้งาน"],["admin-grants.html","สิทธิ์รายบุคคล"],["admin-offboarding.html","ลาออก / ทบทวนสิทธิ์"],["admin-sla.html","SLA / Repeat"],["admin-masterlists.html","รายการมาตรฐาน"],["admin-incident-types.html","ประเภทเหตุการณ์"],["admin-review-questions.html","คำถามทวนข้อมูล"]];if(hasTh||f==="admin-themes.html")T.push(["admin-themes.html","ธีมเทศกาล"]);
     if(!T.some(function(t){return t[0]===f}))return;var m=document.querySelector("main");if(!m)return;
     var n=el("nav","subtabs");n.setAttribute("aria-label","เมนูผู้ดูแลระบบ");
     T.forEach(function(t){var a=el("a",null,t[1]);a.href=t[0];if(t[0]===f)a.setAttribute("aria-current","page");n.appendChild(a)});m.insertBefore(n,m.firstChild)})();
