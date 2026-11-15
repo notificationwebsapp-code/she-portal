@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>เกณฑ์ SLA / Repeat / Plant | SHE Portal</title>
+  <style>
+    .tablewrap{overflow-x:auto;max-width:100%}
+    .tabs{display:flex;flex-wrap:wrap;gap:.3rem;padding:.3rem;margin:.8rem 0}
+    .tabs button{flex:1;min-width:9rem;margin:0}
+    .panel[hidden]{display:none}
+    .card{background:#fff;border-radius:22px;padding:1.1rem 1.2rem;margin:1rem 0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.8rem .9rem;align-items:end}
+    .grid label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.95rem}
+    .grid input,.grid select{min-height:50px;font:inherit;font-weight:400}
+    .grid .wide{grid-column:1/-1}
+    .hint{color:var(--muted);font-size:.9rem;font-weight:400}
+    table.mx{min-width:760px}
+    table.mx td.cell button{min-height:44px;width:100%;margin:0;white-space:normal}
+    table.mx td.cell .sub{display:block;font-size:.85rem;color:var(--muted)}
+    .tag{display:inline-block;border-radius:999px;padding:.1rem .65rem;font-size:.85rem;font-weight:700;background:#eee;color:#333}
+    .tag.ok{background:#e3f6e8;color:#14532d}.tag.warn{background:#fff4d6;color:#6b4200}.tag.bad{background:#fdecea;color:#8c1d18}
+    .row-actions{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.8rem}
+    .row-actions button{min-height:44px}
+    .editor[hidden]{display:none}
+    .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:.4rem;background:#6B7385}
+    .dot.on{background:#1B7A3D}
+  </style>
+  <script src="i18n.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- หน้านี้เป็นเพียงหน้าจอ: สิทธิ์จริงบังคับที่ RPC ฝั่งฐานข้อมูล (Admin; ค่ากลางและ Priority site = Super admin) -->
+    <div id="area" hidden>
+      <h2>เกณฑ์ SLA / กฎ Repeat / Plant</h2>
+      <p>กำหนดเกณฑ์เวลา (ISO 45001:2018 ข้อ 9.1) และเงื่อนไขตรวจจับเหตุการณ์เกิดซ้ำ (ข้อ 10.2) ระบบไม่มีค่าเริ่มต้น: ขั้นที่ยังไม่ตั้งเกณฑ์จะแสดงว่า "ยังไม่กำหนดเกณฑ์"</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <div class="tabs" role="tablist" aria-label="เมนูย่อย">
+        <button type="button" role="tab" id="tb-sla" aria-selected="true" aria-controls="p-sla">เกณฑ์ SLA</button>
+        <button type="button" role="tab" id="tb-rep" aria-selected="false" aria-controls="p-rep">กฎ Repeat</button>
+        <button type="button" role="tab" id="tb-plant" aria-selected="false" aria-controls="p-plant">Priority site</button>
+        <button type="button" role="tab" id="tb-area" aria-selected="false" aria-controls="p-area">พื้นที่ต่อ Plant</button>
+      </div>
+
+      <!-- ===== SLA ===== -->
+      <section id="p-sla" class="panel" role="tabpanel" aria-labelledby="tb-sla">
+        <div class="card grid">
+          <label>ขอบเขต<select id="s-scope"></select></label>
+          <p class="hint wide" id="s-scope-hint"></p>
+        </div>
+        <div class="tablewrap"><table class="mx" id="s-mx">
+          <thead></thead><tbody></tbody>
+        </table></div>
+        <p id="s-empty" hidden>ยังไม่มีประเภทเหตุการณ์ที่ใช้งานอยู่</p>
+
+        <form id="s-form" class="card editor" hidden>
+          <h3 id="s-title"></h3>
+          <p class="hint" id="s-cur"></p>
+          <div class="grid">
+            <label>เวลาสูงสุด (Max)<input id="s-max" type="number" min="1" step="1" required></label>
+            <label>หน่วย<select id="s-max-u"><option value="1">นาที</option><option value="60" selected>ชั่วโมง</option><option value="1440">วัน</option></select></label>
+            <label>เตือนล่วงหน้า (ก่อนครบ)<input id="s-warn" type="number" min="0" step="1" required></label>
+            <label>หน่วย<select id="s-warn-u"><option value="1">นาที</option><option value="60" selected>ชั่วโมง</option><option value="1440">วัน</option></select></label>
+            <label class="wide">เหตุผล / ที่มาของเกณฑ์ (5–200 ตัวอักษร)<input id="s-reason" type="text" maxlength="200" autocomplete="off" required></label>
+          </div>
+          <p class="hint">นับเป็นเวลาตามนาฬิกาจริง (ไม่หักวันหยุด) เกณฑ์ใหม่ไม่ย้อนกระทบเคสที่เริ่มนับไปแล้ว ค่า override ของ Plant ต้องเข้มกว่าหรือเท่ากับค่ากลาง</p>
+          <div class="row-actions">
+            <button type="submit" id="s-save">บันทึกเกณฑ์</button>
+            <button type="button" id="s-clear" class="secondary">ถอนเกณฑ์นี้</button>
+            <button type="button" id="s-cancel" class="secondary">ยกเลิก</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ===== Repeat ===== -->
+      <section id="p-rep" class="panel" role="tabpanel" aria-labelledby="tb-rep" hidden>
+        <div class="card">
+          <h3>นิยามการเกิดซ้ำ</h3>
+          <ul>
+            <li><b>Repeat root cause:</b> root cause เดียวกัน ใน Plant เดียวกัน ภายใน N วัน รวมอย่างน้อย K เคส</li>
+            <li><b>Repeat case:</b> ประเภทเหตุการณ์และพื้นที่เดียวกัน ภายใน N วัน รวมอย่างน้อย K เคส</li>
+            <li><b>Repeat after closure:</b> root cause เดิมเกิดอีกภายใน N วันหลังปิด Action (Action ไม่ได้ผล)</li>
+          </ul>
+        </div>
+        <div class="tablewrap"><table class="mx" id="r-tb" style="min-width:680px">
+          <thead><tr><th>นิยาม</th><th>ขอบเขต</th><th>N (วัน)</th><th>K (เคส)</th><th>สถานะ</th><th>เหตุผล</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <p id="r-empty" hidden>ยังไม่ได้ตั้งกฎ ระบบจึงยังไม่ตรวจจับเหตุการณ์เกิดซ้ำ</p>
+        <form id="r-form" class="card">
+          <h3>ตั้ง / แก้ไขกฎ</h3>
+          <div class="grid">
+            <label>นิยาม<select id="r-kind"><option value="root_cause">Repeat root cause</option><option value="case">Repeat case</option><option value="after_closure">Repeat after closure</option></select></label>
+            <label>ขอบเขต<select id="r-scope"></select></label>
+            <label>N: ช่วงวัน (1–1095)<input id="r-n" type="number" min="1" max="1095" step="1" required></label>
+            <label id="r-k-wrap">K: จำนวนเคสขั้นต่ำ (2–50)<input id="r-k" type="number" min="2" max="50" step="1"></label>
+            <label>การตรวจจับ<select id="r-on"><option value="true">เปิด</option><option value="false">ปิด</option></select></label>
+            <label class="wide">เหตุผล (5–200 ตัวอักษร)<input id="r-reason" type="text" maxlength="200" autocomplete="off" required></label>
+          </div>
+          <p class="hint">ค่า override ของ Plant ต้อง "ไวเท่ากันหรือไวกว่า" ค่ากลาง (N ไม่น้อยกว่า, K ไม่มากกว่า, ปิดการตรวจไม่ได้) ผู้สอบสวนยืนยัน/ปฏิเสธรายเคสได้เอง</p>
+          <div class="row-actions">
+            <button type="submit">บันทึกกฎ</button>
+            <button type="button" id="r-clear" class="secondary">ถอนกฎนี้</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ===== Priority ===== -->
+      <section id="p-plant" class="panel" role="tabpanel" aria-labelledby="tb-plant" hidden>
+        <p>ธง Priority site ใช้กรองมุมมอง Dashboard (ตั้งได้เฉพาะ Super admin) ไม่มีรายชื่อตั้งต้น</p>
+        <div class="tablewrap"><table class="mx" id="pl-tb" style="min-width:640px">
+          <thead><tr><th>Plant</th><th>Business unit</th><th>สถานะ</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <form id="pl-form" class="card editor" hidden>
+          <h3 id="pl-title"></h3>
+          <div class="grid"><label class="wide">เหตุผล (5–200 ตัวอักษร)<input id="pl-reason" type="text" maxlength="200" autocomplete="off" required></label></div>
+          <div class="row-actions"><button type="submit">ยืนยัน</button><button type="button" id="pl-cancel" class="secondary">ยกเลิก</button></div>
+        </form>
+      </section>
+
+      <!-- ===== Areas ===== -->
+      <section id="p-area" class="panel" role="tabpanel" aria-labelledby="tb-area" hidden>
+        <p>พื้นที่/แผนกของแต่ละ Plant ใช้จับคู่ Repeat case ผู้รายงานเลือกจากรายการนี้ ไม่มีค่าตั้งต้น</p>
+        <div class="card grid"><label>Plant<select id="a-plant"></select></label></div>
+        <div class="tablewrap"><table class="mx" id="a-tb" style="min-width:600px">
+          <thead><tr><th>รหัส</th><th>ชื่อ (ไทย)</th><th>ชื่อ (EN)</th><th>สถานะ</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <p id="a-empty" hidden>Plant นี้ยังไม่มีพื้นที่</p>
+        <form id="a-form" class="card">
+          <h3>เพิ่ม / แก้ไขพื้นที่</h3>
+          <div class="grid">
+            <label>รหัส (A-Z a-z 0-9 _ -)<input id="a-code" type="text" maxlength="30" pattern="[A-Za-z0-9_\-]{1,30}" required></label>
+            <label>ชื่อ (ไทย)<input id="a-th" type="text" maxlength="100" required></label>
+            <label>ชื่อ (EN)<input id="a-en" type="text" maxlength="100"></label>
+            <label>สถานะ<select id="a-active"><option value="true">ใช้งาน</option><option value="false">ปิดใช้งาน</option></select></label>
+            <label class="wide">เหตุผล (5–200 ตัวอักษร)<input id="a-reason" type="text" maxlength="200" autocomplete="off" required></label>
+          </div>
+          <div class="row-actions"><button type="submit">บันทึก</button></div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* หน้านี้เป็นเพียงหน้าจอ: ความปลอดภัยจริงอยู่ที่ DB (RPC ตรวจ my_role()='admin' / is_super_admin())
+       แสดงข้อมูลทุกจุดด้วย textContent (OWASP A03) */
+    const $ = (id) => document.getElementById(id);
+    const msgEl = $("msg");
+    let isSuper = false, plants = [], types = [], rules = [], sel = null, repRules = [];
+    const STAGES = [
+      ["flash_report", "ส่ง Flash report", "เวลาเกิดเหตุ → สร้างเคส"],
+      ["investigation_start", "เริ่มสอบสวน", "สร้างเคส → เริ่มสอบสวน"],
+      ["investigation_done", "สอบสวนเสร็จ", "เริ่มสอบสวน → ปิดการสอบสวน"],
+      ["actions_closed", "ปิด Action ครบ", "Action แรก → Action สุดท้ายปิด"],
+      ["case_closed", "ปิดเคส", "สร้างเคส → ปิดเคส"]];
+    const KIND_TH = { root_cause: "Repeat root cause", case: "Repeat case", after_closure: "Repeat after closure" };
+    function show(t, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t; msgEl.scrollIntoView({ block: "nearest" }); }
+    function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+    function nd(e) { e.setAttribute("data-no-i18n", ""); return e; }
+    function fmtMin(m) {
+      if (m == null) return "";
+      if (m % 1440 === 0) return (m / 1440) + " วัน";
+      if (m % 60 === 0) return (m / 60) + " ชม.";
+      return m + " นาที";
+    }
+    function errText(e) {
+      const c = e && e.code, m = (e && e.message) || "";
+      if (c === "42501") return "คุณไม่มีสิทธิ์ทำรายการนี้ (ค่ากลางและ Priority site = Super admin เท่านั้น)";
+      if (c === "P0002") return "ไม่พบรายการที่ต้องการ";
+      if (c === "22023") {
+        if (/central rule is required/i.test(m)) return "ต้องตั้งค่ากลางก่อน จึงตั้ง override ของ Plant ได้";
+        if (/stricter|sensitive/i.test(m)) return "ค่า override ต้องเข้มหรือไวเท่ากับค่ากลาง (ตั้งหลวมกว่าไม่ได้)";
+        if (/Reason/i.test(m)) return "กรุณาระบุเหตุผล 5–200 ตัวอักษร";
+        if (/warn/i.test(m)) return "ค่าเตือนล่วงหน้าต้องน้อยกว่าเวลาสูงสุด";
+        return "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง";
+      }
+      return "ทำรายการไม่สำเร็จ กรุณาติดต่อ Admin";
+    }
+    async function call(fn, args) { const { data, error } = await sb.rpc(fn, args); if (error) throw error; return data; }
+
+    const TABS = ["sla", "rep", "plant", "area"];
+    function selectTab(k) {
+      TABS.forEach((t) => { const on = t === k; $("tb-" + t).setAttribute("aria-selected", on ? "true" : "false"); $("p-" + t).hidden = !on; });
+      if (k === "rep") loadRep(); if (k === "plant") renderPlants(); if (k === "area") loadAreas();
+    }
+    TABS.forEach((t) => $("tb-" + t).addEventListener("click", () => selectTab(t)));
+
+    function fillPlantSelect(s, withCentral) {
+      s.replaceChildren();
+      if (withCentral) { const o = el("option", null, "ค่ากลาง (ทุก Plant)"); o.value = ""; s.appendChild(o); }
+      plants.forEach((p) => { const o = nd(el("option", null, p.code + " — " + p.name)); o.value = p.id; s.appendChild(o); });
+    }
+
+    /* ---------- SLA ---------- */
+    async function loadSla() {
+      const pid = $("s-scope").value || null;
+      try { rules = (await call("sla_rules_list", { p_plant: pid, p_history: false })) || []; } catch (e) { show(errText(e), false); rules = []; }
+      $("s-scope-hint").textContent = pid ? "ช่องแสดงค่าของ Plant นี้ ถ้าไม่มี override จะใช้ค่ากลาง (ตั้ง override ได้เฉพาะที่เข้มกว่าหรือเท่ากับค่ากลาง)" : "ค่ากลางใช้กับทุก Plant (Super admin เท่านั้น)";
+      renderMx();
+    }
+    function ruleFor(typeCode, stage, plantScoped) {
+      return rules.find((r) => r.incident_type_code === typeCode && r.stage === stage && (plantScoped ? r.plant_id : !r.plant_id));
+    }
+    function renderMx() {
+      const th = document.querySelector("#s-mx thead"), tb = document.querySelector("#s-mx tbody");
+      th.replaceChildren(); tb.replaceChildren();
+      const hr = el("tr"); hr.appendChild(el("th", null, "ประเภทเหตุการณ์"));
+      STAGES.forEach((s) => { const h = el("th", null, s[1]); h.title = s[2]; hr.appendChild(h); }); th.appendChild(hr);
+      $("s-empty").hidden = types.length > 0;
+      const scoped = !!$("s-scope").value;
+      types.forEach((t) => {
+        const tr = el("tr"); tr.appendChild(nd(el("td", null, t.name_th)));
+        STAGES.forEach((s) => {
+          const own = ruleFor(t.code, s[0], scoped), central = scoped ? ruleFor(t.code, s[0], false) : null;
+          const r = own || central; const td = el("td", "cell"); const b = el("button", "secondary");
+          b.type = "button";
+          const main = el("span", null, r ? fmtMin(r.max_minutes) : "ยังไม่กำหนดเกณฑ์");
+          b.appendChild(main);
+          if (r) { b.appendChild(el("span", "sub", "เตือนก่อน " + fmtMin(r.warn_before_minutes) + (scoped && !own ? " · ใช้ค่ากลาง" : ""))); }
+          b.setAttribute("aria-label", t.name_th + " / " + s[1]);
+          b.addEventListener("click", () => openEditor(t, s, own, central));
+          td.appendChild(b); tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+    }
+    function bestUnit(m) { return m % 1440 === 0 ? [m / 1440, 1440] : m % 60 === 0 ? [m / 60, 60] : [m, 1]; }
+    function openEditor(t, s, own, central) {
+      sel = { type: t, stage: s[0], own, central };
+      $("s-form").hidden = false;
+      $("s-title").textContent = t.name_th + " — " + s[1] + " (" + s[2] + ")";
+      const cur = own || null;
+      $("s-cur").textContent = cur ? "ค่าปัจจุบัน: " + fmtMin(cur.max_minutes) + " เตือนก่อน " + fmtMin(cur.warn_before_minutes) : "ยังไม่มีเกณฑ์ในขอบเขตนี้" + (central ? " (ค่ากลาง " + fmtMin(central.max_minutes) + ")" : "");
+      const mx = bestUnit(cur ? cur.max_minutes : 60), wn = bestUnit(cur ? cur.warn_before_minutes : 0);
+      $("s-max").value = cur ? mx[0] : ""; $("s-max-u").value = String(cur ? mx[1] : 60);
+      $("s-warn").value = cur ? wn[0] : ""; $("s-warn-u").value = String(cur ? wn[1] : 60);
+      $("s-reason").value = ""; $("s-clear").hidden = !cur;
+      $("s-form").scrollIntoView({ block: "nearest" }); $("s-max").focus();
+    }
+    $("s-cancel").addEventListener("click", () => { $("s-form").hidden = true; sel = null; });
+    $("s-form").addEventListener("submit", async (ev) => {
+      ev.preventDefault(); if (!sel) return;
+      const mx = Math.round(parseFloat($("s-max").value) * parseInt($("s-max-u").value, 10));
+      const wn = Math.round(parseFloat($("s-warn").value) * parseInt($("s-warn-u").value, 10));
+      if (!(mx >= 1) || !(wn >= 0)) { show("กรุณากรอกตัวเลขให้ถูกต้อง", false); return; }
+      if (wn >= mx) { show("ค่าเตือนล่วงหน้าต้องน้อยกว่าเวลาสูงสุด", false); return; }
+      try {
+        await call("sla_rule_set", { p_stage: sel.stage, p_type: sel.type.id, p_plant: $("s-scope").value || null, p_max: mx, p_warn: wn, p_reason: $("s-reason").value.trim() });
+        show("บันทึกเกณฑ์แล้ว", true); $("s-form").hidden = true; sel = null; await loadSla();
+      } catch (e) { show(errText(e), false); }
+    });
+    $("s-clear").addEventListener("click", async () => {
+      if (!sel || !sel.own) return;
+      const reason = $("s-reason").value.trim();
+      if (reason.length < 5) { show("กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร", false); $("s-reason").focus(); return; }
+      if (!confirm("ยืนยันถอนเกณฑ์นี้?")) return;
+      try {
+        await call("sla_rule_clear", { p_stage: sel.stage, p_type: sel.type.id, p_plant: $("s-scope").value || null, p_reason: reason });
+        show("ถอนเกณฑ์แล้ว", true); $("s-form").hidden = true; sel = null; await loadSla();
+      } catch (e) { show(errText(e), false); }
+    });
+    $("s-scope").addEventListener("change", () => { $("s-form").hidden = true; loadSla(); });
+
+    /* ---------- Repeat ---------- */
+    async function loadRep() {
+      try { repRules = (await call("repeat_rules_list", {})) || []; } catch (e) { show(errText(e), false); repRules = []; }
+      const tb = document.querySelector("#r-tb tbody"); tb.replaceChildren();
+      $("r-empty").hidden = repRules.length > 0;
+      repRules.forEach((r) => {
+        const tr = el("tr", null);
+        tr.appendChild(el("td", null, KIND_TH[r.kind] || r.kind));
+        tr.appendChild(nd(el("td", null, r.plant_code || "ค่ากลาง")));
+        tr.appendChild(nd(el("td", null, String(r.window_days))));
+        tr.appendChild(nd(el("td", null, r.min_occurrences == null ? "—" : String(r.min_occurrences))));
+        const st = el("td"); const tag = el("span", "tag " + (r.enabled ? "ok" : "warn"), r.enabled ? "เปิดตรวจจับ" : "ปิด"); st.appendChild(tag); tr.appendChild(st);
+        tr.appendChild(nd(el("td", null, r.reason)));
+        tr.addEventListener("click", () => { $("r-kind").value = r.kind; $("r-scope").value = r.plant_id || ""; $("r-n").value = r.window_days; $("r-k").value = r.min_occurrences == null ? "" : r.min_occurrences; $("r-on").value = String(r.enabled); syncK(); });
+        tr.style.cursor = "pointer"; tb.appendChild(tr);
+      });
+    }
+    function syncK() { const ac = $("r-kind").value === "after_closure"; $("r-k-wrap").hidden = ac; $("r-k").required = !ac; }
+    $("r-kind").addEventListener("change", syncK);
+    $("r-form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const kind = $("r-kind").value;
+      try {
+        await call("repeat_rule_set", { p_kind: kind, p_plant: $("r-scope").value || null, p_window: parseInt($("r-n").value, 10),
+          p_min: kind === "after_closure" ? null : parseInt($("r-k").value, 10), p_enabled: $("r-on").value === "true", p_reason: $("r-reason").value.trim() });
+        show("บันทึกกฎแล้ว", true); $("r-reason").value = ""; await loadRep();
+      } catch (e) { show(errText(e), false); }
+    });
+    $("r-clear").addEventListener("click", async () => {
+      const reason = $("r-reason").value.trim();
+      if (reason.length < 5) { show("กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร", false); $("r-reason").focus(); return; }
+      if (!confirm("ยืนยันถอนกฎนี้?")) return;
+      try { await call("repeat_rule_clear", { p_kind: $("r-kind").value, p_plant: $("r-scope").value || null, p_reason: reason }); show("ถอนกฎแล้ว", true); $("r-reason").value = ""; await loadRep(); }
+      catch (e) { show(errText(e), false); }
+    });
+
+    /* ---------- Priority site ---------- */
+    let plRows = [], plSel = null;
+    async function renderPlants() {
+      try { plRows = (await call("scope_options", {})) || []; } catch (e) { show(errText(e), false); plRows = []; }
+      const tb = document.querySelector("#pl-tb tbody"); tb.replaceChildren();
+      plRows.forEach((p) => {
+        const tr = el("tr"); tr.appendChild(nd(el("td", null, p.code)));
+        tr.appendChild(nd(el("td", null, p.business_unit || "—")));
+        const st = el("td"); st.appendChild(el("span", "tag " + (p.is_priority_site ? "warn" : ""), p.is_priority_site ? "Priority site" : "ปกติ")); tr.appendChild(st);
+        const ac = el("td"); const b = el("button", "secondary", p.is_priority_site ? "ยกเลิกธง" : "ตั้งเป็น Priority site"); b.type = "button"; b.disabled = !isSuper;
+        b.addEventListener("click", () => { plSel = p; $("pl-form").hidden = false; $("pl-title").textContent = (p.is_priority_site ? "ยกเลิกธง Priority site: " : "ตั้ง Priority site: ") + p.code; $("pl-title").setAttribute("data-no-i18n", ""); $("pl-reason").value = ""; $("pl-reason").focus(); });
+        ac.appendChild(b); tr.appendChild(ac); tb.appendChild(tr);
+      });
+      if (!isSuper) show("ดูได้ แต่ตั้งธง Priority site ได้เฉพาะ Super admin", true);
+    }
+    $("pl-cancel").addEventListener("click", () => { $("pl-form").hidden = true; });
+    $("pl-form").addEventListener("submit", async (ev) => {
+      ev.preventDefault(); if (!plSel) return;
+      try { await call("plant_set_priority", { p_plant: plSel.plant_id, p_flag: !plSel.is_priority_site, p_reason: $("pl-reason").value.trim() }); show("บันทึกแล้ว", true); $("pl-form").hidden = true; await renderPlants(); }
+      catch (e) { show(errText(e), false); }
+    });
+
+    /* ---------- พื้นที่ ---------- */
+    let areaRows = [];
+    async function loadAreas() {
+      const pid = $("a-plant").value; if (!pid) return;
+      try { areaRows = (await call("plant_areas_list", { p_plant: pid, p_include_inactive: true })) || []; } catch (e) { show(errText(e), false); areaRows = []; }
+      const tb = document.querySelector("#a-tb tbody"); tb.replaceChildren(); $("a-empty").hidden = areaRows.length > 0;
+      areaRows.forEach((a) => {
+        const tr = el("tr"); tr.appendChild(nd(el("td", null, a.code))); tr.appendChild(nd(el("td", null, a.name_th))); tr.appendChild(nd(el("td", null, a.name_en || "—")));
+        const st = el("td"); st.appendChild(el("span", "tag " + (a.active ? "ok" : ""), a.active ? "ใช้งาน" : "ปิดใช้งาน")); tr.appendChild(st);
+        const ac = el("td"); const b = el("button", "secondary", "แก้ไข"); b.type = "button";
+        b.addEventListener("click", () => { $("a-code").value = a.code; $("a-th").value = a.name_th; $("a-en").value = a.name_en || ""; $("a-active").value = String(a.active); $("a-reason").focus(); });
+        ac.appendChild(b); tr.appendChild(ac); tb.appendChild(tr);
+      });
+    }
+    $("a-plant").addEventListener("change", loadAreas);
+    $("a-form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      try {
+        await call("plant_area_set", { p_plant: $("a-plant").value, p_code: $("a-code").value.trim(), p_name_th: $("a-th").value.trim(), p_name_en: $("a-en").value.trim() || null, p_active: $("a-active").value === "true", p_reason: $("a-reason").value.trim() });
+        show("บันทึกพื้นที่แล้ว", true); $("a-reason").value = ""; await loadAreas();
+      } catch (e) { show(errText(e), false); }
+    });
+
+    (async function init() {
+      const session = await requireLogin(); if (!session) return;
+      const me = await getMyProfile(); const gate = $("gate");
+      if (!me || me.status !== "active" || (me.role !== "admin" && me.role !== "super_admin")) { gate.textContent = "หน้านี้สำหรับ Admin เท่านั้น"; return; }
+      isSuper = me.role === "super_admin";
+      const [pr, ty] = await Promise.all([
+        sb.from("plants").select("id, code, name").eq("active", true).order("code"),
+        sb.from("incident_types").select("id, code, name_th").eq("active", true).order("sort_order").order("code")]);
+      plants = pr.data || []; types = ty.data || [];
+      fillPlantSelect($("s-scope"), true); fillPlantSelect($("r-scope"), true); fillPlantSelect($("a-plant"), false);
+      if (!isSuper) { $("s-scope").selectedIndex = Math.min(1, $("s-scope").options.length - 1); }
+      syncK();
+      gate.hidden = true; $("area").hidden = false;
+      await loadSla();
+    })();
+  </script>
+  <script src="i18n-b26.js"></script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>Leading Indicator | SHE Portal</title>
+  <style>
+    .tablewrap{overflow-x:auto;max-width:100%}
+    .card{background:#fff;border-radius:22px;padding:1.1rem 1.2rem;margin:1rem 0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.8rem .9rem;align-items:end}
+    .grid label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.95rem}
+    .grid input,.grid select{min-height:50px;font:inherit;font-weight:400}
+    .hint{color:var(--muted);font-size:.9rem}
+    .tag{display:inline-block;border-radius:999px;padding:.1rem .65rem;font-size:.85rem;font-weight:700;background:#eee;color:#333}
+    .tag.warn{background:#fff4d6;color:#6b4200}
+    td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+    td.miss{font-weight:700;color:#8c1d18}
+    .bar{display:inline-block;height:10px;border-radius:5px;background:#284499;vertical-align:middle;margin-right:.4rem}
+    .heat td.h{text-align:center;font-variant-numeric:tabular-nums}
+    .hd{background:#EEF1F6}
+    [hidden]{display:none!important}
+    h3{color:var(--navy)}
+  </style>
+  <script src="i18n.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- หน้านี้เป็นเพียงหน้าจอ: สิทธิ์จริงอยู่ที่ RPC (dashboard.view) ข้อมูลเป็นตัวเลขรวมต่อ Plant ไม่มีรายชื่อบุคคล -->
+    <div id="area" hidden>
+      <h2>Leading Indicator และเหตุการณ์เกิดซ้ำ</h2>
+      <p>ติดตามตัวชี้วัดเชิงรุก (ISO 45001:2018 ข้อ 9.1) และประสิทธิผลของ Action (ข้อ 10.2) ว่า Plant ใดพลาดเกณฑ์ที่ขั้นตอนไหน</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <form id="f" class="card grid">
+        <label>มุมมอง
+          <select id="scope"><option value="all">ทุก Plant</option><option value="priority">เฉพาะ Priority site</option><option value="bu">ตาม Business unit</option><option value="plant">Plant เดียว</option></select>
+        </label>
+        <label id="w-bu" hidden>Business unit<select id="bu"></select></label>
+        <label id="w-pl" hidden>Plant<select id="pl"></select></label>
+        <label>ตั้งแต่<input type="date" id="from" required></label>
+        <label>ถึง<input type="date" id="to" required></label>
+        <button type="submit" style="min-height:50px">แสดงผล</button>
+      </form>
+
+      <section class="card"><h3>1) SLA ที่พลาด แยกตาม Plant และขั้นตอน</h3>
+        <p class="hint">ตัวเลข = พลาดเกณฑ์ (ปิดแล้วเกินเวลา + ยังเปิดอยู่แต่เกินเวลา) · "ไม่มีเกณฑ์" = ยังไม่ตั้งเกณฑ์ จึงไม่ถูกนับว่าพลาด</p>
+        <div class="tablewrap"><table id="t-sla" style="min-width:760px"><thead></thead><tbody></tbody></table></div><p id="e-sla" hidden>ไม่มีข้อมูลในช่วงที่เลือก</p></section>
+
+      <section class="card"><h3>2) ตัวชี้วัดเชิงรุกอื่น</h3>
+        <div class="tablewrap"><table id="t-li" style="min-width:760px"><thead><tr><th>Plant</th><th class="num">Action เกินกำหนดที่ยังเปิด</th><th class="num">Action ปิดแล้ว</th><th class="num">ปิดทันเวลา</th><th class="num">เลื่อนกำหนด 2 ครั้งขึ้นไป</th><th class="num">เหตุ Serious potential ที่ไม่มี Action</th></tr></thead><tbody></tbody></table></div><p id="e-li" hidden>ไม่มีข้อมูล</p></section>
+
+      <section class="card"><h3>3) เหตุการณ์เกิดซ้ำ (Repeat)</h3>
+        <p class="hint" id="h-rep">ต้องตั้งกฎ N/K ที่หน้า "เกณฑ์ SLA / Repeat" ก่อน ระบบจึงนับ</p>
+        <div class="tablewrap"><table id="t-rep" style="min-width:760px"><thead><tr><th>Plant</th><th class="num">เคสทั้งหมด</th><th class="num">Repeat root cause</th><th class="num">Repeat case</th><th class="num">Repeat after closure</th><th class="num">ผู้สอบสวนยืนยัน</th><th>กฎที่เปิด</th></tr></thead><tbody></tbody></table></div><p id="e-rep" hidden>ไม่มีข้อมูล</p>
+        <h4>Root cause ที่เกิดซ้ำ (heatmap)</h4>
+        <div class="tablewrap"><table id="t-heat" class="heat" style="min-width:600px"><thead></thead><tbody></tbody></table></div><p id="e-heat" hidden>ไม่มีรายการเกิดซ้ำ</p>
+        <h4>Action ปิดแล้วแต่ root cause เดิมเกิดอีก</h4>
+        <div class="tablewrap"><table id="t-ac" style="min-width:680px"><thead><tr><th>Plant</th><th>Root cause</th><th>เหตุครั้งก่อน</th><th>เหตุครั้งนี้</th><th class="num">หลังปิด (วัน)</th><th>ผลพิจารณา</th><th></th></tr></thead><tbody></tbody></table></div><p id="e-ac" hidden>ไม่มีรายการ (หรือคุณไม่มีสิทธิ์ดูรายเคส)</p>
+        <h4>แนวโน้มรายเดือน</h4>
+        <div class="tablewrap"><table id="t-tr" style="min-width:520px"><thead><tr><th>เดือน</th><th>นิยาม</th><th>เคส</th></tr></thead><tbody></tbody></table></div><p id="e-tr" hidden>ไม่มีข้อมูล</p>
+      </section>
+
+      <section class="card"><h3>4) Life Saving Rules (จำนวนเคสต่อข้อ)</h3>
+        <div class="tablewrap"><table id="t-lsr" style="min-width:560px"><thead><tr><th>Plant</th><th>รหัส</th><th>ข้อกำหนด</th><th class="num">เคส</th></tr></thead><tbody></tbody></table></div><p id="e-lsr" hidden>ยังไม่มีรายการ Life Saving Rules หรือยังไม่มีเคสที่ผูกข้อ</p></section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const msgEl = $("msg");
+    const STAGE_TH = { flash_report: "ส่ง Flash report", investigation_start: "เริ่มสอบสวน", investigation_done: "สอบสวนเสร็จ", actions_closed: "ปิด Action ครบ", case_closed: "ปิดเคส" };
+    const STAGE_ORDER = Object.keys(STAGE_TH);
+    const KIND_TH = { root_cause: "Repeat root cause", case: "Repeat case", after_closure: "Repeat after closure" };
+    const DEC_TH = { confirmed: "ยืนยันว่าซ้ำ", dismissed: "ปฏิเสธ" };
+    let opts = [];
+    function show(t, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = t; }
+    function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+    function td(text, cls) { const c = el("td", cls, text == null ? "" : String(text)); c.setAttribute("data-no-i18n", ""); return c; }
+    function errText(e) { return e && e.code === "42501" ? "คุณไม่มีสิทธิ์ดูข้อมูลชุดนี้" : e && e.code === "22023" ? "ตัวเลือกไม่ถูกต้อง" : "โหลดข้อมูลไม่สำเร็จ"; }
+    function fill(tb, rows, empty, build) { const t = document.querySelector(tb + " tbody"); t.replaceChildren(); $(empty).hidden = rows.length > 0; rows.forEach((r) => t.appendChild(build(r))); }
+    function params() {
+      const sc = $("scope").value;
+      return { p_scope: sc, p_plant: sc === "plant" ? $("pl").value || null : null, p_bu: sc === "bu" ? $("bu").value || null : null, p_from: $("from").value, p_to: $("to").value };
+    }
+    async function rpc(fn, a) { const { data, error } = await sb.rpc(fn, a); if (error) throw error; return data || []; }
+
+    function syncScope() { const s = $("scope").value; $("w-bu").hidden = s !== "bu"; $("w-pl").hidden = s !== "plant"; }
+    $("scope").addEventListener("change", syncScope);
+
+    async function refresh() {
+      msgEl.hidden = true; const a = params();
+      if (!a.p_from || !a.p_to || a.p_from > a.p_to) { show("กรุณาเลือกช่วงวันที่ให้ถูกต้อง", false); return; }
+      if (a.p_scope === "plant" && !a.p_plant) { show("กรุณาเลือก Plant", false); return; }
+      if (a.p_scope === "bu" && !a.p_bu) { show("กรุณาเลือก Business unit", false); return; }
+      const jobs = ["leading_sla_by_plant", "leading_indicators_by_plant", "repeat_summary_by_plant", "repeat_heatmap", "repeat_after_closure_list", "repeat_monthly_trend", "lsr_case_counts"];
+      const res = await Promise.allSettled(jobs.map((j) => rpc(j, a)));
+      const get = (i) => (res[i].status === "fulfilled" ? res[i].value : null);
+      const bad = res.find((r, i) => r.status === "rejected" && i !== 4); // รายเคส (index 4) อาจไม่มีสิทธิ์ ถือว่าปกติ
+      if (bad) show(errText(bad.reason), false);
+
+      /* 1) SLA matrix */
+      const sla = get(0) || [], byPlant = {};
+      sla.forEach((r) => { (byPlant[r.plant_id] = byPlant[r.plant_id] || { code: r.plant_code, name: r.plant_name, pr: r.is_priority_site, s: {} }).s[r.stage] = r; });
+      const th = document.querySelector("#t-sla thead"); th.replaceChildren();
+      const hr = el("tr"); hr.appendChild(el("th", null, "Plant")); STAGE_ORDER.forEach((s) => hr.appendChild(el("th", "num", STAGE_TH[s]))); hr.appendChild(el("th", "num", "ไม่มีเกณฑ์")); th.appendChild(hr);
+      fill("#t-sla", Object.values(byPlant), "e-sla", (p) => {
+        const tr = el("tr"); const c = td(p.code + (p.pr ? " ★" : "")); c.title = p.name; tr.appendChild(c);
+        let nr = 0;
+        STAGE_ORDER.forEach((s) => { const r = p.s[s]; const miss = r ? r.miss_total : 0; if (r) nr += r.no_rule; const cell = td(r ? miss : "—", "num" + (miss > 0 ? " miss" : "")); if (r) cell.title = "ทัน " + r.met + " · พลาด " + r.missed + " · เกินเวลาที่ยังเปิด " + r.overdue + " · ใกล้ครบ " + r.due_soon + " · อยู่ในเวลา " + r.on_track + " · ข้อมูลไม่ครบ " + r.data_gap; tr.appendChild(cell); });
+        tr.appendChild(td(nr, "num")); return tr;
+      });
+
+      /* 2) leading */
+      fill("#t-li", get(1) || [], "e-li", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code + (r.is_priority_site ? " ★" : ""))); [r.capa_overdue_open, r.capa_closed_total, r.capa_closed_on_time, r.capa_due_shifted_2plus, r.serious_potential_no_action].forEach((v) => tr.appendChild(td(v, "num"))); return tr; });
+
+      /* 3) repeat */
+      const rs = get(2) || [];
+      $("h-rep").textContent = rs.length && rs.every((r) => !r.rules_enabled) ? "ยังไม่ได้เปิดกฎ Repeat ที่หน้า \"เกณฑ์ SLA / Repeat\" ตัวเลขจึงเป็น 0" : "นับตามกฎ N/K ที่ตั้งไว้ · ผู้สอบสวนยืนยัน/ปฏิเสธรายเคสได้";
+      fill("#t-rep", rs, "e-rep", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code + (r.is_priority_site ? " ★" : ""))); [r.cases_total, r.repeat_root_cause, r.repeat_case, r.repeat_after_closure, r.confirmed_total].forEach((v) => tr.appendChild(td(v, "num"))); tr.appendChild(td(r.rules_enabled ? "เปิด" : "ยังไม่เปิด")); return tr; });
+
+      const hm = get(3) || [], rcs = [...new Set(hm.map((r) => r.root_cause_code))], pls = [...new Set(hm.map((r) => r.plant_code))];
+      const hh = document.querySelector("#t-heat thead"); hh.replaceChildren(); const h1 = el("tr"); h1.appendChild(el("th", null, "Root cause")); pls.forEach((p) => { const c = el("th", "num", p); c.setAttribute("data-no-i18n", ""); h1.appendChild(c); }); hh.appendChild(h1);
+      const mx = Math.max(1, ...hm.map((r) => r.repeat_cases));
+      fill("#t-heat", rcs, "e-heat", (rc) => {
+        const tr = el("tr"); const first = hm.find((r) => r.root_cause_code === rc); tr.appendChild(td(first.root_cause_name_th || rc));
+        pls.forEach((p) => { const r = hm.find((x) => x.root_cause_code === rc && x.plant_code === p); const v = r ? r.repeat_cases : 0; const c = td(v || "·", "h"); if (v) { c.style.background = "rgba(40,68,153," + (0.12 + 0.6 * v / mx).toFixed(2) + ")"; if (v / mx > 0.5) c.style.color = "#fff"; } tr.appendChild(c); });
+        return tr;
+      });
+
+      const ac = get(4) || [];
+      fill("#t-ac", ac, "e-ac", (r) => { const tr = el("tr"); [r.plant_code, r.root_cause_code, r.related_occurred_on, r.occurred_on].forEach((v) => tr.appendChild(td(v))); tr.appendChild(td(r.days_after_closure, "num")); tr.appendChild(td(DEC_TH[r.decision] || "รอพิจารณา"));
+        const c = el("td"); const l = el("a", null, "ไปหน้าดูข้อมูล"); l.href = "records.html"; c.appendChild(l); tr.appendChild(c); return tr; });
+
+      const mt = get(5) || [];
+      fill("#t-tr", mt, "e-tr", (r) => { const tr = el("tr"); tr.appendChild(td(String(r.month).slice(0, 7))); tr.appendChild(td(KIND_TH[r.kind] || r.kind));
+        const c = el("td"); c.setAttribute("data-no-i18n", ""); const b = el("span", "bar"); b.style.width = Math.min(200, 12 * r.cases) + "px"; c.appendChild(b); c.appendChild(document.createTextNode(String(r.cases))); tr.appendChild(c); return tr; });
+
+      /* 4) LSR */
+      fill("#t-lsr", get(6) || [], "e-lsr", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code)); tr.appendChild(td(r.item_code)); tr.appendChild(td(r.name_th)); tr.appendChild(td(r.cases, "num")); return tr; });
+    }
+    $("f").addEventListener("submit", (ev) => { ev.preventDefault(); refresh(); });
+
+    (async function init() {
+      const session = await requireLogin(); if (!session) return;
+      const me = await getMyProfile(); const gate = $("gate");
+      if (!me || me.status !== "active") { gate.textContent = "บัญชีนี้ยังไม่เปิดใช้งาน"; return; }
+      try { opts = await rpc("scope_options", {}); } catch (e) { gate.textContent = "คุณไม่มีสิทธิ์เข้าหน้านี้ (ต้องมีสิทธิ์ดู Dashboard)"; return; }
+      const bus = [...new Set(opts.map((o) => o.business_unit).filter(Boolean))];
+      bus.forEach((b) => { const o = el("option", null, b); o.value = b; o.setAttribute("data-no-i18n", ""); $("bu").appendChild(o); });
+      opts.forEach((p) => { const o = el("option", null, p.code + " — " + p.name); o.value = p.plant_id; o.setAttribute("data-no-i18n", ""); $("pl").appendChild(o); });
+      const t = new Date(), f = new Date(t.getFullYear(), t.getMonth() - 2, 1), iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      $("from").value = iso(f); $("to").value = iso(t);
+      gate.hidden = true; $("area").hidden = false; syncScope(); refresh();
+    })();
+  </script>
+  <script src="i18n-b26.js"></script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>
