@@ -335,6 +335,7 @@
     @media(max-width:600px){.modes{grid-template-columns:1fr}.exprow{grid-template-columns:1fr}}
   </style>
   <script src="i18n.js"></script>
+  <script src="i18n-b26.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
 </head>
@@ -1561,7 +1562,7 @@
     const SLA_ST = { met: ["ok", "ทันเวลา"], missed: ["bad", "เกินเวลา"], overdue: ["bad", "เกินเวลา (ยังเปิดอยู่)"], due_soon: ["warn", "ใกล้ครบเวลา"], on_track: ["ok", "อยู่ในเวลา"],
       no_rule: ["idle", "ยังไม่กำหนดเกณฑ์"], not_started: ["idle", "ยังไม่เริ่ม"], not_applicable: ["idle", "ไม่เกี่ยวข้อง"], no_data: ["idle", "ไม่มีข้อมูล"], data_issue: ["warn", "ข้อมูลเวลาผิดปกติ"] };
     const REP_KIND = { root_cause: "Root cause เดียวกันใน Plant", case: "ประเภทและพื้นที่เดียวกัน", after_closure: "Root cause เดิมเกิดอีกหลังปิด Action" };
-    function minTxt(m) { if (m == null) return "-"; if (m >= 1440 && m % 1440 === 0) return (m / 1440) + " วัน"; if (m >= 60) return Math.floor(m / 60) + " ชม." + (m % 60 ? " " + (m % 60) + " นาที" : ""); return m + " นาที"; }
+    function minTxt(m) { if (m == null) return "-"; const en = window.I18N && I18N.lang === "en", U = en ? [" d", " h", " min"] : [" วัน", " ชม.", " นาที"]; if (m >= 1440 && m % 1440 === 0) return (m / 1440) + U[0]; if (m >= 60) return Math.floor(m / 60) + U[1] + (m % 60 ? " " + (m % 60) + U[2] : ""); return m + U[2]; }
     async function b26Panel(wrap, inc, closed, d) {
       const box = h("details", { class: "editdet" }, h("summary", { text: "SLA และเหตุการณ์เกิดซ้ำ" }));
       const body = h("div"); box.append(body);
