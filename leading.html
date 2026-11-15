@@ -46,11 +46,12 @@
     #drill table{width:100%}#drill .dtop{display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start;flex-wrap:wrap}
     @media print{#drill{display:none!important}}
     @media print{.ed-grid2{display:grid;grid-template-columns:1fr 1fr}.ed-card,.ed-kpi{break-inside:avoid}}
-    .ltwo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:stretch}.ltwo .full{grid-column:1/-1}
-    .ltwo .card{margin:0;min-width:0}
+    /* จัดเป็น 2 คอลัมน์แบบ masonry: การ์ดเรียงต่อกันตามความสูงจริง ไม่เหลือช่องขาวเมื่อตารางสูงไม่เท่ากัน; การ์ดกว้าง (7, 8) ขึ้นแถวเต็มความกว้างท้ายหน้า */
+    .ltwo{display:block;columns:2;column-gap:1rem}.ltwo .full{column-span:all}
+    .ltwo .card{margin:0 0 1rem;min-width:0;break-inside:avoid;display:block;width:100%;box-sizing:border-box}
     .ltwo table{font-size:.8rem;width:100%;min-width:0!important;table-layout:auto;margin:0}.ltwo th,.ltwo td{padding:.3rem .3rem!important;white-space:normal;overflow-wrap:normal;line-height:1.25}.ltwo th:first-child,.ltwo td:first-child{white-space:nowrap}.ltwo th{font-size:.76rem}.ltwo .tablewrap{overflow-x:auto}
-    @media(max-width:900px){.ltwo{grid-template-columns:1fr}}
-    @media print{header,nav,#f,#export-row,#gate,#msg,footer,.howto{display:none!important}body,main,main.wide{background:#fff!important;padding:0!important;margin:0!important;max-width:none!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}#area{zoom:.72}.ltwo{grid-template-columns:repeat(2,minmax(0,1fr))}.card,.lk{break-inside:avoid}.tablewrap{overflow:visible}.ltwo th,.ltwo td{padding:.12rem .25rem!important;font-size:.72rem}@page{size:A4 landscape;margin:8mm}}
+    @media(max-width:900px){.ltwo{columns:1}}
+    @media print{header,nav,#f,#export-row,#gate,#msg,footer,.howto{display:none!important}body,main,main.wide{background:#fff!important;padding:0!important;margin:0!important;max-width:none!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}#area{zoom:.72}.ltwo{columns:2}.card,.lk{break-inside:avoid}.tablewrap{overflow:visible}.ltwo th,.ltwo td{padding:.12rem .25rem!important;font-size:.72rem}@page{size:A4 landscape;margin:8mm}}
     [hidden]{display:none!important}
     h3{color:var(--navy)}
       #t-rv .rv-toggle{background:none;border:0;padding:.2rem .1rem;min-height:36px;font-weight:700;color:#284499;cursor:pointer;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;gap:.4rem}
@@ -159,18 +160,19 @@
         <p class="hint">เฉพาะข้อที่มีเคสผูกอยู่ · จำนวนเคสต่อ Plant</p>
         <div class="tablewrap"><table id="t-lsr"><thead><tr><th>Plant</th><th>รหัส</th><th>ข้อกำหนด</th><th class="num">เคส</th></tr></thead><tbody></tbody></table></div><p id="e-lsr" hidden>ยังไม่มีรายการ Life Saving Rules หรือยังไม่มีเคสที่ผูกข้อ</p></section>
 
-      <section class="card full"><h4>8) ความครบถ้วนของแบบทวนข้อมูลเคส (ต่อ Plant × คำถาม)</h4>
-        <p class="hint">กดชื่อ Plant เพื่อขยายดูทีละคำถาม · แต่ละช่องแสดงจำนวนเคส และ (% ของเคสทั้งหมดใน Plant) · กดตัวเลขเพื่อดูรายการเคส · "ครบ %" = (ตอบแล้วที่ไม่ใช่ "ยังไม่ทราบ") ÷ เคสทั้งหมด</p>
-        <div class="rv-tools"><button type="button" id="rv-all" class="secondary">ขยายทั้งหมด</button></div>
-        <div class="tablewrap"><table id="t-rv"><thead><tr><th>Plant</th><th>คำถาม</th><th class="num">เคส</th><th class="num">ใช่</th><th class="num">ไม่ใช่</th><th class="num">ยังไม่ทราบ</th><th class="num">ไม่เกี่ยวข้อง</th><th class="num">ยังไม่ตอบ</th><th class="num">ครบ %</th></tr></thead><tbody></tbody></table></div><p id="e-rv" hidden>ยังไม่มีคำถามทวนข้อมูล หรือยังไม่ได้รัน migration B32 (ตั้งคำถามที่หน้า "คำถามทวนข้อมูลเคส")</p></section>
-
       <section class="card"><h4>6) Action ปิดแล้วแต่ root cause เดิมเกิดอีก</h4>
         <p class="hint">Action ปิดแล้ว แต่ root cause เดิมกลับเกิดอีก · เปิดเคสดูรายละเอียดได้ถ้ามีสิทธิ์</p>
         <div class="tablewrap"><table id="t-ac"><thead><tr><th>Plant</th><th>Root cause</th><th>เหตุครั้งก่อน</th><th>เหตุครั้งนี้</th><th class="num">หลังปิด (วัน)</th><th>ผลพิจารณา</th><th></th></tr></thead><tbody></tbody></table></div><p id="e-ac" hidden>ไม่มีรายการ (หรือคุณไม่มีสิทธิ์ดูรายเคส)</p></section>
 
+
       <section class="card full"><h4>7) Root cause ที่เกิดซ้ำ (Plant × Root cause)</h4>
         <p class="hint">ตัวเลขในช่อง = จำนวนเคสที่เกิดซ้ำ · สีเข้มขึ้น = มากขึ้น · แต่ละ Plant เทียบกันได้</p>
         <div class="tablewrap"><table id="t-heat" class="heat"><thead></thead><tbody></tbody></table></div><p id="e-heat" hidden>ไม่มีรายการเกิดซ้ำ</p></section>
+
+      <section class="card full"><h4>8) ความครบถ้วนของแบบทวนข้อมูลเคส (ต่อ Plant × คำถาม)</h4>
+        <p class="hint">กดชื่อ Plant เพื่อขยายดูทีละคำถาม · แต่ละช่องแสดงจำนวนเคส และ (% ของเคสทั้งหมดใน Plant) · กดตัวเลขเพื่อดูรายการเคส · "ครบ %" = (ตอบแล้วที่ไม่ใช่ "ยังไม่ทราบ") ÷ เคสทั้งหมด</p>
+        <div class="rv-tools"><button type="button" id="rv-all" class="secondary">ขยายทั้งหมด</button></div>
+        <div class="tablewrap"><table id="t-rv"><thead><tr><th>Plant</th><th>คำถาม</th><th class="num">เคส</th><th class="num">ใช่</th><th class="num">ไม่ใช่</th><th class="num">ยังไม่ทราบ</th><th class="num">ไม่เกี่ยวข้อง</th><th class="num">ยังไม่ตอบ</th><th class="num">ครบ %</th></tr></thead><tbody></tbody></table></div><p id="e-rv" hidden>ยังไม่มีคำถามทวนข้อมูล หรือยังไม่ได้รัน migration B32 (ตั้งคำถามที่หน้า "คำถามทวนข้อมูลเคส")</p></section>
       </div>
     </div>
   </main>

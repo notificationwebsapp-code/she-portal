@@ -120,17 +120,37 @@ async function openDetail(id, keepScroll) {
   const { data, error } = await sb.rpc("capa_list", { p_id: id, p_plant: null, p_status: null, p_source: null, p_mine: false, p_limit: 1 });
   if (error || !data || !data[0]) { say(error ? errTh(error) : "ไม่พบ Action นี้ หรือคุณไม่มีสิทธิ์ดู", true); return; }
   CUR = data[0];
+  try { history.replaceState(null, "", "capa.html?id=" + encodeURIComponent(id)); } catch (e) {}
   const hist = await sb.rpc("capa_history", { p_id: id });
   renderDetail(CUR, hist.data || []);
-  if (!keepScroll) $("capadetail").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!keepScroll) window.scrollTo(0, 0);
 }
 function dl(pairs) {
   const d = h("dl");
   pairs.forEach(([k, v, u]) => { d.append(h("dt", { text: k }), h("dd", { "data-no-i18n": u ? true : false, text: v == null || v === "" ? "-" : String(v) })); });
   return d;
 }
+const STAGES = [["สร้าง Action", "SHE / ผู้สั่งการ"], ["ลงมือแก้ไข", "ผู้รับผิดชอบ"], ["รอตรวจสอบ", "ผู้ตรวจสอบ"], ["ตรวจสอบแล้ว", "ผู้ตรวจสอบ"]];
+function stageOf(a) { return a.status === "verified" ? 4 : a.status === "closed" ? 2 : 1; }
+function fmtD(v) { if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v) : d.toLocaleDateString("en-GB"); }
+function stepper(a) {
+  const cur = stageOf(a);
+  const ol = h("ol", { class: "flow", "aria-label": "ขั้นตอนของ Action" });
+  STAGES.forEach((s, i) => {
+    const st = i < cur ? "done" : i === cur ? "current" : "todo";
+    const extra = i === 0 ? fmtD(a.created_at) : "";
+    ol.append(h("li", { class: "step " + st, "aria-current": st === "current" ? "step" : false },
+      h("span", { class: "dot", "aria-hidden": "true", text: st === "done" ? "✓" : String(i + 1) }),
+      h("span", { class: "lbl" }, h("span", { text: s[0] }), h("span", { class: "sr", text: st === "done" ? " (เสร็จแล้ว)" : st === "current" ? " (ขั้นตอนปัจจุบัน)" : " (ยังไม่ถึง)" })),
+      h("small", { text: s[1] }), extra ? h("small", { "data-no-i18n": true, text: extra }) : null));
+  });
+  return ol;
+}
+function tile(k, v, u) { return h("div", { class: "ctile" }, h("span", { class: "k", text: k }), h("span", Object.assign({ class: "v" }, u ? { "data-no-i18n": true } : {}), v == null || v === "" ? "-" : String(v))); }
+function textBlock(t, v) { return h("div", { class: "tblock" }, h("div", { class: "k", text: t }), h("div", { class: "v prewrap", "data-no-i18n": true, text: v || "-" })); }
+function showList() { $("capaview").hidden = false; $("capadetail").hidden = true; CUR = null; try { history.replaceState(null, "", "capa.html"); } catch (e) {} window.scrollTo(0, 0); }
 function renderDetail(a, hist) {
-  const box = $("capadetail"); box.hidden = false; box.replaceChildren();
+  const box = $("capadetail"); box.hidden = false; box.replaceChildren(); $("capaview").hidden = true;
   const live = ["open", "in_progress", "returned"].includes(a.status);
   const own = a.i_am_owner;
   const canEdit = live && (own || hasP("capa.create"));
@@ -138,37 +158,43 @@ function renderDetail(a, hist) {
   const canClose = live && (own || hasP("capa.close"));
   const canVerify = a.status === "closed" && hasP("capa.verify");
   const canCancel = live && hasP("capa.create");
-  box.append(h("h3", { "data-no-i18n": true, text: a.action_no + " — " + a.title }), h("div", {}, statusBadge(a)));
-  if (a.status === "closed") box.append(h("p", { class: "msg", role: "status", text: "ปิดงานแล้ว — รอผู้มีสิทธิ์ตรวจสอบ (ต้องไม่ใช่ผู้ปิดงาน)" }));
-  const acts = h("div", { class: "actrow" });
-  if (canStart) acts.append(h("button", { type: "button", onclick: () => doStatus("in_progress", false) }, "เริ่มดำเนินการ"));
+  const canUp = live && (own || hasP("capa.create") || hasP("capa.close"));
   const evLack = (a.evidence_count || 0) < (a.min_evidence || 0);
-  if (canClose) acts.append(h("button", Object.assign({ type: "button", onclick: () => { if (!evLack) doStatus("closed", false); } }, evLack ? { disabled: true, title: "ต้องแนบไฟล์หลักฐานก่อน" } : {}), "ปิดงาน (ส่งตรวจสอบ)"));
-  if (canClose && evLack) box.append(h("p", { class: "msg err", role: "alert", text: "⚠ ยังปิดงานไม่ได้ — ต้องแนบไฟล์หลักฐานก่อน (แนบแล้ว " + (a.evidence_count || 0) + " จาก " + a.min_evidence + " ไฟล์) แล้วปุ่มนี้จะใช้งานได้" }));
-  if (canVerify) acts.append(h("button", { type: "button", onclick: () => doStatus("verified", false) }, "ตรวจสอบผ่าน"),
-    h("button", { type: "button", class: "secondary", onclick: () => doStatus("returned", true) }, "ส่งกลับให้แก้"));
-  if (canEdit) acts.append(h("button", { type: "button", class: "secondary", onclick: () => openForm(a) }, "แก้ไขข้อมูล"),
-    h("button", { type: "button", class: "secondary", onclick: () => doDue(a) }, "เลื่อนกำหนดเสร็จ"));
-  if (canCancel) acts.append(h("button", { type: "button", class: "secondary", style: "color:#991B1B;border:2px solid #DC2626;background:#fff", onclick: () => doStatus("cancelled", true) }, "ยกเลิก Action"));
-  acts.append(h("button", { type: "button", class: "secondary", onclick: () => { box.hidden = true; CUR = null; } }, "ปิดรายละเอียด"));
-  box.append(dl([
-    ["Plant", a.plant_code], ["แหล่งที่มา", SRC[a.source_type] || a.source_type],
-    ["ผู้รับผิดชอบ", a.owner_name, 1], ["แผนก", (DEPTS.find((d) => d.id === a.department_id) || {}).name || "-", 1],
-    ["กำหนดเสร็จ", a.due_date], ["หลักฐาน (แนบแล้ว / ขั้นต่ำ)", a.evidence_count + " / " + a.min_evidence],
-    ["สาเหตุหลัก (Root cause)", lkName("root_cause", a.root_cause_code)],
-    ["ระดับมาตรการ (Hierarchy of Controls)", lkName("control_level", a.control_level_code)],
-    ["ระดับความรุนแรง", lkName("capa_severity", a.severity_code)],
-    ["สร้างโดย", a.created_by_name || "ไม่มีชื่อในโปรไฟล์", 1], ["ปิดงานโดย", a.closed_by_name, 1], ["ตรวจสอบโดย", a.verified_by_name, 1]]));
-  box.append(h("h4", { text: "รายละเอียด" }), h("p", { "data-no-i18n": true, text: a.description || "-" }));
-  [["ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis)", a.root_cause_text], ["มาตรการแก้ไข (Corrective action)", a.corrective_action], ["มาตรการป้องกัน (Preventive action)", a.preventive_action]].forEach(([t, v]) => {
-    box.append(h("h4", { text: t }), h("p", { class: "prewrap", "data-no-i18n": true, text: v || "-" }));
-  });
-  if (a.source_type === "incident" && a.source_id) box.append(h("p", {}, h("a", { href: "records.html" }, "ดูรายงานอุบัติเหตุต้นทางในหน้า \"รายการรายงาน\"")));
-  box.append(h("h4", { text: "หลักฐานการแก้ไข" }));
-  const attBox = h("div"); box.append(attBox);
-  Attach.panel(attBox, { entityType: "capa", entityId: a.id, canUpload: live && (own || hasP("capa.create") || hasP("capa.close")), closed: !live,
-    onChange: async () => { await loadList(); await openDetail(a.id, true); } });
-  box.append(h("h4", { text: "ประวัติ" }));
+  box.append(h("button", { type: "button", class: "secondary small backbtn", onclick: showList }, "← กลับรายการ Action"));
+  box.append(h("h3", { class: "dtitle", "data-no-i18n": true, text: a.action_no + " — " + a.title }), h("div", { class: "dbadges" }, statusBadge(a)));
+  if (a.status === "cancelled") box.append(h("p", { class: "msg", role: "status", text: "Action นี้ถูกยกเลิกแล้ว" }));
+  else box.append(stepper(a));
+  // กล่อง "ตอนนี้ / ขั้นถัดไป" แบบเดียวกับหน้าสอบสวน
+  let now, next;
+  if (a.status === "cancelled") { now = "ยกเลิกแล้ว"; next = "ไม่ต้องดำเนินการใด ๆ"; }
+  else if (a.status === "verified") { now = "ตรวจสอบผ่านแล้ว"; next = "ไม่ต้องทำอะไรเพิ่ม งานนี้เสร็จสมบูรณ์"; }
+  else if (a.status === "closed") { now = "รอผู้ตรวจสอบ"; next = "ขั้นถัดไป: ผู้มีสิทธิ์ตรวจสอบ (ต้องไม่ใช่ผู้ปิดงาน) กด \"ตรวจสอบผ่าน\" หรือ \"ส่งกลับให้แก้\"" + (canVerify ? "" : " คุณไม่ต้องทำอะไรเพิ่ม"); }
+  else if (a.status === "returned") { now = "ถูกส่งกลับให้แก้ไข"; next = "ขั้นถัดไป: แก้ไขตามที่ผู้ตรวจสอบแจ้ง แนบหลักฐานให้ครบ แล้วกด \"ปิดงาน (ส่งตรวจสอบ)\""; }
+  else if (a.status === "open") { now = "เปิดใหม่ รอเริ่มดำเนินการ"; next = "ขั้นถัดไป: ผู้รับผิดชอบกด \"เริ่มดำเนินการ\""; }
+  else { now = "กำลังดำเนินการ"; next = evLack ? "ขั้นถัดไป: แนบไฟล์หลักฐานด้านขวาให้ครบ แล้วกด \"ปิดงาน (ส่งตรวจสอบ)\"" : "ขั้นถัดไป: ทำตามมาตรการให้เสร็จ แล้วกด \"ปิดงาน (ส่งตรวจสอบ)\""; }
+  box.append(h("div", { class: "nextbox", role: "status" }, h("div", { class: "now" }, h("span", { text: "ตอนนี้:" }), " ", h("span", { text: now })), h("div", { text: next })));
+  if (canClose && evLack) box.append(h("p", { class: "msg err", role: "alert", text: "⚠ ยังปิดงานไม่ได้ — ต้องแนบไฟล์หลักฐานก่อน (แนบแล้ว " + (a.evidence_count || 0) + " จาก " + a.min_evidence + " ไฟล์)" }));
+
+  const grid = h("div", { class: "capagrid" });
+  const left = h("div", { class: "capaleft" }), right = h("div", { class: "caparight" });
+  grid.append(left, right); box.append(grid);
+
+  // ซ้าย: ข้อมูลหลัก + เนื้อหา + ประวัติ
+  left.append(h("h4", { class: "sect", text: "รายละเอียด Action" }));
+  left.append(h("div", { class: "ctiles" },
+    tile("Plant", a.plant_code), tile("แหล่งที่มา", SRC[a.source_type] || a.source_type),
+    tile("ผู้รับผิดชอบ", a.owner_name, 1), tile("แผนก", (DEPTS.find((d) => d.id === a.department_id) || {}).name || "-", 1),
+    tile("กำหนดเสร็จ", a.due_date), tile("หลักฐาน (แนบแล้ว / ขั้นต่ำ)", a.evidence_count + " / " + a.min_evidence),
+    tile("สาเหตุหลัก (Root cause)", lkName("root_cause", a.root_cause_code)),
+    tile("ระดับมาตรการ (Hierarchy of Controls)", lkName("control_level", a.control_level_code)),
+    tile("ระดับความรุนแรง", lkName("capa_severity", a.severity_code))));
+  left.append(textBlock("รายละเอียด", a.description));
+  left.append(textBlock("ผลวิเคราะห์สาเหตุที่แท้จริง (Root cause analysis)", a.root_cause_text));
+  left.append(textBlock("มาตรการแก้ไข (Corrective action)", a.corrective_action));
+  left.append(textBlock("มาตรการป้องกัน (Preventive action)", a.preventive_action));
+  left.append(h("div", { class: "ctiles" }, tile("สร้างโดย", a.created_by_name || "ไม่มีชื่อในโปรไฟล์", 1), tile("ปิดงานโดย", a.closed_by_name, 1), tile("ตรวจสอบโดย", a.verified_by_name, 1)));
+  if (a.source_type === "incident" && a.source_id) left.append(h("p", {}, h("a", { href: "records.html" }, "ดูรายงานอุบัติเหตุต้นทางในหน้า \"รายการรายงาน\"")));
+  left.append(h("h4", { class: "sect", text: "ประวัติ" }));
   const ul = h("ul", { class: "hist" });
   hist.forEach((x) => {
     const extra = x.event === "status" ? [" : ", h("span", { text: ST[x.from_status] || "-" }), " → ", h("span", { text: ST[x.to_status] || "-" })]
@@ -176,11 +202,28 @@ function renderDetail(a, hist) {
     ul.append(h("li", {}, h("strong", {}, h("span", { text: EVT[x.event] || x.event }), ...extra), h("br"),
       h("small", { "data-no-i18n": true, text: (x.actor_name || "ไม่มีชื่อในโปรไฟล์") + " · " + new Date(x.at).toLocaleString("en-GB", { hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) + (x.reason ? " · " + x.reason : "") })));
   });
-  box.append(ul);
-  const nextHint = a.status === "closed" ? "ขั้นถัดไป: รอผู้มีสิทธิ์ตรวจสอบ (ต้องไม่ใช่ผู้ปิดงาน)" : a.status === "verified" ? "งานนี้ตรวจสอบผ่านแล้ว" : a.status === "cancelled" ? "งานนี้ถูกยกเลิกแล้ว"
-    : evLack ? "ขั้นถัดไป: แนบไฟล์หลักฐานด้านบนให้ครบ แล้วกด \"ปิดงาน (ส่งตรวจสอบ)\"" : "ขั้นถัดไป: ทำตามมาตรการให้เสร็จ แล้วกด \"ปิดงาน (ส่งตรวจสอบ)\"";
-  acts.classList.add("actbar");
-  box.append(h("div", { class: "actwrap" }, h("p", { class: "acthint", role: "status", text: nextHint }), acts));
+  left.append(ul);
+
+  // ขวา: การ์ดหลักฐาน (เหมือนหน้าสอบสวน)
+  const card = h("section", { class: "evcard", "aria-labelledby": "evt" });
+  card.append(h("div", { class: "evhead" },
+    h("span", { class: "evico", "aria-hidden": "true", text: "▣" }),
+    h("div", {}, h("h4", { id: "evt", text: "หลักฐานการแก้ไข" }),
+      h("p", { class: "evsub" }, h("span", { text: "แนบรูปภาพหรือไฟล์ที่แสดงว่าได้แก้ไขตามมาตรการแล้ว" }), " ", h("span", { class: "evcnt " + (evLack ? "lack" : "ok"), text: (a.evidence_count || 0) + " / " + (a.min_evidence || 0) })))));
+  const attBox = h("div"); card.append(attBox); right.append(card);
+  Attach.panel(attBox, { entityType: "capa", entityId: a.id, canUpload: canUp, closed: !live,
+    onChange: async () => { await loadList(); await openDetail(a.id, true); } });
+
+  // แถบปุ่มดำเนินการ (ติดล่างจอ)
+  const acts = h("div", { class: "actrow actbar" });
+  if (canStart) acts.append(h("button", { type: "button", onclick: () => doStatus("in_progress", false) }, "เริ่มดำเนินการ"));
+  if (canClose) acts.append(h("button", Object.assign({ type: "button", onclick: () => { if (!evLack) doStatus("closed", false); } }, evLack ? { disabled: true, title: "ต้องแนบไฟล์หลักฐานก่อน" } : {}), "ปิดงาน (ส่งตรวจสอบ)"));
+  if (canVerify) acts.append(h("button", { type: "button", onclick: () => doStatus("verified", false) }, "ตรวจสอบผ่าน"),
+    h("button", { type: "button", class: "secondary", onclick: () => doStatus("returned", true) }, "ส่งกลับให้แก้"));
+  if (canEdit) acts.append(h("button", { type: "button", class: "secondary", onclick: () => openForm(a) }, "แก้ไขข้อมูล"),
+    h("button", { type: "button", class: "secondary", onclick: () => doDue(a) }, "เลื่อนกำหนดเสร็จ"));
+  if (canCancel) acts.append(h("button", { type: "button", class: "secondary danger", onclick: () => doStatus("cancelled", true) }, "ยกเลิก Action"));
+  if (acts.children.length) box.append(h("div", { class: "actwrap" }, acts));
 }
 
 // ---------- เปลี่ยนสถานะ / เลื่อนกำหนด ----------
