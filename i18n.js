@@ -194,7 +194,8 @@
     var lead = v.match(/^\s*/)[0], trail = v.match(/\s*$/)[0];
     var core = v.slice(lead.length, v.length - trail.length);
     var r = translate(core);
-    if (r != null) n.nodeValue = lead + r + trail;
+    /* กันวนซ้ำไม่รู้จบ: เขียนกลับเมื่อข้อความเปลี่ยนจริงเท่านั้น (การเขียนค่าเดิมก็ทำให้ MutationObserver ทำงานซ้ำ) */
+    if (r != null) { var nv = lead + r + trail; if (nv !== v) n.nodeValue = nv; }
     else I18N.missing[norm(core)] = 1;
   }
   function attrs(el) {
@@ -202,7 +203,7 @@
       var a = ATTRS[i], v = el.getAttribute && el.getAttribute(a);
       if (v && TH.test(v)) {
         var r = translate(v);
-        if (r != null) el.setAttribute(a, r); else I18N.missing[norm(v)] = 1;
+        if (r != null) { if (r !== v) el.setAttribute(a, r); } else I18N.missing[norm(v)] = 1;
       }
     }
     if (el.tagName === "INPUT" && /^(submit|button|reset)$/.test(el.type)) {
