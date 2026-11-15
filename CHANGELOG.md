@@ -2,6 +2,13 @@
 
 รูปแบบ: วันที่ → สิ่งที่เปลี่ยน → ไฟล์ที่เกี่ยวข้อง (ข้อมูลทั้งหมดเป็นข้อมูลทดสอบ)
 
+## 2026-11-15 — B28c รายงานอุบัติเหตุใช้ 3 แกน (ประเภทหลายระดับ / ความรุนแรง / ผู้เกี่ยวข้อง)
+- ฐานข้อมูล (`migration-B28c-incident-report-axes.sql`): เพิ่ม `severity_id`, `involved_party_id` ใน whitelist แก้ไขรายงาน (`incident_editable_fields`) และ `_apply_incident_changes` (แก้ได้ผ่าน RPC พร้อมเหตุผล + incident_edit_log เท่านั้น); ถอน UPDATE ตรงของสองคอลัมน์; trigger `incident_axes_guard` ตรวจฝั่งฐานข้อมูล: รายงานใหม่ต้องมีความรุนแรงและผู้เกี่ยวข้องที่ active, ประเภทต้อง active + selectable + kind=hazard (ตรวจเฉพาะค่าที่เปลี่ยนตอนแก้ไข รายงานเก่ายังแก้ฟิลด์อื่นได้)
+- `incident.html`: เลือกประเภททีละระดับ (cascade ไม่จำกัดชั้น) + ช่องความรุนแรง (แสดงคำอธิบาย) + ช่องผู้เกี่ยวข้อง; ผูก "ประเภทบุคลากร" รายคนกับผู้เกี่ยวข้องระดับรายงาน (เสนอค่าให้อัตโนมัติ + เตือนเมื่อไม่ตรง ไม่บล็อก); ร่าง (draft) จำค่าใหม่; ร่างที่ใช้ประเภทเดิมจะถูกล้างให้เลือกใหม่
+- `records.html`: กรองประเภทแบบ roll-up (เลือกกลุ่มใหญ่ = รวมประเภทย่อยทุกระดับ), กรองความรุนแรง/ผู้เกี่ยวข้อง (มีตัวเลือก "ไม่ระบุ" สำหรับรายงานเก่า), แสดงในตาราง/รายละเอียด, คอลัมน์ส่งออกใหม่ (เส้นทางประเภทเต็ม / ความรุนแรง / ผู้เกี่ยวข้อง), แก้ไขผ่านขั้นตอนเดิม (SHE แก้ตรง / ผู้รายงานขอแก้)
+- ทดสอบ: ฐานข้อมูลจริง B28c 40/40 (rollback ทั้งหมด; 1 ข้อปรับค่าคาดหวัง เพราะ BEFORE trigger ทำงานก่อน RLS); Playwright (mock) incident 25/25, records 12/12
+- ยังไม่ได้ทำ (B28d): Dashboard / SLA / Repeat tracking ยังอ่านประเภทแบบเดิม
+
 ## 2026-11-15 — B28a + B28b ประเภทเหตุการณ์หลายระดับ (Admin ตั้งค่าเอง)
 - ฐานข้อมูล B28a (`migration-B28a-incident-hierarchy.sql`): `incident_types` เป็นต้นไม้ (parent_id / depth / path / selectable / kind, กันวนลูป, ลึกสูงสุด 10), ตารางใหม่ `incident_severities` (Pyramid 7 ระดับ) และ `incident_involved_parties` (พนักงาน/ผู้รับเหมา/ซัพพลายเออร์), `incident_reports` เพิ่ม `severity_id` / `involved_party_id` (backfill ความรุนแรงจากประเภทเดิม; ผู้เกี่ยวข้องของรายงานเดิมว่าง = "ไม่ระบุ"); เพิ่มอย่างเดียว ไม่ลบข้อมูลเดิม
 - ฐานข้อมูล B28b (`migration-B28b-incident-taxonomy-admin.sql`): RPC สำหรับ Admin เท่านั้น (`incident_taxonomy_admin`, `incident_type_save`, `incident_severity_save`, `incident_severity_move`, `incident_party_save`), นำเข้า CSV แบบ dry-run / all-or-nothing (`incident_types_import`, `incident_severities_import`, `incident_parties_import`) และส่งออก (`*_export`); กัน CSV injection (= + - @), เหตุผล 5–200 ตัวอักษร, audit ทุกครั้ง, ไม่มีการลบ

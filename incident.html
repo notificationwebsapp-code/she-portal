@@ -15,6 +15,10 @@
     .stepcard>h3{margin:0 0 .8rem;font-size:1.05rem;color:var(--brand);display:flex;align-items:center;gap:.5rem}
     .stepcard>h3 .no{display:inline-flex;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--brand);color:#fff;
       align-items:center;justify-content:center;font-size:.9rem}
+    .typebox{margin:0 0 1rem}
+    .typebox select{display:block;width:100%;margin-top:.4rem}
+    .typebox .pathline{display:block;margin-top:.4rem;color:var(--brand);font-weight:600}
+    small.help{display:block;margin-top:.25rem;color:#4b5563;font-size:.85rem;line-height:1.4}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem}
     .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 1rem}
     @media (max-width:700px){.row2,.row3{grid-template-columns:1fr}}
@@ -83,8 +87,23 @@
             <input type="text" id="location" maxlength="200" required placeholder="เช่น Line 2, คลังสินค้า"></p>
         </div>
 
-        <p><label for="type" class="required">ประเภทเหตุการณ์</label><br>
-          <select id="type" required><option value="">-- เลือก --</option></select></p>
+        <div class="typebox">
+          <label for="type-l0" class="required" id="type-lbl">ประเภทเหตุการณ์ (Incident type)</label>
+          <small class="help" id="type-help">เลือกทีละระดับ จากกลุ่มใหญ่ไปกลุ่มย่อย จนถึงข้อที่ตรงที่สุด (ถ้าไม่มีช่องถัดไป แสดงว่าเลือกครบแล้ว) — ประเภทบอกว่า "เหตุเกิดจากอะไร" ไม่ใช่ว่า "รุนแรงแค่ไหน"</small>
+          <div id="type-cascade" role="group" aria-labelledby="type-lbl"></div>
+          <input type="hidden" id="type" required>
+          <small id="type-path" class="pathline" aria-live="polite"></small>
+        </div>
+
+        <div class="row2">
+          <p><label for="severity" class="required">ความรุนแรง (Severity)</label><br>
+            <select id="severity" required><option value="">-- เลือก --</option></select>
+            <small class="help" id="sev-desc">เลือกระดับตามผลที่เกิดขึ้นจริง หรือที่อาจเกิดขึ้นได้ (SHE จะทบทวนอีกครั้งตอนตรวจสอบ)</small></p>
+          <p><label for="party" class="required">ผู้เกี่ยวข้องกับเหตุ (Involved party)</label><br>
+            <select id="party" required><option value="">-- เลือก --</option></select>
+            <small class="help">กลุ่มของผู้ได้รับผลกระทบหลัก (เช่น พนักงาน ผู้รับเหมา) — ระบบจะเสนอให้อัตโนมัติจาก "ประเภทบุคลากร" ของผู้เกี่ยวข้องข้อ 2 แก้ไขได้</small>
+            <small class="help" id="party-hint" role="status" style="color:#92400e"></small></p>
+        </div>
 
         <p id="hazard-row" hidden><label for="hazard">งานอันตรายสูงที่เกี่ยวข้อง (High hazard task)</label><br>
           <select id="hazard"><option value="">-- ไม่เกี่ยวข้อง / ไม่ทราบ --</option></select>
@@ -202,16 +221,69 @@
       $("hazard-row").hidden = LK.high_hazard.length === 0;   // ไม่แสดงช่องที่ยังไม่มีตัวเลือก
     }
     const lookupsReady = loadLookups();
+    let typesReady = Promise.resolve();
 
+    /* B28c: ประเภทเหตุการณ์เป็นต้นไม้ (เลือกทีละระดับ) + ความรุนแรง + ผู้เกี่ยวข้อง */
+    const TYPES = new Map(), KIDS = new Map();
+    const nm = (o) => (window.dbName ? window.dbName(o, "name") : o.name_th) || o.name_th;
+    function typeKids(pid) { return KIDS.get(pid || "root") || []; }
+    function typePath(id) { const p = []; let n = TYPES.get(id); while (n) { p.unshift(n); n = n.parent_id ? TYPES.get(n.parent_id) : null; } return p; }
+    function renderLevel(parentId, level, selectedId) {
+      const kids = typeKids(parentId); if (!kids.length) return;
+      const sel = document.createElement("select"); sel.id = "type-l" + level; sel.dataset.level = String(level);
+      sel.setAttribute("aria-label", level === 0 ? "ประเภทเหตุการณ์" : "ประเภทย่อย ระดับที่ " + (level + 1));
+      sel.appendChild(opt("", level === 0 ? "-- เลือกประเภท --" : "-- เลือกประเภทย่อย --"));
+      kids.forEach((t) => sel.appendChild(opt(t.id, nm(t))));
+      if (selectedId) sel.value = selectedId;
+      sel.addEventListener("change", () => { onTypePick(level, sel.value); });
+      $("type-cascade").appendChild(sel);
+    }
+    function setTypeValue(id) {
+      $("type").value = id || "";
+      const chain = id ? typePath(id) : [];
+      $("type-path").textContent = chain.length ? "ที่เลือก: " + chain.map(nm).join(" › ") : "";
+      refreshSerious();
+    }
+    function onTypePick(level, id) {
+      const box = $("type-cascade");
+      Array.from(box.children).forEach((c) => { if (Number(c.dataset.level) > level) c.remove(); });
+      const n = id ? TYPES.get(id) : null;
+      if (!n) { const up = level > 0 ? $("type-l" + (level - 1)).value : ""; setTypeValue(up && TYPES.get(up) && TYPES.get(up).selectable ? up : ""); return; }
+      if (typeKids(n.id).length) renderLevel(n.id, level + 1, "");
+      setTypeValue(n.selectable ? n.id : "");
+      $("type").dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    function setType(id) {       // ใช้ตอนเปิดร่าง (draft) และหลังส่งแล้วล้างฟอร์ม
+      $("type-cascade").replaceChildren();
+      const chain = id && TYPES.has(id) ? typePath(id) : [];
+      if (!chain.length) { renderLevel(null, 0, ""); setTypeValue(""); return; }
+      chain.forEach((n, i) => renderLevel(n.parent_id || null, i, n.id));
+      if (typeKids(chain[chain.length - 1].id).length) renderLevel(chain[chain.length - 1].id, chain.length, "");
+      setTypeValue(chain[chain.length - 1].selectable ? id : "");
+    }
     async function loadTypes() {
       const { data } = await sb.from("incident_types")
-        .select("id, code, name_th, name_en, is_serious").eq("active", true).order("sort_order");
-      const sel = $("type");
-      (data || []).forEach((t) => {
-        const o = opt(t.id, t.name_th === t.name_en ? t.name_th : t.name_th + " / " + t.name_en);
-        o.dataset.serious = t.is_serious ? "1" : "";
-        sel.appendChild(o);
-      });
+        .select("id, code, name_th, name_en, parent_id, selectable, is_serious, sort_order")
+        .eq("active", true).eq("kind", "hazard").order("sort_order").order("code");
+      TYPES.clear(); KIDS.clear();
+      (data || []).forEach((t) => TYPES.set(t.id, t));
+      TYPES.forEach((t) => { const k = t.parent_id && TYPES.has(t.parent_id) ? t.parent_id : "root"; if (!KIDS.has(k)) KIDS.set(k, []); KIDS.get(k).push(t); });
+      setType("");
+    }
+    let SEV = new Map();
+    async function loadSeverities() {
+      const { data } = await sb.from("incident_severities").select("id, code, name_th, name_en, description, rank, is_serious").eq("active", true).order("rank");
+      (data || []).forEach((r) => { SEV.set(r.id, r); const o = opt(r.id, nm(r)); o.dataset.serious = r.is_serious ? "1" : ""; $("severity").appendChild(o); });
+    }
+    async function loadParties() {
+      const { data } = await sb.from("incident_involved_parties").select("id, code, name_th, name_en").eq("active", true).order("sort_order").order("code");
+      (data || []).forEach((r) => { const o = opt(r.id, nm(r)); o.dataset.code = r.code; $("party").appendChild(o); });
+    }
+    typesReady = Promise.all([loadTypes(), loadSeverities(), loadParties()]);
+    function refreshSerious() {
+      const t = TYPES.get($("type").value), sv = SEV.get($("severity").value);
+      $("serious-note").hidden = !((t && t.is_serious) || (sv && sv.is_serious));
+      $("sev-desc").textContent = sv && sv.description ? sv.description : "เลือกระดับตามผลที่เกิดขึ้นจริง หรือที่อาจเกิดขึ้นได้ (SHE จะทบทวนอีกครั้งตอนตรวจสอบ)";
     }
     let DEPT_ALL = [];
     /* แผนกแยกต่อ Plant: แสดงแผนกส่วนกลาง (plant_id ว่าง) + แผนกของ Plant ที่เลือก */
@@ -446,10 +518,24 @@
     // ---------- เหตุการณ์ในหน้า ----------
     $("btn-add-person").addEventListener("click", async () => { await lookupsReady; addPerson(); SheDraft.markDirty(); });
     $("plant").addEventListener("change", () => { lsSet("she_last_plant", $("plant").value); loadShifts(); });
-    $("type").addEventListener("change", () => {
-      const o = $("type").selectedOptions[0];
-      $("serious-note").hidden = !(o && o.dataset.serious);
-    });
+    $("severity").addEventListener("change", refreshSerious);
+    /* B28c: ผูก "ประเภทบุคลากร" รายคน กับ "ผู้เกี่ยวข้อง" ระดับรายงาน — เสนอค่าให้ + เตือนเมื่อไม่ตรง (ไม่บล็อก เพราะเหตุเดียวอาจมีหลายกลุ่ม) */
+    let partyAuto = true;
+    function personTypes() { return Array.from($("persons").children).map((d) => d._f && d._f.ptype && d._f.ptype.value).filter(Boolean); }
+    function syncParty() {
+      const pts = personTypes(), sel = $("party"), hint = $("party-hint");
+      const byCode = (c) => Array.from(sel.options).find((o) => o.dataset.code === c);
+      if (pts.length && (partyAuto || !sel.value)) {
+        const m = byCode(pts[0]);
+        if (m) { sel.value = m.value; partyAuto = true; }
+      }
+      const cur = sel.selectedOptions[0] && sel.selectedOptions[0].dataset.code;
+      hint.textContent = (sel.value && pts.length && !pts.includes(cur))
+        ? "หมายเหตุ: ผู้เกี่ยวข้องที่เลือกต่างจากประเภทบุคลากรที่ระบุในข้อ 2 — ตรวจสอบอีกครั้ง (ถ้าตั้งใจ ไม่ต้องแก้)" : "";
+      updateProgress();
+    }
+    $("party").addEventListener("change", () => { partyAuto = false; syncParty(); });
+    $("persons").addEventListener("change", syncParty);
     $("resp-name").addEventListener("change", () => {
       const c = contacts.find((x) => x.full_name.toLowerCase() === val("resp-name").toLowerCase());
       if (c && !val("resp-email")) $("resp-email").value = c.email;
@@ -462,7 +548,7 @@
     function thaiError(error) {
       const c = error.code || "";
       if (c === "42501") return "ไม่มีสิทธิ์บันทึก กรุณาตรวจสอบ Plant ประเภท และกะที่เลือก (หรือสิทธิ์บัญชีของคุณ)";
-      if (c === "23514") return "ข้อมูลบางช่องไม่ถูกต้อง (เช่น อีเมล ความยาวข้อความ หรือกะไม่ตรงกับ Plant)";
+      if (c === "23514") return "ข้อมูลบางช่องไม่ถูกต้อง (เช่น ยังไม่ได้เลือกประเภทที่เลือกได้ ความรุนแรง หรือผู้เกี่ยวข้อง หรือรายการที่เลือกถูกปิดใช้งานแล้ว / อีเมล ความยาวข้อความ กะไม่ตรงกับ Plant)";
       return "บันทึกไม่สำเร็จ: " + error.message;
     }
 
@@ -481,6 +567,11 @@
         $("no-persons").scrollIntoView({ block: "center" }); $("no-persons").focus();
         return show("กรุณาระบุผู้เกี่ยวข้องอย่างน้อย 1 คน (กรอกข้อมูลอย่างน้อย 1 ช่อง) หรือติ๊ก \"ไม่มีผู้เกี่ยวข้อง\" ในส่วน \"ใครเกี่ยวข้อง (Who)\"", "error");
       }
+      if (!$("type").value) {
+        const first = $("type-cascade").querySelector("select:last-of-type") || $("type-cascade").firstChild;
+        if (first) { first.scrollIntoView({ block: "center" }); first.focus(); }
+        return show("กรุณาเลือกประเภทเหตุการณ์ให้ครบจนถึงข้อที่เลือกได้ (ถ้ามีช่องประเภทย่อยให้เลือกต่อ)", "error");
+      }
       btn.disabled = true;
 
       // ไม่ส่ง reporter_id: ฐานข้อมูลใส่ auth.uid() ให้ (กันปลอมตัวเป็นคนอื่น)
@@ -490,6 +581,8 @@
         occurred_time: $("time").value,
         location: val("location"),
         incident_type_id: $("type").value,
+        severity_id: $("severity").value,
+        involved_party_id: $("party").value,
         description: val("description"),
         how_text: orNull(val("how")), why_text: orNull(val("why")),
         immediate_action: orNull(val("immediate")),
@@ -529,7 +622,7 @@
       form.reset();
       $("persons").replaceChildren(); renumber();
       $("plant").value = keepPlant; $("department").value = keepDept; $("date").value = todayLocal();
-      $("serious-note").hidden = true;
+      setType(""); refreshSerious();
       loadShifts();
       show("ส่ง Flash Report เรียบร้อยแล้ว" + warn, warn ? "error" : "ok");
     });
@@ -538,7 +631,7 @@
     function getState() {
       return {
         plant: $("plant").value, date: $("date").value, time: $("time").value, shift: $("shift").value,
-        department: $("department").value, location: $("location").value, type: $("type").value,
+        department: $("department").value, location: $("location").value, type: $("type").value, severity: $("severity").value, party: $("party").value,
         description: $("description").value, how: $("how").value, why: $("why").value,
         immediate: $("immediate").value, respName: $("resp-name").value, respEmail: $("resp-email").value,
         hazard: $("hazard").value, hazardOther: $("hazard-other").value, noPersons: $("no-persons").checked,
@@ -559,8 +652,11 @@
       if (st.shift && hasOption($("shift"), st.shift)) $("shift").value = st.shift;
       $("date").value = st.date || todayLocal(); $("time").value = st.time || "";
       $("department").value = st.department || ""; $("location").value = st.location || "";
-      $("type").value = (st.type && hasOption($("type"), st.type)) ? st.type : "";
-      const o = $("type").selectedOptions[0]; $("serious-note").hidden = !(o && o.dataset.serious);
+      await typesReady;
+      setType(st.type && TYPES.has(st.type) ? st.type : "");   // ร่างเก่าที่ใช้ประเภทแบบเดิมจะถูกล้าง ให้เลือกใหม่
+      $("severity").value = (st.severity && hasOption($("severity"), st.severity)) ? st.severity : "";
+      $("party").value = (st.party && hasOption($("party"), st.party)) ? st.party : "";
+      refreshSerious();
       $("hazard").value = (st.hazard && hasOption($("hazard"), st.hazard)) ? st.hazard : "";
       $("hazard-other").value = st.hazardOther || ""; syncHazard();
       $("description").value = st.description || ""; $("how").value = st.how || ""; $("why").value = st.why || "";
@@ -571,8 +667,8 @@
       renumber();
     }
     function draftTitle() {
-      const t = $("type").selectedOptions[0];
-      const parts = [t && t.value ? t.textContent.split(" / ")[0] : "", val("location") || val("description").slice(0, 40)].filter(Boolean);
+      const t = TYPES.get($("type").value);
+      const parts = [t ? nm(t) : "", val("location") || val("description").slice(0, 40)].filter(Boolean);
       return parts.join(" · ");
     }
     // ---------- ตัวนับช่องบังคับ (แสดงผลเท่านั้น ไม่กระทบการตรวจข้อมูล) ----------
@@ -594,7 +690,7 @@
                     actionsEl: document.querySelector(".formactions") });
 
     $("date").value = todayLocal();
-    loadTypes(); loadDepartments(); loadContacts(); loadMyPlants().then(renderDepts); $("plant").addEventListener("change", renderDepts); updateProgress();
+    loadDepartments(); loadContacts(); loadMyPlants().then(renderDepts); $("plant").addEventListener("change", renderDepts); updateProgress();
   </script>
   <script src="shell-v4.js"></script>
 </body>
