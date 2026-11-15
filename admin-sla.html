@@ -12,6 +12,16 @@
     /* modern-ui.css ทำให้ button:hover เป็นพื้นน้ำเงิน ตัวอักษรสีเดียวกัน จนอ่านไม่ออก — บังคับแท็บที่ไม่ได้เลือกให้พื้นขาว ตัวอักษรน้ำเงิน */
     html[data-ui="modern"] .tabs button:not([aria-selected="true"]):hover{background:#fff;color:var(--brand);border-color:transparent}
     .panel[hidden]{display:none}
+    .guide{background:#F4F7FF;border:1px solid #C9D5F5;border-radius:18px;padding:.9rem 1.1rem;margin:.9rem 0}
+    .guide summary{cursor:pointer;font-weight:700;color:var(--navy)}
+    .guide h4{margin:.9rem 0 .3rem;color:var(--navy)}
+    .guide ul,.guide ol{margin:.3rem 0 .3rem 1.2rem;padding:0}
+    .guide li{margin:.2rem 0}
+    .guide dl{margin:.3rem 0}.guide dt{font-weight:700;margin-top:.5rem}.guide dd{margin:.1rem 0 0 0}
+    .howto{background:#FFFBEB;border:1px solid #F3E2A9;border-radius:14px;padding:.7rem .9rem;margin:.6rem 0;font-size:.95rem}
+    .howto b{color:#7A4B00}
+    .fhelp{font-weight:400;font-size:.85rem;color:#4B5563}
+    .presets{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.4rem 0}
     .card{background:#fff;border-radius:22px;padding:1.1rem 1.2rem;margin:1rem 0}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.8rem .9rem;align-items:end}
     .grid label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.95rem}
@@ -52,7 +62,37 @@
     <!-- หน้านี้เป็นเพียงหน้าจอ: สิทธิ์จริงบังคับที่ RPC ฝั่งฐานข้อมูล (Admin; ค่ากลางและ Priority site = Super admin) -->
     <div id="area" hidden>
       <h2>เกณฑ์ SLA / กฎ Repeat / Plant</h2>
-      <p>กำหนดเกณฑ์เวลา (ISO 45001:2018 ข้อ 9.1) และเงื่อนไขตรวจจับเหตุการณ์เกิดซ้ำ (ข้อ 10.2) ระบบไม่มีค่าเริ่มต้น: ขั้นที่ยังไม่ตั้งเกณฑ์จะแสดงว่า "ยังไม่กำหนดเกณฑ์"</p>
+      <p>หน้านี้ใช้กำหนด "กติกา" ที่ระบบจะใช้วัดเคสอุบัติเหตุ: (1) แต่ละขั้นควรเสร็จภายในกี่ชั่วโมง/วัน (SLA) และ (2) เมื่อไรถือว่าเหตุการณ์ "เกิดซ้ำ" (ISO 45001:2018 ข้อ 9.1 และ 10.2)</p>
+      <details class="guide" open>
+        <summary>คู่มือเริ่มต้น (อ่านก่อนใช้งานครั้งแรก)</summary>
+        <h4>หน้านี้ใช้ทำอะไร และถ้าไม่ตั้งค่าจะเกิดอะไรขึ้น</h4>
+        <ul>
+          <li>ระบบ<b>ไม่ได้ตั้งตัวเลขให้</b>เพราะเกณฑ์เหล่านี้เป็นนโยบายของบริษัท ผู้รับผิดชอบต้องเป็นผู้กำหนด</li>
+          <li>ถ้ายังไม่ตั้ง ทุกช่องจะแสดง "ยังไม่กำหนดเกณฑ์" และระบบ<b>จะไม่นับว่าเคสใดเกินเวลาหรือเกิดซ้ำ</b> หน้า Leading Indicator จะเป็น 0 ทั้งหมด ซึ่งเป็นเรื่องปกติของระบบที่ยังไม่ตั้งค่า</li>
+          <li>การตั้งเกณฑ์ไม่ได้เปลี่ยนข้อมูลเคสเดิม เกณฑ์ใหม่ใช้กับเคสที่เริ่มนับหลังตั้งเท่านั้น</li>
+        </ul>
+        <h4>ลำดับที่แนะนำสำหรับผู้เริ่มใช้</h4>
+        <ol>
+          <li>สอบถามผู้รับผิดชอบนโยบาย (เช่น Head of SHE) ว่าบริษัทกำหนดเวลาแต่ละขั้นไว้เท่าไร</li>
+          <li>แท็บ <b>เกณฑ์ SLA</b>: เลือก "ค่ากลาง" แล้วคลิกช่องของประเภทเหตุการณ์ที่ต้องการ ใส่เวลา แล้วบันทึก (ถ้ายังไม่แน่ใจ ใช้ปุ่ม "ใส่ค่าตัวอย่าง" เพื่อดูภาพรวมก่อน แต่ต้องแก้เป็นค่าจริงก่อนใช้งาน)</li>
+          <li>แท็บ <b>กฎ Repeat</b>: ตั้ง N (กี่วัน) และ K (กี่เคส) ของแต่ละนิยาม</li>
+          <li>แท็บ <b>พื้นที่ต่อ Plant</b>: เพิ่มรายการพื้นที่ในโรงงาน เพื่อให้ผู้รายงานเลือกได้</li>
+          <li>แท็บ <b>Priority site</b> (Super admin เท่านั้น): ทำเครื่องหมาย Plant ที่ต้องการติดตามเป็นพิเศษ</li>
+          <li>ตรวจผลที่หน้า <b>Leading Indicator</b> (เมนูผู้ดูแลระบบ)</li>
+        </ol>
+        <h4>คำศัพท์ที่พบในหน้านี้</h4>
+        <dl>
+          <dt>SLA (Service Level Agreement)</dt><dd>เวลาสูงสุดที่ยอมรับได้ในแต่ละขั้นของเคส เช่น "เริ่มสอบสวนภายใน 24 ชั่วโมงหลังสร้างเคส"</dd>
+          <dt>ค่ากลาง (Central)</dt><dd>เกณฑ์ที่ใช้กับทุก Plant ตั้งได้เฉพาะ Super admin</dd>
+          <dt>Override ของ Plant</dt><dd>เกณฑ์เฉพาะของ Plant หนึ่ง ต้อง "เข้มเท่ากับหรือเข้มกว่า" ค่ากลาง (เวลาไม่นานกว่าค่ากลาง) และต้องมีค่ากลางก่อน</dd>
+          <dt>เตือนล่วงหน้า</dt><dd>ก่อนครบเวลาสูงสุดเท่านี้ ระบบจะแสดงสถานะ "ใกล้ครบเวลา" เพื่อให้เร่งดำเนินการ</dd>
+          <dt>เกินเวลา / ทันเวลา</dt><dd>เกินเวลา = ใช้เวลานานกว่าเกณฑ์ ทันเวลา = เสร็จภายในเกณฑ์</dd>
+          <dt>Root cause</dt><dd>สาเหตุรากเหง้าที่ผู้สอบสวนระบุในเคส (เช่น ไม่มีการตรวจสอบก่อนเริ่มงาน)</dd>
+          <dt>Repeat (เหตุการณ์เกิดซ้ำ)</dt><dd>เหตุการณ์ที่เกิดซ้ำตามเงื่อนไข N และ K ด้านล่าง ระบบเพียง "เสนอ" ผู้สอบสวนเป็นผู้ยืนยันหรือปฏิเสธ</dd>
+          <dt>N (วัน) และ K (เคส)</dt><dd>N = ช่วงเวลาที่ย้อนดู, K = จำนวนเคสขั้นต่ำที่ถือว่าซ้ำ เช่น N=90, K=3 คือเกิด 3 เคสขึ้นไปใน 90 วัน</dd>
+          <dt>Priority site</dt><dd>Plant ที่ให้ความสำคัญเป็นพิเศษ ใช้เพื่อกรองดูใน Leading Indicator เท่านั้น ไม่ได้เปลี่ยนสิทธิ์หรือเกณฑ์ของ Plant</dd>
+        </dl>
+      </details>
       <div id="msg" class="msg" hidden role="status"></div>
 
       <div class="tabs" role="tablist" aria-label="เมนูย่อย">
@@ -64,6 +104,7 @@
 
       <!-- ===== SLA ===== -->
       <section id="p-sla" class="panel" role="tabpanel" aria-labelledby="tb-sla">
+        <div class="howto"><b>ทำอย่างไร:</b> (1) เลือก "ขอบเขต" ด้านล่าง ค่ากลางใช้กับทุก Plant หรือเลือก Plant เพื่อตั้งเกณฑ์เฉพาะ (2) คลิกช่องในตาราง ซึ่งแถวคือประเภทเหตุการณ์ และคอลัมน์คือขั้นของเคส (3) กรอกเวลาสูงสุด เวลาเตือนล่วงหน้า และเหตุผล แล้วกด "บันทึกเกณฑ์" <br><b>ขั้นทั้ง 5 คือ:</b> ส่ง Flash report (หลังเกิดเหตุ), เริ่มสอบสวน, สอบสวนเสร็จ, ปิด Action ครบ, ปิดเคส ช่องที่เขียนว่า "ยังไม่กำหนดเกณฑ์" แปลว่ายังไม่มีใครตั้งค่า (คลิกเพื่อตั้งได้)</div>
         <div class="card grid">
           <label>ขอบเขต<select id="s-scope"></select></label>
           <p class="hint wide" id="s-scope-hint"></p>
@@ -77,13 +118,14 @@
           <h3 id="s-title"></h3>
           <p class="hint" id="s-cur"></p>
           <div class="grid">
-            <label>เวลาสูงสุด (Max)<input id="s-max" type="number" min="1" step="1" required></label>
+            <label>เวลาสูงสุด (Max)<input id="s-max" type="number" min="1" step="1" required><span class="fhelp">ขั้นนี้ต้องเสร็จภายในกี่หน่วย เช่น 24</span></label>
             <label>หน่วย<select id="s-max-u"><option value="1">นาที</option><option value="60" selected>ชั่วโมง</option><option value="1440">วัน</option></select></label>
-            <label>เตือนล่วงหน้า (ก่อนครบ)<input id="s-warn" type="number" min="0" step="1" required></label>
+            <label>เตือนล่วงหน้า (ก่อนครบ)<input id="s-warn" type="number" min="0" step="1" required><span class="fhelp">ก่อนครบเวลาเท่านี้ให้แสดง "ใกล้ครบ" ใส่ 0 ถ้าไม่ต้องการเตือน</span></label>
             <label>หน่วย<select id="s-warn-u"><option value="1">นาที</option><option value="60" selected>ชั่วโมง</option><option value="1440">วัน</option></select></label>
-            <label class="wide">เหตุผล / ที่มาของเกณฑ์ (5–200 ตัวอักษร)<input id="s-reason" type="text" maxlength="200" autocomplete="off" required></label>
+            <label class="wide">เหตุผล / ที่มาของเกณฑ์ (5–200 ตัวอักษร)<input id="s-reason" type="text" maxlength="200" autocomplete="off" required><span class="fhelp">บันทึกไว้ใน audit log เพื่อให้ตรวจสอบย้อนหลังได้ เช่น "ตามขั้นตอนมาตรฐานสอบสวนอุบัติเหตุ ฉบับที่ …"</span></label>
           </div>
           <p class="hint">นับเป็นเวลาตามนาฬิกาจริง (ไม่หักวันหยุด) เกณฑ์ใหม่ไม่ย้อนกระทบเคสที่เริ่มนับไปแล้ว ค่า override ของ Plant ต้องเข้มกว่าหรือเท่ากับค่ากลาง</p>
+          <div class="presets"><button type="button" id="s-example" class="secondary">ใส่ค่าตัวอย่าง (24 ชั่วโมง เตือนก่อน 4 ชั่วโมง)</button><span class="fhelp">เป็นตัวอย่างเพื่อให้เห็นภาพเท่านั้น ไม่ใช่นโยบายบริษัท ปุ่มนี้แค่กรอกช่องให้ ยังไม่บันทึก แก้เป็นค่าจริงและใส่เหตุผลก่อนกดบันทึก</span></div>
           <div class="row-actions">
             <button type="submit" id="s-save">บันทึกเกณฑ์</button>
             <button type="button" id="s-clear" class="secondary">ถอนเกณฑ์นี้</button>
@@ -94,6 +136,7 @@
 
       <!-- ===== Repeat ===== -->
       <section id="p-rep" class="panel" role="tabpanel" aria-labelledby="tb-rep" hidden>
+        <div class="howto"><b>ทำอย่างไร:</b> เลือก "นิยาม" ที่ต้องการ กรอก N (ช่วงกี่วันที่ย้อนดู) และ K (จำนวนเคสขั้นต่ำ) ใส่เหตุผล แล้วกด "บันทึกกฎ" <br><b>ตัวอย่างการทำงาน:</b> ตั้ง Repeat root cause เป็น N=90, K=3 → ถ้า root cause เดียวกันเกิดใน Plant เดียวกัน 3 เคสขึ้นไปภายใน 90 วัน ระบบจะแจ้งผู้สอบสวนในเคสนั้นว่า "พบเหตุการณ์ที่อาจเกิดซ้ำ" ให้ยืนยันหรือปฏิเสธ ระบบไม่ตัดสินแทนคน</div>
         <div class="card">
           <h3>นิยามการเกิดซ้ำ</h3>
           <ul>
@@ -106,18 +149,19 @@
           <thead><tr><th>นิยาม</th><th>ขอบเขต</th><th>N (วัน)</th><th>K (เคส)</th><th>สถานะ</th><th>เหตุผล</th></tr></thead>
           <tbody></tbody>
         </table></div>
-        <p id="r-empty" hidden>ยังไม่ได้ตั้งกฎ ระบบจึงยังไม่ตรวจจับเหตุการณ์เกิดซ้ำ</p>
+        <p id="r-empty" hidden>ยังไม่ได้ตั้งกฎ ระบบจึงยังไม่ตรวจจับเหตุการณ์เกิดซ้ำ ให้กรอกฟอร์ม "ตั้ง / แก้ไขกฎ" ด้านล่างเพื่อเริ่มตั้งค่า</p>
         <form id="r-form" class="card">
           <h3>ตั้ง / แก้ไขกฎ</h3>
           <div class="grid">
-            <label>นิยาม<select id="r-kind"><option value="root_cause">Repeat root cause</option><option value="case">Repeat case</option><option value="after_closure">Repeat after closure</option></select></label>
-            <label>ขอบเขต<select id="r-scope"></select></label>
-            <label>N: ช่วงวัน (1–1095)<input id="r-n" type="number" min="1" max="1095" step="1" required></label>
-            <label id="r-k-wrap">K: จำนวนเคสขั้นต่ำ (2–50)<input id="r-k" type="number" min="2" max="50" step="1"></label>
-            <label>การตรวจจับ<select id="r-on"><option value="true">เปิด</option><option value="false">ปิด</option></select></label>
+            <label>นิยาม<span class="fhelp">เลือกชนิดของการเกิดซ้ำ (ดูคำอธิบายด้านบน)</span><select id="r-kind"><option value="root_cause">Repeat root cause</option><option value="case">Repeat case</option><option value="after_closure">Repeat after closure</option></select></label>
+            <label>ขอบเขต<span class="fhelp">ค่ากลางใช้กับทุก Plant</span><select id="r-scope"></select></label>
+            <label>N: ช่วงวัน (1–1095)<span class="fhelp">ย้อนดูกี่วัน เช่น 90</span><input id="r-n" type="number" min="1" max="1095" step="1" required></label>
+            <label id="r-k-wrap">K: จำนวนเคสขั้นต่ำ (2–50)<span class="fhelp">กี่เคสขึ้นไปจึงถือว่าซ้ำ เช่น 3</span><input id="r-k" type="number" min="2" max="50" step="1"></label>
+            <label>การตรวจจับ<span class="fhelp">เปิด = ระบบเริ่มตรวจ</span><select id="r-on"><option value="true">เปิด</option><option value="false">ปิด</option></select></label>
             <label class="wide">เหตุผล (5–200 ตัวอักษร)<input id="r-reason" type="text" maxlength="200" autocomplete="off" required></label>
           </div>
           <p class="hint">ค่า override ของ Plant ต้อง "ไวเท่ากันหรือไวกว่า" ค่ากลาง (N ไม่น้อยกว่า, K ไม่มากกว่า, ปิดการตรวจไม่ได้) ผู้สอบสวนยืนยัน/ปฏิเสธรายเคสได้เอง</p>
+          <div class="presets"><button type="button" id="r-example" class="secondary">ใส่ค่าตัวอย่าง (N=90 วัน, K=3 เคส)</button><span class="fhelp">เป็นตัวอย่างเพื่อให้เห็นภาพเท่านั้น ไม่ใช่นโยบายบริษัท ยังไม่บันทึกจนกว่าจะกด "บันทึกกฎ"</span></div>
           <div class="row-actions">
             <button type="submit">บันทึกกฎ</button>
             <button type="button" id="r-clear" class="secondary">ถอนกฎนี้</button>
@@ -127,7 +171,7 @@
 
       <!-- ===== Priority ===== -->
       <section id="p-plant" class="panel" role="tabpanel" aria-labelledby="tb-plant" hidden>
-        <p>ธง Priority site ใช้กรองมุมมอง Dashboard (ตั้งได้เฉพาะ Super admin) ไม่มีรายชื่อตั้งต้น</p>
+        <div class="howto"><b>หน้านี้ใช้ทำอะไร:</b> ทำเครื่องหมาย ★ ให้ Plant ที่ต้องการติดตามเป็นพิเศษ เพื่อให้หน้า Leading Indicator เลือกดู "เฉพาะ Priority site" ได้ (ไม่ได้เปลี่ยนสิทธิ์หรือเกณฑ์ของ Plant)<br><b>ทำอย่างไร:</b> กดปุ่มในแถวของ Plant → ใส่เหตุผล → กด "ยืนยัน" ตั้งได้เฉพาะ Super admin และยังไม่มีรายชื่อตั้งต้น ให้ผู้บริหารหรือ Head of SHE กำหนดว่า Plant ใดสำคัญ</div>
         <div class="tablewrap"><table class="mx" id="pl-tb" style="min-width:640px">
           <thead><tr><th>Plant</th><th>Business unit</th><th>สถานะ</th><th></th></tr></thead>
           <tbody></tbody>
@@ -141,20 +185,20 @@
 
       <!-- ===== Areas ===== -->
       <section id="p-area" class="panel" role="tabpanel" aria-labelledby="tb-area" hidden>
-        <p>พื้นที่/แผนกของแต่ละ Plant ใช้จับคู่ Repeat case ผู้รายงานเลือกจากรายการนี้ ไม่มีค่าตั้งต้น</p>
+        <div class="howto"><b>หน้านี้ใช้ทำอะไร:</b> กำหนดรายการ "พื้นที่" ในแต่ละโรงงาน เช่น คลังสินค้า, ไลน์ผลิต 1, ห้องหม้อไอน้ำ ผู้รายงานจะเลือกพื้นที่จากรายการนี้ตอนแจ้งเหตุ และระบบใช้ตรวจ Repeat case (เหตุที่เกิดที่เดียวกัน)<br><b>ทำอย่างไร:</b> (1) เลือก Plant (2) กรอกรหัสสั้น ๆ ภาษาอังกฤษ/ตัวเลข เช่น WH01 ชื่อไทย และชื่ออังกฤษ (ถ้ามี) (3) ใส่เหตุผล แล้วกด "บันทึก" ยังไม่มีพื้นที่ตั้งต้น ต้องเพิ่มเองทีละ Plant</div>
         <div class="card grid"><label>Plant<select id="a-plant"></select></label></div>
         <div class="tablewrap"><table class="mx" id="a-tb" style="min-width:600px">
           <thead><tr><th>รหัส</th><th>ชื่อ (ไทย)</th><th>ชื่อ (EN)</th><th>สถานะ</th><th></th></tr></thead>
           <tbody></tbody>
         </table></div>
-        <p id="a-empty" hidden>Plant นี้ยังไม่มีพื้นที่</p>
+        <p id="a-empty" hidden>Plant นี้ยังไม่มีพื้นที่ ให้เพิ่มพื้นที่แรกด้วยฟอร์ม "เพิ่ม / แก้ไขพื้นที่" ด้านล่าง</p>
         <form id="a-form" class="card">
           <h3>เพิ่ม / แก้ไขพื้นที่</h3>
           <div class="grid">
-            <label>รหัส (A-Z a-z 0-9 _ -)<input id="a-code" type="text" maxlength="30" pattern="[A-Za-z0-9_\-]{1,30}" required></label>
-            <label>ชื่อ (ไทย)<input id="a-th" type="text" maxlength="100" required></label>
-            <label>ชื่อ (EN)<input id="a-en" type="text" maxlength="100"></label>
-            <label>สถานะ<select id="a-active"><option value="true">ใช้งาน</option><option value="false">ปิดใช้งาน</option></select></label>
+            <label>รหัส (A-Z a-z 0-9 _ -)<span class="fhelp">ตัวย่อสั้น ๆ เช่น WH01</span><input id="a-code" type="text" maxlength="30" pattern="[A-Za-z0-9_\-]{1,30}" required></label>
+            <label>ชื่อ (ไทย)<span class="fhelp">เช่น คลังสินค้า</span><input id="a-th" type="text" maxlength="100" required></label>
+            <label>ชื่อ (EN)<span class="fhelp">เช่น Warehouse (ไม่บังคับ)</span><input id="a-en" type="text" maxlength="100"></label>
+            <label>สถานะ<span class="fhelp">ปิดใช้งาน = ซ่อนจากตัวเลือก</span><select id="a-active"><option value="true">ใช้งาน</option><option value="false">ปิดใช้งาน</option></select></label>
             <label class="wide">เหตุผล (5–200 ตัวอักษร)<input id="a-reason" type="text" maxlength="200" autocomplete="off" required></label>
           </div>
           <div class="row-actions"><button type="submit">บันทึก</button></div>
@@ -382,6 +426,9 @@
       gate.hidden = true; $("area").hidden = false;
       await loadSla();
     })();
+    /* ปุ่ม "ใส่ค่าตัวอย่าง": กรอกช่องให้ดูเป็นตัวอย่างเท่านั้น ไม่บันทึก ไม่เรียก RPC (ไม่ใช่ค่านโยบายของบริษัท) */
+    $("s-example").addEventListener("click", () => { $("s-max").value = "24"; $("s-max-u").value = "60"; $("s-warn").value = "4"; $("s-warn-u").value = "60"; $("s-reason").focus(); });
+    $("r-example").addEventListener("click", () => { $("r-n").value = "90"; if (!$("r-k-wrap").hidden) $("r-k").value = "3"; $("r-reason").focus(); });
   </script>
   <script src="shell-v4.js"></script>
 </body>

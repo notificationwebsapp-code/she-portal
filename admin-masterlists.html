@@ -20,7 +20,15 @@
     .sum{display:flex;flex-wrap:wrap;gap:.6rem;margin:.6rem 0}
     .errs{margin:.6rem 0;padding-left:1.2rem}
     [hidden]{display:none!important}
-  </style>
+      .guide{background:#F4F7FF;border:1px solid #C9D5F5;border-radius:18px;padding:.9rem 1.1rem;margin:.9rem 0}
+    .guide summary{cursor:pointer;font-weight:700;color:var(--navy)}
+    .guide h4{margin:.9rem 0 .3rem;color:var(--navy)}
+    .guide ol,.guide ul{margin:.3rem 0 .3rem 1.2rem;padding:0}.guide li{margin:.2rem 0}
+    .guide table{border-collapse:collapse;width:100%;min-width:640px;background:#fff}
+    .guide th,.guide td{border:1px solid #D5DCEF;padding:.4rem .55rem;text-align:left;vertical-align:top;font-size:.92rem}
+    .guide th{background:#E8EEFB}
+    .guide .ex{color:#6B7280}
+</style>
   <script src="i18n.js"></script>
   <script src="i18n-b26.js"></script>
   <script src="theme.js"></script>
@@ -44,7 +52,39 @@
     <!-- หน้านี้เป็นเพียงหน้าจอ: สิทธิ์จริงบังคับที่ RPC (Admin / Super admin) -->
     <div id="area" hidden>
       <h2>รายการมาตรฐาน (Master list)</h2>
-      <p>Life Saving Rules และ SHE standards เริ่มต้นเป็นรายการว่าง ระบบไม่มีค่าสมมติ นำเข้าจากไฟล์ CSV (UTF-8) ที่หัวคอลัมน์: code, name_th, name_en, description, sort_order, active</p>
+      <p>หน้านี้ใช้เก็บ "รายการมาตรฐานอ้างอิง" 2 ชุด คือ Life Saving Rules และ SHE standards เพื่อให้ผู้สอบสวนเลือกผูกกับเคส และให้หน้า Leading Indicator นับจำนวนเคสต่อข้อ ระบบเริ่มต้นเป็นรายการว่างและไม่มีค่าสมมติ ต้องนำเข้ารายการจริงของบริษัทจากไฟล์ CSV</p>
+      <details class="guide" open>
+        <summary>คู่มือเริ่มต้น: ต้องกรอกอะไร และกรอกอย่างไร</summary>
+        <h4>ขั้นตอนทั้งหมด</h4>
+        <ol>
+          <li>เลือกรายการที่ต้องการ (Life Saving Rules หรือ SHE standards) ในช่อง "รายการ"</li>
+          <li>กดปุ่ม <b>ดาวน์โหลดไฟล์ตัวอย่าง</b> เปิดด้วย Excel จะเห็นหัวคอลัมน์ 6 ช่องและแถวตัวอย่าง 1 แถว</li>
+          <li>ลบแถวตัวอย่าง แล้วพิมพ์รายการจริงของบริษัท 1 ข้อต่อ 1 แถว (ไม่ต้องใส่ทุกคอลัมน์ ดูตารางด้านล่างว่าช่องใดบังคับ)</li>
+          <li>บันทึกเป็น <b>CSV UTF-8</b> (ใน Excel: File → Save As → "CSV UTF-8 (Comma delimited)") ถ้าไม่เลือก UTF-8 ภาษาไทยจะเพี้ยน</li>
+          <li>เลือกไฟล์ในกล่อง "นำเข้า CSV" ด้านล่าง แล้วกด <b>ตรวจไฟล์ (Dry-run)</b> ระบบจะบอกว่าจะเพิ่ม/แก้กี่แถวและแถวไหนผิด โดยยังไม่บันทึก</li>
+          <li>เมื่อผ่าน ใส่เหตุผล แล้วกด <b>ยืนยันนำเข้า</b></li>
+        </ol>
+        <h4>ความหมายของแต่ละคอลัมน์</h4>
+        <div class="tablewrap"><table>
+          <thead><tr><th>คอลัมน์</th><th>บังคับ?</th><th>ความหมาย</th><th>ตัวอย่างรูปแบบ</th></tr></thead>
+          <tbody>
+            <tr><td>code</td><td>บังคับ</td><td>รหัสสั้น ๆ ที่ไม่ซ้ำกันในรายการเดียวกัน ใช้ตัวอักษรอังกฤษ ตัวเลข _ หรือ - เท่านั้น ไม่เกิน 30 ตัว</td><td class="ex">XX-01</td></tr>
+            <tr><td>name_th</td><td>บังคับ</td><td>ชื่อข้อกำหนดภาษาไทย ที่ผู้ใช้จะเห็นในรายการ</td><td class="ex">(ชื่อข้อกำหนด)</td></tr>
+            <tr><td>name_en</td><td>ไม่บังคับ</td><td>ชื่อภาษาอังกฤษ ใช้เมื่อผู้ใช้เปิดระบบเป็น EN</td><td class="ex">(English name)</td></tr>
+            <tr><td>description</td><td>ไม่บังคับ</td><td>คำอธิบายสั้น ๆ ว่าข้อนี้หมายถึงอะไร</td><td class="ex">(คำอธิบายสั้น ๆ)</td></tr>
+            <tr><td>sort_order</td><td>ไม่บังคับ</td><td>ลำดับการแสดง เลขน้อยแสดงก่อน (0–9999) ถ้าเว้นว่าง = 0</td><td class="ex">10</td></tr>
+            <tr><td>active</td><td>ไม่บังคับ</td><td>true = ใช้งาน, false = ปิดใช้งาน (ซ่อนจากตัวเลือก แต่ประวัติเคสเดิมยังอยู่) ถ้าเว้นว่าง = true</td><td class="ex">true</td></tr>
+          </tbody>
+        </table></div>
+        <h4>ข้อควรรู้</h4>
+        <ul>
+          <li>ถ้านำเข้าไฟล์ที่มีรหัส (code) เดิม ระบบจะ <b>แก้ไข</b> รายการนั้น ไม่สร้างซ้ำ</li>
+          <li>ติ๊ก "ปิดใช้งานรายการที่ไม่อยู่ในไฟล์" ถ้าต้องการให้ไฟล์นี้เป็นรายการทั้งหมด (รายการที่ไม่อยู่ในไฟล์จะถูกปิด ไม่ถูกลบ)</li>
+          <li>ถ้ามีแถวผิดแม้แถวเดียว ระบบจะไม่บันทึกเลยสักแถว (all-or-nothing) แก้ไฟล์แล้วตรวจใหม่ได้</li>
+          <li>ข้อความที่ขึ้นต้นด้วย = + - @ จะถูกปฏิเสธ เพื่อป้องกันสูตรอันตรายใน Excel (OWASP: CSV injection)</li>
+          <li>แถวตัวอย่างในไฟล์ตัวอย่าง (รหัสขึ้นต้นด้วย EXAMPLE) ระบบจะไม่ยอมนำเข้า เพื่อกันตัวอย่างหลุดเข้าข้อมูลจริง</li>
+        </ul>
+      </details>
       <div id="msg" class="msg" hidden role="status"></div>
 
       <div class="card grid">
@@ -61,11 +101,12 @@
         <thead><tr><th>รหัส</th><th>ชื่อ (ไทย)</th><th>ชื่อ (EN)</th><th>คำอธิบาย</th><th>ลำดับ</th><th>สถานะ</th></tr></thead>
         <tbody></tbody>
       </table></div>
-      <p id="empty" hidden>รายการนี้ยังว่าง ดาวน์โหลดไฟล์ตัวอย่างหัวคอลัมน์ แล้วนำเข้าเมื่อได้รายการจริง</p>
+      <p id="empty" hidden>รายการนี้ยังว่างเปล่า ซึ่งเป็นเรื่องปกติของระบบใหม่ ให้ทำตามคู่มือด้านบน: ดาวน์โหลดไฟล์ตัวอย่าง → กรอกรายการจริง → นำเข้า</p>
 
       <div class="row-actions">
         <button type="button" id="exp">ส่งออก CSV</button>
-        <button type="button" id="tpl" class="secondary">ดาวน์โหลดไฟล์เปล่า (หัวคอลัมน์)</button>
+        <button type="button" id="ex" class="secondary">ดาวน์โหลดไฟล์ตัวอย่าง (มีแถวตัวอย่าง)</button>
+        <button type="button" id="tpl" class="secondary">ดาวน์โหลดไฟล์เปล่า (หัวคอลัมน์อย่างเดียว)</button>
       </div>
 
       <form id="imp" class="card">
@@ -152,6 +193,8 @@
       const lines = [COLS.join(",")].concat(items.map((r) => [r.code, r.name_th, r.name_en, r.description, r.sort_order, r.active].map(csvCell).join(",")));
       download($("list").value + ".csv", lines.join("\r\n") + "\r\n");
     });
+    /* ไฟล์ตัวอย่าง: แถวตัวอย่างเป็นข้อความสมมติ (ไม่ใช่ข้อกำหนดจริง) รหัสขึ้นต้น EXAMPLE และระบบหน้าจอจะไม่ยอมนำเข้า */
+    $("ex").addEventListener("click", () => download($("list").value + "-example.csv", COLS.join(",") + "\r\n" + ["EXAMPLE-01", "(ใส่ชื่อข้อกำหนดภาษาไทย)", "(Enter the English name)", "(คำอธิบายสั้น ๆ ไม่บังคับ)", "10", "true"].map(csvCell).join(",") + "\r\n"));
     $("tpl").addEventListener("click", () => download($("list").value + "-template.csv", COLS.join(",") + "\r\n"));
 
     /* ---------- นำเข้า ---------- */
@@ -188,6 +231,7 @@
       const reason = $("reason").value.trim();
       if (!dry && (reason.length < 5 || reason.length > 200)) { show("กรุณาระบุเหตุผล 5–200 ตัวอักษร", false); $("reason").focus(); return; }
       try { parsed = await readRows(); } catch (e) { show(e.message, false); return; }
+      if (parsed.some((r) => /^EXAMPLE/i.test(r.code || ""))) { show("ไฟล์ยังมีแถวตัวอย่าง (รหัสขึ้นต้นด้วย EXAMPLE) กรุณาลบแถวตัวอย่างและใส่รายการจริงก่อนนำเข้า", false); return; }
       const { data, error } = await sb.rpc("master_list_import", { p_list: $("list").value, p_rows: parsed, p_deactivate_missing: $("deact").checked, p_dry_run: dry, p_reason: reason || null });
       if (error) { show(errText(error), false); return; }
       showResult(data);
