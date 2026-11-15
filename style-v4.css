@@ -431,3 +431,21 @@ header nav button.navmore{display:none}
   header nav a.ngf::before{content:attr(data-gl);position:absolute;top:-1.15rem;left:0;font-size:.68rem;font-weight:700;color:var(--gc);white-space:nowrap;letter-spacing:.01em}
 }
 @media(max-width:900px){header nav a::before{content:none!important}}
+
+/* ===== มือถือ (<=900px): แถบเมนูย่อย admin เป็นแถวเดียวเลื่อนแนวนอน + ตาราง admin เป็นการ์ด (B36) ===== */
+@media(max-width:900px){
+  .subtabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:.35rem;margin-left:-.25rem;margin-right:-.25rem;padding-bottom:.7rem}
+  .subtabs::-webkit-scrollbar{display:none}
+  .subtabs a{flex:0 0 auto;white-space:nowrap;min-height:44px;padding:.35rem .9rem;font-size:.95rem}
+  .tablewrap:has(table.stack),.imp .cols:has(table.stack){overflow-x:visible}
+  table.stack{display:block;min-width:0!important;width:100%;border:0!important}
+  table.stack thead{display:none}
+  table.stack tbody{display:block}
+  table.stack tr{display:block;border:1px solid var(--line);border-radius:14px;padding:.4rem .9rem;margin:.6rem 0;background:#fff}
+  table.stack td{display:grid;grid-template-columns:minmax(5.5rem,36%) minmax(0,1fr);gap:.2rem .7rem;border:0!important;padding:.35rem 0!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere;min-width:0!important;width:auto!important}
+  table.stack td::before{content:attr(data-label);font-weight:700;color:#4b5565;font-size:.82rem}
+  table.stack td[data-label=""]::before{display:none}
+  table.stack td[data-label=""]{display:block}
+  table.stack td:empty{display:none}
+  table.stack td input,table.stack td select,table.stack td textarea{max-width:100%;box-sizing:border-box}
+}

@@ -149,8 +149,19 @@
   document.addEventListener("click",function(e){if(open&&!open.pop.contains(e.target))close()});
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&open){var b=open.btn;close();b.focus()}});
 
+
+  /* มือถือ: ตารางหน้า admin เป็นการ์ดซ้อนแถว (ไม่ต้องเลื่อนซ้าย-ขวา) — ใส่ data-label จากหัวคอลัมน์ให้ทุกเซลล์ แล้ว CSS จัดการแสดงผลที่ <=900px
+     ทำไม: ตารางกว้างอ่านบนจอ 420px ไม่ได้ (WCAG 2.2 SC 1.4.10 Reflow); ข้ามตารางแบบเมทริกซ์ (สิทธิ์ / เกณฑ์ SLA) ที่ต้องดูเป็นตาราง */
+  function stackTables(){if(!/\/(admin-[^/]*)$/.test(location.pathname))return;
+    document.querySelectorAll(".tablewrap table,.imp .cols table.ct").forEach(function(t){if(t.id==="pm"||t.id==="s-mx"||t.id==="t-heat"||t.id==="t-rv"||t.classList.contains("pm")||t.dataset.stackInit)return;t.dataset.stackInit="1";t.classList.add("stack");
+      var run=function(){var hs=[].map.call(t.querySelectorAll("thead th"),function(th){return th.textContent.trim()});
+        t.querySelectorAll("tbody tr").forEach(function(tr){[].forEach.call(tr.children,function(td,i){var v=hs[i]||"";if(td.getAttribute("data-label")!==v)td.setAttribute("data-label",v)})})};
+      run();var pend=false;new MutationObserver(function(){if(pend)return;pend=true;setTimeout(function(){pend=false;run()},60)}).observe(t,{childList:true,subtree:true,characterData:true})})}
+  function scrollSubtab(){var c=document.querySelector("nav.subtabs a[aria-current=page]");if(c&&c.scrollIntoView&&c.parentNode.scrollWidth>c.parentNode.clientWidth){try{c.parentNode.scrollLeft=Math.max(0,c.offsetLeft-24)}catch(e){}}}
+  var stkT=0;new MutationObserver(function(){clearTimeout(stkT);stkT=setTimeout(stackTables,150)}).observe(document.documentElement,{childList:true,subtree:true});
+  setTimeout(function(){stackTables();scrollSubtab()},400);setTimeout(function(){stackTables();scrollSubtab()},1500);
   /* ไอคอนเมนู (inline SVG เส้นบาง) + Footer */
-  var NAVIC={"index.html":"M3 11l9-8 9 8v10a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z","incident.html":"M12 3 2.5 20h19L12 3zM12 10v4.5M12 17.2v.1","checklist.html":"M5 4h14v16H5zM8.5 9l1.6 1.6L13 7.7M9 15h6","training.html":"M2.5 9.5 12 4.5l9.5 5-9.5 5zM6.5 12v4.5c0 1.2 2.5 2.5 5.5 2.5s5.5-1.3 5.5-2.5V12","records.html":"M4 5h16v14H4zM4 10h16M9.5 10v9","capa.html":"M12 3a9 9 0 100 18 9 9 0 000-18zM8 12.5l2.7 2.7L16.5 9.5","admin-users.html":"M16 11a4 4 0 10-8 0M4 21a8 8 0 0116 0","admin-permissions.html":"M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5zM9 12l2 2 4-4","admin-master.html":"M4 6h16M4 12h16M4 18h10","executive-dashboard.html":"M4 20V10M10 20V4M16 20v-7M22 20H2"};
+  var NAVIC={"index.html":"M3 11l9-8 9 8v10a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z","incident.html":"M12 3 2.5 20h19L12 3zM12 10v4.5M12 17.2v.1","checklist.html":"M5 4h14v16H5zM8.5 9l1.6 1.6L13 7.7M9 15h6","training.html":"M2.5 9.5 12 4.5l9.5 5-9.5 5zM6.5 12v4.5c0 1.2 2.5 2.5 5.5 2.5s5.5-1.3 5.5-2.5V12","records.html":"M4 5h16v14H4zM4 10h16M9.5 10v9","capa.html":"M12 3a9 9 0 100 18 9 9 0 000-18zM8 12.5l2.7 2.7L16.5 9.5","admin-users.html":"M16 11a4 4 0 10-8 0M4 21a8 8 0 0116 0","admin-permissions.html":"M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5zM9 12l2 2 4-4","admin-master.html":"M4 6h16M4 12h16M4 18h10","executive-dashboard.html":"M4 20V10M10 20V4M16 20v-7M22 20H2","leading.html":"M3 17l6-6 4 4 8-8M15 7h6v6"};
   function decorateNav(){document.querySelectorAll("header nav a").forEach(function(a){
     if(a.querySelector("svg.ni"))return;var k=(a.getAttribute("href")||"").split("/").pop();var d=NAVIC[k];if(!d)return;
     var s=document.createElementNS(NS,"svg");s.setAttribute("class","ni");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");

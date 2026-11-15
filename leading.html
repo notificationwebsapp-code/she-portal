@@ -50,7 +50,7 @@
     .ltwo{display:block;columns:2;column-gap:1rem}.ltwo .full{column-span:all}
     .ltwo .card{margin:0 0 1rem;min-width:0;break-inside:avoid;display:block;width:100%;box-sizing:border-box}
     .ltwo table{font-size:.8rem;width:100%;min-width:0!important;table-layout:auto;margin:0}.ltwo th,.ltwo td{padding:.3rem .3rem!important;white-space:normal;overflow-wrap:normal;line-height:1.25}.ltwo th:first-child,.ltwo td:first-child{white-space:nowrap}.ltwo th{font-size:.76rem}.ltwo .tablewrap{overflow-x:auto}
-    @media(max-width:900px){.ltwo{columns:1}}
+    @media(max-width:900px){.ltwo{columns:1}.ltwo th:first-child,.ltwo td:first-child{position:sticky;left:0;z-index:1;background:#fff;box-shadow:1px 0 0 #E3E8F2}.ltwo th:first-child{background:#F4F6FA}}
     @media print{header,nav,#f,#export-row,#gate,#msg,footer,.howto{display:none!important}body,main,main.wide{background:#fff!important;padding:0!important;margin:0!important;max-width:none!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}#area{zoom:.72}.ltwo{columns:2}.card,.lk{break-inside:avoid}.tablewrap{overflow:visible}.ltwo th,.ltwo td{padding:.12rem .25rem!important;font-size:.72rem}@page{size:A4 landscape;margin:8mm}}
     [hidden]{display:none!important}
     h3{color:var(--navy)}
