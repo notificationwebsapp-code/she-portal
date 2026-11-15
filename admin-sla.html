@@ -9,6 +9,8 @@
     .tablewrap{overflow-x:auto;max-width:100%}
     .tabs{display:flex;flex-wrap:wrap;gap:.3rem;padding:.3rem;margin:.8rem 0}
     .tabs button{flex:1;min-width:9rem;margin:0}
+    /* modern-ui.css ทำให้ button:hover เป็นพื้นน้ำเงิน ตัวอักษรสีเดียวกัน จนอ่านไม่ออก — บังคับแท็บที่ไม่ได้เลือกให้พื้นขาว ตัวอักษรน้ำเงิน */
+    html[data-ui="modern"] .tabs button:not([aria-selected="true"]):hover{background:#fff;color:var(--brand);border-color:transparent}
     .panel[hidden]{display:none}
     .card{background:#fff;border-radius:22px;padding:1.1rem 1.2rem;margin:1rem 0}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.8rem .9rem;align-items:end}
