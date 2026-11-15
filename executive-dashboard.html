@@ -173,7 +173,7 @@
         </div>
         <div class="ed-fact"><button type="button" id="b-apply">แสดงผล</button><button type="button" class="secondary" id="b-reset">ล้างตัวกรอง</button><span class="ed-hint">เลือกประเภทแม่ = รวมประเภทย่อยทั้งหมดอัตโนมัติ</span></div>
         <div class="ed-fact" id="export-row"><span class="ed-hint" style="margin-left:0">ส่งออกตามตัวกรองที่เลือกอยู่ (ตัวเลขเดียวกับหน้านี้ ค่า &lt;3 ยังปิดบัง ไม่มีชื่อบุคคล):</span>
-          <button type="button" class="secondary" id="b-pptx">⭳ PowerPoint (Thai Union CI)</button><button type="button" class="secondary" id="b-print">🖨 พิมพ์ / บันทึก PDF</button><span class="ed-hint" id="export-msg" role="status" aria-live="polite"></span></div>
+          <button type="button" class="secondary" id="b-pptx">⭳ PowerPoint (Thai Union CI)</button><button type="button" class="secondary" id="b-csv">⭳ CSV (ตัวเลขสรุป)</button><button type="button" class="secondary" id="b-print">🖨 พิมพ์ / บันทึก PDF</button><span class="ed-hint" id="export-msg" role="status" aria-live="polite"></span></div>
         <p class="ed-meta" id="meta"></p>
       </section>
 
@@ -509,6 +509,30 @@
       function range0() { var t = new Date(), fr = new Date(); fr.setDate(fr.getDate() - 89); return { from: ymd(fr), to: ymd(t) }; }
       $("b-apply").addEventListener("click", load);
       $("b-print").addEventListener("click", function () { window.print(); });
+      $("b-csv").addEventListener("click", function () {
+        var msg = $("export-msg"); if (!data || !cur) { msg.textContent = "กด \"แสดงผล\" ก่อนส่งออก"; return; }
+        var r = data, rows = [["หมวด", "Plant", "ช่วง/รายการ", "ตัวชี้วัด", "ค่า", "หมายเหตุ"]];
+        function v(n, sup) { return n == null ? "<3" : n; }
+        function add(sec, plant, item, metric, n, sup) { rows.push([sec, plant || "", item || "", metric, v(n), n == null ? "ปิดบังค่าน้อยกว่า 3" : ""]); }
+        rows.push(["ช่วงข้อมูล", "", cur.from + " ถึง " + cur.to, "ตัวกรอง", "", "Plant: " + (cur.pl.length ? cur.pl.length + " แห่ง" : "ทั้งหมด") + " | ประเภท: " + (cur.ty.join(" ") || "ทั้งหมด") + " | ความรุนแรง: " + (cur.sv.join(" ") || "ทั้งหมด") + " | ผู้เกี่ยวข้อง: " + (cur.pt.join(" ") || "ทั้งหมด") + " | สถานะ: " + (cur.ph || "ทั้งหมด")]);
+        var k = r.kpi, py = r.pyramid || {};
+        [["เคสทั้งหมด", k.total], ["เคสรุนแรง (FAT/LTI)", k.serious], ["เสียชีวิต (FAT)", k.fatal], ["LTI", k.lti], ["Near miss", k.near_miss], ["วันนับจาก LTI/FAT ล่าสุด", k.days_since_lti]].forEach(function (x) { rows.push(["KPI", "", "", x[0], x[1] == null ? "" : x[1], ""]); });
+        [["FAT", py.fatal], ["LTI", py.lti], ["RWC", py.rwc], ["MTC", py.mtc], ["FAC", py.fac], ["PD", py.pd], ["NEAR", py.near_miss]].forEach(function (x) { add("พีระมิด", "", x[0], "จำนวนเคส", x[1] == null ? 0 : x[1]); });
+        (r.by_category || []).forEach(function (c) { add("หมวดเหตุการณ์", "", c.name_th, "จำนวนเคส", c.n); });
+        (r.by_severity || []).forEach(function (c) { add("ระดับความรุนแรง", "", c.code + " " + c.name_th, "จำนวนเคส", c.n); });
+        (r.by_party || []).forEach(function (c) { add("ผู้เกี่ยวข้อง", "", c.name_th, "จำนวนเคส", c.n); });
+        (r.by_time || []).forEach(function (c) { add("ช่วงเวลา", "", c.bucket, "จำนวนเคส", c.n); });
+        (r.body_parts || []).forEach(function (c) { add("ตำแหน่งที่บาดเจ็บ", "", c.name_th || c.code, "จำนวนผู้บาดเจ็บ", c.n); });
+        (r.trend || []).forEach(function (m) { rows.push(["แนวโน้มรายเดือน", "", m.month, "เคสรุนแรง", m.serious, ""], ["แนวโน้มรายเดือน", "", m.month, "เคสอื่น ๆ", m.other, ""], ["แนวโน้มรายเดือน", "", m.month, "Near miss", m.near_miss, ""]); });
+        var hp = {}; (r.heatmap.plants || []).forEach(function (p) { hp[p.id] = p.code; });
+        (r.heatmap.cells || []).forEach(function (c) { add("Heatmap Plant x ไตรมาส", hp[c.plant_id] || c.plant_id, c.quarter, "จำนวนเคส", c.n); });
+        (r.by_plant || []).forEach(function (p) { [["ทั้งหมด", p.total], ["รุนแรง", p.serious], ["LTI", p.lti], ["Near miss", p.near_miss]].forEach(function (x) { add("เปรียบเทียบ Plant", p.code, p.name, x[0], x[1]); }); });
+        function cell(x) { x = String(x == null ? "" : x); if (/^[=+\-@\t\r]/.test(x) && x !== "<3") x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; }   /* กัน CSV/Formula injection (OWASP) */
+        var csv = "\uFEFF" + rows.map(function (rw) { return rw.map(cell).join(","); }).join("\r\n");
+        var a = document.createElement("a"), u = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+        a.href = u; a.download = "SHE-Executive-Dashboard_" + cur.from + "_" + cur.to + ".csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 2000);
+        msg.textContent = "สร้างไฟล์ CSV เรียบร้อย (" + (rows.length - 1) + " แถว)";
+      });
       $("b-pptx").addEventListener("click", async function () {
         var btn = $("b-pptx"), msg = $("export-msg");
         if (!data || !cur) { msg.textContent = "กด \"แสดงผล\" ก่อนส่งออก"; return; }
