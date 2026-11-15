@@ -1134,6 +1134,18 @@
         // ไฮไลต์แถวที่ SHE/Admin ต้องลงมือ (มีคำขอรอพิจารณา)
         if (isMgrRole() && data[i] && pendingCount[data[i].id]) tr.classList.add("needs-action");
       });
+      // B26: ป้าย SLA ในรายการ (เฉพาะผู้มีสิทธิ์ดู SLA; ถ้าเรียกไม่ได้หรือยังไม่ตั้งเกณฑ์ จะไม่แสดงอะไร)
+      try {
+        const br = await sb.rpc("incident_sla_badges", { p_ids: data.map((x) => x.id) });
+        if (!br.error && Array.isArray(br.data)) {
+          const bm = {}; br.data.forEach((x) => { bm[x.incident_id] = x; });
+          document.querySelectorAll("#t-incident tbody tr").forEach((tr, i) => {
+            const bd = data[i] && bm[data[i].id], c = tr.cells[4]; if (!bd || !c) return;
+            const t = bd.worst === "overdue" ? ["bad", "SLA เกินเวลา"] : bd.worst === "due_soon" ? ["warn", "SLA ใกล้ครบ"] : bd.worst === "missed" ? ["bad", "SLA เคยเกินเวลา"] : null;
+            if (t) c.append(h("div", {}, h("span", { class: "pill " + t[0], style: "display:inline-block;margin-top:.25rem;padding:.1rem .6rem;border-radius:999px;font-size:.8rem;font-weight:700", text: t[1] })));
+          });
+        }
+      } catch (e) { /* ไม่กระทบรายการหลัก */ }
       renderPager();
     }
 
@@ -1831,6 +1843,9 @@
       PLANTS = pl.data || [];
       buildFilterBar();
       await loadIncidents();
+      // ลิงก์ตรงจาก Dashboard: records.html?open=<id> (ตรวจรูปแบบ UUID; สิทธิ์จริงบังคับที่ RLS/RPC)
+      const openId = new URLSearchParams(location.search).get("open");
+      if (openId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(openId)) openDetail(openId);
     })();
 
     load("checklist_inspections", "inspected_on",
