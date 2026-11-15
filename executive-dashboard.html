@@ -14,7 +14,7 @@
     .ed-fgrid details{position:relative}
     .ed-fgrid details[open] .ed-pop{display:block}
     .ed-pop{display:none;position:absolute;z-index:20;left:0;right:0;min-width:240px;max-height:300px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:.4rem .6rem;margin-top:.2rem}
-    .ed-hint{display:block;font-size:.8rem;color:var(--muted);margin-top:.2rem}
+    .ed-hint{display:inline-block;font-size:.8rem;color:var(--muted);margin-left:.75rem;align-self:center}
     .ed-pop label{display:flex;align-items:center;gap:.5rem;min-height:44px;font-weight:400;font-size:.95rem}
     .ed-fact{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.9rem;align-items:center}
     .ed-meta{font-size:.875rem;color:var(--muted);margin:.4rem 0 0}
@@ -137,8 +137,7 @@
           <div><span class="lbl">Plant</span>
             <details id="d-plants"><summary id="s-plants">ทุก Plant</summary><div class="ed-pop" id="pop-plants"></div></details></div>
           <div><span class="lbl">ประเภทเหตุการณ์</span>
-            <details id="d-types"><summary id="s-types">ทุกประเภท</summary><div class="ed-pop" id="pop-types"></div></details>
-            <span class="ed-hint">เลือกประเภทแม่ = รวมประเภทย่อยทั้งหมดอัตโนมัติ</span></div>
+            <details id="d-types"><summary id="s-types">ทุกประเภท</summary><div class="ed-pop" id="pop-types"></div></details></div>
           <div><span class="lbl">ระดับความรุนแรง</span>
             <details id="d-sev"><summary id="s-sev">ทุกระดับ</summary><div class="ed-pop" id="pop-sev"></div></details></div>
           <div><span class="lbl">ผู้เกี่ยวข้อง</span>
@@ -149,7 +148,7 @@
               <option value="investigation">กำลังสอบสวน</option><option value="closed">ปิดแล้ว</option>
             </select></label>
         </div>
-        <div class="ed-fact"><button type="button" id="b-apply">แสดงผล</button><button type="button" class="secondary" id="b-reset">ล้างตัวกรอง</button></div>
+        <div class="ed-fact"><button type="button" id="b-apply">แสดงผล</button><button type="button" class="secondary" id="b-reset">ล้างตัวกรอง</button><span class="ed-hint">เลือกประเภทแม่ = รวมประเภทย่อยทั้งหมดอัตโนมัติ</span></div>
         <p class="ed-meta" id="meta"></p>
       </section>
 
@@ -389,7 +388,7 @@
       var shown = rows.filter(function (r) { return !q || (r.plant_code + " " + r.type_name).toLowerCase().indexOf(q) > -1; });
       shown.forEach(function (r) {
         var tr = el("tr"); tr.appendChild(el("td", "", thDate(r.occurred_on))); tr.appendChild(el("td", "", r.plant_code)); tr.appendChild(el("td", "", r.type_name));
-        var td = el("td"); td.appendChild(el("span", "badge" + (r.is_serious ? " ser" : ""), r.is_serious ? "รุนแรง" : "ทั่วไป")); tr.appendChild(td);
+        var td = el("td"); td.appendChild(el("span", "badge" + (r.is_serious ? " ser" : ""), r.severity_name || (r.is_serious ? "รุนแรง" : "ทั่วไป"))); tr.appendChild(td);
         tr.appendChild(el("td", "", PHASE[r.phase] || r.phase)); t.appendChild(tr);
       });
       if (!shown.length) { var e = el("tr"), c = el("td", "", "ไม่พบข้อมูล"); c.colSpan = 5; e.appendChild(c); t.appendChild(e); }
