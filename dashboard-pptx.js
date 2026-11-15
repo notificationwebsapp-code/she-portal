@@ -94,7 +94,7 @@
     var k = r.kpi, py = r.pyramid || {};
     var s2 = content("สรุปสำหรับผู้บริหาร", "จำนวนเคสที่บันทึกในระบบ ช่วง " + period);
     var cards = [["เคสทั้งหมด", String(k.total), "ในช่วงที่เลือก", C.blue], ["เคสรุนแรง (FAT/LTI)", String(k.serious), "เสียชีวิต + หยุดงาน", C.orange], ["LTI", String(k.lti), "บาดเจ็บถึงขั้นหยุดงาน", C.blue],
-      ["จำกัดงาน (RWC)", String(py.rwc || 0), "Restricted work case", C.blue], ["Near miss", String(k.near_miss), "เหตุเกือบเกิดอุบัติเหตุ", C.blue],
+      ["จำกัดงาน (RWC)", String(py.rwc || 0), "บาดเจ็บถึงขั้นจำกัดงาน", C.blue], ["เหตุเกือบเกิดอุบัติเหตุ", String(k.near_miss), "ฐานของพีระมิด", C.blue],
       ["ปลอดอุบัติเหตุหยุดงาน", k.days_since_lti == null ? "ไม่มีเคส" : String(k.days_since_lti), k.days_since_lti == null ? "ยังไม่มี LTI/เสียชีวิต" : "วัน (นับจากเคสล่าสุด)", C.blue]];
     cards.forEach(function (c, i) {
       var cx = 0.6 + (i % 3) * 4.1, cy = 1.55 + Math.floor(i / 3) * 1.75;
@@ -104,21 +104,21 @@
       s2.addText(c[1], { x: cx + 0.25, y: cy + 0.5, w: 3.5, h: 0.7, fontFace: FONT, fontSize: 36, bold: true, color: c[3] });
       s2.addText(c[2], { x: cx + 0.25, y: cy + 1.2, w: 3.5, h: 0.35, fontFace: FONT, fontSize: 11, color: C.mid });
     });
-    var msg = ["ช่วง " + period + ": บันทึกเคสทั้งหมด " + k.total + " เคส เป็นเคสรุนแรง (FAT/LTI) " + k.serious + " เคส และ Near miss " + k.near_miss + " เคส"];
+    var msg = ["ช่วง " + period + ": บันทึกเคสทั้งหมด " + k.total + " เคส เป็นเคสรุนแรง (FAT/LTI) " + k.serious + " เคส และ เหตุเกือบเกิดอุบัติเหตุ " + k.near_miss + " เคส"];
     if (k.days_since_lti != null) msg.push("ปลอดอุบัติเหตุหยุดงานมาแล้ว " + k.days_since_lti + " วัน นับจากเคส FAT/LTI ล่าสุด");
     msg.push("ตัวเลขเป็นจำนวนเคส ไม่ปรับตามขนาดโรงงานหรือชั่วโมงทำงาน ใช้ดูแนวโน้ม ไม่ใช่คะแนนหรืออันดับ");
     s2.addText(msg.map(function (t) { return { text: t, options: { bullet: true, breakLine: true } }; }), { x: 0.6, y: 5.15, w: W - 1.2, h: 1.6, fontFace: FONT, fontSize: 14, color: C.text, valign: "top", paraSpaceAfter: 6 });
 
     /* 3 พีระมิดความรุนแรง */
-    var s3 = content("พีระมิดความรุนแรง", "ฐานกว้างคือเหตุที่เบากว่าแต่เกิดบ่อยกว่า (Near miss) ใช้ดูว่ามีการรายงานเชิงป้องกันมากพอหรือไม่");
-    [["FAT", "เสียชีวิต (FAT)", py.fatal, 30], ["LTI", "หยุดงาน (LTI)", py.lti, 39], ["RWC", "จำกัดงาน (RWC)", py.rwc, 49], ["MTC", "รักษาพยาบาล (MTC)", py.mtc, 59], ["FAC", "ปฐมพยาบาล (FAC)", py.fac, 70], ["PD", "ทรัพย์สินเสียหาย (PD)", py.pd, 84], ["NEAR", "Near miss", py.near_miss, 100]].forEach(function (L, i) {
+    var s3 = content("พีระมิดความรุนแรง", "ฐานกว้างคือเหตุที่เบากว่าแต่เกิดบ่อยกว่า (เหตุเกือบเกิดอุบัติเหตุ) ใช้ดูว่ามีการรายงานเชิงป้องกันมากพอหรือไม่");
+    [["FAT", "เสียชีวิต (FAT)", py.fatal, 30], ["LTI", "หยุดงาน (LTI)", py.lti, 39], ["RWC", "จำกัดงาน (RWC)", py.rwc, 49], ["MTC", "รักษาพยาบาล (MTC)", py.mtc, 59], ["FAC", "ปฐมพยาบาล (FAC)", py.fac, 70], ["PD", "ทรัพย์สินเสียหาย (PD)", py.pd, 84], ["NEAR", "เหตุเกือบเกิดอุบัติเหตุ", py.near_miss, 100]].forEach(function (L, i) {
       var w = 7.2 * L[3] / 100, x = 0.6 + (7.2 - w) / 2, y = 1.5 + i * 0.7;
       s3.addShape(pptx.ShapeType.rect, { x: x, y: y, w: w, h: 0.62, fill: { color: SEV[L[0]] }, line: { color: SEV[L[0]], width: 0 } });
       s3.addText(L[1], { x: x + 0.1, y: y, w: w - 1.0, h: 0.62, fontFace: FONT, fontSize: 13, bold: true, color: SEV_TXT[L[0]], valign: "middle" });
       s3.addText(String(L[2] || 0), { x: x + w - 0.9, y: y, w: 0.8, h: 0.62, fontFace: FONT, fontSize: 16, bold: true, color: SEV_TXT[L[0]], align: "right", valign: "middle" });
     });
     s3.addText([{ text: "วิธีอ่านพีระมิด", options: { bold: true, color: C.blue, breakLine: true } },
-      { text: "RWC = Restricted work case · MTC = Medical treatment case · FAC = First aid case · PD = Property damage", options: { bullet: true, breakLine: true } },
+      { text: "RWC = บาดเจ็บถึงขั้นจำกัดงาน · MTC = รักษาพยาบาล · FAC = ปฐมพยาบาล · PD = ทรัพย์สินเสียหาย", options: { bullet: true, breakLine: true } },
       { text: "ไม่รวมอัคคีภัย PSM และสิ่งแวดล้อม (ตามนิยามของหน้า Dashboard)", options: { bullet: true, breakLine: true } },
       { text: "สีของแต่ละระดับใช้ชุดเดียวกับหน้าเว็บเพื่อให้เทียบกันได้", options: { bullet: true } }],
       { x: 8.4, y: 1.5, w: 4.4, h: 4.2, fontFace: FONT, fontSize: 13, color: C.text, valign: "top", paraSpaceAfter: 8 });
@@ -128,7 +128,7 @@
     var s4 = content("แนวโน้มรายเดือน", "จำนวนเคสแยกตามความรุนแรง");
     if (r.trend && r.trend.length) {
       var lab = r.trend.map(function (m) { var p = m.month.split("-"); return MON[Number(p[1]) - 1] + " " + String(Number(p[0]) + 543).slice(2); });
-      s4.addChart(pptx.charts.BAR, [{ name: "เคสรุนแรง (FAT/LTI)", labels: lab, values: r.trend.map(function (m) { return m.serious; }) }, { name: "เคสอื่น ๆ", labels: lab, values: r.trend.map(function (m) { return m.other; }) }, { name: "Near miss", labels: lab, values: r.trend.map(function (m) { return m.near_miss; }) }],
+      s4.addChart(pptx.charts.BAR, [{ name: "เคสรุนแรง (FAT/LTI)", labels: lab, values: r.trend.map(function (m) { return m.serious; }) }, { name: "เคสอื่น ๆ", labels: lab, values: r.trend.map(function (m) { return m.other; }) }, { name: "เหตุเกือบเกิดอุบัติเหตุ", labels: lab, values: r.trend.map(function (m) { return m.near_miss; }) }],
         { x: 0.6, y: 1.45, w: W - 1.2, h: 5.2, barDir: "col", barGrouping: "stacked", chartColors: [C.orange, C.blue, C.sky], showLegend: true, legendPos: "b", legendFontFace: FONT, legendFontSize: 12, showValue: true, dataLabelColor: "FFFFFF", dataLabelFontSize: 11, catAxisLabelFontFace: FONT, catAxisLabelFontSize: 12, valAxisLabelFontFace: FONT, valAxisLabelFontSize: 11, valGridLine: { color: "E5E7EB", size: 0.5 }, catGridLine: { style: "none" } });
     } else s4.addText("ไม่มีข้อมูลในช่วงที่เลือก", { x: 0.6, y: 2, w: 6, h: 0.5, fontFace: FONT, fontSize: 16, color: C.mid });
 
@@ -192,7 +192,7 @@
       var s9 = content("เปรียบเทียบแต่ละ Plant" + (bpages.length > 1 ? " — " + (pi + 1) + "/" + bpages.length : ""), "ใช้เรียนรู้จาก Plant อื่นและปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน)" + (bzero ? " · อีก " + bzero + " Plant เป็น 0" : ""));
       if (!pg.length) { s9.addText("ไม่มีเหตุการณ์ในช่วงที่เลือก", { x: 0.6, y: 2, w: 9, h: 0.5, fontFace: FONT, fontSize: 16, color: C.mid }); return; }
       var hd = function (t, al) { return { text: t, options: { bold: true, color: C.white, fill: { color: C.blue }, fontFace: FONT, fontSize: 12, align: al || "right" } }; };
-      var rows = [[hd("Plant", "left"), hd("ทั้งหมด"), hd("รุนแรง"), hd("LTI"), hd("Near miss")]];
+      var rows = [[hd("Plant", "left"), hd("ทั้งหมด"), hd("รุนแรง"), hd("LTI"), hd("เหตุเกือบเกิดอุบัติเหตุ")]];
       pg.forEach(function (p, i) {
         var f = { color: i % 2 ? "F8FAFC" : "FFFFFF" }, cl = function (v) { return { text: num(v), options: { align: "right", fontFace: FONT, fontSize: 12, bold: v !== 0, color: v === 0 ? "9CA3AF" : C.blue, fill: f } }; };
         rows.push([{ text: p.code + " " + p.name, options: { fontFace: FONT, fontSize: 12, color: C.text, fill: f } }, cl(p.total), cl(p.serious), cl(p.lti), cl(p.near_miss)]);
@@ -217,7 +217,7 @@
     s11.addText([
       { text: "ตัวเลขทั้งหมดเป็นจำนวนเคสที่บันทึกในระบบ ยังไม่ปรับตามขนาดโรงงาน/ชั่วโมงทำงาน จึงใช้เปรียบเทียบเชิงแนวโน้มเท่านั้น (ไม่ใช่คะแนนหรืออันดับ)", options: { bullet: true, breakLine: true } },
       { text: "ค่าที่น้อยกว่า 3 เคสถูกปิดบังเป็น \"<3\" เพื่อลดความเสี่ยงการระบุตัวบุคคลจากกลุ่มเล็ก", options: { bullet: true, breakLine: true } },
-      { text: "จำนวน Near miss ที่สูงมักสะท้อนวัฒนธรรมการรายงานที่ดี ไม่ได้หมายถึง Plant ที่อันตรายกว่า", options: { bullet: true, breakLine: true } },
+      { text: "จำนวน เหตุเกือบเกิดอุบัติเหตุ ที่สูงมักสะท้อนวัฒนธรรมการรายงานที่ดี ไม่ได้หมายถึง Plant ที่อันตรายกว่า", options: { bullet: true, breakLine: true } },
       { text: "ระดับความรุนแรง: FAT เสียชีวิต · LTI บาดเจ็บถึงขั้นหยุดงาน · RWC จำกัดงาน · MTC รักษาพยาบาล · FAC ปฐมพยาบาล · PD ทรัพย์สินเสียหาย · NEAR เหตุเกือบเกิดอุบัติเหตุ", options: { bullet: true, breakLine: true } },
       { text: "เคสเก่าที่ยังไม่ได้ระบุประเภท/ความรุนแรง/ผู้เกี่ยวข้องตามโครงสร้างใหม่ แสดงเป็น \"ไม่ระบุ\"", options: { bullet: true, breakLine: true } },
       { text: "แนวคิดการติดตามและวิเคราะห์ผลด้านความปลอดภัยสอดคล้องกับ ISO 45001:2018 ข้อ 9.1 (Monitoring, measurement, analysis and performance evaluation)", options: { bullet: true } }],

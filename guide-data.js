@@ -48,6 +48,29 @@ window.SHE_GUIDE = {
     }
   },
 
+  "exposure": {
+    purpose: ["บันทึกชั่วโมงทำงาน จำนวนพนักงาน/ผู้รับเหมา และจำนวน UA/UC ของ Plant ตนเองเดือนละครั้ง เพื่อให้ Dashboard คำนวณอัตราต่อชั่วโมงทำงานและแสดงชั้นล่างของพีระมิดได้ถูกต้อง", "Record each plant's monthly work hours, headcount and UA/UC counts so dashboards can show rates per hours worked and the lower pyramid layers."],
+    who: ["SHE ของแต่ละ Plant (กรอกได้เฉพาะ Plant ของตน) และ Admin (ทุก Plant) ส่วนแท็บ \"ชั้นของพีระมิด\" ใช้ได้เฉพาะ Admin", "Each plant's SHE (own plant only) and Admin (all plants). The pyramid layers tab is Admin only."],
+    ifnot: ["Dashboard คำนวณอัตราอุบัติเหตุต่อชั่วโมงทำงานไม่ได้ และพีระมิดไม่มีชั้น UA/UC", "Dashboards cannot calculate incident rates per hours worked, and the pyramid has no UA/UC layers."],
+    steps: [
+      ["เลือก Plant และเดือน (ระบบเลือกเดือนที่แล้วให้ก่อน)", "Choose the plant and month (last month is pre-selected)."],
+      ["กรอกชั่วโมงทำงานรวมและจำนวนคน ถ้ายังไม่ทราบค่าไหนให้เว้นว่างได้", "Enter total hours worked and headcount; leave a field blank if you do not know it yet."],
+      ["กรอกจำนวนในแต่ละชั้นล่างของพีระมิด เช่น UA และ UC", "Enter the count for each lower pyramid layer, e.g. UA and UC."],
+      ["กด \"บันทึกข้อมูลเดือนนี้\" ถ้าเดือนนั้นมีข้อมูลอยู่แล้วจะถูกทับด้วยค่าใหม่", "Press Save; existing values for that month are overwritten."],
+      ["ดูตาราง 12 เดือนล่าสุดว่าเดือนไหนยังไม่กรอก (ป้าย \"ยังไม่กรอก\" / \"กรอกบางส่วน\" / \"ครบ\") กด \"แก้ไข\" เพื่อกลับไปกรอกเดือนนั้น", "Check the last 12 months table for months not yet filled; press Edit to go back to that month."],
+      ["กรอกย้อนหลังหลายเดือน: ใช้แท็บ \"นำเข้า / ส่งออก\" ดาวน์โหลดไฟล์ตัวอย่าง กรอก ตรวจไฟล์ แก้ในตาราง แล้วยืนยัน (ไม่บันทึกจนกว่าจะยืนยัน)", "For many months: use the import tab, download the example, fill, check, edit in the table, then confirm (nothing is saved until you confirm)."]
+    ],
+    glossary: [
+      ["ชั่วโมงทำงานรวม", "ผลรวมชั่วโมงทำงานของทุกคนในเดือนนั้น ตามนิยามของบริษัท ใช้เป็นตัวหารของอัตราอุบัติเหตุ", "Total hours worked by everyone in the month, per company definition; the denominator of incident rates."],
+      ["UA", "การกระทำที่ไม่ปลอดภัย ชื่อและนิยามที่ใช้จริงตามที่ Admin กำหนด", "Unsafe Act. The name and definition actually used are set by Admin."],
+      ["UC", "สภาพที่ไม่ปลอดภัย ชื่อและนิยามที่ใช้จริงตามที่ Admin กำหนด", "Unsafe Condition. The name and definition actually used are set by Admin."],
+      ["ชั้นล่างของพีระมิด", "ชั้นที่อยู่ใต้ \"เหตุเกือบเกิดอุบัติเหตุ\" บนพีระมิด เช่น UA และ UC Admin เพิ่ม ปิด หรือเรียงลำดับได้", "Layers below near miss in the pyramid, e.g. UA and UC; Admin can add, deactivate or reorder them."],
+      ["ตรวจไฟล์", "ตรวจไฟล์นำเข้าว่าผิดตรงไหนโดยยังไม่บันทึกอะไร", "Checks an import file for errors without saving anything."]
+    ].map(function (g) { return [[g[0], g[0]], [g[1], g[2]]]; }),
+    example: ["ตัวอย่าง: Plant A เดือนตุลาคม พนักงาน 240 คน ทำงานรวม 52,000 ชั่วโมง พบ UA 12 เรื่อง และ UC 30 เรื่อง (ตัวเลขสมมติ) กรอกทั้งหมดในหน้านี้แล้วกดบันทึก", "Example: Plant A, October, 240 employees, 52,000 hours, 12 UA and 30 UC (made-up numbers): enter them here and press Save."],
+    std: ["ISO 45001:2018 ข้อ 9.1 (การเฝ้าระวัง วัด วิเคราะห์ และประเมินผล) และ ISO/IEC 27001:2022 A.8.15 (การบันทึกเหตุการณ์ ทุกการแก้ไขมี audit log)", "ISO 45001:2018 cl. 9.1 (monitoring, measurement, analysis and evaluation) and ISO/IEC 27001:2022 A.8.15 (logging; every change is audit-logged)."]
+  },
+
   "admin-incident-types": {
     purpose: ["กำหนดตัวเลือกของรายงานอุบัติเหตุเอง 3 แกน: ประเภทเหตุการณ์ (ต้นไม้หลายระดับ), ความรุนแรง (Pyramid) และผู้เกี่ยวข้อง โดยไม่ต้องแก้โค้ด", "Define the three choices of the incident report yourself: incident type (multi-level tree), severity (Pyramid) and involved party, without code changes."],
     who: ["Admin และ Super admin", "Admin and Super admin."],

@@ -389,7 +389,7 @@
       f.age = input("number", 0, { min: 0, max: 120, step: 1, inputMode: "numeric" });
       f.tenure = input("number", 0, { min: 0, max: 80, step: 0.5, inputMode: "decimal" });
       f.nat = input("text", 50); f.pos = input("text", 100);
-      f.ptype = select([["", "-- ไม่ระบุ --"], ["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["supplier", "ซัพพลายเออร์ (Supplier)"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]]);
+      f.ptype = select([["", "-- ไม่ระบุ --"], ["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["supplier", "ซัพพลายเออร์"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]]);
 
       f.oRole = otherInput("รายละเอียดบทบาท (อื่น ๆ)"); f.oGender = otherInput("รายละเอียดเพศ (อื่น ๆ)");
       f.oPtype = otherInput("รายละเอียดประเภทบุคลากร (อื่น ๆ)"); f.oInjury = otherInput("รายละเอียดชนิดการบาดเจ็บ (อื่น ๆ)"); f.oBody = otherInput("รายละเอียดตำแหน่งที่บาดเจ็บ (อื่น ๆ)");

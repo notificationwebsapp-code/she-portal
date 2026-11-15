@@ -184,14 +184,14 @@
         <p class="ed-meta" id="meta"></p>
       </section>
 
-      <p class="ed-note">ตัวเลขทั้งหมดเป็น <b>จำนวนเคส</b> ที่บันทึกในระบบ ยังไม่ปรับตามขนาดโรงงาน/ชั่วโมงทำงาน จึงใช้เปรียบเทียบเชิงแนวโน้มเท่านั้น (ไม่ใช่คะแนนหรืออันดับ) และจำนวน Near miss ที่สูงมักสะท้อนวัฒนธรรมการรายงานที่ดี<br><b>คลิกได้ทุกการ์ด</b> (ตัวเลข แถบ ช่องสี หรือแถวในตาราง) เพื่อไปดูรายการเคสที่อยู่เบื้องหลังตัวเลขนั้นในหน้า "บันทึกการสอบสวน" — ผู้ใช้เห็นเฉพาะเคสที่ตนมีสิทธิ์ตามปกติ</p>
+      <p class="ed-note">ตัวเลขทั้งหมดเป็น <b>จำนวนเคส</b> ที่บันทึกในระบบ ยังไม่ปรับตามขนาดโรงงาน/ชั่วโมงทำงาน จึงใช้เปรียบเทียบเชิงแนวโน้มเท่านั้น (ไม่ใช่คะแนนหรืออันดับ) และจำนวน เหตุเกือบเกิดอุบัติเหตุ ที่สูงมักสะท้อนวัฒนธรรมการรายงานที่ดี<br><b>คลิกได้ทุกการ์ด</b> (ตัวเลข แถบ ช่องสี หรือแถวในตาราง) เพื่อไปดูรายการเคสที่อยู่เบื้องหลังตัวเลขนั้นในหน้า "บันทึกการสอบสวน" — ผู้ใช้เห็นเฉพาะเคสที่ตนมีสิทธิ์ตามปกติ</p>
 
       <section class="ed-kpis" id="kpis" aria-label="ตัวชี้วัดหลัก"></section>
 
       <div class="ed-grid">
         <section class="ed-card"><h3>พีระมิดความรุนแรง</h3><p class="sub">จำนวนเคสตามระดับ — ฐานกว้างคือเหตุที่เบากว่าแต่เกิดบ่อยกว่า (เหตุเกือบเกิดอุบัติเหตุ) ใช้ดูว่ามีการรายงานเชิงป้องกันมากพอหรือไม่</p>
           <div class="ed-pyr" id="pyr" role="list" aria-label="พีระมิดความรุนแรง"></div>
-          <p class="sub" style="margin-top:.6rem">RWC = Restricted work case · MTC = Medical treatment case · FAC = First aid case · PD = Property damage · ไม่รวมอัคคีภัย PSM สิ่งแวดล้อม</p></section>
+          <p class="sub" style="margin-top:.6rem">RWC = บาดเจ็บถึงขั้นจำกัดงาน · MTC = รักษาพยาบาล · FAC = ปฐมพยาบาล · PD = ทรัพย์สินเสียหาย · ไม่รวมอัคคีภัย PSM สิ่งแวดล้อม</p></section>
         <section class="ed-card"><h3>ส่วนของร่างกายที่บาดเจ็บ</h3><p class="sub" id="body-sub">จำนวนผู้บาดเจ็บแยกตามส่วนของร่างกาย (ซ้าย/ขวาตามตัวผู้บาดเจ็บ มองจากด้านหน้า)</p>
           <div class="ed-body"><svg id="body-svg" viewBox="-6 0 212 368" role="img" aria-label="ภาพร่างกายแสดงส่วนที่บาดเจ็บ ซ้าย/ขวาตามผู้บาดเจ็บ รายละเอียดอยู่ในรายการด้านข้าง">
             <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#e2e8f0"/><line x1="0" y1="0" x2="0" y2="6" stroke="#94a3b8" stroke-width="2"/></pattern></defs>
@@ -233,7 +233,7 @@
       <div class="ed-grid">
         <section class="ed-card"><h3>แนวโน้มรายเดือน</h3><p class="sub">จำนวนเคสแยกตามความรุนแรง</p>
           <div class="ed-trend" id="trend" role="img" aria-label="กราฟแท่งแนวโน้มรายเดือน มีตารางให้ดูด้านล่าง"></div>
-          <div class="ed-legend"><span><i class="sg-serious"></i>เคสรุนแรง (FAT/LTI)</span><span><i class="sg-other"></i>เคสอื่น ๆ</span><span><i class="sg-near"></i>Near miss</span></div>
+          <div class="ed-legend"><span><i class="sg-serious"></i>เคสรุนแรง (FAT/LTI)</span><span><i class="sg-other"></i>เคสอื่น ๆ</span><span><i class="sg-near"></i>เหตุเกือบเกิดอุบัติเหตุ</span></div>
           <details class="ed-alt"><summary>ดูเป็นตาราง</summary><div class="ed-scroll"><table class="ed-tbl" id="trend-tbl"></table></div></details></section>
         <section class="ed-card"><h3>หมวดเหตุการณ์</h3><p class="sub">จำนวนเคสตามประเภทหลัก (รวมประเภทย่อย) เคสเก่าที่ยังไม่ได้จัดประเภทใหม่จะแสดงเป็น "ไม่ระบุประเภท"</p><div id="cats"></div></section>
         <section class="ed-card"><h3>ระดับความรุนแรง</h3><p class="sub">FAT, LTI, RWC, MTC, FAC, PD, NEAR ตามที่เลือกในรายงาน (เคสเก่าที่ยังไม่ระบุ = "ไม่ระบุ")</p><div id="sevs"></div></section>
@@ -251,7 +251,7 @@
         <section class="ed-card"><h3>เปรียบเทียบแต่ละ Plant</h3><p class="sub">ใช้เรียนรู้จาก Plant อื่นและปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน) เรียงจากเคสมากไปน้อย</p>
           <div class="ed-tool"><label><input type="checkbox" class="only-active"> แสดงเฉพาะ Plant ที่มีเหตุการณ์</label><span class="cnt" id="bench-cnt"></span></div>
           <div class="ed-hmw" id="bench"></div>
-          <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="hm"></i>&lt;3 (ปิดบัง)</span><span><i class="h1"></i>1–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10–19</span><span><i class="h4"></i>20 ขึ้นไป</span><span><i class="b2"></i>Near miss (สีน้ำเงิน = รายงานเชิงป้องกัน ยิ่งมากยิ่งดี)</span></div></section>
+          <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="hm"></i>&lt;3 (ปิดบัง)</span><span><i class="h1"></i>1–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10–19</span><span><i class="h4"></i>20 ขึ้นไป</span><span><i class="b2"></i>เหตุเกือบเกิดอุบัติเหตุ (สีน้ำเงิน = รายงานเชิงป้องกัน ยิ่งมากยิ่งดี)</span></div></section>
       </div>
 
       <section class="ed-soon" aria-label="ส่วนที่กำลังพัฒนา">
@@ -338,19 +338,22 @@
     function numOrMask(o) { return o == null ? "<3" : String(o); }
 
     function render(r) {
+      /* ชื่อระดับความรุนแรง: ชื่อไทย + รหัสย่อในวงเล็บครั้งเดียว (ไม่ซ้ำถ้า Admin ใส่เองแล้ว) */
+      var ABBR = { FAT: 1, LTI: 1, RWC: 1, MTC: 1, FAC: 1, PD: 1 };
+      r.by_severity = (r.by_severity || []).map(function (c) { var n = c.name_th || ""; return ABBR[c.code] && n.indexOf("(" + c.code + ")") < 0 ? Object.assign({}, c, { name_th: n + " (" + c.code + ")" }) : c; });
       var k = r.kpi, box = $("kpis"); box.replaceChildren();
       box.appendChild(kpi("", "เคสทั้งหมด", String(k.total), "ในช่วงที่เลือก", drill()));
       box.appendChild(kpi("k-serious", "เคสรุนแรง (FAT/LTI)", String(k.serious), "เสียชีวิต + หยุดงาน", drill({ sev: ["FAT", "LTI"] })));
       box.appendChild(kpi("k-lti", "LTI", String(k.lti), "บาดเจ็บถึงขั้นหยุดงาน (ไม่รวมเสียชีวิต)", drill({ sev: ["LTI"] })));
-      box.appendChild(kpi("k-rwc", "จำกัดงาน (RWC)", String((r.pyramid && r.pyramid.rwc) || 0), "Restricted work case", drill({ sev: ["RWC"] })));
-      box.appendChild(kpi("k-near", "Near miss", String(k.near_miss), "เหตุเกือบเกิดอุบัติเหตุ", drill({ sev: ["NEAR"] })));
+      box.appendChild(kpi("k-rwc", "จำกัดงาน (RWC)", String((r.pyramid && r.pyramid.rwc) || 0), "บาดเจ็บถึงขั้นจำกัดงาน", drill({ sev: ["RWC"] })));
+      box.appendChild(kpi("k-near", "เหตุเกือบเกิดอุบัติเหตุ", String(k.near_miss), "ฐานของพีระมิด", drill({ sev: ["NEAR"] })));
       box.appendChild(kpi("k-days", "ปลอดอุบัติเหตุหยุดงานมาแล้ว", k.days_since_lti == null ? "ไม่มีเคส" : String(k.days_since_lti), k.days_since_lti == null ? "ยังไม่มี LTI/เสียชีวิตที่บันทึก" : "วัน (นับจากเคสล่าสุด)", drill({ sev: ["FAT", "LTI"] })));
       var soon = kpi("soon", "Open CAPA", "เร็ว ๆ นี้", ""); box.appendChild(soon);
 
       /* pyramid */
       var py = $("pyr"); py.replaceChildren();
       var pm = r.pyramid || { fatal: 0, lti: 0, rwc: 0, mtc: 0, fac: 0, near_miss: 0 };
-      [["pl-fat", "เสียชีวิต (FAT)", pm.fatal, 30, "FAT"], ["pl-lti", "หยุดงาน (LTI)", pm.lti, 39, "LTI"], ["pl-rwc", "จำกัดงาน (RWC)", pm.rwc || 0, 49, "RWC"], ["pl-mtc", "รักษาพยาบาล (MTC)", pm.mtc || 0, 59, "MTC"], ["pl-fac", "ปฐมพยาบาล (FAC)", pm.fac || 0, 70, "FAC"], ["pl-pd", "ทรัพย์สินเสียหาย (PD)", pm.pd || 0, 84, "PD"], ["pl-near", "Near miss", pm.near_miss, 100, "NEAR"]].forEach(function (L) {
+      [["pl-fat", "เสียชีวิต (FAT)", pm.fatal, 30, "FAT"], ["pl-lti", "หยุดงาน (LTI)", pm.lti, 39, "LTI"], ["pl-rwc", "จำกัดงาน (RWC)", pm.rwc || 0, 49, "RWC"], ["pl-mtc", "รักษาพยาบาล (MTC)", pm.mtc || 0, 59, "MTC"], ["pl-fac", "ปฐมพยาบาล (FAC)", pm.fac || 0, 70, "FAC"], ["pl-pd", "ทรัพย์สินเสียหาย (PD)", pm.pd || 0, 84, "PD"], ["pl-near", "เหตุเกือบเกิดอุบัติเหตุ", pm.near_miss, 100, "NEAR"]].forEach(function (L) {
         var d = el("a", "drill ed-pl " + L[0]); d.href = drill({ sev: [L[4]] }); d.setAttribute("role", "listitem"); d.style.width = L[3] + "%";
         d.appendChild(el("span", null, L[1])); d.appendChild(el("b", null, String(L[2]))); py.appendChild(d);
       });
@@ -401,7 +404,7 @@
         tr.appendChild(col);
       });
       var tt = $("trend-tbl"); tt.replaceChildren();
-      var th = el("tr"); ["เดือน", "รุนแรง", "อื่น ๆ", "Near miss"].forEach(function (h, i) { th.appendChild(el("th", i ? "n" : "", h)); }); tt.appendChild(th);
+      var th = el("tr"); ["เดือน", "รุนแรง", "อื่น ๆ", "เหตุเกือบเกิดอุบัติเหตุ"].forEach(function (h, i) { th.appendChild(el("th", i ? "n" : "", h)); }); tt.appendChild(th);
       r.trend.forEach(function (m) {
         var tr2 = el("tr"), mr2 = monthRange(m.month), td1 = el("td"); td1.appendChild(link("", m.month, drill({ from: mr2.from, to: mr2.to }))); tr2.appendChild(td1);
         [["serious", ["FAT", "LTI"]], ["other", ["RWC", "MTC", "FAC", "PD", "none"]], ["near_miss", ["NEAR"]]].forEach(function (g) { var td = el("td", "n"); td.appendChild(link("", String(m[g[0]]), drill({ from: mr2.from, to: mr2.to, sev: g[1] }))); tr2.appendChild(td); }); tt.appendChild(tr2);
@@ -464,7 +467,7 @@
       if (!bShow.length) bw0.appendChild(el("p", "sub", "ไม่มีเหตุการณ์ในช่วงที่เลือก (Plant ทั้งหมด " + bp.length + " แห่งเป็น 0)"));
       var bSize = Math.max(1, Math.ceil(bShow.length / (bShow.length > 12 ? 2 : 1)));
       for (var bi = 0; bi < bShow.length; bi += bSize) {
-        var bt = el("table", "ed-bt"), bh = el("tr"); ["Plant", "ทั้งหมด", "รุนแรง", "LTI", "Near miss"].forEach(function (h) { bh.appendChild(el("th", "", h)); }); bt.appendChild(bh);
+        var bt = el("table", "ed-bt"), bh = el("tr"); ["Plant", "ทั้งหมด", "รุนแรง", "LTI", "เหตุเกือบเกิดอุบัติเหตุ"].forEach(function (h) { bh.appendChild(el("th", "", h)); }); bt.appendChild(bh);
         bShow.slice(bi, bi + bSize).forEach(function (p) {
           var tr4 = el("tr"), td0 = el("td", "pl"); td0.appendChild(link("", p.code, drill({ plant: p.id }), p.code + " " + p.name + " — ดูรายการเคส")); td0.title = p.name; if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr4.appendChild(td0);
           [[p.total, null, false], [p.serious, ["FAT", "LTI"], false], [p.lti, ["LTI"], false], [p.near_miss, ["NEAR"], true]].forEach(function (g) {
@@ -529,17 +532,17 @@
         function add(sec, plant, item, metric, n) { rows.push([sec, plant || "", item || "", metric, v(n), n == null ? "ปิดบังค่าน้อยกว่า 3" : ""]); }
         rows.push(["ช่วงข้อมูล", "", cur.from + " ถึง " + cur.to, "ตัวกรอง", "", "Plant: " + (cur.pl.length ? cur.pl.length + " แห่ง" : "ทั้งหมด") + " | ประเภท: " + (cur.ty.join(" ") || "ทั้งหมด") + " | ความรุนแรง: " + (cur.sv.join(" ") || "ทั้งหมด") + " | ผู้เกี่ยวข้อง: " + (cur.pt.join(" ") || "ทั้งหมด") + " | สถานะ: " + (cur.ph || "ทั้งหมด")]);
         var k = r.kpi, py = r.pyramid || {};
-        [["เคสทั้งหมด", k.total], ["เคสรุนแรง (FAT/LTI)", k.serious], ["เสียชีวิต (FAT)", k.fatal], ["LTI", k.lti], ["Near miss", k.near_miss], ["วันนับจาก LTI/FAT ล่าสุด", k.days_since_lti]].forEach(function (x) { rows.push(["KPI", "", "", x[0], x[1] == null ? "" : x[1], ""]); });
+        [["เคสทั้งหมด", k.total], ["เคสรุนแรง (FAT/LTI)", k.serious], ["เสียชีวิต (FAT)", k.fatal], ["LTI", k.lti], ["เหตุเกือบเกิดอุบัติเหตุ", k.near_miss], ["วันนับจาก LTI/FAT ล่าสุด", k.days_since_lti]].forEach(function (x) { rows.push(["KPI", "", "", x[0], x[1] == null ? "" : x[1], ""]); });
         [["FAT", py.fatal], ["LTI", py.lti], ["RWC", py.rwc], ["MTC", py.mtc], ["FAC", py.fac], ["PD", py.pd], ["NEAR", py.near_miss]].forEach(function (x) { add("พีระมิด", "", x[0], "จำนวนเคส", x[1] == null ? 0 : x[1]); });
         (r.by_category || []).forEach(function (c) { add("หมวดเหตุการณ์", "", c.name_th, "จำนวนเคส", c.n); });
-        (r.by_severity || []).forEach(function (c) { add("ระดับความรุนแรง", "", c.code + " " + c.name_th, "จำนวนเคส", c.n); });
+        (r.by_severity || []).forEach(function (c) { add("ระดับความรุนแรง", "", c.name_th, "จำนวนเคส", c.n); });
         (r.by_party || []).forEach(function (c) { add("ผู้เกี่ยวข้อง", "", c.name_th, "จำนวนเคส", c.n); });
         (r.by_time || []).forEach(function (c) { add("ช่วงเวลา", "", c.bucket, "จำนวนเคส", c.n); });
         (r.body_parts || []).forEach(function (c) { add("ตำแหน่งที่บาดเจ็บ", "", c.name_th || c.code, "จำนวนผู้บาดเจ็บ", c.n); });
-        (r.trend || []).forEach(function (m) { rows.push(["แนวโน้มรายเดือน", "", m.month, "เคสรุนแรง", m.serious, ""], ["แนวโน้มรายเดือน", "", m.month, "เคสอื่น ๆ", m.other, ""], ["แนวโน้มรายเดือน", "", m.month, "Near miss", m.near_miss, ""]); });
+        (r.trend || []).forEach(function (m) { rows.push(["แนวโน้มรายเดือน", "", m.month, "เคสรุนแรง", m.serious, ""], ["แนวโน้มรายเดือน", "", m.month, "เคสอื่น ๆ", m.other, ""], ["แนวโน้มรายเดือน", "", m.month, "เหตุเกือบเกิดอุบัติเหตุ", m.near_miss, ""]); });
         var hp = {}; (r.heatmap.plants || []).forEach(function (p) { hp[p.id] = p.code; });
         (r.heatmap.cells || []).forEach(function (c) { add("Heatmap Plant x ไตรมาส", hp[c.plant_id] || c.plant_id, c.quarter, "จำนวนเคส", c.n); });
-        (r.by_plant || []).forEach(function (p) { [["ทั้งหมด", p.total], ["รุนแรง", p.serious], ["LTI", p.lti], ["Near miss", p.near_miss]].forEach(function (x) { add("เปรียบเทียบ Plant", p.code, p.name, x[0], x[1]); }); });
+        (r.by_plant || []).forEach(function (p) { [["ทั้งหมด", p.total], ["รุนแรง", p.serious], ["LTI", p.lti], ["เหตุเกือบเกิดอุบัติเหตุ", p.near_miss]].forEach(function (x) { add("เปรียบเทียบ Plant", p.code, p.name, x[0], x[1]); }); });
         function cell(x) { x = String(x == null ? "" : x); if (/^[=+\-@\t\r]/.test(x) && x !== "<3") x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; }   /* กัน CSV/Formula injection (OWASP) */
         var csv = "\uFEFF" + rows.map(function (rw) { return rw.map(cell).join(","); }).join("\r\n");
         var a = document.createElement("a"), u = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));

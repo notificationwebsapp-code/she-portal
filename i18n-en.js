@@ -286,6 +286,7 @@ I18N.add({
 "ช่อง": "Field “",
 "ช่องบังคับที่กรอกแล้ว": "Required fields completed",
 "ซัพพลายเออร์ (Supplier)": "Supplier",
+"ซัพพลายเออร์": "Supplier",
 "ดำเนินการไปแล้ว และผู้รับผิดชอบหลัก": "Action taken and main responsible person",
 "ดำเนินการไม่สำเร็จ:": "Operation failed:",
 "ดูข้อมูล": "Records",

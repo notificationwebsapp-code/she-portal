@@ -485,7 +485,7 @@
       nationality: "สัญชาติ", position_title: "ตำแหน่งงาน", person_type: "ประเภทบุคคล"
     };
     const GENDER_OPTS = [["male", "ชาย"], ["female", "หญิง"], ["other", "อื่น ๆ"]];
-    const PTYPE_OPTS = [["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["supplier", "ซัพพลายเออร์ (Supplier)"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]];
+    const PTYPE_OPTS = [["employee", "พนักงาน"], ["contractor", "ผู้รับเหมา"], ["supplier", "ซัพพลายเออร์"], ["visitor", "ผู้มาติดต่อ"], ["other", "อื่น ๆ"]];
     const ROLE_TH = { injured: "ผู้บาดเจ็บ", witness: "พยาน", other: "อื่น ๆ" };
     // B21: เลือก "อื่น ๆ" ต้องพิมพ์รายละเอียด (เก็บใน other_notes) — field → { key ใน other_notes, เงื่อนไขว่าเลือก "อื่น ๆ" }
     const isOth = (v) => v === "other" || v === "OTHER";
@@ -806,7 +806,7 @@
       }
       // คำอธิบายสี (ผู้ใช้ใหม่เข้าใจได้เอง; มีข้อความกำกับ ไม่ใช้สีอย่างเดียว ตาม WCAG 2.2 ข้อ 1.4.1)
       const lg = h("div", { class: "fb-chips sevlegend", role: "note", "aria-label": "คำอธิบายสีระดับความรุนแรง" }, h("span", { class: "lbl", text: "สีที่แถบและป้ายในตาราง = ระดับความรุนแรง:" }));
-      [["FAT", "เสียชีวิต"], ["LTI", "หยุดงาน"], ["RWC", "จำกัดงาน"], ["MTC", "รักษาพยาบาล"], ["FAC", "ปฐมพยาบาล"], ["PD", "ทรัพย์สิน"], ["NEAR", "Near miss"]].forEach(([c, t]) => lg.append(h("span", { class: "sevlg", style: "--svc:" + SEV_COLOR[c], text: c + " " + t })));
+      [["FAT", "เสียชีวิต"], ["LTI", "หยุดงาน"], ["RWC", "จำกัดงาน"], ["MTC", "รักษาพยาบาล"], ["FAC", "ปฐมพยาบาล"], ["PD", "ทรัพย์สิน"], ["NEAR", "เหตุเกือบเกิดอุบัติเหตุ"]].forEach(([c, t]) => lg.append(h("span", { class: "sevlg", style: "--svc:" + SEV_COLOR[c], text: c + " " + t })));
       f.append(lg);
       f.onsubmit = (e) => { e.preventDefault(); flt.q = q.value.trim(); apply(); };
     }
@@ -864,7 +864,7 @@
       return /[",\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
     }
     const GENDER = { male: "ชาย", female: "หญิง", other: "อื่น ๆ" };
-    const PTYPE = { employee: "พนักงาน", contractor: "ผู้รับเหมา", supplier: "ซัพพลายเออร์ (Supplier)", visitor: "ผู้มาติดต่อ", other: "อื่น ๆ" };
+    const PTYPE = { employee: "พนักงาน", contractor: "ผู้รับเหมา", supplier: "ซัพพลายเออร์", visitor: "ผู้มาติดต่อ", other: "อื่น ๆ" };
     const PROLE = { injured: "ผู้บาดเจ็บ/ผู้ได้รับผลกระทบ", witness: "พยาน", other: "อื่น ๆ" };
     const REQ_LABEL = { pending: "รอ SHE พิจารณา", approved: "อนุมัติแล้ว", rejected: "ไม่อนุมัติ", cancelled: "ยกเลิกแล้ว" };
     const yn = (v) => (v === true ? "ใช่" : v === false ? "ไม่ใช่" : "");
@@ -1505,7 +1505,7 @@
         h("div", { class: "warnbox", role: "note" }, ico("alert"), h("span", { text: "ห้ามใส่ชื่อ รหัสพนักงาน หรือข้อมูลสุขภาพของผู้บาดเจ็บในช่องนี้ ให้เขียนเฉพาะข้อเท็จจริงของเหตุการณ์/กระบวนการ (PDPA, ISO/IEC 27001:2022 A.5.34) — อ้างอิงการสอบสวนตาม ISO 45001:2018 ข้อ 10.2" })));
 
       if (!d.started) {
-        wrap.append(h("p", { text: "เคสนี้ยังไม่ได้เริ่มสอบสวน กดเมื่อ SHE ตรวจรายงานเบื้องต้นเสร็จและต้องการหาสาเหตุ (เคสเล็ก เช่น Near miss ปิดเคสได้เลยโดยไม่ต้องสอบสวน)" }),
+        wrap.append(h("p", { text: "เคสนี้ยังไม่ได้เริ่มสอบสวน กดเมื่อ SHE ตรวจรายงานเบื้องต้นเสร็จและต้องการหาสาเหตุ (เคสเล็ก เช่น เหตุเกือบเกิดอุบัติเหตุ ปิดเคสได้เลยโดยไม่ต้องสอบสวน)" }),
           h("div", { class: "rowbtns" }, h("button", { type: "button", class: "btn-ok", text: "เริ่มสอบสวน",
             onclick: () => act(sb.rpc("incident_investigation_start", { p_incident: inc.id }), "เริ่มสอบสวนแล้ว") })));
       } else if (!d.can_edit) {

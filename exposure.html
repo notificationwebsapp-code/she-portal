@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ชั่วโมงทำงานและ UA/UC รายเดือน | SHE Portal</title>
+  <script src="i18n.js"></script>
+  <script src="guide-data.js"></script><script src="guide.js"></script><script src="csv-import.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+  <style>
+    .tablewrap{overflow-x:auto;max-width:100%}
+    .card2{background:#fff;border:1px solid #D5DCEF;border-radius:18px;padding:1rem 1.1rem;margin:1rem 0}
+    .card2 h3{margin:.1rem 0 .4rem;color:var(--navy,#1F3A8A)}
+    .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.8rem 1rem;align-items:start;margin:.7rem 0}
+    .fgrid label{display:flex;flex-direction:column;gap:.25rem;font-weight:700;font-size:.95rem}
+    .fgrid input,.fgrid select{min-height:48px;font:inherit;font-weight:400}
+    .fh{display:block;font-weight:400;font-size:.85rem;color:#4B5563}
+    .sub2{margin:.9rem 0 .2rem;color:var(--navy,#1F3A8A);font-size:1rem}
+    .monthword{font-weight:700;color:var(--navy,#1F3A8A)}
+    .acts{display:flex;flex-wrap:wrap;gap:.6rem;margin:.8rem 0}
+    .acts button{min-height:44px}
+    .tg{display:inline-block;border-radius:999px;padding:.1rem .65rem;font-size:.85rem;font-weight:700;background:#EEE;color:#333}
+    .tg.ok{background:#E3F6E8;color:#14532D}.tg.warn{background:#FFF4D6;color:#6B4200}.tg.bad{background:#FDECEA;color:#8C1D18}
+    table.ex{border-collapse:collapse;width:100%;min-width:640px;background:#fff}
+    table.ex th,table.ex td{border:1px solid #D5DCEF;padding:.4rem .55rem;text-align:left;font-size:.92rem}
+    table.ex th{background:#E8EEFB}
+    table.ex td.n{text-align:right;font-variant-numeric:tabular-nums}
+    .empty{padding:.8rem 1rem;background:#FFF7E0;border:1px solid #F0D58A;border-radius:12px}
+    .chk{display:flex;align-items:center;gap:.5rem;min-height:44px}
+    .chk input{width:22px;height:22px}
+    .seg{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+    .seg button{min-height:44px}
+    .seg button[aria-pressed="true"]{background:var(--navy,#1F3A8A);color:#fff;border-color:var(--navy,#1F3A8A)}
+    .panel[hidden],[hidden]{display:none!important}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <div id="area" hidden>
+      <h2>ชั่วโมงทำงานและ UA/UC รายเดือน</h2>
+      <p>SHE ของแต่ละ Plant กรอกข้อมูลเดือนละครั้ง เพื่อให้ Dashboard คำนวณอัตราอุบัติเหตุต่อชั่วโมงทำงาน และแสดงจำนวน UA/UC เป็นชั้นล่างสุดของพีระมิด</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <div class="seg" role="group" aria-label="เลือกหัวข้อ">
+        <button type="button" class="secondary" data-panel="entry" aria-pressed="true">กรอกรายเดือน</button>
+        <button type="button" class="secondary" data-panel="import" aria-pressed="false">นำเข้า / ส่งออก (CSV)</button>
+        <button type="button" class="secondary" data-panel="layers" aria-pressed="false" id="tab-layers" hidden>ชั้นของพีระมิด (Admin)</button>
+      </div>
+
+      <section id="panel-entry" class="panel">
+        <div class="card2">
+          <h3>1) เลือก Plant และเดือน</h3>
+          <div class="fgrid">
+            <label>Plant<select id="f-plant"></select><span class="fh">แสดงเฉพาะ Plant ที่คุณมีสิทธิ์กรอก</span></label>
+            <label>เดือน<input type="month" id="f-month"><span class="fh">เดือนที่เลือก: <span class="monthword" id="monthword" data-no-i18n>–</span></span></label>
+          </div>
+          <div id="entry-note"></div>
+        </div>
+        <div class="card2">
+          <h3>2) ชั่วโมงทำงานและจำนวนคน</h3>
+          <div class="fgrid">
+            <label>ชั่วโมงทำงานรวม — พนักงาน<input type="number" id="f-he" min="0" max="99999999" step="0.01" inputmode="decimal"><span class="fh">ผลรวมชั่วโมงทำงานจริงของพนักงานทุกคนในเดือนนั้น ตามนิยามที่บริษัทกำหนด (เว้นว่างถ้ายังไม่ทราบ)</span></label>
+            <label>ชั่วโมงทำงานรวม — ผู้รับเหมา<input type="number" id="f-hc" min="0" max="99999999" step="0.01" inputmode="decimal"><span class="fh">ผลรวมชั่วโมงทำงานของผู้รับเหมาที่ทำงานใน Plant เดือนนั้น</span></label>
+            <label>จำนวนพนักงาน (คน)<input type="number" id="f-ne" min="0" max="1000000" step="1" inputmode="numeric"><span class="fh">จำนวนพนักงานตามที่บริษัทกำหนดให้นับ ณ เดือนนั้น</span></label>
+            <label>จำนวนผู้รับเหมา (คน)<input type="number" id="f-nc" min="0" max="1000000" step="1" inputmode="numeric"><span class="fh">จำนวนผู้รับเหมาเฉลี่ยหรือตามที่บริษัทกำหนดให้นับ</span></label>
+          </div>
+          <h4 class="sub2">3) จำนวนในชั้นล่างของพีระมิด (เช่น UA / UC)</h4>
+          <div id="metrics" class="fgrid"></div>
+          <div id="metrics-empty" class="empty" hidden>ยังไม่มีชั้นล่างของพีระมิดที่เปิดใช้งาน ให้ Admin เพิ่มได้ที่แท็บ "ชั้นของพีระมิด (Admin)" เช่น UA และ UC</div>
+          <div class="acts"><button type="button" class="btn-ok" id="b-save">บันทึกข้อมูลเดือนนี้</button><button type="button" class="secondary" id="b-clear">ล้างช่องที่กรอก</button></div>
+        </div>
+        <div class="card2">
+          <h3>ประวัติ 12 เดือนล่าสุดของ Plant นี้</h3>
+          <p class="fh">ใช้ตรวจว่าเดือนไหนยังไม่กรอก กดปุ่ม "แก้ไข" เพื่อนำข้อมูลของเดือนนั้นกลับมาที่ฟอร์มด้านบน</p>
+          <div class="tablewrap"><table class="ex" id="hist"><thead></thead><tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="panel-import" class="panel" hidden>
+        <div id="imp-ex"></div>
+      </section>
+
+      <section id="panel-layers" class="panel" hidden>
+        <div class="card2">
+          <h3>ชั้นล่างของพีระมิด (UA / UC และอื่น ๆ)</h3>
+          <p class="fh">ชั้นเหล่านี้อยู่ใต้ "เหตุเกือบเกิดอุบัติเหตุ" ในพีระมิดบน Dashboard และเป็นช่องให้ SHE กรอกจำนวนรายเดือน เพิ่ม ปิด หรือเรียงลำดับได้เอง ไม่ต้องแก้โค้ด</p>
+          <div class="tablewrap"><table class="ex" id="t-layers">
+            <thead><tr><th>ลำดับ</th><th>รหัส</th><th>ชื่อ</th><th>สถานะ</th><th>การทำงาน</th></tr></thead><tbody></tbody>
+          </table></div>
+          <form id="f-layer" autocomplete="off">
+            <h4 class="sub2" id="ly-title">+ เพิ่มชั้นใหม่</h4>
+            <div class="fgrid">
+              <label>รหัส<input type="text" id="ly-code" maxlength="30" required><span class="fh">ตัวย่อ 1–30 ตัว (A-Z a-z 0-9 _ -) เช่น UA สร้างแล้วเปลี่ยนไม่ได้</span></label>
+              <label>ชื่อภาษาไทย<input type="text" id="ly-th" maxlength="200" required><span class="fh">เช่น "การกระทำที่ไม่ปลอดภัย" (ตัวอย่าง) ใช้ชื่อตามนิยามของบริษัท</span></label>
+              <label>ชื่อภาษาอังกฤษ (ถ้ามี)<input type="text" id="ly-en" maxlength="200"></label>
+              <label>ลำดับ (0–100000)<input type="number" id="ly-rank" min="0" max="100000" value="100" required><span class="fh">เลขน้อยแสดงก่อน (อยู่ด้านบนของกลุ่มชั้นล่าง)</span></label>
+              <label>คำอธิบาย / นิยาม<input type="text" id="ly-desc" maxlength="500"><span class="fh">ไม่บังคับ ช่วยให้ SHE ทุก Plant นับตรงกัน</span></label>
+              <label class="chk"><input type="checkbox" id="ly-act" checked> เปิดใช้งาน</label>
+            </div>
+            <div class="acts"><button type="submit" class="btn-ok" id="ly-save">+ เพิ่มชั้นใหม่</button><button type="button" class="secondary" id="ly-cancel" hidden>ยกเลิกการแก้ไข</button></div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* หน้านี้เป็นเพียงหน้าจอ สิทธิ์จริงอยู่ที่ฐานข้อมูล: exposure_upsert / exposure_import ตรวจสิทธิ์ exposure.edit รายคน รายPlant
+       และ RLS จำกัดการอ่านตาม Plant; ข้อมูลที่ผู้ใช้กรอกแสดงด้วย textContent เท่านั้น (OWASP A03) */
+    const $ = (id) => document.getElementById(id);
+    const msgEl = $("msg");
+    let ME = null, IS_ADMIN = false, PLANTS = [], TYPES = [], STATS = {}, VALS = {}, editLayer = null;
+
+    function el(tag, text, cls) { const e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
+    function dn(e) { e.setAttribute("data-no-i18n", ""); return e; }
+    function show(text, ok) { msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error"); msgEl.textContent = text; msgEl.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+    const THMON = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+    function monthWord(ym) { const m = /^(\d{4})-(\d{2})/.exec(ym || ""); return m ? THMON[+m[2] - 1] + " " + (+m[1] + 543) : "–"; }
+    function curYM() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
+    function addMonths(ym, n) { const m = /^(\d{4})-(\d{2})/.exec(ym); const d = new Date(+m[1], +m[2] - 1 + n, 1); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
+    function thaiError(e) {
+      const m = (e && e.message) || "";
+      if (e.code === "42501") return "คุณไม่มีสิทธิ์กรอกข้อมูลของ Plant นี้";
+      if (e.code === "23505") return "รหัสนี้ถูกใช้แล้ว";
+      if (e.code === "23503") return "ชั้นนี้มีข้อมูลแล้ว ลบไม่ได้ ให้ปิดใช้งานแทน";
+      if (e.code === "P0002") return "ไม่พบรายการ (อาจถูกแก้ไขโดยผู้อื่น) กรุณาโหลดหน้าใหม่";
+      if (e.code === "22023") {
+        if (/month/i.test(m)) return "เดือนไม่ถูกต้อง (เลือกเดือนในอนาคตไม่ได้)";
+        if (/hours/i.test(m)) return "ชั่วโมงทำงานต้องเป็นตัวเลขตั้งแต่ 0";
+        if (/headcount/i.test(m)) return "จำนวนคนต้องเป็นจำนวนเต็มตั้งแต่ 0";
+        if (/inactive/i.test(m)) return "ชั้นที่เลือกถูกปิดใช้งานแล้ว";
+        if (/unknown metric/i.test(m)) return "ไม่พบชั้นของพีระมิดที่ระบุ กรุณาโหลดหน้าใหม่";
+        if (/integer/i.test(m)) return "จำนวนในแต่ละชั้นต้องเป็นจำนวนเต็ม 0–1,000,000";
+        if (/code must/i.test(m)) return "รหัสต้องเป็น A-Z a-z 0-9 _ - ไม่เกิน 30 ตัว";
+        if (/must not start/i.test(m)) return "ข้อความห้ามขึ้นต้นด้วย = + - @ และห้ามมีอักขระควบคุม";
+        return "ข้อมูลไม่ถูกต้อง";
+      }
+      return "ทำรายการไม่สำเร็จ: " + m;
+    }
+
+    document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+      document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+      ["entry", "import", "layers"].forEach((p) => { $("panel-" + p).hidden = p !== b.dataset.panel; });
+    }));
+
+    const activeTypes = () => TYPES.filter((t) => t.active);
+    function metricInputs() {
+      const box = $("metrics"); box.replaceChildren();
+      const at = activeTypes();
+      $("metrics-empty").hidden = at.length > 0;
+      at.forEach((t) => {
+        const lab = el("label"); lab.appendChild(dn(el("span", t.name_th + " (" + t.code + ")")));
+        const inp = el("input"); inp.type = "number"; inp.min = "0"; inp.max = "1000000"; inp.step = "1"; inp.inputMode = "numeric"; inp.dataset.code = t.code; inp.id = "m-" + t.code;
+        lab.appendChild(inp);
+        lab.appendChild(dn(el("span", t.description || "จำนวนเรื่องที่พบในเดือนนั้น (เว้นว่างถ้าไม่ทราบ)", "fh")));
+        box.appendChild(lab);
+      });
+    }
+
+    async function loadTypes() {
+      const r = await sb.from("exposure_metric_types").select("id, code, name_th, name_en, description, rank, active").order("rank").order("code");
+      TYPES = r.data || [];
+    }
+    async function loadHistory() {
+      const p = $("f-plant").value; STATS = {}; VALS = {};
+      if (!p) return;
+      const from = addMonths(curYM(), -11) + "-01";
+      const [s, v] = await Promise.all([
+        sb.from("plant_monthly_stats").select("month, work_hours_employee, work_hours_contractor, headcount_employee, headcount_contractor").eq("plant_id", p).gte("month", from).limit(60),
+        sb.from("plant_monthly_metric_values").select("month, value, metric_type_id").eq("plant_id", p).gte("month", from).limit(1000)
+      ]);
+      (s.data || []).forEach((x) => { STATS[x.month.slice(0, 7)] = x; });
+      (v.data || []).forEach((x) => { const k = x.month.slice(0, 7); (VALS[k] = VALS[k] || {})[x.metric_type_id] = x.value; });
+      renderHistory(); fillForm();
+    }
+    function num(x) { return x === null || x === undefined ? "" : String(x); }
+    function fillForm() {
+      const ym = $("f-month").value, s = STATS[ym] || {}, v = VALS[ym] || {};
+      $("f-he").value = num(s.work_hours_employee); $("f-hc").value = num(s.work_hours_contractor);
+      $("f-ne").value = num(s.headcount_employee); $("f-nc").value = num(s.headcount_contractor);
+      activeTypes().forEach((t) => { const i = $("m-" + t.code); if (i) i.value = num(v[t.id]); });
+      $("monthword").textContent = monthWord(ym);
+      const has = !!STATS[ym] || Object.keys(v).length;
+      const n = $("entry-note"); n.replaceChildren();
+      n.appendChild(el("span", has ? "เดือนนี้มีข้อมูลแล้ว (แก้ไขแล้วกดบันทึกเพื่อทับค่าเดิม)" : "เดือนนี้ยังไม่มีข้อมูล", "tg " + (has ? "ok" : "warn")));
+    }
+    function statusOf(ym) {
+      const s = STATS[ym] || {}, v = VALS[ym] || {}, at = activeTypes();
+      const cells = [s.work_hours_employee, s.work_hours_contractor, s.headcount_employee, s.headcount_contractor].concat(at.map((t) => v[t.id]));
+      const filled = cells.filter((x) => x !== null && x !== undefined).length;
+      return filled === 0 ? ["ยังไม่กรอก", "bad"] : filled === cells.length ? ["ครบ", "ok"] : ["กรอกบางส่วน", "warn"];
+    }
+    function renderHistory() {
+      const th = document.querySelector("#hist thead"), tb = document.querySelector("#hist tbody"); th.replaceChildren(); tb.replaceChildren();
+      const hr = el("tr"); ["เดือน", "ชม.พนักงาน", "ชม.ผู้รับเหมา", "พนักงาน (คน)", "ผู้รับเหมา (คน)"].forEach((h) => hr.appendChild(el("th", h)));
+      activeTypes().forEach((t) => hr.appendChild(dn(el("th", t.code))));
+      hr.appendChild(el("th", "สถานะ")); hr.appendChild(el("th", "")); th.appendChild(hr);
+      for (let i = 0; i < 12; i++) {
+        const ym = addMonths(curYM(), -i), s = STATS[ym] || {}, v = VALS[ym] || {}, tr = el("tr");
+        tr.appendChild(dn(el("td", monthWord(ym))));
+        [s.work_hours_employee, s.work_hours_contractor, s.headcount_employee, s.headcount_contractor].forEach((x) => tr.appendChild(dn(el("td", x === null || x === undefined ? "–" : Number(x).toLocaleString("en-US"), "n"))));
+        activeTypes().forEach((t) => tr.appendChild(dn(el("td", v[t.id] === undefined ? "–" : String(v[t.id]), "n"))));
+        const st = statusOf(ym), td = el("td"); td.appendChild(el("span", st[0], "tg " + st[1])); tr.appendChild(td);
+        const tb2 = el("td"), b = el("button", "แก้ไข", "secondary small"); b.type = "button"; b.addEventListener("click", () => { $("f-month").value = ym; fillForm(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+        tb2.appendChild(b); tr.appendChild(tb2); tb.appendChild(tr);
+      }
+    }
+
+    function readNum(id, int, label, max) {
+      const raw = $(id).value.trim(); if (raw === "") return { v: null };
+      const n = Number(raw);
+      if (!isFinite(n) || n < 0 || n > max || (int && !Number.isInteger(n))) return { err: label + ": " + (int ? "ต้องเป็นจำนวนเต็ม" : "ต้องเป็นตัวเลข") + " 0–" + max.toLocaleString("en-US") };
+      return { v: n };
+    }
+    async function save() {
+      const p = $("f-plant").value, ym = $("f-month").value;
+      if (!p) { show("กรุณาเลือก Plant", false); return; }
+      if (!/^\d{4}-\d{2}$/.test(ym) || ym > curYM()) { show("กรุณาเลือกเดือนที่ไม่เกินเดือนปัจจุบัน", false); return; }
+      const he = readNum("f-he", false, "ชั่วโมงพนักงาน", 99999999), hc = readNum("f-hc", false, "ชั่วโมงผู้รับเหมา", 99999999),
+        ne = readNum("f-ne", true, "จำนวนพนักงาน", 1000000), nc = readNum("f-nc", true, "จำนวนผู้รับเหมา", 1000000);
+      const bad = [he, hc, ne, nc].find((x) => x.err); if (bad) { show(bad.err, false); return; }
+      const values = {};
+      for (const t of activeTypes()) {
+        const r = readNum("m-" + t.code, true, t.code, 1000000); if (r.err) { show(r.err, false); return; }
+        values[t.code] = r.v;
+      }
+      const btn = $("b-save"); btn.disabled = true;
+      const { error } = await sb.rpc("exposure_upsert", { p_plant: p, p_month: ym + "-01", p_hours_employee: he.v, p_hours_contractor: hc.v, p_values: values, p_headcount_employee: ne.v, p_headcount_contractor: nc.v });
+      btn.disabled = false;
+      if (error) { show("บันทึกไม่สำเร็จ: " + thaiError(error), false); return; }
+      show("บันทึกข้อมูล " + monthWord(ym) + " เรียบร้อยแล้ว", true);
+      await loadHistory();
+    }
+
+    /* ---------- Admin: ชั้นของพีระมิด ---------- */
+    function renderLayers() {
+      const tb = document.querySelector("#t-layers tbody"); tb.replaceChildren();
+      if (!TYPES.length) { const tr = el("tr"), td = el("td", "ยังไม่มีชั้น — เพิ่มด้านล่าง เช่น UA และ UC"); td.colSpan = 5; tr.appendChild(td); tb.appendChild(tr); return; }
+      TYPES.forEach((t) => {
+        const tr = el("tr"); tr.appendChild(dn(el("td", String(t.rank)))); tr.appendChild(dn(el("td", t.code))); tr.appendChild(dn(el("td", t.name_th)));
+        const st = el("td"); st.appendChild(el("span", t.active ? "ใช้งานอยู่" : "ปิดใช้งาน", "tg " + (t.active ? "ok" : ""))); tr.appendChild(st);
+        const ac = el("td");
+        const bE = el("button", "แก้ไข", "secondary small"); bE.type = "button"; bE.addEventListener("click", () => startEdit(t));
+        const bT = el("button", t.active ? "ปิดใช้งาน" : "เปิดใช้งาน", "secondary small"); bT.type = "button";
+        bT.addEventListener("click", async () => { if (await saveLayer(t, { active: !t.active }, "อัปเดตสถานะแล้ว")) await reloadAll(); });
+        const bD = el("button", "ลบ", "secondary small"); bD.type = "button";
+        bD.addEventListener("click", async () => {
+          if (!window.confirm("ลบชั้น " + t.code + " ? (ลบได้เฉพาะชั้นที่ยังไม่มีข้อมูล ลบแล้วกู้คืนไม่ได้)")) return;
+          const { error } = await sb.rpc("exposure_metric_type_delete", { p_id: t.id });
+          if (error) { show("ลบไม่สำเร็จ: " + thaiError(error), false); return; }
+          show("ลบชั้นแล้ว", true); await reloadAll();
+        });
+        [bE, bT, bD].forEach((b) => { b.style.marginRight = ".4rem"; ac.appendChild(b); }); tr.appendChild(ac); tb.appendChild(tr);
+      });
+    }
+    async function saveLayer(t, over, okText) {
+      const a = Object.assign({ p_id: t.id, p_code: t.code, p_name_th: t.name_th, p_name_en: t.name_en, p_description: t.description, p_rank: t.rank, p_active: t.active }, over);
+      const { error } = await sb.rpc("exposure_metric_type_save", a);
+      if (error) { show("บันทึกไม่สำเร็จ: " + thaiError(error), false); return false; }
+      show(okText, true); return true;
+    }
+    function startEdit(t) {
+      editLayer = t; $("ly-title").textContent = "แก้ไขชั้น " + t.code; $("ly-code").value = t.code; $("ly-code").readOnly = true;
+      $("ly-th").value = t.name_th; $("ly-en").value = t.name_en || ""; $("ly-rank").value = t.rank; $("ly-desc").value = t.description || ""; $("ly-act").checked = t.active;
+      $("ly-save").textContent = "บันทึกการแก้ไข"; $("ly-cancel").hidden = false; $("f-layer").scrollIntoView({ behavior: "smooth" });
+    }
+    function resetLayerForm() {
+      editLayer = null; $("f-layer").reset(); $("ly-code").readOnly = false; $("ly-rank").value = "100"; $("ly-act").checked = true;
+      $("ly-title").textContent = "+ เพิ่มชั้นใหม่"; $("ly-save").textContent = "+ เพิ่มชั้นใหม่"; $("ly-cancel").hidden = true;
+    }
+    $("ly-cancel").addEventListener("click", resetLayerForm);
+    $("f-layer").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const a = { p_id: editLayer ? editLayer.id : null, p_code: $("ly-code").value.trim(), p_name_th: $("ly-th").value.trim(), p_name_en: $("ly-en").value.trim() || null, p_description: $("ly-desc").value.trim() || null, p_rank: Number($("ly-rank").value), p_active: $("ly-act").checked };
+      const { error } = await sb.rpc("exposure_metric_type_save", a);
+      if (error) { show("บันทึกไม่สำเร็จ: " + thaiError(error), false); return; }
+      show(editLayer ? "แก้ไขชั้นเรียบร้อย" : "เพิ่มชั้นเรียบร้อย", true); resetLayerForm(); await reloadAll();
+    });
+
+    async function reloadAll() { await loadTypes(); metricInputs(); renderLayers(); mountImport(); await loadHistory(); }
+
+    function mountImport() {
+      const codes = TYPES.filter((t) => t.active).map((t) => t.code);
+      const exMetric = codes[0] || "UA";
+      const p0 = ($("f-plant").options[0] || {}).dataset ? ($("f-plant").options[0].dataset.code || "PLANT-CODE") : "PLANT-CODE";
+      SHEImport.mount($("imp-ex"), {
+        title: ["นำเข้า / ส่งออกชั่วโมงทำงาน จำนวนคน และ UA/UC (CSV)", "Import / export work hours, headcount and UA/UC (CSV)"],
+        what: ["ใช้กรอกข้อมูลย้อนหลังหรือหลายเดือนพร้อมกัน 1 แถว = 1 ค่า (Plant + เดือน + รายการ) SHE นำเข้าได้เฉพาะ Plant ของตนเอง", "Use this to backfill or enter several months at once. One row = one value (plant + month + item)."],
+        rpc: "exposure_import", exportRpc: "exposure_export", filename: "exposure", maxRows: 500, exampleKey: "plant_code",
+        extraNote: ["รายการ (item) ที่ใช้ได้: HOURS_EMP = ชั่วโมงพนักงาน, HOURS_CON = ชั่วโมงผู้รับเหมา, HEADCOUNT_EMP = จำนวนพนักงาน, HEADCOUNT_CON = จำนวนผู้รับเหมา" + (codes.length ? ", และรหัสชั้นของพีระมิดที่เปิดใช้งาน: " + codes.join(", ") : "") + " ค่าที่มีอยู่แล้วจะถูกทับ ไม่มีอะไรถูกลบ", "Items: HOURS_EMP, HOURS_CON, HEADCOUNT_EMP, HEADCOUNT_CON and active pyramid layer codes. Existing values are overwritten; nothing is deleted."],
+        columns: [
+          { key: "plant_code", req: true, help: ["รหัส Plant ตามหน้าข้อมูลหลัก (ต้องเป็น Plant ที่คุณมีสิทธิ์)", "Plant code (must be a plant you may edit)"], ex: p0 },
+          { key: "month", req: true, help: ["เดือน รูปแบบ ปปปป-ดด (ค.ศ.) เช่น 2026-10 ห้ามเป็นเดือนในอนาคต", "Month as YYYY-MM, no future months"], ex: "2026-10" },
+          { key: "item", req: true, help: ["รายการที่จะกรอก ดูรายชื่อในกล่อง \"วิธีใช้\" ด้านบน", "Item to fill, see list above"], ex: "HOURS_EMP" },
+          { key: "value", req: true, help: ["ตัวเลข ชั่วโมงมีทศนิยมได้ไม่เกิน 2 ตำแหน่ง ส่วนจำนวนคนและชั้นพีระมิดต้องเป็นจำนวนเต็ม", "Number; hours up to 2 decimals, others integers"], ex: "52000" }
+        ],
+        examples: [
+          { plant_code: "EXAMPLE-" + p0, month: "2026-10", item: "HOURS_EMP", value: "52000" },
+          { plant_code: "EXAMPLE-" + p0, month: "2026-10", item: "HEADCOUNT_EMP", value: "240" },
+          { plant_code: "EXAMPLE-" + p0, month: "2026-10", item: exMetric, value: "12" }
+        ],
+        onDone: loadHistory
+      });
+    }
+
+    (async function init() {
+      const session = await requireLogin(); if (!session) return;
+      ME = await getMyProfile();
+      const gate = $("gate");
+      const role = ME && ME.role;
+      if (!ME || ME.status !== "active" || !["admin", "super_admin", "she"].includes(role)) { gate.textContent = "หน้านี้สำหรับ SHE และ Admin เท่านั้น"; return; }
+      IS_ADMIN = role === "admin" || role === "super_admin";
+      gate.hidden = true; $("area").hidden = false; $("tab-layers").hidden = !IS_ADMIN;
+      const pr = await sb.from("plants").select("id, code, name").eq("active", true).order("code");
+      let list = pr.data || [];
+      if (!IS_ADMIN) { const up = await sb.from("user_plants").select("plant_id").eq("user_id", ME.id); const ids = new Set((up.data || []).map((x) => x.plant_id)); list = list.filter((p) => ids.has(p.id)); }
+      PLANTS = list;
+      const sel = $("f-plant");
+      if (!PLANTS.length) { show("บัญชีของคุณยังไม่ได้ผูกกับ Plant ใด กรุณาติดต่อ Admin", false); }
+      PLANTS.forEach((p) => { const o = dn(el("option", p.code + " — " + p.name)); o.value = p.id; o.dataset.code = p.code; sel.appendChild(o); });
+      const m = $("f-month"); m.max = curYM(); m.value = addMonths(curYM(), -1);
+      sel.addEventListener("change", loadHistory); m.addEventListener("change", () => { if (m.value > curYM()) m.value = curYM(); fillForm(); });
+      $("b-save").addEventListener("click", save);
+      $("b-clear").addEventListener("click", () => { ["f-he", "f-hc", "f-ne", "f-nc"].forEach((i) => { $(i).value = ""; }); document.querySelectorAll("#metrics input").forEach((i) => { i.value = ""; }); });
+      await loadTypes(); metricInputs(); renderLayers(); mountImport(); await loadHistory(); fillForm();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>
