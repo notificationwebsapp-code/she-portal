@@ -92,6 +92,15 @@
     }
     .badge{display:inline-flex;min-height:28px;align-items:center;border-radius:8px;padding:.05rem .6rem;font-size:.78rem;font-weight:700;border:1px solid #cbd5e1;background:#f1f5f9;color:#334155}
     .badge.ser{background:#fdeceb;color:#8c1d18;border-color:#f3b8b4}
+    .badge.sv{border-color:transparent}
+    .badge.sv-FAT{background:#7f1d1d;color:#fff}.badge.sv-LTI{background:#dc2626;color:#fff}.badge.sv-RWC{background:#c2410c;color:#fff}
+    .badge.sv-MTC{background:#fb923c;color:#431407}.badge.sv-FAC{background:#fcd34d;color:#422006}.badge.sv-PD{background:#bef264;color:#1a2e05}.badge.sv-NEAR{background:#86efac;color:#052e16}
+    .ed-tool{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin:.4rem 0 .6rem}
+    .ed-tool label{display:inline-flex;align-items:center;gap:.5rem;min-height:44px;font-size:.9rem;cursor:pointer}
+    .ed-tool .cnt{font-size:.8rem;color:var(--muted)}
+    .ed-vscroll{max-height:420px;overflow:auto}
+    .ed-vscroll th{position:sticky;top:0;z-index:2}
+    .ed-tbl td.z{color:#94a3b8;font-weight:400}.ed-tbl td.nz{font-weight:700;color:var(--navy)}
     .ed-own{font-size:.75rem;background:var(--accent);color:var(--brand);border-radius:8px;padding:0 .5rem;margin-left:.4rem;font-weight:700}
     .ed-note{background:#fff8e1;border:1px solid #f3d98b;border-radius:8px;padding:.6rem .9rem;font-size:.88rem;margin:0 0 1rem}
     .ed-soon{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin:0 0 1rem}
@@ -210,9 +219,13 @@
       </div>
 
       <div class="ed-grid">
-        <section class="ed-card"><h3>Plant × ไตรมาส (Heatmap)</h3><p class="sub">จำนวนเคสต่อไตรมาส</p><div class="ed-scroll"><table class="ed-hm" id="hm"></table></div>
+        <section class="ed-card"><h3>Plant × ไตรมาส (Heatmap)</h3><p class="sub">จำนวนเคสต่อไตรมาส เรียงจากมากไปน้อย ช่องสีเข้ม = เคสมาก</p>
+          <div class="ed-tool"><label><input type="checkbox" class="only-active" checked> แสดงเฉพาะ Plant ที่มีเหตุการณ์</label><span class="cnt" id="hm-cnt"></span></div>
+          <div class="ed-scroll ed-vscroll"><table class="ed-hm" id="hm"></table></div>
           <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="h1"></i>3–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10 ขึ้นไป</span></div></section>
-        <section class="ed-card"><h3>เปรียบเทียบแต่ละ Plant</h3><p class="sub">ใช้เรียนรู้จาก Plant อื่นและปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน)</p><div class="ed-scroll"><table class="ed-tbl" id="bench"></table></div></section>
+        <section class="ed-card"><h3>เปรียบเทียบแต่ละ Plant</h3><p class="sub">ใช้เรียนรู้จาก Plant อื่นและปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน) เรียงจากเคสมากไปน้อย</p>
+          <div class="ed-tool"><label><input type="checkbox" class="only-active" checked> แสดงเฉพาะ Plant ที่มีเหตุการณ์</label><span class="cnt" id="bench-cnt"></span></div>
+          <div class="ed-scroll ed-vscroll"><table class="ed-tbl" id="bench"></table></div></section>
       </div>
 
       <section class="ed-soon" aria-label="ส่วนที่กำลังพัฒนา">
@@ -249,6 +262,7 @@
       if (v === "ytd") from = new Date(to.getFullYear(), 0, 1); else from.setDate(from.getDate() - Number(v) + 1);
       return { from: ymd(from), to: ymd(to) };
     }
+    var onlyActive = true;
     function checks(boxId) { return Array.prototype.slice.call($(boxId).querySelectorAll("input:checked")).map(function (c) { return c.value; }); }
     function sumLabel(boxId, sumId, all, noun) {
       var c = checks(boxId); $(sumId).textContent = c.length === 0 ? all : c.length + " " + noun + " ที่เลือก";
@@ -363,7 +377,12 @@
       var hm = $("hm"); hm.replaceChildren();
       var hr = el("tr"); hr.appendChild(el("th", "", "Plant")); r.heatmap.quarters.forEach(function (q) { hr.appendChild(el("th", "", q.replace("-", " "))); }); hm.appendChild(hr);
       var cell = {}; r.heatmap.cells.forEach(function (c) { cell[c.plant_id + "|" + c.quarter] = c; });
-      r.heatmap.plants.forEach(function (p) {
+      var hmTot = {}; r.heatmap.cells.forEach(function (c) { hmTot[c.plant_id] = (hmTot[c.plant_id] || 0) + (c.suppressed ? 1.5 : (c.n || 0)); });
+      var hmPlants = r.heatmap.plants.slice().sort(function (a, b) { return (hmTot[b.id] || 0) - (hmTot[a.id] || 0) || String(a.code).localeCompare(String(b.code)); });
+      var hmShow = hmPlants.filter(function (p) { return !onlyActive || (hmTot[p.id] || 0) > 0; });
+      $("hm-cnt").textContent = "แสดง " + hmShow.length + " จาก " + hmPlants.length + " Plant";
+      if (!hmShow.length) { var he = el("tr"), hc = el("td", "", "ไม่มีเหตุการณ์ในช่วงที่เลือก (Plant ทั้งหมด " + hmPlants.length + " แห่งเป็น 0)"); hc.colSpan = r.heatmap.quarters.length + 1; he.appendChild(hc); hm.appendChild(he); }
+      hmShow.forEach(function (p) {
         var tr3 = el("tr"), td0 = el("td", "", p.code); if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr3.appendChild(td0);
         r.heatmap.quarters.forEach(function (q) {
           var c = cell[p.id + "|" + q] || { n: 0 }, v = c.n, cls = c.suppressed ? "hm" : v === 0 ? "h0" : v < 6 ? "h1" : v < 10 ? "h2" : "h3";
@@ -374,9 +393,14 @@
       /* benchmark */
       var bt = $("bench"); bt.replaceChildren();
       var bh = el("tr"); ["Plant", "ทั้งหมด", "รุนแรง", "LTI", "Near miss"].forEach(function (h, i) { bh.appendChild(el("th", i ? "n" : "", h)); }); bt.appendChild(bh);
-      r.by_plant.forEach(function (p) {
+      function bw(v) { return v == null ? 1.5 : v; }
+      var bp = r.by_plant.slice().sort(function (a, b) { return bw(b.total) - bw(a.total) || bw(b.serious) - bw(a.serious) || String(a.code).localeCompare(String(b.code)); });
+      var bShow = bp.filter(function (p) { return !onlyActive || bw(p.total) > 0; });
+      $("bench-cnt").textContent = "แสดง " + bShow.length + " จาก " + bp.length + " Plant";
+      if (!bShow.length) { var be = el("tr"), bc = el("td", "", "ไม่มีเหตุการณ์ในช่วงที่เลือก (Plant ทั้งหมด " + bp.length + " แห่งเป็น 0)"); bc.colSpan = 5; be.appendChild(bc); bt.appendChild(be); }
+      bShow.forEach(function (p) {
         var tr4 = el("tr"), td0 = el("td", "", p.code + " " + p.name); if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr4.appendChild(td0);
-        [p.total, p.serious, p.lti, p.near_miss].forEach(function (v) { tr4.appendChild(el("td", "n", numOrMask(v))); }); bt.appendChild(tr4);
+        [p.total, p.serious, p.lti, p.near_miss].forEach(function (v) { tr4.appendChild(el("td", "n " + (v === 0 ? "z" : "nz"), numOrMask(v))); }); bt.appendChild(tr4);
       });
 
       /* latest */
@@ -388,7 +412,7 @@
       var shown = rows.filter(function (r) { return !q || (r.plant_code + " " + r.type_name).toLowerCase().indexOf(q) > -1; });
       shown.forEach(function (r) {
         var tr = el("tr"); tr.appendChild(el("td", "", thDate(r.occurred_on))); tr.appendChild(el("td", "", r.plant_code)); tr.appendChild(el("td", "", r.type_name));
-        var td = el("td"); td.appendChild(el("span", "badge" + (r.is_serious ? " ser" : ""), r.severity_name || (r.is_serious ? "รุนแรง" : "ทั่วไป"))); tr.appendChild(td);
+        var td = el("td"); td.appendChild(el("span", r.severity_code && /^(FAT|LTI|RWC|MTC|FAC|PD|NEAR)$/.test(r.severity_code) ? "badge sv sv-" + r.severity_code : "badge" + (r.is_serious ? " ser" : ""), r.severity_name || (r.is_serious ? "รุนแรง" : "ทั่วไป"))); tr.appendChild(td);
         tr.appendChild(el("td", "", PHASE[r.phase] || r.phase)); t.appendChild(tr);
       });
       if (!shown.length) { var e = el("tr"), c = el("td", "", "ไม่พบข้อมูล"); c.colSpan = 5; e.appendChild(c); t.appendChild(e); }
@@ -426,6 +450,11 @@
       });
       function range0() { var t = new Date(), fr = new Date(); fr.setDate(fr.getDate() - 89); return { from: ymd(fr), to: ymd(t) }; }
       $("b-apply").addEventListener("click", load);
+      document.querySelectorAll(".only-active").forEach(function (cb) {
+        cb.addEventListener("change", function () {
+          onlyActive = cb.checked; document.querySelectorAll(".only-active").forEach(function (o) { o.checked = onlyActive; }); if (data) render(data);
+        });
+      });
       $("b-reset").addEventListener("click", function () {
         $("f-range").value = "90"; $("l-from").hidden = $("l-to").hidden = true; $("f-phase").value = "";
         document.querySelectorAll("#pop-plants input,#pop-types input,#pop-sev input,#pop-party input").forEach(function (c) { c.checked = false; });
