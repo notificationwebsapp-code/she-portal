@@ -30,15 +30,16 @@
       if (sub) s.addText(sub, { x: 0.6, y: 0.9, w: W - 3.0, h: 0.4, fontFace: FONT, fontSize: 13, color: C.mid, valign: "top" }); return s; }
     function table(s, head, rows, x, y, w, colW, fs) {
       s.addTable([head].concat(rows), { x: x, y: y, w: w, colW: colW, fontFace: FONT, fontSize: fs || 11, border: { type: "solid", pt: 0.5, color: "D5DAE5" }, rowH: 0.3, autoPage: false }); }
-    function bars(s, title, items, x, y, w, fmt, flag) {
+    function bars(s, title, items, x, y, w, fmt, flag, asc) {
       s.addText(title, { x: x, y: y, w: w, h: 0.35, fontFace: FONT, fontSize: 14, bold: true, color: C.blue });
-      var rows = items.slice().sort(function (a, b) { return b.v - a.v; }).slice(0, 10);
-      if (!rows.length) { s.addText("ไม่มีข้อมูลในช่วงที่เลือก", { x: x, y: y + 0.45, w: w, h: 0.4, fontFace: FONT, fontSize: 12, color: C.mid }); return; }
+      var all = items.filter(function (r) { return asc || r.v > 0; }).sort(function (a, b) { return asc ? a.v - b.v : b.v - a.v; }), rows = all.slice(0, 10);
+      if (!rows.length) { s.addText("ไม่มีรายการ (ทุก Plant เป็น 0 หรือไม่มีข้อมูล)", { x: x, y: y + 0.45, w: w, h: 0.4, fontFace: FONT, fontSize: 12, color: C.mid }); return; }
       var mx = Math.max.apply(null, rows.map(function (r) { return r.v; })) || 1;
       rows.forEach(function (r, i) { var top = flag && r.v > 0 && r.v === mx, yy = y + 0.45 + i * 0.34, bw = (w - 2.6) * r.v / mx;
         s.addText(r.label, { x: x, y: yy, w: 1.1, h: 0.3, fontFace: FONT, fontSize: 11, color: C.text, valign: "middle" });
         s.addShape(pptx.ShapeType.rect, { x: x + 1.15, y: yy + 0.04, w: Math.max(0.03, bw), h: 0.22, fill: { color: top ? C.orange : C.blue }, line: { color: top ? C.orange : C.blue, width: 0 } });
-        s.addText(fmt(r.v) + (top ? " สูงสุด" : ""), { x: x + 1.2 + Math.max(0.03, bw), y: yy, w: 1.4, h: 0.3, fontFace: FONT, fontSize: 11, bold: true, color: C.text, valign: "middle" }); }); }
+        s.addText(fmt(r.v) + (top ? " สูงสุด" : ""), { x: x + 1.2 + Math.max(0.03, bw), y: yy, w: 1.4, h: 0.3, fontFace: FONT, fontSize: 11, bold: true, color: C.text, valign: "middle" }); });
+      s.addText((asc ? "เรียงจากต่ำสุดก่อน · " : "แสดงเฉพาะ Plant ที่มีค่ามากกว่า 0 · ") + (all.length > 10 ? "แสดง 10 อันดับแรก อีก " + (all.length - 10) + " Plant ดูในตารางสไลด์ถัดไป" : "ครบทุก Plant ที่เกี่ยวข้อง"), { x: x, y: y + 0.5 + rows.length * 0.34, w: w, h: 0.3, fontFace: FONT, fontSize: 10, color: C.mid }); }
 
     var cv = pptx.addSlide(); cv.background = { color: C.white };
     cv.addImage({ data: gradient(1600, 900), x: 0, y: 0, w: 8.2, h: H });
@@ -64,7 +65,7 @@
     bars(s3, "SLA ที่พลาด (ครั้ง)", Object.keys(d.miss).map(function (c) { return { label: c, v: d.miss[c] }; }), 0.6, 1.5, 6.0, String, true);
     bars(s3, "Repeat case (เคส)", d.rs.map(function (r) { return { label: r.plant_code, v: r.repeat_case || 0 }; }).filter(function (x) { return x.v > 0; }), 6.9, 1.5, 6.0, String, true);
     var s3b = content("ปิด Action ทันเวลา", "ร้อยละของ Action ที่ปิดแล้วและปิดทันกำหนด (ยิ่งสูงยิ่งดี)");
-    bars(s3b, "ปิดทันเวลา (ร้อยละ)", d.li.filter(function (r) { return r.capa_closed_total > 0; }).map(function (r) { return { label: r.plant_code, v: Math.round(100 * r.capa_closed_on_time / r.capa_closed_total) }; }), 0.6, 1.5, 6.0, function (v) { return v + "%"; }, false);
+    bars(s3b, "ปิดทันเวลา (ร้อยละ)", d.li.filter(function (r) { return r.capa_closed_total > 0; }).map(function (r) { return { label: r.plant_code, v: Math.round(100 * r.capa_closed_on_time / r.capa_closed_total) }; }), 0.6, 1.5, 6.0, function (v) { return v + "%"; }, false, true);
     var mo = {}; d.mt.forEach(function (r) { var m = String(r.month).slice(0, 7); mo[m] = (mo[m] || 0) + (r.cases || 0); });
     bars(s3b, "แนวโน้ม Repeat รายเดือน (เคส)", Object.keys(mo).sort().map(function (m) { return { label: m, v: mo[m] }; }), 6.9, 1.5, 6.0, String, false);
 

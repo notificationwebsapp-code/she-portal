@@ -25,7 +25,7 @@
     .lk span{display:block;font-size:.9rem;color:#1B1F24;margin-top:.2rem}
     .lk small{display:block;color:#6B7280;font-size:.8rem;margin-top:.15rem}
     .lk.warn b{color:#E56C0C}
-    .lcharts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem}
+    .lcharts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:stretch}@media(max-width:900px){.lcharts{grid-template-columns:1fr}}
     .lcharts .card{margin:0}
     .hb{display:grid;grid-template-columns:5.5rem 1fr 5rem;align-items:center;gap:.5rem;margin:.35rem 0;font-size:.92rem}
     .hb .t{background:#EEF1F6;border-radius:6px;height:16px;overflow:hidden}
@@ -34,12 +34,12 @@
     .hb .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
     .hb .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .howto{background:#EEF1F6;border-radius:14px;padding:.7rem 1rem;font-size:.92rem;margin:.6rem 0}
-    @media print{.lcharts{display:block}.lcharts .card{break-inside:avoid;margin:.5rem 0}}
-    .ltwo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:start}
+    @media print{.lcharts{display:grid;grid-template-columns:1fr 1fr}.ltwo .full{grid-column:1/-1}.ltwo .hint{min-height:2.6em;margin:.2rem 0 .6rem}.lcharts .card{break-inside:avoid;margin:.3rem 0}h3{break-after:avoid}}
+    .ltwo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:stretch}.ltwo .full{grid-column:1/-1}
     .ltwo .card{margin:0;min-width:0}
     .ltwo table{font-size:.8rem;width:100%;min-width:0!important;table-layout:auto;margin:0}.ltwo th,.ltwo td{padding:.3rem .3rem!important;white-space:normal;overflow-wrap:normal;line-height:1.25}.ltwo th:first-child,.ltwo td:first-child{white-space:nowrap}.ltwo th{font-size:.76rem}.ltwo .tablewrap{overflow-x:auto}
     @media(max-width:900px){.ltwo{grid-template-columns:1fr}}
-    @media print{header,nav,#f,#export-row,#gate,#msg,footer,.howto{display:none!important}body,main,main.wide{background:#fff!important;padding:0!important;margin:0!important;max-width:none!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}#area{zoom:.72}.ltwo{grid-template-columns:repeat(2,minmax(0,1fr))}.card,.lk{break-inside:avoid}.tablewrap{overflow:visible}@page{size:A4 landscape;margin:8mm}}
+    @media print{header,nav,#f,#export-row,#gate,#msg,footer,.howto{display:none!important}body,main,main.wide{background:#fff!important;padding:0!important;margin:0!important;max-width:none!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}#area{zoom:.72}.ltwo{grid-template-columns:repeat(2,minmax(0,1fr))}.card,.lk{break-inside:avoid}.tablewrap{overflow:visible}.ltwo th,.ltwo td{padding:.12rem .25rem!important;font-size:.72rem}@page{size:A4 landscape;margin:8mm}}
     [hidden]{display:none!important}
     h3{color:var(--navy)}
   </style>
@@ -78,6 +78,13 @@
         <label>ตั้งแต่<input type="date" id="from" required></label>
         <label>ถึง<input type="date" id="to" required></label>
         <button type="submit" style="min-height:50px">แสดงผล</button>
+      <div id="export-row" style="grid-column:1/-1;border-top:1px solid #e3e8f2;padding-top:.8rem;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem">
+        <b>ส่งออกเพื่อนำเสนอ</b> <span class="hint">ตามช่วงวันที่และมุมมองที่เลือกอยู่ (ตัวเลขเดียวกับหน้านี้)</span>
+        <button type="button" class="secondary" id="b-pptx">⭳ PowerPoint (Thai Union CI)</button>
+        <button type="button" class="secondary" id="b-csv">⭳ CSV (ตัวเลขทั้งหมด)</button>
+        <button type="button" class="secondary" id="b-print">🖨 พิมพ์ / บันทึก PDF</button>
+        <span class="hint" id="export-msg" role="status"></span>
+      </div>
       </form>
 
       <section aria-labelledby="sum-h">
@@ -85,44 +92,42 @@
         <p class="howto">วิธีอ่าน: แถบยาว = ค่ามาก · แถบสีส้มพร้อมคำว่า "สูงสุด" = Plant ที่มีค่าพลาด/เกิดซ้ำมากที่สุด (ไม่ใช้กับร้อยละปิดทันเวลา ซึ่งยิ่งสูงยิ่งดี) · ตัวเลขทางขวาคือค่าจริง · ตัวย่อ SLA คือเกณฑ์เวลาที่ต้องทำให้ทัน (ตั้งที่หน้า "เกณฑ์ SLA / Repeat") · ตารางละเอียดอยู่ด้านล่าง</p>
         <div class="lkpis" id="lkpis" role="status"></div>
         <div class="lcharts">
-          <div class="card"><h4>SLA ที่พลาด (จำนวนครั้ง) แยกตาม Plant</h4><div id="c-sla"></div><p id="ce-sla" class="hint" hidden>ไม่มีข้อมูลในช่วงที่เลือก</p></div>
+          <div class="card"><h4>SLA ที่พลาด (จำนวนครั้ง) แยกตาม Plant</h4><div id="c-sla"></div><p id="ce-sla" class="hint" hidden>ไม่มี SLA ที่พลาดในช่วงที่เลือก (ทุก Plant เป็น 0)</p></div>
           <div class="card"><h4>ปิด Action ทันเวลา (ร้อยละ) แยกตาม Plant</h4><div id="c-ot"></div><p id="ce-ot" class="hint" hidden>ยังไม่มี Action ที่ปิดแล้วในช่วงที่เลือก</p></div>
           <div class="card"><h4>เหตุการณ์เกิดซ้ำ (Repeat case) แยกตาม Plant</h4><div id="c-rep"></div><p id="ce-rep" class="hint" hidden>ไม่มีเหตุการณ์เกิดซ้ำในช่วงที่เลือก</p></div>
           <div class="card"><h4>แนวโน้ม Repeat รายเดือน (เคส)</h4><div id="c-tr"></div><p id="ce-tr" class="hint" hidden>ไม่มีข้อมูลแนวโน้ม</p></div>
         </div>
       </section>
-      <div class="card" id="export-row">
-        <b>ส่งออกเพื่อนำเสนอ</b> <span class="hint">ตามช่วงวันที่และมุมมองที่เลือกอยู่ (ตัวเลขเดียวกับหน้านี้)</span><br>
-        <button type="button" class="secondary" id="b-pptx">⭳ PowerPoint (Thai Union CI)</button>
-        <button type="button" class="secondary" id="b-csv">⭳ CSV (ตัวเลขทั้งหมด)</button>
-        <button type="button" class="secondary" id="b-print">🖨 พิมพ์ / บันทึก PDF</button>
-        <span class="hint" id="export-msg" role="status"></span>
-      </div>
-
       <h3>ตารางละเอียด</h3>
       <div class="ltwo">
+
       <section class="card"><h4>1) SLA ที่พลาด แยกตาม Plant และขั้นตอน</h4>
         <p class="hint">ตัวเลข = พลาดเกณฑ์ (ปิดแล้วเกินเวลา + ยังเปิดอยู่แต่เกินเวลา) · "ไม่มีเกณฑ์" = ยังไม่ตั้งเกณฑ์ จึงไม่ถูกนับว่าพลาด</p>
         <div class="tablewrap"><table id="t-sla"><thead></thead><tbody></tbody></table></div><p id="e-sla" hidden>ไม่มีข้อมูลในช่วงที่เลือก</p></section>
 
       <section class="card"><h4>2) ตัวชี้วัดเชิงรุกอื่น</h4>
+        <p class="hint">นับเป็นจำนวนรายการ ตามช่วงวันที่ที่เลือก · ใช้ดูประสิทธิผลของ Action (ISO 45001:2018 ข้อ 10.2)</p>
         <div class="tablewrap"><table id="t-li"><thead><tr><th>Plant</th><th class="num">Action เกินกำหนดที่ยังเปิด</th><th class="num">Action ปิดแล้ว</th><th class="num">ปิดทันเวลา</th><th class="num">เลื่อนกำหนด 2 ครั้งขึ้นไป</th><th class="num">เหตุ Serious potential ที่ไม่มี Action</th></tr></thead><tbody></tbody></table></div><p id="e-li" hidden>ไม่มีข้อมูล</p></section>
 
       <section class="card"><h4>3) เหตุการณ์เกิดซ้ำ (Repeat) แยกตาม Plant</h4>
         <p class="hint" id="h-rep">ต้องตั้งกฎ N/K ที่หน้า "เกณฑ์ SLA / Repeat" ก่อน ระบบจึงนับ</p>
         <div class="tablewrap"><table id="t-rep"><thead><tr><th>Plant</th><th class="num">เคสทั้งหมด</th><th class="num">Repeat root cause</th><th class="num">Repeat case</th><th class="num">Repeat after closure</th><th class="num">ผู้สอบสวนยืนยัน</th><th>กฎที่เปิด</th></tr></thead><tbody></tbody></table></div><p id="e-rep" hidden>ไม่มีข้อมูล</p></section>
 
-      <section class="card"><h4>4) Life Saving Rules (จำนวนเคสต่อข้อ)</h4>
+      <section class="card"><h4>4) แนวโน้ม Repeat รายเดือน</h4>
+        <p class="hint">จำนวนเคสต่อเดือน แยกตามนิยามของ Repeat</p>
+        <div class="tablewrap"><table id="t-tr"><thead><tr><th>เดือน</th><th>นิยาม</th><th>เคส</th></tr></thead><tbody></tbody></table></div><p id="e-tr" hidden>ไม่มีข้อมูล</p></section>
+
+      <section class="card"><h4>5) Life Saving Rules (จำนวนเคสต่อข้อ)</h4>
+        <p class="hint">เฉพาะข้อที่มีเคสผูกอยู่ · จำนวนเคสต่อ Plant</p>
         <div class="tablewrap"><table id="t-lsr"><thead><tr><th>Plant</th><th>รหัส</th><th>ข้อกำหนด</th><th class="num">เคส</th></tr></thead><tbody></tbody></table></div><p id="e-lsr" hidden>ยังไม่มีรายการ Life Saving Rules หรือยังไม่มีเคสที่ผูกข้อ</p></section>
 
-      <section class="card"><h4>5) Root cause ที่เกิดซ้ำ (Plant × Root cause)</h4>
-        <div class="tablewrap"><table id="t-heat" class="heat"><thead></thead><tbody></tbody></table></div><p id="e-heat" hidden>ไม่มีรายการเกิดซ้ำ</p></section>
-
       <section class="card"><h4>6) Action ปิดแล้วแต่ root cause เดิมเกิดอีก</h4>
+        <p class="hint">Action ปิดแล้ว แต่ root cause เดิมกลับเกิดอีก · เปิดเคสดูรายละเอียดได้ถ้ามีสิทธิ์</p>
         <div class="tablewrap"><table id="t-ac"><thead><tr><th>Plant</th><th>Root cause</th><th>เหตุครั้งก่อน</th><th>เหตุครั้งนี้</th><th class="num">หลังปิด (วัน)</th><th>ผลพิจารณา</th><th></th></tr></thead><tbody></tbody></table></div><p id="e-ac" hidden>ไม่มีรายการ (หรือคุณไม่มีสิทธิ์ดูรายเคส)</p></section>
 
-      <section class="card"><h4>7) แนวโน้ม Repeat รายเดือน</h4>
-        <div class="tablewrap"><table id="t-tr"><thead><tr><th>เดือน</th><th>นิยาม</th><th>เคส</th></tr></thead><tbody></tbody></table></div><p id="e-tr" hidden>ไม่มีข้อมูล</p></section>
+      <section class="card full"><h4>7) Root cause ที่เกิดซ้ำ (Plant × Root cause)</h4>
+        <p class="hint">ตัวเลขในช่อง = จำนวนเคสที่เกิดซ้ำ · สีเข้มขึ้น = มากขึ้น · แต่ละ Plant เทียบกันได้</p>
+        <div class="tablewrap"><table id="t-heat" class="heat"><thead></thead><tbody></tbody></table></div><p id="e-heat" hidden>ไม่มีรายการเกิดซ้ำ</p></section>
       </div>
     </div>
   </main>
@@ -206,13 +211,15 @@
 
 
       /* ภาพรวม: KPI + กราฟแท่ง (สร้างด้วย textContent) */
-      function bars(host, empty, items, fmt, flag) {
-        const h = $(host); h.replaceChildren(); const rows = items.filter((x) => x.v != null);
+      function bars(host, empty, items, fmt, flag, asc) {
+        const h = $(host); h.replaceChildren(); let rows = items.filter((x) => x.v != null && (asc || x.v > 0));
         $(empty).hidden = rows.length > 0; if (!rows.length) return;
-        rows.sort((a, b) => b.v - a.v); const mx = Math.max(1, ...rows.map((x) => x.v));
+        rows.sort((a, b) => asc ? a.v - b.v : b.v - a.v); const more = Math.max(0, rows.length - 10); rows = rows.slice(0, 10);
+        const mx = Math.max(1, ...rows.map((x) => x.v));
         rows.forEach((x) => { const top = flag && x.v > 0 && x.v === mx; const r = el("div", "hb" + (top ? " top" : "")); const l = el("span", "l", x.label); l.setAttribute("data-no-i18n", ""); l.title = x.label;
           const t = el("span", "t"); const f = el("span", "f"); f.style.width = (100 * x.v / mx).toFixed(1) + "%"; t.appendChild(f);
           const v = el("span", "v", fmt(x.v) + (top ? " สูงสุด" : "")); v.setAttribute("data-no-i18n", ""); r.appendChild(l); r.appendChild(t); r.appendChild(v); h.appendChild(r); });
+        h.appendChild(el("p", "hint", (asc ? "เรียงจากต่ำสุดก่อน · " : "แสดงเฉพาะ Plant ที่มีค่ามากกว่า 0 · ") + (more ? "แสดง 10 อันดับแรก อีก " + more + " Plant ดูในตารางละเอียด" : "ครบทุก Plant ที่เกี่ยวข้อง")));
       }
       const miss = {}; sla.forEach((r) => { miss[r.plant_code] = (miss[r.plant_code] || 0) + (r.miss_total || 0); });
       const li = get(1) || [];
@@ -223,7 +230,7 @@
       [[totMiss, "SLA ที่พลาดทั้งหมด", "ครั้ง (ปิดเกินเวลา + ยังเปิดเกินเวลา)", totMiss > 0], [totOver, "Action เกินกำหนดที่ยังเปิด", "รายการ", totOver > 0], [totClosed ? Math.round(100 * totOn / totClosed) + "%" : "–", "ปิด Action ทันเวลา", totClosed ? totOn + " จาก " + totClosed + " รายการ" : "ยังไม่มี Action ที่ปิดแล้ว", false], [totRep, "Repeat case", "เคสที่เกิดซ้ำ", totRep > 0]].forEach((k) => {
         const d = el("div", "lk" + (k[3] ? " warn" : "")); const b = el("b", null, String(k[0])); d.appendChild(b); d.appendChild(el("span", null, k[1])); d.appendChild(el("small", null, k[2])); kp.appendChild(d); });
       bars("c-sla", "ce-sla", Object.keys(miss).map((c) => ({ label: c, v: miss[c] })), (v) => String(v), true);
-      bars("c-ot", "ce-ot", li.filter((r) => r.capa_closed_total > 0).map((r) => ({ label: r.plant_code, v: Math.round(100 * r.capa_closed_on_time / r.capa_closed_total) })), (v) => v + "%", false);
+      bars("c-ot", "ce-ot", li.filter((r) => r.capa_closed_total > 0).map((r) => ({ label: r.plant_code, v: Math.round(100 * r.capa_closed_on_time / r.capa_closed_total) })), (v) => v + "%", false, true);
       bars("c-rep", "ce-rep", rs.map((r) => ({ label: r.plant_code, v: r.repeat_case || 0 })).filter((x) => x.v > 0), (v) => String(v), true);
       const mo = {}; (get(5) || []).forEach((r) => { const m = String(r.month).slice(0, 7); mo[m] = (mo[m] || 0) + (r.cases || 0); });
       const ml = Object.keys(mo).sort(); const th2 = $("c-tr"); th2.replaceChildren(); $("ce-tr").hidden = ml.length > 0;
