@@ -14,6 +14,7 @@
     .ed-fgrid details{position:relative}
     .ed-fgrid details[open] .ed-pop{display:block}
     .ed-pop{display:none;position:absolute;z-index:20;left:0;right:0;min-width:240px;max-height:300px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:.4rem .6rem;margin-top:.2rem}
+    .ed-hint{display:block;font-size:.8rem;color:var(--muted);margin-top:.2rem}
     .ed-pop label{display:flex;align-items:center;gap:.5rem;min-height:44px;font-weight:400;font-size:.95rem}
     .ed-fact{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.9rem;align-items:center}
     .ed-meta{font-size:.875rem;color:var(--muted);margin:.4rem 0 0}
@@ -136,7 +137,12 @@
           <div><span class="lbl">Plant</span>
             <details id="d-plants"><summary id="s-plants">ทุก Plant</summary><div class="ed-pop" id="pop-plants"></div></details></div>
           <div><span class="lbl">ประเภทเหตุการณ์</span>
-            <details id="d-types"><summary id="s-types">ทุกประเภท</summary><div class="ed-pop" id="pop-types"></div></details></div>
+            <details id="d-types"><summary id="s-types">ทุกประเภท</summary><div class="ed-pop" id="pop-types"></div></details>
+            <span class="ed-hint">เลือกประเภทแม่ = รวมประเภทย่อยทั้งหมดอัตโนมัติ</span></div>
+          <div><span class="lbl">ระดับความรุนแรง</span>
+            <details id="d-sev"><summary id="s-sev">ทุกระดับ</summary><div class="ed-pop" id="pop-sev"></div></details></div>
+          <div><span class="lbl">ผู้เกี่ยวข้อง</span>
+            <details id="d-party"><summary id="s-party">ทุกกลุ่ม</summary><div class="ed-pop" id="pop-party"></div></details></div>
           <label>สถานะเคส
             <select id="f-phase">
               <option value="">ทุกสถานะ</option><option value="flash">Flash Report</option>
@@ -198,7 +204,9 @@
           <div class="ed-trend" id="trend" role="img" aria-label="กราฟแท่งแนวโน้มรายเดือน มีตารางให้ดูด้านล่าง"></div>
           <div class="ed-legend"><span><i class="sg-serious"></i>เคสรุนแรง (FAT/LTI)</span><span><i class="sg-other"></i>เคสอื่น ๆ</span><span><i class="sg-near"></i>Near miss</span></div>
           <details class="ed-alt"><summary>ดูเป็นตาราง</summary><div class="ed-scroll"><table class="ed-tbl" id="trend-tbl"></table></div></details></section>
-        <section class="ed-card"><h3>หมวดเหตุการณ์</h3><p class="sub">จำนวนเคสตามประเภท</p><div id="cats"></div></section>
+        <section class="ed-card"><h3>หมวดเหตุการณ์</h3><p class="sub">จำนวนเคสตามประเภทหลัก (รวมประเภทย่อย) เคสเก่าที่ยังไม่ได้จัดประเภทใหม่จะแสดงเป็น "ไม่ระบุประเภท"</p><div id="cats"></div></section>
+        <section class="ed-card"><h3>ระดับความรุนแรง</h3><p class="sub">FAT, LTI, RWC, MTC, FAC, PD, NEAR ตามที่เลือกในรายงาน (เคสเก่าที่ยังไม่ระบุ = "ไม่ระบุ")</p><div id="sevs"></div></section>
+        <section class="ed-card"><h3>ผู้เกี่ยวข้อง</h3><p class="sub">พนักงาน / ผู้รับเหมา / กลุ่มอื่น ๆ ตามที่ผู้รายงานระบุ</p><div id="parties"></div></section>
         <section class="ed-card"><h3>ช่วงเวลาที่เกิดเหตุ</h3><p class="sub">แบ่งตามช่วง 6 ชั่วโมง (เวลาท้องถิ่นของ Plant) เพราะแต่ละ Plant กำหนดกะไม่เหมือนกัน</p><div class="ed-time" id="times"></div></section>
       </div>
 
@@ -246,11 +254,12 @@
     function sumLabel(boxId, sumId, all, noun) {
       var c = checks(boxId); $(sumId).textContent = c.length === 0 ? all : c.length + " " + noun + " ที่เลือก";
     }
-    function buildPop(boxId, sumId, items, valKey, labFn, all, noun) {
+    function buildPop(boxId, sumId, items, valKey, labFn, all, noun, depthFn) {
       var box = $(boxId); box.replaceChildren();
       items.forEach(function (it) {
         var l = el("label"), c = el("input"); c.type = "checkbox"; c.value = it[valKey];
         c.addEventListener("change", function () { sumLabel(boxId, sumId, all, noun); });
+        if (depthFn) l.style.paddingLeft = (Math.max(0, depthFn(it) - 1) * 1.1) + "rem";
         l.appendChild(c); l.appendChild(el("span", null, labFn(it))); box.appendChild(l);
       });
     }
@@ -327,15 +336,20 @@
       r.trend.forEach(function (m) { var tr2 = el("tr"); tr2.appendChild(el("td", "", m.month)); [m.serious, m.other, m.near_miss].forEach(function (v) { tr2.appendChild(el("td", "n", String(v))); }); tt.appendChild(tr2); });
 
       /* category */
-      var cb = $("cats"); cb.replaceChildren();
-      var cmax = Math.max.apply(null, r.by_category.map(function (c) { return c.n || 0; }).concat([1]));
-      if (!r.by_category.length) cb.appendChild(el("p", "sub", "ไม่มีข้อมูลในช่วงที่เลือก"));
       var CATCOL = { FAT: "#7f1d1d", LTI: "#dc2626", RWC: "#ea580c", MTC: "#fb923c", FAC: "#fcd34d", PD: "#bef264", NEAR: "#86efac" };
-      r.by_category.forEach(function (c) {
-        var row = el("div", "ed-bar"); row.appendChild(el("span", null, c.name_th));
-        var trk = el("span", "trk"), f = el("span", "fil"); f.style.width = (c.n ? Math.round(c.n / cmax * 100) : 0) + "%"; f.style.background = CATCOL[c.code] || "#64748b"; trk.appendChild(f); row.appendChild(trk);
-        row.appendChild(el("span", c.suppressed ? "num msk" : "num", numOrMask(c.n))); cb.appendChild(row);
-      });
+      function bars(boxId, arr, colFn) {
+        var cb = $(boxId); cb.replaceChildren(); arr = arr || [];
+        var cmax = Math.max.apply(null, arr.map(function (c) { return c.n || 0; }).concat([1]));
+        if (!arr.length) cb.appendChild(el("p", "sub", "ไม่มีข้อมูลในช่วงที่เลือก"));
+        arr.forEach(function (c) {
+          var row = el("div", "ed-bar"); row.appendChild(el("span", null, c.name_th));
+          var trk = el("span", "trk"), f = el("span", "fil"); f.style.width = (c.n ? Math.round(c.n / cmax * 100) : 0) + "%"; f.style.background = colFn(c); trk.appendChild(f); row.appendChild(trk);
+          row.appendChild(el("span", c.suppressed ? "num msk" : "num", numOrMask(c.n))); cb.appendChild(row);
+        });
+      }
+      bars("cats", r.by_category, function () { return "#284499"; });
+      bars("sevs", r.by_severity, function (c) { return CATCOL[c.code] || "#64748b"; });
+      bars("parties", r.by_party, function () { return "#017AB6"; });
 
       /* time */
       var tb = $("times"); tb.replaceChildren();
@@ -386,11 +400,11 @@
       if (!rg.from || !rg.to || rg.from > rg.to) { show("กรุณาเลือกช่วงวันที่ให้ถูกต้อง (วันเริ่มต้องไม่เกินวันสิ้นสุด)", false); return; }
       busy = true; $("b-apply").disabled = true; show("กำลังโหลดข้อมูล…", true);
       try {
-        var pl = checks("pop-plants"), ty = checks("pop-types"), ph = $("f-phase").value;
-        var res = await sb.rpc("dashboard_summary", { p_from: rg.from, p_to: rg.to, p_plants: pl.length ? pl : null, p_types: ty.length ? ty : null, p_phase: ph || null });
+        var pl = checks("pop-plants"), ty = checks("pop-types"), sv = checks("pop-sev"), pt = checks("pop-party"), ph = $("f-phase").value;
+        var res = await sb.rpc("dashboard_summary", { p_from: rg.from, p_to: rg.to, p_plants: pl.length ? pl : null, p_types: ty.length ? ty : null, p_phase: ph || null, p_severities: sv.length ? sv : null, p_parties: pt.length ? pt : null });
         if (res.error) { show("โหลดข้อมูลไม่สำเร็จ: " + res.error.message, false); return; }
         data = res.data; show("", true); render(data);
-        $("meta").textContent = "ช่วงข้อมูล " + thDate(rg.from) + " – " + thDate(rg.to) + " · " + (pl.length ? pl.length + " Plant" : "ทุก Plant") + " · " + (ty.length ? ty.length + " ประเภท" : "ทุกประเภท");
+        $("meta").textContent = "ช่วงข้อมูล " + thDate(rg.from) + " – " + thDate(rg.to) + " · " + (pl.length ? pl.length + " Plant" : "ทุก Plant") + " · " + (ty.length ? ty.length + " ประเภท" : "ทุกประเภท") + (sv.length ? " · " + sv.length + " ระดับ" : "") + (pt.length ? " · " + pt.length + " กลุ่ม" : "");
       } finally { busy = false; $("b-apply").disabled = false; }
     }
 
@@ -401,10 +415,12 @@
       if (perms.error || !Array.isArray(perms.data) || perms.data.indexOf("dashboard.view") < 0) { gate.textContent = "คุณไม่มีสิทธิ์เข้าหน้านี้ (ติดต่อ Admin เพื่อขอสิทธิ์ ดู Executive Dashboard)"; return; }
       var f = await sb.rpc("dashboard_filters");
       if (f.error) { gate.textContent = "โหลดตัวกรองไม่สำเร็จ: " + f.error.message + " (ตรวจว่ารัน Migration B17 แล้ว)"; return; }
-      plants = f.data.plants || []; types = f.data.types || [];
+      plants = f.data.plants || []; types = f.data.types || []; var sevs = f.data.severities || [], parties = f.data.parties || [];
       try { var up = await sb.from("user_plants").select("plant_id").eq("user_id", session.user.id); (up.data || []).forEach(function (u) { own[u.plant_id] = true; }); } catch (e) {}
       buildPop("pop-plants", "s-plants", plants, "id", function (p) { return p.code + " " + p.name; }, "ทุก Plant", "Plant");
-      buildPop("pop-types", "s-types", types, "code", function (t) { return t.name_th; }, "ทุกประเภท", "ประเภท");
+      buildPop("pop-types", "s-types", types, "code", function (t) { return t.name_th; }, "ทุกประเภท", "ประเภท", function (t) { return t.depth || 1; });
+      buildPop("pop-sev", "s-sev", sevs, "code", function (x) { return x.code + " " + x.name_th; }, "ทุกระดับ", "ระดับ");
+      buildPop("pop-party", "s-party", parties, "code", function (x) { return x.name_th; }, "ทุกกลุ่ม", "กลุ่ม");
       $("f-range").addEventListener("change", function () {
         var c = $("f-range").value === "custom"; $("l-from").hidden = $("l-to").hidden = !c;
         if (c) { var r = range0(); $("f-from").value = r.from; $("f-to").value = r.to; }
@@ -413,8 +429,8 @@
       $("b-apply").addEventListener("click", load);
       $("b-reset").addEventListener("click", function () {
         $("f-range").value = "90"; $("l-from").hidden = $("l-to").hidden = true; $("f-phase").value = "";
-        document.querySelectorAll("#pop-plants input,#pop-types input").forEach(function (c) { c.checked = false; });
-        sumLabel("pop-plants", "s-plants", "ทุก Plant", "Plant"); sumLabel("pop-types", "s-types", "ทุกประเภท", "ประเภท"); load();
+        document.querySelectorAll("#pop-plants input,#pop-types input,#pop-sev input,#pop-party input").forEach(function (c) { c.checked = false; });
+        sumLabel("pop-plants", "s-plants", "ทุก Plant", "Plant"); sumLabel("pop-types", "s-types", "ทุกประเภท", "ประเภท"); sumLabel("pop-sev", "s-sev", "ทุกระดับ", "ระดับ"); sumLabel("pop-party", "s-party", "ทุกกลุ่ม", "กลุ่ม"); load();
       });
       $("q").addEventListener("input", function () { if (data) renderLatest(data.latest); });
       gate.hidden = true; $("area").hidden = false; load();
