@@ -166,11 +166,11 @@
   var obs=null;
   function normalizeNav(){var n=document.querySelector("header nav");if(!n)return;if(obs)obs.disconnect();
     var f=(location.pathname.split("/").pop()||"index.html");var by={};
-    document.querySelectorAll("header a").forEach(function(a){if(a.closest(".tpadmin"))return;var k=(a.getAttribute("href")||"").split("/").pop();if(n.contains(a)||ADM.indexOf(k)>-1)by[k]=by[k]||a});
+    document.querySelectorAll("header a").forEach(function(a){if(a.closest(".tpadmin")||a.classList.contains("navlead"))return;var k=(a.getAttribute("href")||"").split("/").pop();if(n.contains(a)||ADM.indexOf(k)>-1)by[k]=by[k]||a});
     if(capaOn&&!by["capa.html"]){var cl=el("a",null,"Action (CAPA)");cl.href="capa.html";by["capa.html"]=cl}
     ORDER.forEach(function(k){if(by[k])n.appendChild(by[k])});
     var dl=n.querySelector("a.navdash");if(!dl&&dashMode==="yes"){dl=el("a","navdash","Executive Dashboard");dl.href="executive-dashboard.html"}
-    if(dl&&by["index.html"])n.appendChild(dl);
+    if(dl&&by["index.html"])n.appendChild(dl);var ll=n.querySelector("a.navlead");if(!ll&&dashMode==="yes"){ll=el("a","navlead","Leading Indicator");ll.href="leading.html"}if(ll)n.appendChild(ll);
     if(by["admin-themes.html"])hasTh=true;if(hasTh){var st=document.querySelector("nav.subtabs");if(st&&!st.querySelector('a[href="admin-themes.html"]')){var ta=el("a",null,"ธีมเทศกาล");ta.href="admin-themes.html";if(f==="admin-themes.html")ta.setAttribute("aria-current","page");st.appendChild(ta)}}var isAdmin=!!(by[ADM[0]]||by[ADM[1]]||by[ADM[2]]);
     ADM.slice(1).forEach(function(k){if(by[k]&&by[k].parentNode)by[k].parentNode.removeChild(by[k])});
     if(adminBox){var labs={"admin-users.html":"จัดการผู้ใช้","admin-master.html":"ข้อมูลหลัก","admin-permissions.html":"สิทธิ์การใช้งาน","admin-grants.html":"สิทธิ์รายบุคคล","admin-offboarding.html":"ผู้ใช้ที่ลาออก / ทบทวนสิทธิ์","admin-sla.html":"เกณฑ์ SLA / Repeat","admin-masterlists.html":"Life Saving Rules / SHE std","admin-incident-types.html":"ประเภทเหตุการณ์ / ความรุนแรง","leading.html":"Leading Indicator","admin-themes.html":"ธีมเทศกาล"};
