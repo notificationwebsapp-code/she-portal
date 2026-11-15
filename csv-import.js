@@ -132,6 +132,7 @@
     lr.appendChild(el("span", "fh", t(["เก็บใน Audit log เช่น \"นำเข้ารายชื่อพื้นที่ตามไฟล์ของโรงงาน\" (ตัวอย่าง)", "Kept in the Audit log, e.g. \"Imported area list from the plant file\" (example)."])));
     frm.appendChild(lr);
 
+    var prev = el("div", "prev"); prev.hidden = true; box.appendChild(prev);
     var acts2 = el("div", "acts"); box.appendChild(acts2);
     var bDry = el("button", "secondary", t(["ตรวจไฟล์ (Dry-run)", "Check file (Dry-run)"])); bDry.type = "button"; acts2.appendChild(bDry);
     var bApply = el("button", "btn-ok", t(["ยืนยันนำเข้า", "Confirm import"])); bApply.type = "button"; bApply.disabled = true; acts2.appendChild(bApply);
@@ -140,7 +141,45 @@
     var sum = el("div", "sum"), errs = el("ul", "errs"); res.appendChild(sum); res.appendChild(errs);
 
     var parsed = null, dryOk = false;
-    file.addEventListener("change", function () { dryOk = false; bApply.disabled = true; res.hidden = true; });
+    var EDIT_MAX = 300, errLines = {};
+    function touch() { dryOk = false; bApply.disabled = true; res.hidden = true; errLines = {}; }
+    function renderPrev() {
+      prev.replaceChildren(); prev.hidden = !parsed;
+      if (!parsed) return;
+      prev.appendChild(el("p", "fh", t(["ตรวจและแก้ไขข้อมูลในตารางได้ก่อนกด Dry-run (การแก้ไขนี้ยังไม่ถูกบันทึก และไม่แก้ไฟล์ต้นฉบับ) ทั้งหมด ", "Review and edit the data below before the Dry-run (edits are not saved and do not change your original file). Total rows: "]) + parsed.length + t([" แถว", ""])));
+      if (parsed.length > EDIT_MAX) prev.appendChild(el("p", "fh", t(["แสดงให้แก้ไข " + EDIT_MAX + " แถวแรก แถวที่เหลือส่งตามไฟล์เดิม (แก้ในไฟล์ได้)", "Showing the first " + EDIT_MAX + " rows for editing; the rest are sent as in the file (edit them in the file)."])));
+      var wrap = el("div", "tablewrap"), tb = el("table"), hd = el("tr");
+      hd.appendChild(el("th", null, "#"));
+      cols.forEach(function (c) { hd.appendChild(el("th", null, c)); });
+      hd.appendChild(el("th", null, ""));
+      var th = el("thead"); th.appendChild(hd); tb.appendChild(th);
+      var body = el("tbody");
+      parsed.slice(0, EDIT_MAX).forEach(function (row, idx) {
+        var tr = el("tr");
+        if (errLines[idx + 1]) tr.style.background = "#FEE2E2";
+        tr.appendChild(el("td", null, String(idx + 1)));
+        cols.forEach(function (c) {
+          var td = el("td"), inp = el("input"); inp.type = "text"; inp.maxLength = 300; inp.value = row[c] || ""; inp.setAttribute("aria-label", c + " " + (idx + 1));
+          inp.style.minWidth = "7rem";
+          inp.addEventListener("input", function () { row[c] = inp.value; touch(); });
+          td.appendChild(inp); tr.appendChild(td);
+        });
+        var tdx = el("td"), del = el("button", "secondary small", "✕"); del.type = "button"; del.setAttribute("aria-label", t(["ลบแถว ", "Delete row "]) + (idx + 1));
+        del.addEventListener("click", function () { parsed.splice(idx, 1); touch(); renderPrev(); });
+        tdx.appendChild(del); tr.appendChild(tdx);
+        body.appendChild(tr);
+      });
+      tb.appendChild(body); wrap.appendChild(tb); nd(wrap); prev.appendChild(wrap);
+      var add = el("button", "secondary small", t(["+ เพิ่มแถว", "+ Add row"])); add.type = "button";
+      add.addEventListener("click", function () { if (parsed.length >= maxRows) return; var o = {}; cols.forEach(function (c) { o[c] = ""; }); parsed.push(o); touch(); renderPrev(); });
+      prev.appendChild(add);
+    }
+    file.addEventListener("change", async function () {
+      touch(); parsed = null; renderPrev();
+      if (!file.files[0]) return;
+      try { parsed = await readRows(); renderPrev(); show(t(["อ่านไฟล์แล้ว ยังไม่บันทึกอะไร ตรวจ/แก้ไขในตารางแล้วกด \"ตรวจไฟล์ (Dry-run)\"", "File read. Nothing saved. Review/edit the table, then press \"Check file (Dry-run)\"."]), true); }
+      catch (e) { show(e.message, false); }
+    });
 
     function readRows() {
       return new Promise(function (resolve, reject) {
@@ -176,7 +215,7 @@
     async function run(dry) {
       var why = reason.value.trim();
       if (!dry && (why.length < 5 || why.length > 200)) { show(t(["กรุณาระบุเหตุผล 5–200 ตัวอักษร", "Please enter a reason of 5–200 characters"]), false); reason.focus(); return; }
-      try { parsed = await readRows(); } catch (e) { show(e.message, false); return; }
+      if (!parsed || !parsed.length) { show(t(["กรุณาเลือกไฟล์ CSV ก่อน", "Please choose a CSV file first"]), false); return; }
       var ek = cfg.exampleKey;
       if (ek && parsed.some(function (r) { return /^EXAMPLE/i.test(r[ek] || ""); })) {
         show(t(["ไฟล์ยังมีแถวตัวอย่าง (รหัสขึ้นต้นด้วย EXAMPLE) กรุณาลบแถวตัวอย่างและใส่ข้อมูลจริงก่อน", "The file still has example rows (codes starting with EXAMPLE). Delete them and enter real data first."]), false); return;
@@ -184,9 +223,10 @@
       var r = await sb.rpc(cfg.rpc, { p_rows: parsed, p_dry_run: dry, p_reason: why || null });
       if (r.error) { show(errText(r.error), false); return; }
       var data = r.data; showResult(data);
+      errLines = {}; (data.errors || []).forEach(function (e) { errLines[e.line] = true; }); renderPrev();
       var bad = (data.errors || []).length > 0;
-      if (dry) { dryOk = !bad; bApply.disabled = bad; show(bad ? t(["พบแถวผิดพลาด แก้ไฟล์แล้วตรวจใหม่ (ยังไม่ได้บันทึกอะไร)", "Errors found. Fix the file and check again (nothing was saved)."]) : t(["ตรวจไฟล์ผ่าน ยังไม่บันทึก กรอกเหตุผลแล้วกด \"ยืนยันนำเข้า\"", "File is valid. Nothing saved yet. Enter a reason and press \"Confirm import\"."]), !bad); }
-      else if (data.applied) { show(t(["นำเข้าเรียบร้อย", "Import completed"]), true); file.value = ""; dryOk = false; bApply.disabled = true; if (cfg.onDone) cfg.onDone(); }
+      if (dry) { dryOk = !bad; bApply.disabled = bad; show(bad ? t(["พบแถวผิดพลาด (แถวสีแดงในตาราง) แก้ไขในตารางแล้วตรวจใหม่ (ยังไม่ได้บันทึกอะไร)", "Errors found (red rows in the table). Edit them in the table and check again (nothing was saved)."]) : t(["ตรวจไฟล์ผ่าน ยังไม่บันทึก กรอกเหตุผลแล้วกด \"ยืนยันนำเข้า\"", "File is valid. Nothing saved yet. Enter a reason and press \"Confirm import\"."]), !bad); }
+      else if (data.applied) { show(t(["นำเข้าเรียบร้อย", "Import completed"]), true); file.value = ""; parsed = null; renderPrev(); dryOk = false; bApply.disabled = true; if (cfg.onDone) cfg.onDone(); }
       else show(t(["ไม่ได้บันทึก เนื่องจากมีแถวผิดพลาด", "Not saved because some rows have errors"]), false);
     }
     bDry.addEventListener("click", function () { run(true); });
