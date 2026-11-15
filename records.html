@@ -721,7 +721,31 @@
 
     // ---------- ตัวกรอง + แบ่งหน้า (กรองที่ฐานข้อมูล ไม่ดึงทั้งหมดมากรองในเบราว์เซอร์) ----------
     const PAGE = 25;
-    const flt = { from: "", to: "", plant: "", type: "", sev: "", party: "", stage: "", req: "", q: "", page: 0 };
+    const flt = { from: "", to: "", plant: "", type: "", sev: "", party: "", stage: "", req: "", q: "", tb: "", body: "", page: 0 };
+    // ---------- Drill-down จาก Executive Dashboard: รับตัวกรองจาก URL (ตรวจค่าทุกตัว ค่าที่ไม่รู้จัก = ไม่พบรายการ ไม่ใช่ "ทั้งหมด") ----------
+    const ZERO_ID = "00000000-0000-0000-0000-000000000000";
+    const TB_RANGE = { "00-05": ["00:00:00", "05:59:59", "00:00–05:59"], "06-11": ["06:00:00", "11:59:59", "06:00–11:59"], "12-17": ["12:00:00", "17:59:59", "12:00–17:59"], "18-23": ["18:00:00", "23:59:59", "18:00–23:59"], unknown: [null, null, "ไม่ระบุเวลา"] };
+    const splitTok = (v) => String(v || "").split(",").map((x) => x.trim()).filter(Boolean).slice(0, 20);
+    function applyUrlFilters() {
+      const P = new URLSearchParams(location.search), D = /^\d{4}-\d{2}-\d{2}$/;
+      if (![...P.keys()].some((k) => ["from", "to", "plant", "type", "sev", "party", "stage", "tb", "body"].includes(k))) return;
+      if (D.test(P.get("from") || "")) flt.from = P.get("from");
+      if (D.test(P.get("to") || "")) flt.to = P.get("to");
+      const mapList = (raw, fn) => splitTok(raw).map((t) => fn(t) || ZERO_ID).join(",");
+      if (P.get("plant")) flt.plant = mapList(P.get("plant"), (t) => (PLANTS.find((x) => x.id === t || x.code === t) || {}).id);
+      if (P.get("type")) flt.type = mapList(P.get("type"), (t) => (t === "legacy" ? "legacy" : (TYPES_ALL.find((x) => x.id === t || x.code === t) || {}).id));
+      if (P.get("sev")) flt.sev = mapList(P.get("sev"), (t) => (t === "none" || t === "UNK" ? "none" : (SEVS.find((x) => x.id === t || x.code === t) || {}).id));
+      if (P.get("party")) flt.party = mapList(P.get("party"), (t) => (t === "none" || t === "UNK" ? "none" : (PARTIES.find((x) => x.id === t || x.code === t) || {}).id));
+      if (STAGE_OPTS.some((o) => o[0] && o[0] === P.get("stage"))) flt.stage = P.get("stage");
+      if (Object.prototype.hasOwnProperty.call(TB_RANGE, P.get("tb") || "")) flt.tb = P.get("tb");
+      if (/^(any|[A-Z0-9_]{1,30})$/.test(P.get("body") || "")) flt.body = P.get("body");
+    }
+    // ใส่ค่าหลายรายการลงคอลัมน์เดียว (รองรับ "none" = ค่าว่าง)
+    function multiFilter(q, col, ids, hasNone) {
+      if (hasNone && ids.length) return q.or(col + ".is.null," + col + ".in.(" + ids.join(",") + ")");
+      if (hasNone) return q.is(col, null);
+      return ids.length === 1 ? q.eq(col, ids[0]) : q.in(col, ids);
+    }
     let PLANTS = [], totalRows = 0;
     const STAGE_OPTS = [["", "ทุกขั้นตอน"], ["flash", "รอ SHE ตรวจสอบ"], ["investigation", "กำลังสอบสวน"], ["closed", "ปิดเคสแล้ว"]];
     const SVG_SEARCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>';
@@ -730,7 +754,9 @@
       const apply = () => { flt.page = 0; loadIncidents(); };
       const lab = (id, label, ctl) => h("label", { for: id }, label, ctl);
       const sel = (id, label, opts, key) => {
-        const s = h("select", { id }); opts.forEach(([v, t]) => s.append(h("option", { value: v, text: t }))); s.value = flt[key];
+        const s = h("select", { id }); opts.forEach(([v, t]) => s.append(h("option", { value: v, text: t })));
+        if (String(flt[key]).includes(",")) s.append(h("option", { value: flt[key], text: "หลายรายการ (จากแดชบอร์ด)" }));
+        s.value = flt[key];
         s.addEventListener("change", () => { flt[key] = s.value; apply(); });          // เลือกแล้วกรองทันที
         return lab(id, label, s);
       };
@@ -762,7 +788,14 @@
         sel("f-sev", "ความรุนแรง", [["", "ทุกระดับ"]].concat(SEVS.map((x) => [x.id, dbName(x)]), [["none", "ไม่ระบุ (รายงานเก่า)"]]), "sev"),
         sel("f-party", "ผู้เกี่ยวข้อง", [["", "ทุกกลุ่ม"]].concat(PARTIES.map((x) => [x.id, dbName(x)]), [["none", "ไม่ระบุ (รายงานเก่า)"]]), "party"),
         h("div", { class: "fb-actions" }, h("button", { type: "button", class: "secondary small", text: "ล้างตัวกรอง", onclick: () => {
-          Object.assign(flt, { from: "", to: "", plant: "", type: "", sev: "", party: "", stage: "", req: "", q: "", page: 0 }); buildFilterBar(); loadIncidents(); } }))));
+          Object.assign(flt, { from: "", to: "", plant: "", type: "", sev: "", party: "", stage: "", req: "", q: "", tb: "", body: "", page: 0 }); buildFilterBar(); loadIncidents(); } }))));
+      if (flt.tb || flt.body) {   // ตัวกรองที่มาจากแดชบอร์ดและไม่มีช่องในแถบนี้ — แสดงให้เห็นและยกเลิกได้
+        const note = h("div", { class: "fb-chips", role: "group", "aria-label": "ตัวกรองจากแดชบอร์ด" }, h("span", { class: "lbl", text: "จากแดชบอร์ด:" }));
+        const addChip = (text, key) => note.append(h("button", { type: "button", class: "chip", text: text + " ✕", title: "ยกเลิกตัวกรองนี้", onclick: () => { flt[key] = ""; apply(); buildFilterBar(); } }));
+        if (flt.tb) addChip("ช่วงเวลา " + TB_RANGE[flt.tb][2], "tb");
+        if (flt.body) addChip(flt.body === "any" ? "มีตำแหน่งที่บาดเจ็บ" : "ตำแหน่งที่บาดเจ็บ " + flt.body + " (สูงสุด 400 เคสแรก)", "body");
+        f.append(note);
+      }
       f.onsubmit = (e) => { e.preventDefault(); flt.q = q.value.trim(); apply(); };
     }
     function renderPager() {
@@ -785,10 +818,22 @@
       let q = sb.from("incident_reports").select(cols, withCount ? { count: "exact" } : undefined);
       if (flt.from) q = q.gte("occurred_on", flt.from);
       if (flt.to) q = q.lte("occurred_on", flt.to);
-      if (flt.plant) q = q.eq("plant_id", flt.plant);
-      if (flt.type) q = q.in("incident_type_id", typeDescendantIds(flt.type));   // roll-up: เลือกกลุ่มใหญ่ = นับรวมทุกประเภทย่อย
-      if (flt.sev) q = flt.sev === "none" ? q.is("severity_id", null) : q.eq("severity_id", flt.sev);
-      if (flt.party) q = flt.party === "none" ? q.is("involved_party_id", null) : q.eq("involved_party_id", flt.party);
+      if (flt.plant) q = multiFilter(q, "plant_id", splitTok(flt.plant), false);
+      if (flt.type) {   // roll-up: เลือกกลุ่มใหญ่ = นับรวมทุกประเภทย่อย; "legacy" = รายงานเก่าที่ใช้ประเภทแบบความรุนแรงเดิม
+        const ids = new Set();
+        splitTok(flt.type).forEach((t) => { if (t === "legacy") TYPES_ALL.filter((x) => x.kind === "severity_legacy").forEach((x) => ids.add(x.id)); else typeDescendantIds(t).forEach((x) => ids.add(x)); });
+        q = multiFilter(q, "incident_type_id", [...ids], false);
+      }
+      if (flt.sev) { const t = splitTok(flt.sev); q = multiFilter(q, "severity_id", t.filter((x) => x !== "none"), t.includes("none")); }
+      if (flt.party) { const t = splitTok(flt.party); q = multiFilter(q, "involved_party_id", t.filter((x) => x !== "none"), t.includes("none")); }
+      if (flt.tb) { const r = TB_RANGE[flt.tb]; q = r[0] ? q.gte("occurred_time", r[0]).lte("occurred_time", r[1]) : q.is("occurred_time", null); }
+      if (flt.body) {   // ตำแหน่งที่บาดเจ็บอยู่ที่ตารางผู้เกี่ยวข้อง (incident_persons) — หา incident_id ก่อน (สิทธิ์จริงยังบังคับโดย RLS)
+        let pq = sb.from("incident_persons").select("incident_id");
+        pq = flt.body === "any" ? pq.neq("body_part_codes", "{}") : pq.overlaps("body_part_codes", [flt.body]);
+        const bp = await pq.limit(400);
+        const bids = [...new Set((bp.data || []).map((x) => x.incident_id))];
+        q = bids.length ? q.in("id", bids) : q.eq("id", ZERO_ID);
+      }
       if (flt.stage) q = q.eq("phase", flt.stage);
       if (pendIds) q = pendIds.length ? q.in("id", pendIds) : q.eq("id", "00000000-0000-0000-0000-000000000000");
       const term = flt.q.replace(/[,()%*\\_]/g, " ").trim();   // ตัดอักขระพิเศษของ PostgREST filter ออก
@@ -1885,6 +1930,7 @@
       await loadMasters();
       const pl = await sb.from("plants").select("id, code").order("code");
       PLANTS = pl.data || [];
+      applyUrlFilters();
       buildFilterBar();
       await loadIncidents();
       // ลิงก์ตรงจาก Dashboard: records.html?open=<id> (ตรวจรูปแบบ UUID; สิทธิ์จริงบังคับที่ RLS/RPC)

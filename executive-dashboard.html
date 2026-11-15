@@ -51,7 +51,11 @@
     .ed-hm th{font-weight:600;text-align:center;color:var(--muted);font-size:.8rem}
     .ed-hm th:first-child,.ed-hm td:first-child{text-align:left}
     .ed-hm td.c{text-align:center;border-radius:6px;font-weight:700;min-width:48px;padding:.35rem .2rem}
-    .h0{background:#f1f5f9;color:#475569}.hm{background:#e2e8f0;color:#334155;font-weight:400}.h1{background:#fde68a;color:#78350f}.h2{background:#fdba74;color:#7c2d12}.h3{background:#f87171;color:#fff}
+    .ed-hmw{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:1.2rem;align-items:start}
+    .ed-hm{border-spacing:2px;font-size:.8rem}
+    .ed-hm td.pl{padding:.1rem .3rem;white-space:nowrap}
+    .ed-hm td.c{padding:.15rem .2rem;min-width:56px;height:24px}
+    .h0{background:#f8fafc;color:#cbd5e1;font-weight:400}.hm{background:#cbd5e1;color:#334155;font-weight:400}.h1{background:#fde68a;color:#78350f}.h2{background:#fb923c;color:#431407}.h3{background:#dc2626;color:#fff}.h4{background:#7f1d1d;color:#fff}
     .ed-pyr{display:flex;flex-direction:column;align-items:center;gap:4px;margin:.4rem 0}
     .ed-pl{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem .9rem;border-radius:6px;color:#fff;font-weight:700;font-size:.9rem;min-width:175px;max-width:100%}
     .ed-pl b{font-size:1.15rem}
@@ -93,14 +97,24 @@
     .badge{display:inline-flex;min-height:28px;align-items:center;border-radius:8px;padding:.05rem .6rem;font-size:.78rem;font-weight:700;border:1px solid #cbd5e1;background:#f1f5f9;color:#334155}
     .badge.ser{background:#fdeceb;color:#8c1d18;border-color:#f3b8b4}
     .badge.sv{border-color:transparent}
+    html[data-ui="modern"] .badge.sv-FAT{background:#7f1d1d!important;color:#fff!important}html[data-ui="modern"] .badge.sv-LTI{background:#dc2626!important;color:#fff!important}html[data-ui="modern"] .badge.sv-RWC{background:#c2410c!important;color:#fff!important}
+    html[data-ui="modern"] .badge.sv-MTC{background:#fb923c!important;color:#431407!important}html[data-ui="modern"] .badge.sv-FAC{background:#fcd34d!important;color:#422006!important}html[data-ui="modern"] .badge.sv-PD{background:#bef264!important;color:#1a2e05!important}html[data-ui="modern"] .badge.sv-NEAR{background:#86efac!important;color:#052e16!important}
     .badge.sv-FAT{background:#7f1d1d;color:#fff}.badge.sv-LTI{background:#dc2626;color:#fff}.badge.sv-RWC{background:#c2410c;color:#fff}
     .badge.sv-MTC{background:#fb923c;color:#431407}.badge.sv-FAC{background:#fcd34d;color:#422006}.badge.sv-PD{background:#bef264;color:#1a2e05}.badge.sv-NEAR{background:#86efac;color:#052e16}
     .ed-tool{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin:.4rem 0 .6rem}
     .ed-tool label{display:inline-flex;align-items:center;gap:.5rem;min-height:44px;font-size:.9rem;cursor:pointer}
     .ed-tool .cnt{font-size:.8rem;color:var(--muted)}
-    .ed-vscroll{max-height:420px;overflow:auto}
+    .ed-vscroll{max-height:560px;overflow:auto}
     .ed-vscroll th{position:sticky;top:0;z-index:2}
     .ed-tbl td.z{color:#94a3b8;font-weight:400}.ed-tbl td.nz{font-weight:700;color:var(--navy)}
+    a.drill{color:inherit;text-decoration:none;cursor:pointer}
+    a.drill:hover{filter:brightness(.95);text-decoration:underline}
+    a.drill:focus-visible{outline:3px solid #284499;outline-offset:2px}
+    a.ed-kpi{display:block}a.ed-kpi:hover{box-shadow:0 2px 10px rgba(40,68,153,.25);text-decoration:none}
+    td a.drill,.ed-bar a.drill{display:block}
+    .ed-tbl td a.drill{display:block;margin:-.5rem -.6rem;padding:.5rem .6rem}
+    .ed-hm td.c a.drill,.ed-hm td.pl a.drill{display:block;color:inherit}
+    @media print{header,nav,.ed-filters,.ed-note,#export-row,.ed-tool,#gate,#msg,footer{display:none!important}.ed-card,.ed-kpi{break-inside:avoid;box-shadow:none}.ed-vscroll{max-height:none!important;overflow:visible!important}body{background:#fff}@page{size:A4 landscape;margin:10mm}}
     .ed-own{font-size:.75rem;background:var(--accent);color:var(--brand);border-radius:8px;padding:0 .5rem;margin-left:.4rem;font-weight:700}
     .ed-note{background:#fff8e1;border:1px solid #f3d98b;border-radius:8px;padding:.6rem .9rem;font-size:.88rem;margin:0 0 1rem}
     .ed-soon{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin:0 0 1rem}
@@ -158,10 +172,12 @@
             </select></label>
         </div>
         <div class="ed-fact"><button type="button" id="b-apply">แสดงผล</button><button type="button" class="secondary" id="b-reset">ล้างตัวกรอง</button><span class="ed-hint">เลือกประเภทแม่ = รวมประเภทย่อยทั้งหมดอัตโนมัติ</span></div>
+        <div class="ed-fact" id="export-row"><span class="ed-hint" style="margin-left:0">ส่งออกตามตัวกรองที่เลือกอยู่ (ตัวเลขเดียวกับหน้านี้ ค่า &lt;3 ยังปิดบัง ไม่มีชื่อบุคคล):</span>
+          <button type="button" class="secondary" id="b-pptx">⭳ PowerPoint (Thai Union CI)</button><button type="button" class="secondary" id="b-print">🖨 พิมพ์ / บันทึก PDF</button><span class="ed-hint" id="export-msg" role="status" aria-live="polite"></span></div>
         <p class="ed-meta" id="meta"></p>
       </section>
 
-      <p class="ed-note">ตัวเลขทั้งหมดเป็น <b>จำนวนเคส</b> ที่บันทึกในระบบ ยังไม่ปรับตามขนาดโรงงาน/ชั่วโมงทำงาน จึงใช้เปรียบเทียบเชิงแนวโน้มเท่านั้น (ไม่ใช่คะแนนหรืออันดับ) และจำนวน Near miss ที่สูงมักสะท้อนวัฒนธรรมการรายงานที่ดี</p>
+      <p class="ed-note">ตัวเลขทั้งหมดเป็น <b>จำนวนเคส</b> ที่บันทึกในระบบ ยังไม่ปรับตามขนาดโรงงาน/ชั่วโมงทำงาน จึงใช้เปรียบเทียบเชิงแนวโน้มเท่านั้น (ไม่ใช่คะแนนหรืออันดับ) และจำนวน Near miss ที่สูงมักสะท้อนวัฒนธรรมการรายงานที่ดี<br><b>คลิกได้ทุกการ์ด</b> (ตัวเลข แถบ ช่องสี หรือแถวในตาราง) เพื่อไปดูรายการเคสที่อยู่เบื้องหลังตัวเลขนั้นในหน้า "บันทึกการสอบสวน" — ผู้ใช้เห็นเฉพาะเคสที่ตนมีสิทธิ์ตามปกติ</p>
 
       <section class="ed-kpis" id="kpis" aria-label="ตัวชี้วัดหลัก"></section>
 
@@ -218,13 +234,15 @@
         <section class="ed-card"><h3>ช่วงเวลาที่เกิดเหตุ</h3><p class="sub">แบ่งตามช่วง 6 ชั่วโมง (เวลาท้องถิ่นของ Plant) เพราะแต่ละ Plant กำหนดกะไม่เหมือนกัน</p><div class="ed-time" id="times"></div></section>
       </div>
 
-      <div class="ed-grid">
-        <section class="ed-card"><h3>Plant × ไตรมาส (Heatmap)</h3><p class="sub">จำนวนเคสต่อไตรมาส เรียงจากมากไปน้อย ช่องสีเข้ม = เคสมาก</p>
-          <div class="ed-tool"><label><input type="checkbox" class="only-active" checked> แสดงเฉพาะ Plant ที่มีเหตุการณ์</label><span class="cnt" id="hm-cnt"></span></div>
-          <div class="ed-scroll ed-vscroll"><table class="ed-hm" id="hm"></table></div>
-          <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="h1"></i>3–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10 ขึ้นไป</span></div></section>
+      <div class="ed-grid" style="grid-template-columns:1fr">
+        <section class="ed-card"><h3>Plant × ไตรมาส (Heatmap)</h3><p class="sub">เห็นทุก Plant ในภาพเดียว เรียงจากเคสมากไปน้อย สีเข้ม = เคสมาก ("·" = ไม่มีเคส, "&lt;3" = ปิดบังค่าน้อย)</p>
+          <div class="ed-tool"><label><input type="checkbox" class="only-active"> แสดงเฉพาะ Plant ที่มีเหตุการณ์</label><span class="cnt" id="hm-cnt"></span></div>
+          <div class="ed-hmw" id="hmw"></div>
+          <div class="ed-legend"><span><i class="h0"></i>0</span><span><i class="hm"></i>&lt;3 (ปิดบัง)</span><span><i class="h1"></i>3–5</span><span><i class="h2"></i>6–9</span><span><i class="h3"></i>10–19</span><span><i class="h4"></i>20 ขึ้นไป</span></div></section>
+      </div>
+      <div class="ed-grid" style="grid-template-columns:1fr">
         <section class="ed-card"><h3>เปรียบเทียบแต่ละ Plant</h3><p class="sub">ใช้เรียนรู้จาก Plant อื่นและปรับปรุง Plant ของตนเอง (จำนวนเคส ไม่ปรับตามขนาดโรงงาน) เรียงจากเคสมากไปน้อย</p>
-          <div class="ed-tool"><label><input type="checkbox" class="only-active" checked> แสดงเฉพาะ Plant ที่มีเหตุการณ์</label><span class="cnt" id="bench-cnt"></span></div>
+          <div class="ed-tool"><label><input type="checkbox" class="only-active"> แสดงเฉพาะ Plant ที่มีเหตุการณ์</label><span class="cnt" id="bench-cnt"></span></div>
           <div class="ed-scroll ed-vscroll"><table class="ed-tbl" id="bench"></table></div></section>
       </div>
 
@@ -262,7 +280,7 @@
       if (v === "ytd") from = new Date(to.getFullYear(), 0, 1); else from.setDate(from.getDate() - Number(v) + 1);
       return { from: ymd(from), to: ymd(to) };
     }
-    var onlyActive = true;
+    var onlyActive = false;
     function checks(boxId) { return Array.prototype.slice.call($(boxId).querySelectorAll("input:checked")).map(function (c) { return c.value; }); }
     function sumLabel(boxId, sumId, all, noun) {
       var c = checks(boxId); $(sumId).textContent = c.length === 0 ? all : c.length + " " + noun + " ที่เลือก";
@@ -277,26 +295,55 @@
       });
     }
 
-    function kpi(cls, title, value, unit) {
-      var d = el("div", "ed-kpi " + cls); d.appendChild(el("div", "t", title)); d.appendChild(el("div", "v", value)); if (unit) d.appendChild(el("div", "u", unit)); return d;
+    var cur = null, treeTypes = [], sevs0 = [], parties0 = [];
+    var Q_END = { 1: "03-31", 2: "06-30", 3: "09-30", 4: "12-31" }, Q_START = { 1: "01-01", 2: "04-01", 3: "07-01", 4: "10-01" };
+    function inter(sel, wanted) {   /* ตัดกันระหว่างตัวกรองที่เลือกอยู่กับค่าของการ์ด (ว่าง = ไม่มีเคสตรงกัน) */
+      if (!sel || !sel.length) return wanted;
+      var r = wanted.filter(function (w) { return sel.indexOf(w) > -1 || (w === "none" && sel.indexOf("UNK") > -1); });
+      return r.length ? r : ["zz"];
+    }
+    function rootOf(code) { var t = null, g = 0; treeTypes.forEach(function (x) { if (x.code === code) t = x; });
+      while (t && t.parent_code && g++ < 12) { var p = null; treeTypes.forEach(function (x) { if (x.code === t.parent_code) p = x; }); if (!p) break; t = p; } return t ? t.code : code; }
+    function drill(o) {
+      o = o || {}; var c = cur || {}, p = new URLSearchParams();
+      function put(k, v) { if (v && v.length) p.set(k, Array.isArray(v) ? v.join(",") : v); }
+      var from = c.from, to = c.to;
+      if (o.from && (!from || o.from > from)) from = o.from;
+      if (o.to && (!to || o.to < to)) to = o.to;
+      put("from", from); put("to", to);
+      put("plant", o.plant ? [o.plant] : c.pl);
+      var ty = c.ty || [];
+      if (o.type) ty = (ty.length ? ty.filter(function (t) { return rootOf(t) === o.type; }) : [o.type]); if (o.type && !ty.length) ty = ["zz"];
+      if (o.type === "legacy") ty = ["legacy"];
+      put("type", ty);
+      put("sev", o.sev ? inter(c.sv, o.sev) : c.sv);
+      put("party", o.party ? inter(c.pt, o.party) : c.pt);
+      put("stage", c.ph); put("tb", o.tb); put("body", o.body);
+      return "records.html?" + p.toString();
+    }
+    function link(cls, text, href, label) { var a = el("a", "drill " + (cls || ""), text); a.href = href; if (label) a.setAttribute("aria-label", label); return a; }
+    function monthRange(m) { var y = Number(m.split("-")[0]), mo = Number(m.split("-")[1]), last = new Date(y, mo, 0).getDate(); return { from: m + "-01", to: m + "-" + (last < 10 ? "0" : "") + last }; }
+    function qRange(q) { var y = q.split("-")[0], n = Number(q.split("-")[1].replace("Q", "")); return { from: y + "-" + Q_START[n], to: y + "-" + Q_END[n] }; }
+    function kpi(cls, title, value, unit, href) {
+      var d = href ? el("a", "ed-kpi drill " + cls) : el("div", "ed-kpi " + cls); if (href) { d.href = href; d.setAttribute("aria-label", title + " " + value + " — ดูรายการเคส"); } d.appendChild(el("div", "t", title)); d.appendChild(el("div", "v", value)); if (unit) d.appendChild(el("div", "u", unit)); return d;
     }
     function numOrMask(o) { return o == null ? "<3" : String(o); }
 
     function render(r) {
       var k = r.kpi, box = $("kpis"); box.replaceChildren();
-      box.appendChild(kpi("", "เคสทั้งหมด", String(k.total), "ในช่วงที่เลือก"));
-      box.appendChild(kpi("k-serious", "เคสรุนแรง (FAT/LTI)", String(k.serious), "เสียชีวิต + หยุดงาน"));
-      box.appendChild(kpi("k-lti", "LTI", String(k.lti), "บาดเจ็บถึงขั้นหยุดงาน (ไม่รวมเสียชีวิต)"));
-      box.appendChild(kpi("k-rwc", "จำกัดงาน (RWC)", String((r.pyramid && r.pyramid.rwc) || 0), "Restricted work case"));
-      box.appendChild(kpi("k-near", "Near miss", String(k.near_miss), "เหตุเกือบเกิดอุบัติเหตุ"));
-      box.appendChild(kpi("k-days", "ปลอดอุบัติเหตุหยุดงานมาแล้ว", k.days_since_lti == null ? "ไม่มีเคส" : String(k.days_since_lti), k.days_since_lti == null ? "ยังไม่มี LTI/เสียชีวิตที่บันทึก" : "วัน (นับจากเคสล่าสุด)"));
+      box.appendChild(kpi("", "เคสทั้งหมด", String(k.total), "ในช่วงที่เลือก", drill()));
+      box.appendChild(kpi("k-serious", "เคสรุนแรง (FAT/LTI)", String(k.serious), "เสียชีวิต + หยุดงาน", drill({ sev: ["FAT", "LTI"] })));
+      box.appendChild(kpi("k-lti", "LTI", String(k.lti), "บาดเจ็บถึงขั้นหยุดงาน (ไม่รวมเสียชีวิต)", drill({ sev: ["LTI"] })));
+      box.appendChild(kpi("k-rwc", "จำกัดงาน (RWC)", String((r.pyramid && r.pyramid.rwc) || 0), "Restricted work case", drill({ sev: ["RWC"] })));
+      box.appendChild(kpi("k-near", "Near miss", String(k.near_miss), "เหตุเกือบเกิดอุบัติเหตุ", drill({ sev: ["NEAR"] })));
+      box.appendChild(kpi("k-days", "ปลอดอุบัติเหตุหยุดงานมาแล้ว", k.days_since_lti == null ? "ไม่มีเคส" : String(k.days_since_lti), k.days_since_lti == null ? "ยังไม่มี LTI/เสียชีวิตที่บันทึก" : "วัน (นับจากเคสล่าสุด)", drill({ sev: ["FAT", "LTI"] })));
       var soon = kpi("soon", "Open CAPA", "เร็ว ๆ นี้", ""); box.appendChild(soon);
 
       /* pyramid */
       var py = $("pyr"); py.replaceChildren();
       var pm = r.pyramid || { fatal: 0, lti: 0, rwc: 0, mtc: 0, fac: 0, near_miss: 0 };
-      [["pl-fat", "เสียชีวิต (FAT)", pm.fatal, 30], ["pl-lti", "หยุดงาน (LTI)", pm.lti, 39], ["pl-rwc", "จำกัดงาน (RWC)", pm.rwc || 0, 49], ["pl-mtc", "รักษาพยาบาล (MTC)", pm.mtc || 0, 59], ["pl-fac", "ปฐมพยาบาล (FAC)", pm.fac || 0, 70], ["pl-pd", "ทรัพย์สินเสียหาย (PD)", pm.pd || 0, 84], ["pl-near", "Near miss", pm.near_miss, 100]].forEach(function (L) {
-        var d = el("div", "ed-pl " + L[0]); d.setAttribute("role", "listitem"); d.style.width = L[3] + "%";
+      [["pl-fat", "เสียชีวิต (FAT)", pm.fatal, 30, "FAT"], ["pl-lti", "หยุดงาน (LTI)", pm.lti, 39, "LTI"], ["pl-rwc", "จำกัดงาน (RWC)", pm.rwc || 0, 49, "RWC"], ["pl-mtc", "รักษาพยาบาล (MTC)", pm.mtc || 0, 59, "MTC"], ["pl-fac", "ปฐมพยาบาล (FAC)", pm.fac || 0, 70, "FAC"], ["pl-pd", "ทรัพย์สินเสียหาย (PD)", pm.pd || 0, 84, "PD"], ["pl-near", "Near miss", pm.near_miss, 100, "NEAR"]].forEach(function (L) {
+        var d = el("a", "drill ed-pl " + L[0]); d.href = drill({ sev: [L[4]] }); d.setAttribute("role", "listitem"); d.style.width = L[3] + "%";
         d.appendChild(el("span", null, L[1])); d.appendChild(el("b", null, String(L[2]))); py.appendChild(d);
       });
 
@@ -309,14 +356,14 @@
       bps.forEach(function (g) {
         var cls = g.suppressed ? "bgm" : !g.n ? "bg0" : g.n >= bmax * 0.66 ? "bg3" : g.n >= bmax * 0.33 ? "bg2" : "bg1";
         bcls[g.code] = cls; bval[g.code] = g.suppressed ? "<3" : (g.n ? String(g.n) : "");
-        var li = el("li"); li.appendChild(el("i", cls)); li.appendChild(el("span", null, g.name_th || g.code)); li.appendChild(el("b", null, numOrMask(g.n)));
+        var li = el("li"); li.appendChild(el("i", cls)); var bsp = el("span"); bsp.appendChild(link("", g.name_th || g.code, drill({ body: g.code }), (g.name_th || g.code) + " — ดูรายการเคส")); li.appendChild(bsp); li.appendChild(el("b", null, numOrMask(g.n)));
         var bar = el("div", "bar"), fill = el("s", cls); fill.style.width = (g.suppressed ? 12 : Math.round((g.n || 0) / bmax * 100)) + "%"; bar.appendChild(fill);
         if (cls === "bgm") fill.style.background = "repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0 3px,#94a3b8 3px,#94a3b8 5px)"; else fill.style.background = BFILL[cls];
         li.appendChild(bar); bl.appendChild(li);
       });
       if (!bps.length) { var e0 = el("li"); e0.appendChild(el("span")); e0.appendChild(el("span", null, "ไม่มีข้อมูลตำแหน่งที่บาดเจ็บในช่วงที่เลือก")); e0.appendChild(el("b")); bl.appendChild(e0); }
-      var ip = r.injured_persons || { n: 0 }, li2 = el("li", "tot"); li2.appendChild(el("span")); li2.appendChild(el("span", null, "ผู้บาดเจ็บทั้งหมด")); li2.appendChild(el("b", null, numOrMask(ip.n))); bl.appendChild(li2);
-      document.querySelectorAll("#body-svg .rg").forEach(function (n) { n.setAttribute("class", "rg" + (n.getAttribute("class").indexOf(" sm") > -1 ? " sm " : " ") + (bcls[n.getAttribute("data-c")] || "bg0")); });
+      var ip = r.injured_persons || { n: 0 }, li2 = el("li", "tot"); li2.appendChild(el("span")); var tsp = el("span"); tsp.appendChild(link("", "ผู้บาดเจ็บทั้งหมด", drill({ body: "any" }), "ผู้บาดเจ็บทั้งหมด — ดูรายการเคส")); li2.appendChild(tsp); li2.appendChild(el("b", null, numOrMask(ip.n))); bl.appendChild(li2);
+      document.querySelectorAll("#body-svg .rg").forEach(function (n) { n.style.cursor = "pointer"; n.onclick = function () { location.href = drill({ body: n.getAttribute("data-c") }); }; n.setAttribute("class", "rg" + (n.getAttribute("class").indexOf(" sm") > -1 ? " sm " : " ") + (bcls[n.getAttribute("data-c")] || "bg0")); });
       /* badge ตัวเลขบนภาพ: เฉพาะส่วนใหญ่ที่มีผู้บาดเจ็บ (นิ้ว/ตา ดูในรายการ) — ซ้าย/ขวาตามตัวผู้บาดเจ็บ (ด้านซ้ายของภาพ = ขวาของผู้บาดเจ็บ) */
       var NS = "http://www.w3.org/2000/svg", bd = $("body-badges"); bd.replaceChildren();
       var BP = [["HEAD", 100, 14], ["FACE", 100, 50], ["NECK", 100, 66], ["SHOULDER_R", 64, 96], ["CHEST", 100, 135], ["ABDOMEN", 100, 188], ["BACK", 187, 158],
@@ -335,60 +382,69 @@
       var mx = Math.max.apply(null, r.trend.map(function (m) { return m.serious + m.other + m.near_miss; }).concat([1]));
       r.trend.forEach(function (m) {
         var col = el("div", "ed-col"), tot = m.serious + m.other + m.near_miss;
-        col.appendChild(el("div", "ed-tot", String(tot)));
+        var mr = monthRange(m.month);
+        col.appendChild(link("ed-tot", String(tot), drill({ from: mr.from, to: mr.to }), "เดือน " + m.month + " ทั้งหมด " + tot + " เคส"));
         var st = el("div", "ed-stack"); st.style.height = Math.max(tot ? 6 : 0, Math.round(tot / mx * 130)) + "px";
         [["serious", "sg-serious"], ["other", "sg-other"], ["near_miss", "sg-near"]].forEach(function (p) {
-          if (!m[p[0]]) return; var s = el("div", "ed-seg " + p[1], String(m[p[0]])); s.style.flex = String(m[p[0]]); st.appendChild(s);
+          if (!m[p[0]]) return; var s = link("ed-seg " + p[1], String(m[p[0]]), drill({ from: mr.from, to: mr.to, sev: p[0] === "serious" ? ["FAT", "LTI"] : p[0] === "near_miss" ? ["NEAR"] : ["RWC", "MTC", "FAC", "PD", "none"] }), "เดือน " + m.month); s.style.flex = String(m[p[0]]); st.appendChild(s);
         });
         col.appendChild(st);
-        var mm = m.month.split("-"); col.appendChild(el("div", "ed-mon", MON[Number(mm[1]) - 1] + " " + String(Number(mm[0]) + 543).slice(2)));
+        var mm = m.month.split("-"); col.appendChild(link("ed-mon", MON[Number(mm[1]) - 1] + " " + String(Number(mm[0]) + 543).slice(2), drill({ from: mr.from, to: mr.to })));
         tr.appendChild(col);
       });
       var tt = $("trend-tbl"); tt.replaceChildren();
       var th = el("tr"); ["เดือน", "รุนแรง", "อื่น ๆ", "Near miss"].forEach(function (h, i) { th.appendChild(el("th", i ? "n" : "", h)); }); tt.appendChild(th);
-      r.trend.forEach(function (m) { var tr2 = el("tr"); tr2.appendChild(el("td", "", m.month)); [m.serious, m.other, m.near_miss].forEach(function (v) { tr2.appendChild(el("td", "n", String(v))); }); tt.appendChild(tr2); });
+      r.trend.forEach(function (m) {
+        var tr2 = el("tr"), mr2 = monthRange(m.month), td1 = el("td"); td1.appendChild(link("", m.month, drill({ from: mr2.from, to: mr2.to }))); tr2.appendChild(td1);
+        [["serious", ["FAT", "LTI"]], ["other", ["RWC", "MTC", "FAC", "PD", "none"]], ["near_miss", ["NEAR"]]].forEach(function (g) { var td = el("td", "n"); td.appendChild(link("", String(m[g[0]]), drill({ from: mr2.from, to: mr2.to, sev: g[1] }))); tr2.appendChild(td); }); tt.appendChild(tr2);
+      });
 
       /* category */
       var CATCOL = { FAT: "#7f1d1d", LTI: "#dc2626", RWC: "#ea580c", MTC: "#fb923c", FAC: "#fcd34d", PD: "#bef264", NEAR: "#86efac" };
-      function bars(boxId, arr, colFn) {
+      function bars(boxId, arr, colFn, hrefFn) {
         var cb = $(boxId); cb.replaceChildren(); arr = arr || [];
         var cmax = Math.max.apply(null, arr.map(function (c) { return c.n || 0; }).concat([1]));
         if (!arr.length) cb.appendChild(el("p", "sub", "ไม่มีข้อมูลในช่วงที่เลือก"));
         arr.forEach(function (c) {
-          var row = el("div", "ed-bar"); row.appendChild(el("span", null, c.name_th));
+          var row = el("a", "drill ed-bar"); row.href = hrefFn(c); row.appendChild(el("span", null, c.name_th));
           var trk = el("span", "trk"), f = el("span", "fil"); f.style.width = (c.n ? Math.round(c.n / cmax * 100) : 0) + "%"; f.style.background = colFn(c); trk.appendChild(f); row.appendChild(trk);
           row.appendChild(el("span", c.suppressed ? "num msk" : "num", numOrMask(c.n))); cb.appendChild(row);
         });
       }
-      bars("cats", r.by_category, function () { return "#284499"; });
-      bars("sevs", r.by_severity, function (c) { return CATCOL[c.code] || "#64748b"; });
-      bars("parties", r.by_party, function () { return "#017AB6"; });
+      bars("cats", r.by_category, function () { return "#284499"; }, function (c) { return drill(c.code === "UNK" ? { type: "legacy" } : { type: c.code }); });
+      bars("sevs", r.by_severity, function (c) { return CATCOL[c.code] || "#64748b"; }, function (c) { return drill({ sev: [c.code === "UNK" ? "none" : c.code] }); });
+      bars("parties", r.by_party, function () { return "#017AB6"; }, function (c) { return drill({ party: [c.code === "UNK" ? "none" : c.code] }); });
 
       /* time */
       var tb = $("times"); tb.replaceChildren();
       var lab = { "00-05": "00:00–05:59", "06-11": "06:00–11:59", "12-17": "12:00–17:59", "18-23": "18:00–23:59", unknown: "ไม่ระบุเวลา" };
       r.by_time.forEach(function (t) {
-        var c = el("div", "ed-tc"); c.appendChild(el("div", "p", numOrMask(t.n)));
+        var c = el("a", "drill ed-tc"); c.href = drill({ tb: t.bucket }); c.style.display = "block"; c.appendChild(el("div", "p", numOrMask(t.n)));
         c.appendChild(el("div", "h", lab[t.bucket] || t.bucket));
         c.appendChild(el("div", "h", t.n != null && k.total ? Math.round(t.n / k.total * 100) + "% ของเคส" : "")); tb.appendChild(c);
       });
 
       /* heatmap */
-      var hm = $("hm"); hm.replaceChildren();
-      var hr = el("tr"); hr.appendChild(el("th", "", "Plant")); r.heatmap.quarters.forEach(function (q) { hr.appendChild(el("th", "", q.replace("-", " "))); }); hm.appendChild(hr);
+      var hmw = $("hmw"); hmw.replaceChildren();
       var cell = {}; r.heatmap.cells.forEach(function (c) { cell[c.plant_id + "|" + c.quarter] = c; });
       var hmTot = {}; r.heatmap.cells.forEach(function (c) { hmTot[c.plant_id] = (hmTot[c.plant_id] || 0) + (c.suppressed ? 1.5 : (c.n || 0)); });
       var hmPlants = r.heatmap.plants.slice().sort(function (a, b) { return (hmTot[b.id] || 0) - (hmTot[a.id] || 0) || String(a.code).localeCompare(String(b.code)); });
       var hmShow = hmPlants.filter(function (p) { return !onlyActive || (hmTot[p.id] || 0) > 0; });
       $("hm-cnt").textContent = "แสดง " + hmShow.length + " จาก " + hmPlants.length + " Plant";
-      if (!hmShow.length) { var he = el("tr"), hc = el("td", "", "ไม่มีเหตุการณ์ในช่วงที่เลือก (Plant ทั้งหมด " + hmPlants.length + " แห่งเป็น 0)"); hc.colSpan = r.heatmap.quarters.length + 1; he.appendChild(hc); hm.appendChild(he); }
-      hmShow.forEach(function (p) {
-        var tr3 = el("tr"), td0 = el("td", "", p.code); if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr3.appendChild(td0);
-        r.heatmap.quarters.forEach(function (q) {
-          var c = cell[p.id + "|" + q] || { n: 0 }, v = c.n, cls = c.suppressed ? "hm" : v === 0 ? "h0" : v < 6 ? "h1" : v < 10 ? "h2" : "h3";
-          tr3.appendChild(el("td", "c " + cls, numOrMask(v)));
-        }); hm.appendChild(tr3);
-      });
+      if (!hmShow.length) hmw.appendChild(el("p", "sub", "ไม่มีเหตุการณ์ในช่วงที่เลือก (Plant ทั้งหมด " + hmPlants.length + " แห่งเป็น 0)"));
+      var hmCols = hmShow.length > 12 ? 2 : 1, hmSize = Math.max(1, Math.ceil(hmShow.length / hmCols));
+      for (var ci = 0; ci < hmShow.length; ci += hmSize) {
+        var hm = el("table", "ed-hm");
+        var hr = el("tr"); hr.appendChild(el("th", "", "Plant")); r.heatmap.quarters.forEach(function (q) { hr.appendChild(el("th", "", q.replace("-", " "))); }); hm.appendChild(hr);
+        hmShow.slice(ci, ci + hmSize).forEach(function (p) {
+          var tr3 = el("tr"), td0 = el("td", "pl"); td0.appendChild(link("", p.code, drill({ plant: p.id }), p.code + " — ดูรายการเคส")); if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr3.appendChild(td0);
+          r.heatmap.quarters.forEach(function (q) {
+            var c = cell[p.id + "|" + q] || { n: 0 }, v = c.n, cls = c.suppressed ? "hm" : v === 0 ? "h0" : v < 6 ? "h1" : v < 10 ? "h2" : v < 20 ? "h3" : "h4";
+            var tdc = el("td", "c " + cls), qr = qRange(q); tdc.appendChild(link("", v === 0 ? "·" : numOrMask(v), drill({ plant: p.id, from: qr.from, to: qr.to }), p.code + " " + q)); tr3.appendChild(tdc);
+          }); hm.appendChild(tr3);
+        });
+        hmw.appendChild(hm);
+      }
 
       /* benchmark */
       var bt = $("bench"); bt.replaceChildren();
@@ -399,8 +455,10 @@
       $("bench-cnt").textContent = "แสดง " + bShow.length + " จาก " + bp.length + " Plant";
       if (!bShow.length) { var be = el("tr"), bc = el("td", "", "ไม่มีเหตุการณ์ในช่วงที่เลือก (Plant ทั้งหมด " + bp.length + " แห่งเป็น 0)"); bc.colSpan = 5; be.appendChild(bc); bt.appendChild(be); }
       bShow.forEach(function (p) {
-        var tr4 = el("tr"), td0 = el("td", "", p.code + " " + p.name); if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr4.appendChild(td0);
-        [p.total, p.serious, p.lti, p.near_miss].forEach(function (v) { tr4.appendChild(el("td", "n " + (v === 0 ? "z" : "nz"), numOrMask(v))); }); bt.appendChild(tr4);
+        var tr4 = el("tr"), td0 = el("td"); td0.appendChild(link("", p.code + " " + p.name, drill({ plant: p.id }))); if (own[p.id]) td0.appendChild(el("span", "ed-own", "ของคุณ")); tr4.appendChild(td0);
+        [[p.total, null], [p.serious, ["FAT", "LTI"]], [p.lti, ["LTI"]], [p.near_miss, ["NEAR"]]].forEach(function (g) {
+          var td = el("td", "n " + (g[0] === 0 ? "z" : "nz")); td.appendChild(link("", numOrMask(g[0]), drill(g[1] ? { plant: p.id, sev: g[1] } : { plant: p.id }))); tr4.appendChild(td);
+        }); bt.appendChild(tr4);
       });
 
       /* latest */
@@ -411,7 +469,7 @@
       var h = el("tr"); ["วันที่", "Plant", "ประเภท", "ความรุนแรง", "สถานะ"].forEach(function (x) { h.appendChild(el("th", "", x)); }); t.appendChild(h);
       var shown = rows.filter(function (r) { return !q || (r.plant_code + " " + r.type_name).toLowerCase().indexOf(q) > -1; });
       shown.forEach(function (r) {
-        var tr = el("tr"); tr.appendChild(el("td", "", thDate(r.occurred_on))); tr.appendChild(el("td", "", r.plant_code)); tr.appendChild(el("td", "", r.type_name));
+        var tr = el("tr"); var dtd = el("td"); dtd.appendChild(link("", thDate(r.occurred_on), "records.html?open=" + encodeURIComponent(r.id), "เปิดรายละเอียดเคสวันที่ " + thDate(r.occurred_on))); tr.appendChild(dtd); tr.appendChild(el("td", "", r.plant_code)); tr.appendChild(el("td", "", r.type_name));
         var td = el("td"); td.appendChild(el("span", r.severity_code && /^(FAT|LTI|RWC|MTC|FAC|PD|NEAR)$/.test(r.severity_code) ? "badge sv sv-" + r.severity_code : "badge" + (r.is_serious ? " ser" : ""), r.severity_name || (r.is_serious ? "รุนแรง" : "ทั่วไป"))); tr.appendChild(td);
         tr.appendChild(el("td", "", PHASE[r.phase] || r.phase)); t.appendChild(tr);
       });
@@ -426,7 +484,7 @@
         var pl = checks("pop-plants"), ty = checks("pop-types"), sv = checks("pop-sev"), pt = checks("pop-party"), ph = $("f-phase").value;
         var res = await sb.rpc("dashboard_summary", { p_from: rg.from, p_to: rg.to, p_plants: pl.length ? pl : null, p_types: ty.length ? ty : null, p_phase: ph || null, p_severities: sv.length ? sv : null, p_parties: pt.length ? pt : null });
         if (res.error) { show("โหลดข้อมูลไม่สำเร็จ: " + res.error.message, false); return; }
-        data = res.data; show("", true); render(data);
+        cur = { from: rg.from, to: rg.to, pl: pl, ty: ty, sv: sv, pt: pt, ph: ph }; treeTypes = types; data = res.data; show("", true); render(data);
         $("meta").textContent = "ช่วงข้อมูล " + thDate(rg.from) + " – " + thDate(rg.to) + " · " + (pl.length ? pl.length + " Plant" : "ทุก Plant") + " · " + (ty.length ? ty.length + " ประเภท" : "ทุกประเภท") + (sv.length ? " · " + sv.length + " ระดับ" : "") + (pt.length ? " · " + pt.length + " กลุ่ม" : "");
       } finally { busy = false; $("b-apply").disabled = false; }
     }
@@ -438,7 +496,7 @@
       if (perms.error || !Array.isArray(perms.data) || perms.data.indexOf("dashboard.view") < 0) { gate.textContent = "คุณไม่มีสิทธิ์เข้าหน้านี้ (ติดต่อ Admin เพื่อขอสิทธิ์ ดู Executive Dashboard)"; return; }
       var f = await sb.rpc("dashboard_filters");
       if (f.error) { gate.textContent = "โหลดตัวกรองไม่สำเร็จ: " + f.error.message + " (ตรวจว่ารัน Migration B17 แล้ว)"; return; }
-      plants = f.data.plants || []; types = f.data.types || []; var sevs = f.data.severities || [], parties = f.data.parties || [];
+      plants = f.data.plants || []; types = f.data.types || []; var sevs = f.data.severities || [], parties = f.data.parties || []; sevs0 = sevs; parties0 = parties;
       try { var up = await sb.from("user_plants").select("plant_id").eq("user_id", session.user.id); (up.data || []).forEach(function (u) { own[u.plant_id] = true; }); } catch (e) {}
       buildPop("pop-plants", "s-plants", plants, "id", function (p) { return p.code + " " + p.name; }, "ทุก Plant", "Plant");
       buildPop("pop-types", "s-types", types, "code", function (t) { return t.name_th; }, "ทุกประเภท", "ประเภท", function (t) { return t.depth || 1; });
@@ -450,6 +508,27 @@
       });
       function range0() { var t = new Date(), fr = new Date(); fr.setDate(fr.getDate() - 89); return { from: ymd(fr), to: ymd(t) }; }
       $("b-apply").addEventListener("click", load);
+      $("b-print").addEventListener("click", function () { window.print(); });
+      $("b-pptx").addEventListener("click", async function () {
+        var btn = $("b-pptx"), msg = $("export-msg");
+        if (!data || !cur) { msg.textContent = "กด \"แสดงผล\" ก่อนส่งออก"; return; }
+        btn.disabled = true; msg.textContent = "กำลังสร้างไฟล์…";
+        function lbl(ids, list, key, name, all) { return ids && ids.length ? ids.map(function (i) { var m = list.filter(function (x) { return x[key] === i; })[0]; return m ? name(m) : i; }).join(", ") : all; }
+        try {
+          await window.exportDashboardPptx({
+            data: data, range: { from: cur.from, to: cur.to }, fmt: thDate, MON: MON, PHASE: PHASE,
+            scope: {
+              plants: lbl(cur.pl, plants, "id", function (p) { return p.code; }, "ทุก Plant"),
+              types: lbl(cur.ty, types, "code", function (t) { return t.name_th; }, "ทุกประเภท"),
+              sev: lbl(cur.sv, sevs0, "code", function (x) { return x.code; }, "ทุกระดับ"),
+              party: lbl(cur.pt, parties0, "code", function (x) { return x.name_th; }, "ทุกกลุ่ม"),
+              phase: cur.ph ? (PHASE[cur.ph] || cur.ph) : "ทุกสถานะ"
+            }
+          });
+          msg.textContent = "สร้างไฟล์เรียบร้อย (ดูที่โฟลเดอร์ดาวน์โหลด)";
+        } catch (e) { msg.textContent = "ส่งออกไม่สำเร็จ: " + (e && e.message ? e.message : e); }
+        finally { btn.disabled = false; }
+      });
       document.querySelectorAll(".only-active").forEach(function (cb) {
         cb.addEventListener("change", function () {
           onlyActive = cb.checked; document.querySelectorAll(".only-active").forEach(function (o) { o.checked = onlyActive; }); if (data) render(data);
@@ -464,6 +543,7 @@
       gate.hidden = true; $("area").hidden = false; load();
     })();
   </script>
+  <script src="dashboard-pptx.js"></script>
   <script src="shell-v4.js"></script>
 </body>
 </html>
