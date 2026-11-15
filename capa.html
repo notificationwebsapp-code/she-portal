@@ -19,6 +19,7 @@
     .capacard:hover,.capacard:focus-visible{outline:2px solid var(--brand);outline-offset:1px;background:#f4f0fb!important;color:#1b2430!important;box-shadow:0 2px 8px rgba(0,0,0,.12)}
     .capacard:hover.od,.capacard.od:focus-visible{background:#ffecec!important}
     .capacard:hover .no,.capacard:hover .meta{color:#394150!important}
+    .capagrp{grid-column:1/-1;margin:.6rem 0 0;font-size:1rem;color:#284499;border-bottom:1px solid var(--line);padding-bottom:.3rem}
     .capacard{display:block}.capacard>span{display:block}.capacard>span.no{margin-bottom:.1rem}.capacard .no{font-size:.875rem;color:#4b5565;font-weight:600}
     .capacard .tt{display:block;font-weight:700;margin:.15rem 0 .35rem;overflow-wrap:anywhere}
     .capacard .meta{display:block;font-size:.88rem;color:#394150;margin-top:.15rem;overflow-wrap:anywhere}
@@ -79,6 +80,7 @@
       <div><label for="f-status">สถานะ</label><select id="f-status"></select></div>
       <div><label for="f-source">แหล่งที่มา</label><select id="f-source"></select></div>
       <div id="f-plant-wrap" hidden><label for="f-plant">Plant</label><select id="f-plant"></select></div>
+      <div><label for="f-sort">เรียงลำดับ</label><select id="f-sort"><option value="urgent">เร่งด่วนก่อน (แบ่งกลุ่ม)</option><option value="due">กำหนดเสร็จ: ใกล้สุดก่อน</option><option value="new">สร้างล่าสุดก่อน</option></select></div>
       <label class="chk"><input type="checkbox" id="f-mine"> เฉพาะที่ฉันรับผิดชอบ</label>
       <button type="button" id="btn-new" hidden>+ สร้าง Action</button>
     </form>
@@ -188,7 +190,21 @@
         h("span", { class: "sumchip", text: "ทั้งหมด " + ROWS.length + " รายการ" }),
         od ? h("span", { class: "sumchip bad", text: "เกินกำหนด " + od + " รายการ" }) : null,
         wt ? h("span", { class: "sumchip wait", text: "รอตรวจสอบ " + wt + " รายการ" }) : null].filter(Boolean));   // replaceChildren แปลง null เป็นข้อความ "null" จึงต้องกรองออกก่อน
-      ROWS.forEach((r) => {
+      const mode = $("f-sort") ? $("f-sort").value : "urgent";
+      const rank = (r) => r.is_overdue ? 0 : r.status === "returned" ? 1 : (r.status === "open" || r.status === "in_progress") ? 2 : r.status === "closed" ? 3 : 4;
+      const GN = ["เกินกำหนด: ต้องเร่งก่อน", "ส่งกลับให้แก้: รอเจ้าของแก้ไข", "กำลังดำเนินการ / เปิดใหม่", "รอตรวจสอบ: รอผู้ตรวจสอบปิดงาน", "ปิดแล้ว (ตรวจสอบแล้ว / ยกเลิก)"];
+      const byDue = (a, b) => String(a.due_date).localeCompare(String(b.due_date));
+      const list = ROWS.slice();
+      if (mode === "urgent") list.sort((a, b) => rank(a) - rank(b) || (a.is_overdue && b.is_overdue ? (b.days_overdue || 0) - (a.days_overdue || 0) : byDue(a, b)));
+      else if (mode === "due") list.sort(byDue);
+      else list.sort((a, b) => String(b.created_at || b.action_no).localeCompare(String(a.created_at || a.action_no)));
+      let lastG = -1, seq = 0;
+      list.forEach((r) => {
+        if (mode === "urgent" && rank(r) !== lastG) {
+          lastG = rank(r);
+          const n = list.filter((x) => rank(x) === lastG).length;
+          box.append(h("h3", { class: "capagrp", text: GN[lastG] + " (" + n + ")" }));
+        }
         const card = h("button", { type: "button", class: "capacard s-" + r.status + (r.is_overdue ? " od" : ""), onclick: () => openDetail(r.id) },
           h("span", { class: "no", "data-no-i18n": true, text: r.action_no + " · " + r.plant_code }),
           h("span", { class: "tt", "data-no-i18n": true, text: r.title }),
@@ -454,6 +470,7 @@
       $("btn-new").hidden = !canCreate;
       $("btn-new").addEventListener("click", () => openForm(null));
       ["f-status", "f-source", "f-plant", "f-mine"].forEach((id) => $(id).addEventListener("change", loadList));
+      $("f-sort").addEventListener("change", renderList);
       $("capabar").addEventListener("submit", (e) => e.preventDefault());
       await loadList();
       const q = new URLSearchParams(location.search);
