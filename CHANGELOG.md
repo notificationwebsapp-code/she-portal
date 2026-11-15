@@ -2,6 +2,15 @@
 
 รูปแบบ: วันที่ → สิ่งที่เปลี่ยน → ไฟล์ที่เกี่ยวข้อง (ข้อมูลทั้งหมดเป็นข้อมูลทดสอบ)
 
+## 2026-11-15 — B28a + B28b ประเภทเหตุการณ์หลายระดับ (Admin ตั้งค่าเอง)
+- ฐานข้อมูล B28a (`migration-B28a-incident-hierarchy.sql`): `incident_types` เป็นต้นไม้ (parent_id / depth / path / selectable / kind, กันวนลูป, ลึกสูงสุด 10), ตารางใหม่ `incident_severities` (Pyramid 7 ระดับ) และ `incident_involved_parties` (พนักงาน/ผู้รับเหมา/ซัพพลายเออร์), `incident_reports` เพิ่ม `severity_id` / `involved_party_id` (backfill ความรุนแรงจากประเภทเดิม; ผู้เกี่ยวข้องของรายงานเดิมว่าง = "ไม่ระบุ"); เพิ่มอย่างเดียว ไม่ลบข้อมูลเดิม
+- ฐานข้อมูล B28b (`migration-B28b-incident-taxonomy-admin.sql`): RPC สำหรับ Admin เท่านั้น (`incident_taxonomy_admin`, `incident_type_save`, `incident_severity_save`, `incident_severity_move`, `incident_party_save`), นำเข้า CSV แบบ dry-run / all-or-nothing (`incident_types_import`, `incident_severities_import`, `incident_parties_import`) และส่งออก (`*_export`); กัน CSV injection (= + - @), เหตุผล 5–200 ตัวอักษร, audit ทุกครั้ง, ไม่มีการลบ
+- `admin-incident-types.html` (ใหม่): 3 แท็บ (ประเภทแบบต้นไม้ / ความรุนแรง ▲▼ / ผู้เกี่ยวข้อง) + กล่องนำเข้า-ส่งออก CSV แต่ละแท็บ + คำอธิบาย 3 แกนสำหรับผู้ใช้ใหม่; รหัสแก้ไม่ได้หลังสร้าง; ปิดใช้งานแทนการลบ; เตือนเมื่อลึกเกิน 4 ระดับที่แนะนำ
+- `guide-data.js`: คู่มือหน้า "admin-incident-types" (วัตถุประสงค์ ขั้นตอน ศัพท์ ตัวอย่าง คำอธิบายช่อง); `shell-v4.js`: เพิ่มเมนูผู้ดูแลระบบ "ประเภทเหตุการณ์ / ความรุนแรง"
+- ทดสอบ: ฐานข้อมูลจริง B28a 42/42, B28b 83/83 (rollback ทั้งหมด); หน้าเว็บจำลอง Playwright 24/25 (ข้อที่เหลือคือ error ของกระดิ่งใน mock ไม่ใช่หน้านี้)
+- ยังไม่ได้ทำ (B28c / B28d): ฟอร์มรายงานและหน้ารายการยังใช้ประเภทเดิม; Dashboard / SLA / Repeat ยังอ่าน `incident_types` แบบเดิม
+- หมายเหตุ: CHANGELOG ฉบับนี้ยังไม่มีรายการ B26–B27d (ดู HANDOFF-update และ AUDIT-Import-Coverage ใน Project)
+
 ## 2026-11-01 — B24a-4-UI กระดิ่งแจ้งเตือน CAPA + ช่องความคิดเห็นในหน้า Action
 - `shell-v4.js`: กระดิ่งเรียก `notifications_refresh` → `notifications_list` / `notifications_unread_count`; ตัวเลขบนกระดิ่ง = คำขอแก้ไขรอดำเนินการ + แจ้งเตือนที่ยังไม่อ่าน; คงรายการเดิม; ถ้ายังไม่รัน SQL ส่วนใหม่จะข้ามโดยไม่กระทบรายการเดิม
 - การ์ดแจ้งเตือนแยกสีตามประเภท (มอบหมาย=น้ำเงิน, ใกล้ครบกำหนด=เหลืองเข้ม, เกินกำหนด=แดง, เปลี่ยนสถานะ=ม่วง, เลื่อนกำหนด=ส้ม, ความคิดเห็น=เขียวเข้ม) ป้ายตัวอักษรขาวบนพื้นเข้ม (WCAG 2.2 SC 1.4.3); ยังไม่อ่าน = พื้นฟ้า + จุดแดง; ปุ่ม "อ่านทั้งหมด"

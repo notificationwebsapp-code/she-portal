@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ประเภทเหตุการณ์ | SHE Portal</title>
+  <script src="i18n.js"></script>
+  <script src="guide-data.js"></script><script src="guide.js"></script><script src="csv-import.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+  <style>
+    .seg{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+    .seg button{min-height:44px}
+    .seg button[aria-pressed="true"]{background:var(--navy,#1F3A8A);color:#fff;border-color:var(--navy,#1F3A8A)}
+    .axes{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.8rem;margin:.8rem 0}
+    .axes>div{background:#F4F7FF;border:1px solid #C9D5F5;border-radius:14px;padding:.7rem .9rem}
+    .axes h4{margin:.1rem 0 .3rem;color:var(--navy,#1F3A8A)}
+    .axes p{margin:.2rem 0;font-size:.93rem}
+    .tinfo{font-size:.85rem;color:#4B5563}
+    .warn{color:#7a3a00;font-size:.85rem;font-weight:600}
+    .tcell{display:block}
+    .chk{display:flex;align-items:center;gap:.5rem;min-height:44px}
+    .chk input{width:22px;height:22px}
+    .fh{display:block;font-weight:400;font-size:.85rem;color:#4B5563}
+    #f-type .grid2,#f-sev .grid2,#f-party .grid2{grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))}
+    .formhead{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
+    .empty{padding:.8rem 1rem;background:#FFF7E0;border:1px solid #F0D58A;border-radius:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">ดูข้อมูล</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- ซ่อนจนกว่าจะยืนยันว่าเป็น Admin (ซ่อนหน้าจอเท่านั้น สิทธิ์จริงอยู่ที่ RPC ในฐานข้อมูลที่ตรวจ Role = admin) -->
+    <div id="adminarea" hidden>
+      <h2>ประเภทเหตุการณ์ / ความรุนแรง / ผู้เกี่ยวข้อง</h2>
+      <p>กำหนดตัวเลือกของ "รายงานอุบัติเหตุ" ทั้งหมดด้วยตัวเอง ไม่ต้องแก้โค้ด รายงานแต่ละฉบับจะถูกจัดกลุ่มจาก 3 แกนที่แยกจากกัน</p>
+
+      <div class="axes" aria-label="3 แกนของรายงาน">
+        <div><h4>1) ประเภทเหตุการณ์ (ต้นไม้)</h4><p>"เกิดอะไรขึ้น" แบ่งเป็นหมวดใหญ่ → หมวดย่อย ได้หลายระดับ (แนะนำไม่เกิน 4 ระดับ) เช่น ไฟไหม้ → ไฟฟ้า → ตู้ควบคุม</p></div>
+        <div><h4>2) ความรุนแรง (Pyramid)</h4><p>"รุนแรงแค่ไหน" เรียงจากรุนแรงที่สุดไปน้อยที่สุด ใช้วาด Pyramid ใน Dashboard เช่น FAT, LTI, RWC, MTC, FAC, PD, NEAR</p></div>
+        <div><h4>3) ผู้เกี่ยวข้อง</h4><p>"เกิดกับใคร" เช่น พนักงาน ผู้รับเหมา ซัพพลายเออร์ แยกจากประเภท เพื่อกรองและเทียบสถิติได้</p></div>
+      </div>
+      <p class="tinfo">ถ้าไม่ตั้งค่า: ฟอร์มรายงานจะไม่มีตัวเลือกให้เลือก และ Dashboard จัดกลุ่มไม่ได้ ไม่มีการลบข้อมูล: ถ้าไม่ใช้แล้วให้ "ปิดใช้งาน" รายงานเดิมยังอ้างอิงถูกต้อง รหัส (Code) แก้ไม่ได้หลังสร้าง</p>
+
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <div class="seg" role="group" aria-label="เลือกหัวข้อ">
+        <button type="button" class="secondary" data-panel="types" aria-pressed="true">ประเภทเหตุการณ์</button>
+        <button type="button" class="secondary" data-panel="sev" aria-pressed="false">ความรุนแรง</button>
+        <button type="button" class="secondary" data-panel="party" aria-pressed="false">ผู้เกี่ยวข้อง</button>
+      </div>
+
+      <!-- ===== ประเภทเหตุการณ์ ===== -->
+      <section id="panel-types">
+        <h3>ประเภทเหตุการณ์ (ต้นไม้)</h3>
+        <p class="helper">กด "+ ลูก" เพื่อเพิ่มหัวข้อย่อยใต้รายการนั้น หรือใช้ฟอร์มด้านล่างเพิ่มหัวข้อระดับบนสุด "ผู้รายงานเลือกได้" = ติ๊กเมื่อเป็นหัวข้อปลายทางที่เลือกในฟอร์มได้ ไม่ติ๊กเมื่อเป็นหัวข้อกลุ่มที่ใช้จัดหมวดเท่านั้น</p>
+        <p id="types-summary" class="tinfo" role="status"></p>
+        <div class="tablewrap"><table id="t-types">
+          <thead><tr><th>ชื่อ (ไทย / English)</th><th>รหัส</th><th>ระดับ</th><th>ผู้รายงานเลือกได้</th><th>สถานะ</th><th>จำนวนรายงาน</th><th>การทำงาน</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+
+        <form id="f-type" class="addform" autocomplete="off">
+          <div class="formhead"><h4 id="ty-title" style="margin:0">+ เพิ่มประเภท</h4><button type="button" class="secondary small" id="ty-cancel" hidden>ยกเลิกการแก้ไข</button></div>
+          <div class="grid2">
+            <div><label for="ty-code">รหัส <small>(A–Z 0–9 _ - ไม่เกิน 20 ตัว)</small></label><br><input type="text" id="ty-code" maxlength="20" required></div>
+            <div><label for="ty-parent">อยู่ภายใต้ <small>(ว่าง = ระดับบนสุด)</small></label><br><select id="ty-parent"></select><span class="warn" id="ty-depthwarn" hidden></span></div>
+            <div><label for="ty-th">ชื่อภาษาไทย</label><br><input type="text" id="ty-th" maxlength="100" required></div>
+            <div><label for="ty-en">ชื่อภาษาอังกฤษ <small>(ว่าง = ใช้ชื่อไทย)</small></label><br><input type="text" id="ty-en" maxlength="100"></div>
+            <div><label for="ty-sort">ลำดับ <small>(0–9999 เลขน้อยแสดงก่อน)</small></label><br><input type="number" id="ty-sort" min="0" max="9999" value="100" required></div>
+            <div><label class="chk"><input type="checkbox" id="ty-sel" checked> ผู้รายงานเลือกหัวข้อนี้ได้</label>
+                 <label class="chk"><input type="checkbox" id="ty-act" checked> เปิดใช้งาน</label></div>
+          </div>
+          <div class="actions"><button type="submit" class="btn-ok" id="ty-save">+ เพิ่มประเภท</button></div>
+        </form>
+        <div id="imp-types"></div>
+      </section>
+
+      <!-- ===== ความรุนแรง ===== -->
+      <section id="panel-sev" hidden>
+        <h3>ความรุนแรง (Pyramid)</h3>
+        <p class="helper">เรียงจากรุนแรงที่สุดอยู่บน ใช้ปุ่ม ▲ ▼ ปรับลำดับ ชื่อและคำอธิบายให้ตั้งตามนิยามของบริษัท ระบบไม่ตัดสินแทน (เช่น นิยาม LTI / RWC / MTC อาจต่างจากเกณฑ์บันทึกกรณีของ OSHA 29 CFR 1904.7)</p>
+        <div class="tablewrap"><table id="t-sev">
+          <thead><tr><th>ลำดับ</th><th>รหัส</th><th>ชื่อ (ไทย / English)</th><th>คำอธิบาย</th><th>ร้ายแรง</th><th>สถานะ</th><th>จำนวนรายงาน</th><th>การทำงาน</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <form id="f-sev" class="addform" autocomplete="off">
+          <div class="formhead"><h4 id="sv-title" style="margin:0">+ เพิ่มระดับความรุนแรง</h4><button type="button" class="secondary small" id="sv-cancel" hidden>ยกเลิกการแก้ไข</button></div>
+          <div class="grid2">
+            <div><label for="sv-code">รหัส <small>(A–Z 0–9 _ - ไม่เกิน 30 ตัว)</small></label><br><input type="text" id="sv-code" maxlength="30" required></div>
+            <div><label for="sv-rank">ลำดับ <small>(1–99 เลข 1 = รุนแรงสุด ว่าง = ต่อท้าย)</small></label><br><input type="number" id="sv-rank" min="1" max="99"></div>
+            <div><label for="sv-th">ชื่อภาษาไทย</label><br><input type="text" id="sv-th" maxlength="200" required></div>
+            <div><label for="sv-en">ชื่อภาษาอังกฤษ</label><br><input type="text" id="sv-en" maxlength="200"></div>
+            <div style="grid-column:1/-1"><label for="sv-desc">คำอธิบาย / นิยาม <small>(ไม่บังคับ ไม่เกิน 500 ตัวอักษร แสดงให้ผู้รายงานอ่านตอนเลือก)</small></label><br><input type="text" id="sv-desc" maxlength="500"></div>
+            <div><label class="chk"><input type="checkbox" id="sv-serious"> นับเป็นเหตุการณ์ร้ายแรง</label>
+                 <label class="chk"><input type="checkbox" id="sv-act" checked> เปิดใช้งาน</label></div>
+          </div>
+          <div class="actions"><button type="submit" class="btn-ok" id="sv-save">+ เพิ่มระดับความรุนแรง</button></div>
+        </form>
+        <div id="imp-sev"></div>
+      </section>
+
+      <!-- ===== ผู้เกี่ยวข้อง ===== -->
+      <section id="panel-party" hidden>
+        <h3>ผู้เกี่ยวข้อง</h3>
+        <p class="helper">ผู้ที่เกี่ยวข้องกับเหตุการณ์ เช่น พนักงาน ผู้รับเหมา ซัพพลายเออร์ เพิ่มประเภทอื่นได้ (เช่น ผู้มาติดต่อ) รายงานเดิมที่ยังไม่ระบุจะแสดงเป็น "ไม่ระบุ"</p>
+        <div class="tablewrap"><table id="t-party">
+          <thead><tr><th>รหัส</th><th>ชื่อ (ไทย / English)</th><th>ลำดับ</th><th>สถานะ</th><th>จำนวนรายงาน</th><th>การทำงาน</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <form id="f-party" class="addform" autocomplete="off">
+          <div class="formhead"><h4 id="pt-title" style="margin:0">+ เพิ่มผู้เกี่ยวข้อง</h4><button type="button" class="secondary small" id="pt-cancel" hidden>ยกเลิกการแก้ไข</button></div>
+          <div class="grid2">
+            <div><label for="pt-code">รหัส <small>(A–Z 0–9 _ - ไม่เกิน 30 ตัว)</small></label><br><input type="text" id="pt-code" maxlength="30" required></div>
+            <div><label for="pt-sort">ลำดับ <small>(0–9999)</small></label><br><input type="number" id="pt-sort" min="0" max="9999" value="100" required></div>
+            <div><label for="pt-th">ชื่อภาษาไทย</label><br><input type="text" id="pt-th" maxlength="200" required></div>
+            <div><label for="pt-en">ชื่อภาษาอังกฤษ</label><br><input type="text" id="pt-en" maxlength="200"></div>
+            <div><label class="chk"><input type="checkbox" id="pt-act" checked> เปิดใช้งาน</label></div>
+          </div>
+          <div class="actions"><button type="submit" class="btn-ok" id="pt-save">+ เพิ่มผู้เกี่ยวข้อง</button></div>
+        </form>
+        <div id="imp-party"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // หมายเหตุ: หน้านี้เป็นเพียงหน้าจอ สิทธิ์จริงอยู่ที่ RPC (incident_taxonomy_admin / incident_type_save / ... ตรวจ Role = admin ในฐานข้อมูล)
+    // ไม่มีการลบ: ปิดใช้งานแทน และทุกการเปลี่ยนแปลงถูกบันทึกใน audit_log; ข้อความจากฐานข้อมูลแสดงด้วย textContent เท่านั้น (OWASP A03)
+    const RECOMMENDED_DEPTH = 4;
+    let DATA = { types: [], severities: [], parties: [] };
+    let editType = null, editSev = null, editParty = null;
+    const msgEl = document.getElementById("msg");
+    const $ = (id) => document.getElementById(id);
+
+    function show(text, ok) {
+      msgEl.hidden = false; msgEl.className = "msg " + (ok ? "ok" : "error");
+      msgEl.textContent = text; msgEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    function el(tag, text, cls) { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; }
+    function dn(e) { e.setAttribute("data-no-i18n", ""); return e; }   // ข้อมูลที่ Admin กรอก ต้องเห็นตามจริง ไม่แปลอัตโนมัติ
+    function thaiError(error) {
+      const m = (error && error.message) || "";
+      if (error.code === "23505") return "รหัสหรือลำดับนี้ถูกใช้แล้ว";
+      if (error.code === "42501") return "ไม่มีสิทธิ์ทำรายการนี้ (Admin เท่านั้น)";
+      if (error.code === "P0002") return "ไม่พบรายการนี้ (อาจถูกแก้ไขโดยผู้อื่น) กรุณาโหลดหน้าใหม่";
+      if (error.code === "22023") {
+        if (/cycle/i.test(m)) return "ย้ายแบบนี้ไม่ได้ เพราะจะวนเป็นวงกลม (ย้ายไปอยู่ใต้ลูกหลานของตัวเอง)";
+        if (/own parent/i.test(m)) return "ตั้งตัวเองเป็นหัวข้อแม่ไม่ได้";
+        if (/too deep/i.test(m)) return "ต้นไม้ลึกเกิน 10 ระดับ";
+        if (/Parent type not found/i.test(m)) return "ไม่พบหัวข้อแม่ที่เลือก";
+        if (/Code cannot be changed/i.test(m)) return "รหัสแก้ไขไม่ได้หลังสร้าง";
+        if (/code must be/i.test(m)) return "รหัสต้องเป็น A–Z a–z 0–9 _ - เท่านั้น (ไม่เกิน 20 ตัวสำหรับประเภท, 30 ตัวสำหรับอย่างอื่น)";
+        if (/must not start/i.test(m)) return "ข้อความห้ามขึ้นต้นด้วย = + - @ และห้ามมีอักขระควบคุม";
+        if (/name must|description/i.test(m)) return "ความยาวชื่อหรือคำอธิบายไม่ถูกต้อง";
+        if (/sort|rank/i.test(m)) return "ลำดับต้องเป็นตัวเลขในช่วงที่กำหนด";
+        return "ข้อมูลไม่ถูกต้อง";
+      }
+      return "ทำรายการไม่สำเร็จ: " + m;
+    }
+    async function call(name, args, okText) {
+      const { data, error } = await sb.rpc(name, args);
+      if (error) { show("บันทึกไม่สำเร็จ: " + thaiError(error), false); return false; }
+      if (okText) show(okText, true);
+      return data === undefined ? true : (data === null ? true : data);
+    }
+    function badge(active) { return el("span", active ? "ใช้งานอยู่" : "ปิดใช้งาน", "badge " + (active ? "active" : "suspended")); }
+    function setPressed(panel) {
+      document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.panel === panel ? "true" : "false"));
+      ["types", "sev", "party"].forEach((p) => { $("panel-" + p).hidden = p !== panel; });
+    }
+    document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => setPressed(b.dataset.panel)));
+
+    // ---------- ประเภท (ต้นไม้) ----------
+    function sortedTree() {
+      const kids = {}; DATA.types.forEach((t) => { const k = t.parent_id || "root"; (kids[k] = kids[k] || []).push(t); });
+      const cmp = (a, b) => (a.sort_order - b.sort_order) || a.code.localeCompare(b.code);
+      const out = [];
+      (function walk(pid) { (kids[pid] || []).sort(cmp).forEach((t) => { out.push(t); walk(t.id); }); })("root");
+      return out;
+    }
+    function typeRow(t) {
+      const tr = document.createElement("tr");
+      const c1 = el("td"); c1.style.paddingLeft = (0.6 + (t.depth - 1) * 1.4) + "rem";
+      c1.appendChild(dn(el("span", (t.depth > 1 ? "└ " : "") + t.name_th, "tcell")));
+      c1.appendChild(dn(el("span", t.name_en, "tinfo tcell")));
+      if (t.kind === "severity_legacy") c1.appendChild(el("span", "ระดับความรุนแรงเดิม (ผูกกับรายงานเก่า)", "tinfo tcell"));
+      tr.appendChild(c1);
+      tr.appendChild(dn(el("td", t.code)));
+      const lv = el("td", String(t.depth));
+      if (t.depth > RECOMMENDED_DEPTH) lv.appendChild(el("span", " เกินที่แนะนำ", "warn"));
+      tr.appendChild(lv);
+      tr.appendChild(el("td", t.selectable ? "เลือกได้" : "หัวข้อกลุ่ม"));
+      const st = el("td"); st.appendChild(badge(t.active)); tr.appendChild(st);
+      tr.appendChild(el("td", String(t.reports)));
+      const act = el("td");
+      const add = el("button", "+ ลูก", "small secondary"); add.type = "button";
+      const edit = el("button", "แก้ไข", "small secondary"); edit.type = "button";
+      const tog = el("button", t.active ? "ปิดใช้งาน" : "เปิดใช้งาน", "small " + (t.active ? "btn-danger-outline" : "btn-ok-outline")); tog.type = "button";
+      add.addEventListener("click", () => startType(null, t.id));
+      edit.addEventListener("click", () => startType(t));
+      tog.addEventListener("click", async () => {
+        if (t.active && !confirm("ปิดใช้งาน " + t.code + " ?\nฟอร์มใหม่จะไม่แสดงตัวเลือกนี้ รายงานเดิมไม่ถูกลบ" + (t.children ? "\n(หัวข้อย่อย " + t.children + " รายการไม่ถูกปิดอัตโนมัติ)" : ""))) return;
+        tog.disabled = true;
+        const r = await call("incident_type_save", { p_id: t.id, p_code: t.code, p_parent_id: t.parent_id, p_name_th: t.name_th, p_name_en: t.name_en, p_selectable: t.selectable, p_active: !t.active, p_sort: t.sort_order },
+          (t.active ? "ปิดใช้งาน " : "เปิดใช้งาน ") + t.code + " เรียบร้อย");
+        if (r) await load(); else tog.disabled = false;
+      });
+      act.append(add, edit, tog); tr.appendChild(act);
+      return tr;
+    }
+    function renderTypes() {
+      const tb = document.querySelector("#t-types tbody"); tb.replaceChildren();
+      const list = sortedTree();
+      if (!list.length) { const tr = document.createElement("tr"); const td = el("td", "ยังไม่มีประเภท — เพิ่มด้านล่าง หรือดาวน์โหลดไฟล์ตัวอย่างเพื่อนำเข้าทีเดียวหลายรายการ"); td.colSpan = 7; tr.appendChild(td); tb.appendChild(tr); }
+      list.forEach((t) => tb.appendChild(typeRow(t)));
+      const deep = DATA.types.filter((t) => t.depth > RECOMMENDED_DEPTH).length, maxd = DATA.types.reduce((m, t) => Math.max(m, t.depth), 0);
+      $("types-summary").textContent = "ทั้งหมด " + DATA.types.length + " รายการ ลึกสุด " + maxd + " ระดับ" + (deep ? " (" + deep + " รายการลึกเกิน " + RECOMMENDED_DEPTH + " ระดับที่แนะนำ ใช้ได้ แต่ผู้รายงานต้องเลือกหลายครั้ง)" : "");
+      fillParentSelect();
+    }
+    function fillParentSelect() {
+      const sel = $("ty-parent"), keep = sel.value; sel.replaceChildren();
+      const top = el("option", "— ระดับบนสุด —"); top.value = ""; sel.appendChild(top);
+      const selfPath = editType ? editType.path : null;
+      sortedTree().forEach((t) => {
+        if (selfPath && t.path.startsWith(selfPath)) return;   // ห้ามเลือกตัวเองหรือลูกหลานเป็นแม่ (กันวนลูป; ฐานข้อมูลตรวจซ้ำ)
+        const o = el("option", "\u00A0".repeat((t.depth - 1) * 3) + t.code + " · " + t.name_th + (t.active ? "" : " (ปิดใช้งาน)")); o.value = t.id; sel.appendChild(o);
+      });
+      if (keep && [...sel.options].some((o) => o.value === keep)) sel.value = keep;
+    }
+    function depthHint() {
+      const p = DATA.types.find((t) => t.id === $("ty-parent").value), d = (p ? p.depth : 0) + 1, w = $("ty-depthwarn");
+      w.hidden = d <= RECOMMENDED_DEPTH; w.textContent = d <= RECOMMENDED_DEPTH ? "" : "หัวข้อนี้จะอยู่ระดับ " + d + " (เกิน " + RECOMMENDED_DEPTH + " ระดับที่แนะนำ ใช้ได้ แต่ผู้รายงานต้องเลือกหลายครั้ง)";
+    }
+    $("ty-parent").addEventListener("change", depthHint);
+    function startType(t, parentId) {
+      editType = t; fillParentSelect();
+      $("ty-title").textContent = t ? "แก้ไขประเภท: " + t.code : "+ เพิ่มประเภท";
+      $("ty-save").textContent = t ? "✓ บันทึกการแก้ไข" : "+ เพิ่มประเภท";
+      $("ty-cancel").hidden = !t;
+      $("ty-code").value = t ? t.code : ""; $("ty-code").disabled = !!t;
+      $("ty-parent").value = t ? (t.parent_id || "") : (parentId || "");
+      $("ty-th").value = t ? t.name_th : ""; $("ty-en").value = t ? t.name_en : "";
+      $("ty-sort").value = t ? t.sort_order : 100; $("ty-sel").checked = t ? t.selectable : true; $("ty-act").checked = t ? t.active : true;
+      depthHint(); $("f-type").scrollIntoView({ behavior: "smooth", block: "center" }); (t ? $("ty-th") : $("ty-code")).focus();
+    }
+    $("ty-cancel").addEventListener("click", () => startType(null));
+    $("f-type").addEventListener("submit", async (e) => {
+      e.preventDefault(); const b = $("ty-save"); b.disabled = true;
+      try {
+        const r = await call("incident_type_save", { p_id: editType ? editType.id : null, p_code: $("ty-code").value.trim(), p_parent_id: $("ty-parent").value || null,
+          p_name_th: $("ty-th").value.trim(), p_name_en: $("ty-en").value.trim() || null, p_selectable: $("ty-sel").checked, p_active: $("ty-act").checked, p_sort: parseInt($("ty-sort").value, 10) },
+          editType ? "บันทึกการแก้ไขเรียบร้อย" : "เพิ่มประเภทเรียบร้อย");
+        if (r) { await load(); startType(null); }
+      } finally { b.disabled = false; }
+    });
+
+    // ---------- ความรุนแรง ----------
+    function sevRow(s, i, n) {
+      const tr = document.createElement("tr");
+      tr.appendChild(el("td", String(s.rank))); tr.appendChild(dn(el("td", s.code)));
+      const c = el("td"); c.appendChild(dn(el("span", s.name_th, "tcell"))); c.appendChild(dn(el("span", s.name_en || "", "tinfo tcell"))); tr.appendChild(c);
+      tr.appendChild(dn(el("td", s.description || "—")));
+      tr.appendChild(el("td", s.is_serious ? "ใช่" : "—"));
+      const st = el("td"); st.appendChild(badge(s.active)); tr.appendChild(st);
+      tr.appendChild(el("td", String(s.reports)));
+      const act = el("td");
+      const up = el("button", "▲", "small secondary"); up.type = "button"; up.setAttribute("aria-label", "ย้ายขึ้น " + s.code); up.disabled = i === 0;
+      const dw = el("button", "▼", "small secondary"); dw.type = "button"; dw.setAttribute("aria-label", "ย้ายลง " + s.code); dw.disabled = i === n - 1;
+      const edit = el("button", "แก้ไข", "small secondary"); edit.type = "button";
+      const tog = el("button", s.active ? "ปิดใช้งาน" : "เปิดใช้งาน", "small " + (s.active ? "btn-danger-outline" : "btn-ok-outline")); tog.type = "button";
+      const mv = (dir) => async () => { up.disabled = dw.disabled = true; if (await call("incident_severity_move", { p_id: s.id, p_dir: dir })) await load(); else { up.disabled = dw.disabled = false; } };
+      up.addEventListener("click", mv(-1)); dw.addEventListener("click", mv(1));
+      edit.addEventListener("click", () => startSev(s));
+      tog.addEventListener("click", async () => {
+        if (s.active && !confirm("ปิดใช้งาน " + s.code + " ?\nฟอร์มใหม่จะไม่แสดงตัวเลือกนี้ รายงานเดิมไม่ถูกลบ")) return;
+        tog.disabled = true;
+        const r = await call("incident_severity_save", { p_id: s.id, p_code: s.code, p_name_th: s.name_th, p_name_en: s.name_en, p_description: s.description, p_rank: s.rank, p_is_serious: s.is_serious, p_active: !s.active },
+          (s.active ? "ปิดใช้งาน " : "เปิดใช้งาน ") + s.code + " เรียบร้อย");
+        if (r) await load(); else tog.disabled = false;
+      });
+      act.append(up, dw, edit, tog); tr.appendChild(act); return tr;
+    }
+    function renderSev() {
+      const tb = document.querySelector("#t-sev tbody"); tb.replaceChildren();
+      if (!DATA.severities.length) { const tr = document.createElement("tr"); const td = el("td", "ยังไม่มีระดับความรุนแรง — เพิ่มด้านล่างหรือนำเข้าจากไฟล์"); td.colSpan = 8; tr.appendChild(td); tb.appendChild(tr); }
+      DATA.severities.forEach((s, i) => tb.appendChild(sevRow(s, i, DATA.severities.length)));
+    }
+    function startSev(s) {
+      editSev = s;
+      $("sv-title").textContent = s ? "แก้ไขความรุนแรง: " + s.code : "+ เพิ่มระดับความรุนแรง";
+      $("sv-save").textContent = s ? "✓ บันทึกการแก้ไข" : "+ เพิ่มระดับความรุนแรง"; $("sv-cancel").hidden = !s;
+      $("sv-code").value = s ? s.code : ""; $("sv-code").disabled = !!s; $("sv-rank").value = s ? s.rank : "";
+      $("sv-th").value = s ? s.name_th : ""; $("sv-en").value = s ? (s.name_en || "") : ""; $("sv-desc").value = s ? (s.description || "") : "";
+      $("sv-serious").checked = s ? s.is_serious : false; $("sv-act").checked = s ? s.active : true;
+      if (s) { $("f-sev").scrollIntoView({ behavior: "smooth", block: "center" }); $("sv-th").focus(); }
+    }
+    $("sv-cancel").addEventListener("click", () => startSev(null));
+    $("f-sev").addEventListener("submit", async (e) => {
+      e.preventDefault(); const b = $("sv-save"); b.disabled = true;
+      try {
+        const rk = $("sv-rank").value.trim();
+        const r = await call("incident_severity_save", { p_id: editSev ? editSev.id : null, p_code: $("sv-code").value.trim(), p_name_th: $("sv-th").value.trim(), p_name_en: $("sv-en").value.trim() || null,
+          p_description: $("sv-desc").value.trim() || null, p_rank: rk === "" ? null : parseInt(rk, 10), p_is_serious: $("sv-serious").checked, p_active: $("sv-act").checked },
+          editSev ? "บันทึกการแก้ไขเรียบร้อย" : "เพิ่มระดับความรุนแรงเรียบร้อย");
+        if (r) { await load(); startSev(null); }
+      } finally { b.disabled = false; }
+    });
+
+    // ---------- ผู้เกี่ยวข้อง ----------
+    function partyRow(p) {
+      const tr = document.createElement("tr");
+      tr.appendChild(dn(el("td", p.code)));
+      const c = el("td"); c.appendChild(dn(el("span", p.name_th, "tcell"))); c.appendChild(dn(el("span", p.name_en || "", "tinfo tcell"))); tr.appendChild(c);
+      tr.appendChild(el("td", String(p.sort_order)));
+      const st = el("td"); st.appendChild(badge(p.active)); tr.appendChild(st);
+      tr.appendChild(el("td", String(p.reports)));
+      const act = el("td");
+      const edit = el("button", "แก้ไข", "small secondary"); edit.type = "button";
+      const tog = el("button", p.active ? "ปิดใช้งาน" : "เปิดใช้งาน", "small " + (p.active ? "btn-danger-outline" : "btn-ok-outline")); tog.type = "button";
+      edit.addEventListener("click", () => startParty(p));
+      tog.addEventListener("click", async () => {
+        if (p.active && !confirm("ปิดใช้งาน " + p.code + " ?\nฟอร์มใหม่จะไม่แสดงตัวเลือกนี้ รายงานเดิมไม่ถูกลบ")) return;
+        tog.disabled = true;
+        const r = await call("incident_party_save", { p_id: p.id, p_code: p.code, p_name_th: p.name_th, p_name_en: p.name_en, p_sort: p.sort_order, p_active: !p.active },
+          (p.active ? "ปิดใช้งาน " : "เปิดใช้งาน ") + p.code + " เรียบร้อย");
+        if (r) await load(); else tog.disabled = false;
+      });
+      act.append(edit, tog); tr.appendChild(act); return tr;
+    }
+    function renderParty() {
+      const tb = document.querySelector("#t-party tbody"); tb.replaceChildren();
+      if (!DATA.parties.length) { const tr = document.createElement("tr"); const td = el("td", "ยังไม่มีรายการ — เพิ่มด้านล่างหรือนำเข้าจากไฟล์"); td.colSpan = 6; tr.appendChild(td); tb.appendChild(tr); }
+      DATA.parties.forEach((p) => tb.appendChild(partyRow(p)));
+    }
+    function startParty(p) {
+      editParty = p;
+      $("pt-title").textContent = p ? "แก้ไขผู้เกี่ยวข้อง: " + p.code : "+ เพิ่มผู้เกี่ยวข้อง";
+      $("pt-save").textContent = p ? "✓ บันทึกการแก้ไข" : "+ เพิ่มผู้เกี่ยวข้อง"; $("pt-cancel").hidden = !p;
+      $("pt-code").value = p ? p.code : ""; $("pt-code").disabled = !!p; $("pt-sort").value = p ? p.sort_order : 100;
+      $("pt-th").value = p ? p.name_th : ""; $("pt-en").value = p ? (p.name_en || "") : ""; $("pt-act").checked = p ? p.active : true;
+      if (p) { $("f-party").scrollIntoView({ behavior: "smooth", block: "center" }); $("pt-th").focus(); }
+    }
+    $("pt-cancel").addEventListener("click", () => startParty(null));
+    $("f-party").addEventListener("submit", async (e) => {
+      e.preventDefault(); const b = $("pt-save"); b.disabled = true;
+      try {
+        const r = await call("incident_party_save", { p_id: editParty ? editParty.id : null, p_code: $("pt-code").value.trim(), p_name_th: $("pt-th").value.trim(), p_name_en: $("pt-en").value.trim() || null,
+          p_sort: parseInt($("pt-sort").value, 10), p_active: $("pt-act").checked }, editParty ? "บันทึกการแก้ไขเรียบร้อย" : "เพิ่มผู้เกี่ยวข้องเรียบร้อย");
+        if (r) { await load(); startParty(null); }
+      } finally { b.disabled = false; }
+    });
+
+    async function load() {
+      const { data, error } = await sb.rpc("incident_taxonomy_admin");
+      if (error) { show("โหลดข้อมูลไม่สำเร็จ: " + thaiError(error), false); return; }
+      DATA = data; renderTypes(); renderSev(); renderParty();
+    }
+
+    (async function init() {
+      const session = await requireLogin();
+      if (!session) return;
+      const me = await getMyProfile();
+      const gate = $("gate");
+      if (!me || me.status !== "active" || (me.role !== "admin" && me.role !== "super_admin")) { gate.textContent = "หน้านี้สำหรับ Admin เท่านั้น"; return; }
+      gate.hidden = true; $("adminarea").hidden = false;
+      await load();
+
+      SHEImport.mount($("imp-types"), {
+        title: ["นำเข้า / ส่งออกประเภทเหตุการณ์ทั้งต้นไม้ (CSV)", "Import / export the whole incident type tree (CSV)"],
+        what: ["ใช้เมื่อต้องสร้างหรือปรับต้นไม้ประเภทจำนวนมากพร้อมกัน ระบุหัวข้อแม่ในคอลัมน์ parent_code ได้ทุกระดับในไฟล์เดียว เรียงแถวอย่างไรก็ได้", "Use this to build or adjust many incident types at once. Give the parent in the parent_code column at any level, in one file, in any row order."],
+        rpc: "incident_types_import", exportRpc: "incident_types_export", filename: "incident-types", maxRows: 2000, exampleKey: "code",
+        extraNote: ["parent_code ว่าง = หัวข้อระดับบนสุด; ถ้าแถวที่มีอยู่แล้วเปลี่ยน parent_code ระบบจะย้ายกิ่งทั้งกิ่งตามไปด้วย; ถ้าอ้าง parent_code ที่ไม่มีทั้งในระบบและในไฟล์ หรือทำให้วนเป็นวงกลม หรือลึกเกิน 10 ระดับ ระบบจะแจ้งแถวที่ผิดและไม่บันทึกอะไรเลย (ไม่มีการลบ)", "A blank parent_code means top level. Changing parent_code on an existing row moves the whole branch. A parent_code that exists neither in the system nor in the file, a loop, or more than 10 levels is reported and nothing is saved (nothing is deleted)."],
+        columns: [
+          { key: "code", req: true, help: ["รหัสประเภท 1–20 ตัว (A-Z a-z 0-9 _ -) ไม่ซ้ำกันทั้งระบบ สร้างแล้วแก้ไม่ได้", "Type code, 1–20 characters (A-Z a-z 0-9 _ -), unique; cannot be changed later"], ex: "FIRE-ELEC" },
+          { key: "parent_code", req: false, help: ["รหัสของหัวข้อแม่ (ว่าง = ระดับบนสุด)", "Code of the parent (blank = top level)"], ex: "FIRE" },
+          { key: "name_th", req: true, help: ["ชื่อภาษาไทย (ไม่เกิน 100 ตัวอักษร)", "Thai name (max 100 characters)"], ex: "ไฟฟ้า" },
+          { key: "name_en", req: false, help: ["ชื่อภาษาอังกฤษ (ว่าง = ใช้ชื่อไทย)", "English name (blank = Thai name is used)"], ex: "Electrical" },
+          { key: "selectable", req: false, help: ["true = ผู้รายงานเลือกหัวข้อนี้ได้, false = หัวข้อกลุ่ม (ว่าง = ไม่เปลี่ยน/เลือกได้)", "true = reporters can pick it, false = group heading only (blank = unchanged / selectable)"], ex: "true" },
+          { key: "active", req: false, help: ["true = ใช้งาน, false = ปิดใช้งาน (ว่าง = ไม่เปลี่ยน/ใช้งาน)", "true = active, false = inactive (blank = unchanged / active)"], ex: "true" },
+          { key: "sort_order", req: false, help: ["ลำดับแสดง 0–9999 เลขน้อยแสดงก่อน (ว่าง = ไม่เปลี่ยน/100)", "Display order 0–9999, smaller first (blank = unchanged / 100)"], ex: "10" }
+        ],
+        examples: [
+          { code: "EXAMPLE-FIRE", parent_code: "", name_th: "(หัวข้อระดับบนสุดตัวอย่าง)", name_en: "(Example top level)", selectable: "false", active: "true", sort_order: "10" },
+          { code: "EXAMPLE-FIRE-ELEC", parent_code: "EXAMPLE-FIRE", name_th: "(หัวข้อย่อยระดับ 2 ตัวอย่าง)", name_en: "(Example level 2)", selectable: "false", active: "true", sort_order: "10" },
+          { code: "EXAMPLE-FIRE-PANEL", parent_code: "EXAMPLE-FIRE-ELEC", name_th: "(หัวข้อปลายทางระดับ 3 ตัวอย่าง)", name_en: "(Example level 3)", selectable: "true", active: "true", sort_order: "10" }
+        ],
+        onDone: load
+      });
+      SHEImport.mount($("imp-sev"), {
+        title: ["นำเข้า / ส่งออกระดับความรุนแรง (CSV)", "Import / export severity levels (CSV)"],
+        what: ["ใช้ตั้งหรือปรับระดับ Pyramid ทั้งชุดในครั้งเดียว ลำดับ (rank) ต้องไม่ซ้ำกัน สลับลำดับกันในไฟล์เดียวได้", "Use this to set or adjust the whole Pyramid at once. Ranks must be unique; ranks can be swapped within one file."],
+        rpc: "incident_severities_import", exportRpc: "incident_severities_export", filename: "incident-severities", maxRows: 99, exampleKey: "code",
+        extraNote: ["ระดับใหม่ต้องระบุ rank; rank ที่ระบุต้องไม่ชนกับระดับที่ไม่อยู่ในไฟล์; ชื่อและคำอธิบายให้ตั้งตามนิยามของบริษัท ระบบไม่ตัดสินแทน (ไม่มีการลบ)", "A new level needs a rank; a rank must not clash with a level that is not in the file. Set names and descriptions per your company definition; the system does not decide for you (nothing is deleted)."],
+        columns: [
+          { key: "code", req: true, help: ["รหัส 1–30 ตัว (A-Z a-z 0-9 _ -) ไม่ซ้ำ สร้างแล้วแก้ไม่ได้", "Code, 1–30 characters (A-Z a-z 0-9 _ -), unique; cannot be changed later"], ex: "LTI" },
+          { key: "name_th", req: true, help: ["ชื่อภาษาไทย (ไม่เกิน 200 ตัวอักษร)", "Thai name (max 200 characters)"], ex: "บาดเจ็บถึงขั้นหยุดงาน" },
+          { key: "name_en", req: false, help: ["ชื่อภาษาอังกฤษ", "English name"], ex: "Lost Time Injury" },
+          { key: "description", req: false, help: ["คำอธิบาย/นิยามตามบริษัท (ไม่เกิน 500 ตัวอักษร)", "Company definition (max 500 characters)"], ex: "(นิยามตามที่บริษัทกำหนด)" },
+          { key: "rank", req: false, help: ["ลำดับ 1–99 (1 = รุนแรงสุด) จำเป็นสำหรับระดับใหม่; ว่าง = ไม่เปลี่ยน", "Rank 1–99 (1 = most severe); required for a new level; blank = unchanged"], ex: "2" },
+          { key: "is_serious", req: false, help: ["true = นับเป็นเหตุการณ์ร้ายแรง (ว่าง = ไม่เปลี่ยน/false)", "true = counts as serious (blank = unchanged / false)"], ex: "true" },
+          { key: "active", req: false, help: ["true = ใช้งาน, false = ปิดใช้งาน (ว่าง = ไม่เปลี่ยน/ใช้งาน)", "true = active, false = inactive (blank = unchanged / active)"], ex: "true" }
+        ],
+        examples: [
+          { code: "EXAMPLE-SEV1", name_th: "(ระดับความรุนแรงตัวอย่าง 1)", name_en: "(Example severity 1)", description: "(นิยามตัวอย่าง)", rank: "90", is_serious: "true", active: "true" },
+          { code: "EXAMPLE-SEV2", name_th: "(ระดับความรุนแรงตัวอย่าง 2)", name_en: "", description: "", rank: "91", is_serious: "", active: "" }
+        ],
+        onDone: load
+      });
+      SHEImport.mount($("imp-party"), {
+        title: ["นำเข้า / ส่งออกผู้เกี่ยวข้อง (CSV)", "Import / export involved parties (CSV)"],
+        what: ["ใช้เพิ่มหรือแก้ประเภทผู้เกี่ยวข้อง เช่น พนักงาน ผู้รับเหมา ผู้มาติดต่อ หลายรายการพร้อมกัน", "Use this to add or edit involved-party types (employee, contractor, visitor, ...) in bulk."],
+        rpc: "incident_parties_import", exportRpc: "incident_parties_export", filename: "incident-parties", maxRows: 200, exampleKey: "code",
+        columns: [
+          { key: "code", req: true, help: ["รหัส 1–30 ตัว (A-Z a-z 0-9 _ -) ไม่ซ้ำ สร้างแล้วแก้ไม่ได้", "Code, 1–30 characters (A-Z a-z 0-9 _ -), unique; cannot be changed later"], ex: "visitor" },
+          { key: "name_th", req: true, help: ["ชื่อภาษาไทย (ไม่เกิน 200 ตัวอักษร)", "Thai name (max 200 characters)"], ex: "ผู้มาติดต่อ" },
+          { key: "name_en", req: false, help: ["ชื่อภาษาอังกฤษ", "English name"], ex: "Visitor" },
+          { key: "sort_order", req: false, help: ["ลำดับแสดง 0–9999 (ว่าง = ไม่เปลี่ยน/100)", "Display order 0–9999 (blank = unchanged / 100)"], ex: "40" },
+          { key: "active", req: false, help: ["true = ใช้งาน, false = ปิดใช้งาน (ว่าง = ไม่เปลี่ยน/ใช้งาน)", "true = active, false = inactive (blank = unchanged / active)"], ex: "true" }
+        ],
+        examples: [
+          { code: "EXAMPLE-PARTY1", name_th: "(ผู้เกี่ยวข้องตัวอย่าง 1)", name_en: "(Example party 1)", sort_order: "90", active: "true" },
+          { code: "EXAMPLE-PARTY2", name_th: "(ผู้เกี่ยวข้องตัวอย่าง 2)", name_en: "", sort_order: "", active: "" }
+        ],
+        onDone: load
+      });
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>

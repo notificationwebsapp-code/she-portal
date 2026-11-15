@@ -48,6 +48,40 @@ window.SHE_GUIDE = {
     }
   },
 
+  "admin-incident-types": {
+    purpose: ["กำหนดตัวเลือกของรายงานอุบัติเหตุเอง 3 แกน: ประเภทเหตุการณ์ (ต้นไม้หลายระดับ), ความรุนแรง (Pyramid) และผู้เกี่ยวข้อง โดยไม่ต้องแก้โค้ด", "Define the three choices of the incident report yourself: incident type (multi-level tree), severity (Pyramid) and involved party, without code changes."],
+    who: ["Admin และ Super admin", "Admin and Super admin."],
+    ifnot: ["ฟอร์มรายงานไม่มีตัวเลือกให้เลือก และ Dashboard จัดกลุ่มหรือวาด Pyramid ไม่ได้", "The report form has nothing to choose from, and dashboards cannot group data or draw the Pyramid."],
+    steps: [
+      ["เลือกแท็บ: ประเภทเหตุการณ์ / ความรุนแรง / ผู้เกี่ยวข้อง", "Pick a tab: incident types / severity / involved parties."],
+      ["ประเภท: กด \"+ ลูก\" ที่รายการแม่เพื่อเพิ่มหัวข้อย่อย หรือกรอกฟอร์มด้านล่างเพื่อเพิ่มหัวข้อระดับบนสุด (แนะนำไม่เกิน 4 ระดับ)", "Types: press \"+ child\" on a parent to add a sub-heading, or use the form below for a top-level heading (4 levels or fewer recommended)."],
+      ["ความรุนแรง: ใช้ ▲ ▼ จัดลำดับจากรุนแรงที่สุดลงมา แล้วใส่นิยามตามบริษัทในช่อง \"คำอธิบาย\"", "Severity: use ▲ ▼ to order from most severe down, and put your company definition in \"Description\"."],
+      ["มีรายการจำนวนมาก: ใช้กล่อง \"นำเข้า\" ใต้แต่ละแท็บ ดาวน์โหลดไฟล์ตัวอย่าง กรอก แล้ว \"ตรวจไฟล์\" → แก้ในตาราง → \"ยืนยันนำเข้า\" (ตรวจก่อนเสมอ ไม่บันทึกทันที)", "Many items: use the \"Import\" box under each tab; download the example file, fill it in, then \"Check file\" → edit in the table → \"Confirm import\" (always checked first, never saved immediately)."],
+      ["ไม่ใช้แล้วให้ \"ปิดใช้งาน\" ไม่มีการลบ รายงานเดิมยังอ้างอิงถูกต้อง", "If no longer used, \"deactivate\"; nothing is deleted and old reports stay correct."]
+    ],
+    glossary: [
+      ["ประเภทเหตุการณ์ (Incident type)", "ต้นไม้ของ \"เกิดอะไรขึ้น\" หมวดใหญ่ → หมวดย่อย เช่น ไฟไหม้ → ไฟฟ้า → ตู้ควบคุม", "A tree of \"what happened\": main group → sub group, e.g. Fire → Electrical → Control panel."],
+      ["ความรุนแรง (Severity)", "ระดับผลกระทบตาม Pyramid เช่น FAT, LTI, RWC, MTC, FAC, PD, NEAR แยกจากประเภท ตั้งชื่อและนิยามตามบริษัท", "Impact level in the Pyramid, e.g. FAT, LTI, RWC, MTC, FAC, PD, NEAR; separate from the type. Names and definitions are your company's."],
+      ["ผู้เกี่ยวข้อง (Involved party)", "เกิดกับใคร เช่น พนักงาน ผู้รับเหมา ซัพพลายเออร์ ใช้กรองและเทียบสถิติ", "Who it happened to, e.g. employee, contractor, supplier; used to filter and compare statistics."],
+      ["ผู้รายงานเลือกได้ (Selectable)", "ติ๊ก = เป็นหัวข้อปลายทางที่เลือกในฟอร์มได้ ไม่ติ๊ก = หัวข้อกลุ่มสำหรับจัดหมวด", "Ticked = a final heading reporters can pick; unticked = a group heading used only to organise."],
+      ["รหัส (Code)", "ตัวย่อภาษาอังกฤษ/ตัวเลข สร้างแล้วแก้ไม่ได้ เพื่อให้ข้อมูลเดิมยังตรง", "A short English/number identifier that cannot be changed after creation so old data stays valid."],
+      ["ระดับ (Depth)", "ชั้นของหัวข้อในต้นไม้ ระดับ 1 = บนสุด ระบบรองรับสูงสุด 10 ระดับ แนะนำไม่เกิน 4", "The layer of a heading in the tree; level 1 = top. The system allows up to 10, 4 or fewer is recommended."]
+    ].map(function (g) { return [[g[0], g[0]], [g[1], g[2]]]; }),
+    example: ["ตัวอย่าง: เพิ่ม \"ไฟไหม้\" (ระดับ 1, ไม่ติ๊กเลือกได้) → กด \"+ ลูก\" เพิ่ม \"ไฟฟ้า\" (ระดับ 2) → กด \"+ ลูก\" ที่ \"ไฟฟ้า\" เพิ่ม \"ตู้ควบคุม\" (ระดับ 3, ติ๊กเลือกได้) แล้วผู้รายงานจะเลือกไล่ลงมาทีละระดับ (ชื่อเป็นตัวอย่าง ใช้หัวข้อจริงของบริษัท)", "Example: add \"Fire\" (level 1, not selectable) → press \"+ child\" and add \"Electrical\" (level 2) → press \"+ child\" on \"Electrical\" and add \"Control panel\" (level 3, selectable); reporters then pick level by level (names are examples; use your real headings)."],
+    std: ["ISO 45001:2018 ข้อ 10.2 (เหตุการณ์ ความไม่สอดคล้อง และการปฏิบัติการแก้ไข) และข้อ 7.5 (ข้อมูลที่เป็นเอกสาร)", "ISO 45001:2018 clause 10.2 (incident, nonconformity and corrective action) and clause 7.5 (documented information)."],
+    fields: {
+      "ty-code": ["ตัวย่อสั้น ๆ เช่น FIRE-ELEC (ตัวอย่าง) สร้างแล้วแก้ไม่ได้", "A short code, e.g. FIRE-ELEC (example). Cannot be changed after creation."],
+      "ty-parent": ["เลือกหัวข้อแม่ ถ้าเว้นว่างจะเป็นหัวข้อระดับบนสุด", "Choose the parent heading; blank means a top-level heading."],
+      "ty-th": ["ชื่อที่ผู้รายงานเห็น เช่น \"ไฟฟ้า\" (ตัวอย่าง)", "The name reporters see, e.g. \"Electrical\" (example)."],
+      "ty-sort": ["ตัวเลข 0–9999 เลขน้อยแสดงก่อนในกลุ่มเดียวกัน", "A number 0–9999; smaller shows first within the same group."],
+      "sv-code": ["ตัวย่อสั้น ๆ เช่น LTI (ตัวอย่าง) สร้างแล้วแก้ไม่ได้", "A short code, e.g. LTI (example). Cannot be changed after creation."],
+      "sv-rank": ["1 = รุนแรงที่สุด ถ้าเว้นว่างจะต่อท้ายสุด ใช้ ▲ ▼ ปรับทีหลังได้", "1 = most severe; blank puts it last. You can adjust later with ▲ ▼."],
+      "sv-desc": ["นิยามตามบริษัท ผู้รายงานอ่านตอนเลือก เช่น \"บาดเจ็บจนต้องหยุดงานตั้งแต่ 1 วันขึ้นไป\" (ตัวอย่าง ใช้นิยามจริงของบริษัท)", "Your company definition, read by reporters when choosing, e.g. \"injury causing 1 or more lost days\" (example; use your real definition)."],
+      "pt-code": ["ตัวย่อสั้น ๆ เช่น visitor (ตัวอย่าง) สร้างแล้วแก้ไม่ได้", "A short code, e.g. visitor (example). Cannot be changed after creation."],
+      "pt-th": ["ชื่อที่ผู้รายงานเห็น เช่น \"ผู้มาติดต่อ\" (ตัวอย่าง)", "The name reporters see, e.g. \"Visitor\" (example)."]
+    }
+  },
+
   "admin-permissions": {
     purpose: ["กำหนดว่าแต่ละ Role ทำอะไรได้บ้าง เช่น ส่งออกข้อมูล แก้ไขรายงาน ดู Dashboard", "Set what each Role may do, e.g. export data, edit reports, view dashboards."],
     who: ["Admin และ Super admin", "Admin and Super admin."],
