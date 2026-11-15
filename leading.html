@@ -142,7 +142,7 @@
       const hh = document.querySelector("#t-heat thead"); hh.replaceChildren(); const h1 = el("tr"); h1.appendChild(el("th", null, "Root cause")); pls.forEach((p) => { const c = el("th", "num", p); c.setAttribute("data-no-i18n", ""); h1.appendChild(c); }); hh.appendChild(h1);
       const mx = Math.max(1, ...hm.map((r) => r.repeat_cases));
       fill("#t-heat", rcs, "e-heat", (rc) => {
-        const tr = el("tr"); const first = hm.find((r) => r.root_cause_code === rc); tr.appendChild(td(first.root_cause_name_th || rc));
+        const tr = el("tr"); const first = hm.find((r) => r.root_cause_code === rc); tr.appendChild(td(dbName({ name_th: first.root_cause_name_th, name_en: first.root_cause_name_en }) || rc));
         pls.forEach((p) => { const r = hm.find((x) => x.root_cause_code === rc && x.plant_code === p); const v = r ? r.repeat_cases : 0; const c = td(v || "·", "h"); if (v) { c.style.background = "rgba(40,68,153," + (0.12 + 0.6 * v / mx).toFixed(2) + ")"; if (v / mx > 0.5) c.style.color = "#fff"; } tr.appendChild(c); });
         return tr;
       });
@@ -156,7 +156,7 @@
         const c = el("td"); c.setAttribute("data-no-i18n", ""); const b = el("span", "bar"); b.style.width = Math.min(200, 12 * r.cases) + "px"; c.appendChild(b); c.appendChild(document.createTextNode(String(r.cases))); tr.appendChild(c); return tr; });
 
       /* 4) LSR */
-      fill("#t-lsr", get(6) || [], "e-lsr", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code)); tr.appendChild(td(r.item_code)); tr.appendChild(td(r.name_th)); tr.appendChild(td(r.cases, "num")); return tr; });
+      fill("#t-lsr", get(6) || [], "e-lsr", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code)); tr.appendChild(td(r.item_code)); tr.appendChild(td(dbName(r))); tr.appendChild(td(r.cases, "num")); return tr; });
     }
     $("f").addEventListener("submit", (ev) => { ev.preventDefault(); refresh(); });
 

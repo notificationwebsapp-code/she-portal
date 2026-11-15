@@ -155,7 +155,7 @@
 
       async function loadTasks() {
         $("taskhead").hidden = true; $("tasks").hidden = true;
-        const r = await scope(sb.from("incident_reports").select("id, occurred_on, location, description, phase, plants(code), incident_types(name_th)").neq("phase", "closed").is("deleted_at", null)).order("created_at", { ascending: false }).limit(5);
+        const r = await scope(sb.from("incident_reports").select("id, occurred_on, location, description, phase, plants(code), incident_types(name_th,name_en)").neq("phase", "closed").is("deleted_at", null)).order("created_at", { ascending: false }).limit(5);
         if (r.error) return;
         const box = $("tasks"); box.replaceChildren();
         const STAGE = { flash: ["รอ SHE ตรวจสอบ", "badge review"], investigation: ["กำลังสอบสวน", "badge invest"] };
@@ -163,7 +163,7 @@
           const a = mk("a", "taskcard"); a.href = "records.html"; const l = mk("div");
           const st = STAGE[x.phase] || [String(x.phase || ""), "badge"]; l.appendChild(mk("span", st[1], st[0]));
           l.appendChild(mk("p", "tt", (x.description || "(ไม่มีรายละเอียด)").slice(0, 120)));
-          const m = mk("p", "tm", [x.occurred_on, x.plants && x.plants.code, x.incident_types && x.incident_types.name_th, x.location].filter(Boolean).join(" · ")); m.style.margin = ".2rem 0 0"; l.appendChild(m);
+          const m = mk("p", "tm", [x.occurred_on, x.plants && x.plants.code, x.incident_types && dbName(x.incident_types), x.location].filter(Boolean).join(" · ")); m.style.margin = ".2rem 0 0"; l.appendChild(m);
           a.appendChild(l); a.appendChild(mk("span", "go", "เปิดดู →")); box.appendChild(a);
         });
         if (!box.children.length) box.appendChild(mk("div", "taskempty", "ไม่มีรายงานที่ค้างอยู่"));

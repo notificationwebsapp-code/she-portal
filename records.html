@@ -433,15 +433,15 @@
     // ---------- รายการตัวเลือก (Master list) ----------
     let LK = {}, LKALL = {}, TYPES = [];
     async function loadMasters() {
-      const a = await sb.from("lookup_values").select("kind, code, name_th, sort_order, grp, active")
+      const a = await sb.from("lookup_values").select("kind, code, name_th, name_en, sort_order, grp, active")
         .order("sort_order").order("code");
       LK = {}; LKALL = {};
       (a.data || []).forEach((r) => { (LKALL[r.kind] = LKALL[r.kind] || []).push(r); if (r.active) (LK[r.kind] = LK[r.kind] || []).push(r); });
-      const t = await sb.from("incident_types").select("id, code, name_th").eq("active", true).order("sort_order");
+      const t = await sb.from("incident_types").select("id, code, name_th, name_en").eq("active", true).order("sort_order");
       TYPES = t.data || [];
     }
-    const lkName = (kind, code) => { const f = (LKALL[kind] || []).find((x) => x.code === code); return f ? f.name_th : code; };   // รวมรหัสที่ปิดใช้งาน เพื่อแสดงชื่อข้อมูลเก่าได้
-    const typeName = (id) => { const f = TYPES.find((x) => x.id === id); return f ? f.name_th : id; };
+    const lkName = (kind, code) => { const f = (LKALL[kind] || []).find((x) => x.code === code); return f ? dbName(f) : code; };   // รวมรหัสที่ปิดใช้งาน เพื่อแสดงชื่อข้อมูลเก่าได้
+    const typeName = (id) => { const f = TYPES.find((x) => x.id === id); return f ? dbName(f) : id; };
 
     // ---------- นิยามฟิลด์ที่แก้ได้ (ต้องตรงกับ whitelist ใน incident_editable_fields ของฐานข้อมูล) ----------
     const LBL = {
@@ -556,7 +556,7 @@
         list.forEach((o) => {
           let parent = s;
           if (o.grp) { if (!og.has(o.grp)) { const g = h("optgroup", { label: o.grp }); og.set(o.grp, g); s.append(g); } parent = og.get(o.grp); }
-          parent.append(h("option", { value: o.code, text: o.name_th }));
+          parent.append(h("option", { value: o.code, text: dbName(o) }));
         });
         if (curVal && !list.some((o) => o.code === curVal)) s.append(h("option", { value: curVal, text: curVal + " (ไม่ active)" }));
         s.value = curVal || ""; return s;
@@ -579,7 +579,7 @@
         get = () => (control.value.trim() === "" ? null : control.value.trim());
       } else if (f.t === "type") {
         control = h("select", { id });
-        TYPES.forEach((o) => control.append(h("option", { value: o.id, text: o.name_th })));
+        TYPES.forEach((o) => control.append(h("option", { value: o.id, text: dbName(o) })));
         if (cur && !TYPES.some((o) => o.id === cur)) control.append(h("option", { value: cur, text: "(ประเภทที่ปิดใช้งาน)" }));
         control.value = cur || ""; get = () => control.value || null;
       } else if (f.t === "lk") {
@@ -600,7 +600,7 @@
         const all = list.concat([...have].filter((c) => !list.some((o) => o.code === c)).map((c) => ({ code: c, name_th: c + " (ไม่ active)" })));
         all.forEach((o) => {
           const cb = h("input", { type: "checkbox", value: o.code }); cb.checked = have.has(o.code); boxes.push(cb);
-          control.append(h("label", { class: "chk" }, cb, o.name_th));
+          control.append(h("label", { class: "chk" }, cb, dbName(o)));
         });
         get = () => { const v = boxes.filter((b) => b.checked).map((b) => b.value); return v.length ? v : null; };
       }
@@ -727,7 +727,7 @@
       f.append(h("div", { class: "fb-grid" },
         dt("f-from", "วันที่เกิดเหตุ ตั้งแต่", "from"), dt("f-to", "ถึงวันที่", "to"),
         sel("f-plant", "Plant", [["", "ทุก Plant"]].concat(PLANTS.map((p) => [p.id, p.code])), "plant"),
-        sel("f-type", "ประเภทเหตุการณ์", [["", "ทุกประเภท"]].concat(TYPES.map((t) => [t.id, t.name_th])), "type"),
+        sel("f-type", "ประเภทเหตุการณ์", [["", "ทุกประเภท"]].concat(TYPES.map((t) => [t.id, dbName(t)])), "type"),
         h("div", { class: "fb-actions" }, h("button", { type: "button", class: "secondary small", text: "ล้างตัวกรอง", onclick: () => {
           Object.assign(flt, { from: "", to: "", plant: "", type: "", stage: "", req: "", q: "", page: 0 }); buildFilterBar(); loadIncidents(); } }))));
       f.onsubmit = (e) => { e.preventDefault(); flt.q = q.value.trim(); apply(); };
@@ -779,7 +779,7 @@
     const two = (n) => String(n).padStart(2, "0");
     // เวลาแสดงตามเขตเวลาของเครื่องผู้ส่งออก (หลักการ Global-ready: ไม่ฝังเวลาไทย)
     const fmtLocal = (iso) => { if (!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + " " + two(d.getHours()) + ":" + two(d.getMinutes()); };
-    const PL = "plants(code,name,country_code,company_name,business_unit,site_type)", TY = "incident_types(name_th)";
+    const PL = "plants(code,name,country_code,company_name,business_unit,site_type)", TY = "incident_types(name_th,name_en)";
     const EX_GROUPS = [
       ["core", "ข้อมูลเคสและ Plant"], ["detail", "รายละเอียดเหตุการณ์ (5W1H)"], ["cls", "การจำแนกโดย SHE"],
       ["follow", "ติดตามผล"], ["person", "ผู้เกี่ยวข้อง / ผู้บาดเจ็บ"]
@@ -795,7 +795,7 @@
       { k: "company", g: "core", l: "บริษัท", f: [PL], c: (r) => (r.plants ? r.plants.company_name : "") },
       { k: "bu", g: "core", l: "Business unit", f: [PL], c: (r) => (r.plants ? r.plants.business_unit : "") },
       { k: "site_type", g: "core", l: "ประเภทไซต์", f: [PL], c: (r) => (r.plants ? r.plants.site_type : "") },
-      { k: "type", g: "core", l: "ประเภทเหตุการณ์", f: [TY], c: (r) => (r.incident_types ? r.incident_types.name_th : "") },
+      { k: "type", g: "core", l: "ประเภทเหตุการณ์", f: [TY], c: (r) => (r.incident_types ? dbName(r.incident_types) : "") },
       { k: "shift", g: "core", l: "กะ", f: ["shift_id"], c: (r) => SHIFTS[r.shift_id] || "" },
       { k: "department", g: "core", l: "แผนก", f: ["department_text"], c: (r) => r.department_text },
       { k: "location", g: "core", l: "จุดเกิดเหตุ", f: ["location"], c: (r) => r.location },

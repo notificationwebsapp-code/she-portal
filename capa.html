@@ -315,7 +315,10 @@
       const ownerName = h("input", { type: "text", id: "fm-oname", maxlength: "100", list: "fm-ousers", autocomplete: "off" });
       const ownerList = h("datalist", { id: "fm-ousers" });
       USERS.forEach((u) => ownerList.append(h("option", { value: userLabel(u) })));
-      const dept = h("select", { id: "fm-dept" }); fillSel(dept, DEPTS.map((d) => [d.id, d.name]), "-- ไม่ระบุ --");
+      const dept = h("select", { id: "fm-dept" });
+      /* แผนกแยกต่อ Plant: ส่วนกลาง + แผนกของ Plant ที่เลือก (คงแผนกเดิมของ Action ที่กำลังแก้ไว้เสมอ) */
+      const refillDept = () => { const cur = dept.value, pid = plant.value || (a && a.plant_id) || ""; fillSel(dept, DEPTS.filter((d) => !d.plant_id || d.plant_id === pid || (a && d.id === a.department_id)).map((d) => [d.id, d.name]), "-- ไม่ระบุ --"); dept.value = cur; };
+      refillDept(); plant.addEventListener("change", refillDept);
       const due = h("input", { type: "date", id: "fm-due", required: "", "data-date-min": "today", "data-date-max": "today+1826", "data-date-warn": "past" });
       const rc = h("select", { id: "fm-rc" }); fillSel(rc, lkOpts("root_cause"), "-- ไม่ระบุ --");
       const cl = h("select", { id: "fm-cl" }); fillSel(cl, lkOpts("control_level"), "-- ไม่ระบุ --");
@@ -334,6 +337,7 @@
         rct.value = a.root_cause_text || ""; cor.value = a.corrective_action || ""; prv.value = a.preventive_action || "";
         rc.value = a.root_cause_code || ""; cl.value = a.control_level_code || ""; sv.value = a.severity_code || "";
       } else if (pre && pre.plant) plant.value = pre.plant;
+      refillDept();
       const rows = [];
       if (!edit) rows.push(h("label", { for: "fm-plant", text: "Plant" }), plant);
       rows.push(h("label", { for: "fm-title", text: "ชื่อเรื่อง Action (3–200 ตัวอักษร)" }), title,
@@ -428,7 +432,7 @@
       try { const mp = await sb.rpc("my_permissions"); MYPERMS = Array.isArray(mp.data) ? mp.data : []; } catch (e) { MYPERMS = []; }
       const [pl, dp, lk, us] = await Promise.all([
         sb.from("plants").select("id, code, name").eq("active", true).order("code"),
-        sb.from("departments").select("id, name").eq("active", true).order("name"),
+        sb.from("departments").select("id, name, plant_id").eq("active", true).order("name"),
         sb.from("lookup_values").select("kind, code, name_th, name_en, sort_order").in("kind", ["root_cause", "control_level", "capa_severity"]).eq("active", true).order("sort_order"),
         sb.from("profiles").select("id, full_name, email, employee_code").eq("status", "active").order("full_name")]);
       PLANTS = pl.data || []; DEPTS = dp.data || [];

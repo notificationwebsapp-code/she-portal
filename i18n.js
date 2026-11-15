@@ -49,6 +49,8 @@
   });
 
   document.documentElement.setAttribute("lang", lang);
+  /* ชื่อจากฐานข้อมูล (ข้อมูลหลักที่มีคู่ name_th/name_en): EN แสดง name_en ถ้ามี ไม่มีให้ตกกลับ name_th */
+  window.dbName = function (o, f) { f = f || "name"; if (!o) return ""; return (lang === "en" && o[f + "_en"]) ? o[f + "_en"] : (o[f + "_th"] != null ? o[f + "_th"] : ""); };
   if (lang === "th") return; /* ไทย = ไม่แปลง ไม่แตะอะไร */
 
   /* ---------- EN mode ---------- */

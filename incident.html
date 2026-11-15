@@ -213,10 +213,18 @@
         sel.appendChild(o);
       });
     }
+    let DEPT_ALL = [];
+    /* แผนกแยกต่อ Plant: แสดงแผนกส่วนกลาง (plant_id ว่าง) + แผนกของ Plant ที่เลือก */
+    function renderDepts() {
+      const dl = $("dl-dept"); dl.replaceChildren(); const pl = $("plant").value, seen = new Set();
+      DEPT_ALL.filter((d) => !d.plant_id || d.plant_id === pl).forEach((d) => {
+        if (seen.has(d.name)) return; seen.add(d.name);
+        const o = document.createElement("option"); o.value = d.name; dl.appendChild(o);
+      });
+    }
     async function loadDepartments() {
-      const { data } = await sb.from("departments").select("name").eq("active", true).order("name");
-      const dl = $("dl-dept");
-      (data || []).forEach((d) => { const o = document.createElement("option"); o.value = d.name; dl.appendChild(o); });
+      const { data } = await sb.from("departments").select("name, plant_id").eq("active", true).order("name");
+      DEPT_ALL = data || []; renderDepts();
       if (!$("department").value) $("department").value = lsGet("she_last_dept");
     }
     async function loadContacts() {
@@ -586,7 +594,7 @@
                     actionsEl: document.querySelector(".formactions") });
 
     $("date").value = todayLocal();
-    loadTypes(); loadDepartments(); loadContacts(); loadMyPlants(); updateProgress();
+    loadTypes(); loadDepartments(); loadContacts(); loadMyPlants().then(renderDepts); $("plant").addEventListener("change", renderDepts); updateProgress();
   </script>
   <script src="shell-v4.js"></script>
 </body>

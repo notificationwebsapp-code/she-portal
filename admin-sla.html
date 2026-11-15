@@ -41,6 +41,7 @@
   </style>
   <script src="i18n.js"></script>
   <script src="i18n-b26.js"></script>
+  <script src="csv-import.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
 </head>
@@ -203,6 +204,7 @@
           </div>
           <div class="row-actions"><button type="submit">บันทึก</button></div>
         </form>
+        <div id="imp-areas"></div>
       </section>
     </div>
   </main>
@@ -278,7 +280,7 @@
       $("s-empty").hidden = types.length > 0;
       const scoped = !!$("s-scope").value;
       types.forEach((t) => {
-        const tr = el("tr"); tr.appendChild(nd(el("td", null, t.name_th)));
+        const tr = el("tr"); tr.appendChild(nd(el("td", null, dbName(t))));
         STAGES.forEach((s) => {
           const own = ruleFor(t.code, s[0], scoped), central = scoped ? ruleFor(t.code, s[0], false) : null;
           const r = own || central; const td = el("td", "cell"); const b = el("button", "secondary");
@@ -286,7 +288,7 @@
           const main = el("span", null, r ? fmtMin(r.max_minutes) : "ยังไม่กำหนดเกณฑ์");
           b.appendChild(main);
           if (r) { b.appendChild(el("span", "sub", "เตือนก่อน " + fmtMin(r.warn_before_minutes) + (scoped && !own ? " · ใช้ค่ากลาง" : ""))); }
-          b.setAttribute("aria-label", t.name_th + " / " + s[1]);
+          b.setAttribute("aria-label", dbName(t) + " / " + s[1]);
           b.addEventListener("click", () => openEditor(t, s, own, central));
           td.appendChild(b); tr.appendChild(td);
         });
@@ -297,7 +299,7 @@
     function openEditor(t, s, own, central) {
       sel = { type: t, stage: s[0], own, central };
       $("s-form").hidden = false;
-      $("s-title").textContent = t.name_th + " — " + s[1] + " (" + s[2] + ")";
+      $("s-title").textContent = dbName(t) + " — " + s[1] + " (" + s[2] + ")";
       const cur = own || null;
       $("s-cur").textContent = cur ? "ค่าปัจจุบัน: " + fmtMin(cur.max_minutes) + " เตือนก่อน " + fmtMin(cur.warn_before_minutes) : "ยังไม่มีเกณฑ์ในขอบเขตนี้" + (central ? " (ค่ากลาง " + fmtMin(central.max_minutes) + ")" : "");
       const mx = bestUnit(cur ? cur.max_minutes : 60), wn = bestUnit(cur ? cur.warn_before_minutes : 0);
@@ -403,6 +405,24 @@
       });
     }
     $("a-plant").addEventListener("change", loadAreas);
+    SHEImport.mount($("imp-areas"), {
+      title: ["นำเข้า / ส่งออกพื้นที่ทุก Plant (CSV)", "Import / export areas for all Plants (CSV)"],
+      what: ["แต่ละ Plant มีพื้นที่ไม่เหมือนกันและมีจำนวนมาก ใส่ทุก Plant ในไฟล์เดียวได้ โดยระบุ plant_code ในแต่ละแถว", "Each Plant has its own, often many, areas. Put all Plants in one file by giving plant_code on each row."],
+      rpc: "plant_areas_import", exportRpc: "plant_areas_export", filename: "plant-areas", maxRows: 2000, exampleKey: "code",
+      extraNote: ["plant_code ต้องเป็นรหัส Plant ที่มีอยู่แล้วในหน้า \"ข้อมูลหลัก\" (ถ้ายังไม่มี ให้เพิ่ม Plant ก่อน)", "plant_code must be an existing Plant code from the \"Master data\" page (add the Plant first if it does not exist)."],
+      columns: [
+        { key: "plant_code", req: true, help: ["รหัส Plant ที่พื้นที่นี้อยู่", "Code of the Plant this area belongs to"], ex: "PLANT-A" },
+        { key: "code", req: true, help: ["รหัสพื้นที่ 1–30 ตัว (A-Z a-z 0-9 _ -) ไม่ซ้ำภายใน Plant เดียวกัน", "Area code, 1–30 characters (A-Z a-z 0-9 _ -), unique within a Plant"], ex: "WH01" },
+        { key: "name_th", req: true, help: ["ชื่อพื้นที่ภาษาไทย (ไม่เกิน 100 ตัวอักษร)", "Area name in Thai (max 100 characters)"], ex: "คลังสินค้า" },
+        { key: "name_en", req: false, help: ["ชื่อภาษาอังกฤษ (ไม่บังคับ)", "English name (optional)"], ex: "Warehouse" },
+        { key: "active", req: false, help: ["true = ใช้งาน, false = ปิดใช้งาน (ว่าง = ไม่เปลี่ยน/ใช้งาน)", "true = active, false = inactive (blank = unchanged / active)"], ex: "true" }
+      ],
+      examples: [
+        { plant_code: "(รหัส Plant ที่มีอยู่แล้ว)", code: "EXAMPLE-01", name_th: "(ชื่อพื้นที่ภาษาไทย)", name_en: "(English name)", active: "true" },
+        { plant_code: "(รหัส Plant ที่มีอยู่แล้ว)", code: "EXAMPLE-02", name_th: "(ชื่อพื้นที่ตัวอย่าง 2)", name_en: "", active: "" }
+      ],
+      onDone: loadAreas
+    });
     $("a-form").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       try {
@@ -418,7 +438,7 @@
       isSuper = me.role === "super_admin";
       const [pr, ty] = await Promise.all([
         sb.from("plants").select("id, code, name").eq("active", true).order("code"),
-        sb.from("incident_types").select("id, code, name_th").eq("active", true).order("sort_order").order("code")]);
+        sb.from("incident_types").select("id, code, name_th, name_en").eq("active", true).order("sort_order").order("code")]);
       plants = pr.data || []; types = ty.data || [];
       fillPlantSelect($("s-scope"), true); fillPlantSelect($("r-scope"), true); fillPlantSelect($("a-plant"), false);
       if (!isSuper) { $("s-scope").selectedIndex = Math.min(1, $("s-scope").options.length - 1); }

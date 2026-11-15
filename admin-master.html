@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="style.css">
   <title>ข้อมูลหลัก | SHE Portal</title>
   <script src="i18n.js"></script>
-  <script src="guide-data.js"></script><script src="guide.js"></script>
+  <script src="guide-data.js"></script><script src="guide.js"></script><script src="csv-import.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
 </head>
@@ -43,11 +43,12 @@
         </div>
         <div class="actions"><button type="submit" class="btn-ok">+ เพิ่ม Plant</button></div>
       </form>
+      <div id="imp-plants"></div>
 
       <h3>แผนก (มาตรฐาน)</h3>
-      <p class="helper">ใช้จับคู่กับแผนกที่ผู้สมัครพิมพ์เอง และใช้สรุป KPI รายแผนก</p>
+      <p class="helper">แผนกแยกตามแต่ละ Plant ได้ (คอลัมน์ Plant ว่าง = แผนกส่วนกลางที่ทุก Plant เห็น) ถ้ามีแผนกจำนวนมาก ให้ใช้กล่อง "นำเข้าแผนก" ด้านล่างแทนการเพิ่มทีละรายการ ใช้จับคู่กับแผนกที่ผู้สมัครพิมพ์เอง และใช้สรุป KPI รายแผนก</p>
       <div class="tablewrap"><table id="t-departments">
-        <thead><tr><th>รหัส</th><th>ชื่อ</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
+        <thead><tr><th>รหัส</th><th>ชื่อ</th><th>Plant</th><th>สถานะ</th><th>การทำงาน</th></tr></thead>
         <tbody></tbody>
       </table></div>
       <form id="f-departments" class="addform" autocomplete="off">
@@ -57,6 +58,7 @@
         </div>
         <div class="actions"><button type="submit" class="btn-ok">+ เพิ่มแผนก</button></div>
       </form>
+      <div id="imp-depts"></div>
 
       <h3>รายการตัวเลือกในฟอร์ม (Dropdown)</h3>
       <p class="helper">ใช้ในฟอร์มรายงานอุบัติเหตุและ Dashboard — เพิ่ม แก้ชื่อ เรียงลำดับ หรือปิดใช้งานได้ ส่วนรหัสแก้และลบไม่ได้ เพื่อให้ข้อมูลเดิมยังอ้างอิงถูกต้อง</p>
@@ -127,6 +129,8 @@
       if (kind === "plants") {
         tr.appendChild(el("td", countryLabel(r.country_code)));
         tr.appendChild(dn(el("td", [r.company_name, r.business_unit].filter(Boolean).join(" / ") || "—")));
+      } else {
+        tr.appendChild(dn(el("td", r.plant_id ? (PLANT_BY_ID[r.plant_id] || "?") : "ส่วนกลาง (ทุก Plant)")));
       }
       const st = el("td"); st.appendChild(el("span", r.active ? "ใช้งานอยู่" : "ปิดใช้งาน", "badge " + (r.active ? "active" : "suspended")));
       tr.appendChild(st);
@@ -148,7 +152,7 @@
       const next = tr.nextElementSibling;
       if (next && next.classList.contains("editrow")) { next.remove(); return; }
       const row = document.createElement("tr"); row.className = "editrow";
-      const td = el("td"); td.colSpan = kind === "plants" ? 6 : 4;
+      const td = el("td"); td.colSpan = kind === "plants" ? 6 : 5;
       const box = el("div", undefined, "userbox editbox");
       box.appendChild(el("h4", "แก้ไข " + KINDS[kind] + ": " + r.code));
       const grid = el("div", undefined, "grid");
@@ -188,12 +192,14 @@
       td.appendChild(box); row.appendChild(td); tr.after(row);
     }
 
+    let PLANT_BY_ID = {};
     async function renderKind(kind) {
-      const cols = kind === "plants" ? "id, code, name, active, company_name, business_unit, country_code, site_type" : "id, code, name, active";
+      const cols = kind === "plants" ? "id, code, name, active, company_name, business_unit, country_code, site_type" : "id, code, name, active, plant_id";
       const { data, error } = await sb.from(kind).select(cols).order("code");
       if (error) { show("โหลดข้อมูลไม่สำเร็จ: " + error.message, false); return; }
       const tb = document.querySelector("#t-" + kind + " tbody");
       tb.replaceChildren();
+      if (kind === "plants") { PLANT_BY_ID = {}; data.forEach((x) => { PLANT_BY_ID[x.id] = x.code; }); }
       if (data.length === 0) {
         const tr = document.createElement("tr"); const td = el("td", "ยังไม่มีรายการ"); td.colSpan = kind === "plants" ? 6 : 4;
         tr.appendChild(td); tb.appendChild(tr);
@@ -321,6 +327,43 @@
       gate.hidden = true;
       document.getElementById("adminarea").hidden = false;
       await load();
+      SHEImport.mount(document.getElementById("imp-plants"), {
+        title: ["นำเข้า / ส่งออก Plant (CSV)", "Import / export Plants (CSV)"],
+        what: ["ใช้เมื่อต้องเพิ่มหรือแก้ Plant จำนวนมากพร้อมกัน แทนการกรอกทีละแห่ง", "Use this to add or edit many Plants at once instead of one by one."],
+        rpc: "plants_import", exportRpc: "plants_export", filename: "plants", maxRows: 300, exampleKey: "code",
+        columns: [
+          { key: "code", req: true, help: ["รหัส Plant 1–20 ตัว (A-Z a-z 0-9 _ -) ไม่ซ้ำกัน", "Plant code, 1–20 characters (A-Z a-z 0-9 _ -), unique"], ex: "PLANT-A" },
+          { key: "name", req: true, help: ["ชื่อ Plant ที่ผู้ใช้เห็น (ไม่เกิน 100 ตัวอักษร)", "Plant name users see (max 100 characters)"], ex: "โรงงาน A" },
+          { key: "company_name", req: false, help: ["ชื่อบริษัท", "Company name"], ex: "บริษัท ตัวอย่าง จำกัด" },
+          { key: "business_unit", req: false, help: ["หน่วยธุรกิจ (Business Unit) ใช้กรองใน Dashboard", "Business Unit, used to filter dashboards"], ex: "BU1" },
+          { key: "country_code", req: false, help: ["รหัสประเทศ 2 ตัวอักษร (ISO 3166-1) เช่น TH", "2-letter country code (ISO 3166-1), e.g. TH"], ex: "TH" },
+          { key: "site_type", req: false, help: ["ประเภทสถานที่ เช่น Factory, Office", "Site type, e.g. Factory, Office"], ex: "Factory" },
+          { key: "timezone", req: false, help: ["เขตเวลา IANA เช่น Asia/Bangkok (ว่าง = ใช้ค่าเดิม/ค่าเริ่มต้นของระบบ)", "IANA time zone, e.g. Asia/Bangkok (blank = keep existing / system default)"], ex: "Asia/Bangkok" },
+          { key: "active", req: false, help: ["true = ใช้งาน, false = ปิดใช้งาน (ว่าง = ไม่เปลี่ยน/ใช้งาน)", "true = active, false = inactive (blank = unchanged / active)"], ex: "true" }
+        ],
+        examples: [
+          { code: "EXAMPLE-P1", name: "(ชื่อ Plant ตัวอย่าง 1)", company_name: "(ชื่อบริษัท)", business_unit: "(BU)", country_code: "TH", site_type: "Factory", timezone: "Asia/Bangkok", active: "true" },
+          { code: "EXAMPLE-P2", name: "(ชื่อ Plant ตัวอย่าง 2)", company_name: "", business_unit: "", country_code: "", site_type: "", timezone: "", active: "" }
+        ],
+        onDone: load
+      });
+      SHEImport.mount(document.getElementById("imp-depts"), {
+        title: ["นำเข้า / ส่งออกแผนก แยกตาม Plant (CSV)", "Import / export departments per Plant (CSV)"],
+        what: ["แต่ละ Plant มีแผนกไม่เหมือนกัน ใส่ได้ทุก Plant ในไฟล์เดียว โดยระบุ plant_code ในแต่ละแถว (เว้นว่าง = แผนกส่วนกลางที่ทุก Plant เห็น)", "Each Plant has its own departments. Put all Plants in one file by giving plant_code on each row (blank = central department visible to every Plant)."],
+        rpc: "departments_import", exportRpc: "departments_export", filename: "departments", maxRows: 2000, exampleKey: "code",
+        extraNote: ["รหัสแผนกซ้ำกันข้าม Plant ได้ (เช่น PROD ของ Plant A และ Plant B) แต่ห้ามซ้ำภายใน Plant เดียวกัน", "The same department code may repeat across Plants (e.g. PROD in Plant A and B) but not within one Plant."],
+        columns: [
+          { key: "plant_code", req: false, help: ["รหัส Plant ที่แผนกนี้สังกัด ต้องมีอยู่ในรายการ Plant ด้านบน (ว่าง = ส่วนกลาง)", "Code of the Plant this department belongs to; must exist in the Plant list above (blank = central)"], ex: "PLANT-A" },
+          { key: "code", req: true, help: ["รหัสแผนก 1–20 ตัว (A-Z a-z 0-9 _ -)", "Department code, 1–20 characters (A-Z a-z 0-9 _ -)"], ex: "PROD" },
+          { key: "name", req: true, help: ["ชื่อแผนก (ไม่เกิน 100 ตัวอักษร)", "Department name (max 100 characters)"], ex: "ผลิต" },
+          { key: "active", req: false, help: ["true = ใช้งาน, false = ปิดใช้งาน (ว่าง = ไม่เปลี่ยน/ใช้งาน)", "true = active, false = inactive (blank = unchanged / active)"], ex: "true" }
+        ],
+        examples: [
+          { plant_code: "(รหัส Plant ที่มีอยู่แล้ว)", code: "EXAMPLE-01", name: "(ชื่อแผนกตัวอย่าง)", active: "true" },
+          { plant_code: "", code: "EXAMPLE-02", name: "(แผนกส่วนกลางตัวอย่าง)", active: "" }
+        ],
+        onDone: load
+      });
     })();
   </script>
   <script src="shell-v4.js"></script>

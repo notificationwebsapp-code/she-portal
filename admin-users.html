@@ -116,9 +116,12 @@
       grid.appendChild(field("Role (สิทธิ์การใช้งาน)", roleSel));
       const deptSel = document.createElement("select");
       const o0 = el("option", "(ไม่ระบุ)"); o0.value = ""; deptSel.appendChild(o0);
-      depts.forEach(d => { const o = el("option", d.name); o.value = d.id; deptSel.appendChild(o); });
+      const dLabel = d => d.name + (d.plant_id ? " (" + ((plants.find(p => p.id === d.plant_id) || {}).code || "?") + ")" : "");
+      depts.forEach(d => { const o = el("option", dLabel(d)); o.value = d.id; deptSel.appendChild(o); });
       const reqDept = (u.requested_department_text || "").trim().toLowerCase();
-      const matchDept = reqDept && depts.find(d => d.name.trim().toLowerCase() === reqDept);
+      const reqPl = u.requested_plant_ids || [];
+      const sameName = reqDept ? depts.filter(d => d.name.trim().toLowerCase() === reqDept) : [];
+      const matchDept = sameName.find(d => d.plant_id && reqPl.includes(d.plant_id)) || sameName.find(d => !d.plant_id) || sameName[0];
       if (matchDept) deptSel.value = matchDept.id;
       grid.appendChild(field("แผนก", deptSel));
       box.appendChild(grid);
@@ -278,7 +281,7 @@
       grid.appendChild(field("รหัสพนักงาน", codeIn, "(ไม่บังคับ / ห้ามซ้ำทั้งระบบ)"));
       const deptSel = document.createElement("select");
       const o0 = el("option", "(ไม่ระบุ)"); o0.value = ""; deptSel.appendChild(o0);
-      depts.forEach(d => { const o = el("option", d.name); o.value = d.id; deptSel.appendChild(o); });
+      depts.forEach(d => { const o = el("option", d.name + (d.plant_id ? " (" + ((plants.find(p => p.id === d.plant_id) || {}).code || "?") + ")" : "")); o.value = d.id; deptSel.appendChild(o); });
       deptSel.value = u.department_id || "";
       grid.appendChild(field("แผนก", deptSel));
       let roleSel = null, boxes = [], plantWrap = null;
@@ -382,7 +385,7 @@
       pendingEl.replaceChildren();
       const [pl, dp, us, up] = await Promise.all([
         sb.from("plants").select("id, code, name").eq("active", true).order("code"),
-        sb.from("departments").select("id, name").eq("active", true).order("name"),
+        sb.from("departments").select("id, name, plant_id").eq("active", true).order("name"),
         sb.from("profiles").select("id, full_name, email, employee_code, department_id, role, status, reject_reason, created_at, requested_plant_ids, requested_department_text").order("created_at", { ascending: false }),
         sb.from("user_plants").select("user_id, plant_id")
       ]);
