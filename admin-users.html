@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="style.css">
   <title>จัดการผู้ใช้ | SHE Portal</title>
   <script src="i18n.js"></script>
-  <script src="guide-data.js"></script><script src="guide.js"></script>
+  <script src="guide-data.js"></script><script src="guide.js"></script><script src="csv-import.js"></script>
   <script src="theme.js"></script>
   <link rel="stylesheet" href="style-v4.css">
   <style>.filterbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;margin:8px 0}.filterbar label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.85rem}.filterbar input,.filterbar select{padding:8px;border:1px solid #b9a9d6;border-radius:8px;font:inherit}.badge.dormant{background:#e8eaf6;color:#283593}</style>
@@ -35,6 +35,8 @@
 
       <h3>รออนุมัติ</h3>
       <div id="pending">กำลังโหลด…</div>
+
+      <div id="imp-prereg"></div>
 
       <h3>ผู้ใช้ทั้งหมด</h3>
       <div class="filterbar" id="ufilters">
@@ -101,12 +103,15 @@
       return wrap;
     }
 
+    let PREREG = {};
     function buildCard(u) {
       const box = el("div", undefined, "userbox");
       box.appendChild(el("h4", (u.full_name || "(ไม่ระบุชื่อ)") + " — " + (u.email || "")));
       box.appendChild(el("p", "รหัสพนักงาน: " + (u.employee_code || "ไม่ได้ระบุ") + " · สมัครเมื่อ " + fmt(u.created_at), "meta"));
-      const reqPlants = u.requested_plant_ids || [];
+      let reqPlants = u.requested_plant_ids || [];
       const reqNames = plants.filter(p => reqPlants.includes(p.id)).map(p => p.code).join(", ");
+      const pre = PREREG[u.id];
+      if (pre) box.appendChild(el("p", "✓ ตรงกับรายชื่อล่วงหน้า (ตาม" + (pre.match_by === "email" ? "อีเมล" : "รหัสพนักงาน") + ") — ระบบเติม Role / Plant / แผนกให้แล้ว กรุณาตรวจสอบก่อนกดอนุมัติ", "meta"));
       box.appendChild(el("p", "ผู้สมัครขอ — แผนก: " + (u.requested_department_text || "ไม่ได้ระบุ") +
         " · Plant: " + (reqNames || "ไม่ได้ระบุ") + " (เป็นเพียงคำขอ กรุณาตรวจสอบก่อนอนุมัติ)", "meta"));
 
@@ -123,6 +128,15 @@
       const sameName = reqDept ? depts.filter(d => d.name.trim().toLowerCase() === reqDept) : [];
       const matchDept = sameName.find(d => d.plant_id && reqPl.includes(d.plant_id)) || sameName.find(d => !d.plant_id) || sameName[0];
       if (matchDept) deptSel.value = matchDept.id;
+      if (pre) {
+        roleSel.value = pre.role;
+        const prePl = plants.filter(p => (pre.plant_codes || "").split(";").includes(p.code)).map(p => p.id);
+        if (pre.department_code) {
+          const dm = depts.find(d => d.code === pre.department_code && d.plant_id && prePl.includes(d.plant_id)) || depts.find(d => d.code === pre.department_code && !d.plant_id);
+          if (dm) deptSel.value = dm.id;
+        }
+        reqPlants = prePl;
+      }
       grid.appendChild(field("แผนก", deptSel));
       box.appendChild(grid);
 
@@ -392,6 +406,9 @@
       const err = pl.error || dp.error || us.error || up.error;
       if (err) { show("โหลดข้อมูลไม่สำเร็จ: " + err.message, false); return; }
       plants = pl.data; depts = dp.data;
+      PREREG = {};
+      const pm = await sb.rpc("prereg_match_pending");
+      if (!pm.error) (pm.data || []).forEach(m => { if (!PREREG[m.user_id]) PREREG[m.user_id] = m; });
       userPlants = {};
       up.data.forEach(r => { (userPlants[r.user_id] = userPlants[r.user_id] || []).push(r.plant_id); });
       renderSummary(us.data);
@@ -445,6 +462,25 @@
       document.getElementById("f-count").textContent = "แสดง " + rows.length + " จาก " + allUsers.length + " บัญชี";
     }
     load();
+    SHEImport.mount(document.getElementById("imp-prereg"), {
+      title: ["นำเข้ารายชื่อผู้ใช้ล่วงหน้า (CSV)", "Import pre-registered users (CSV)"],
+      what: ["ใส่รายชื่อพนักงานพร้อม Role / Plant / แผนกไว้ก่อน เมื่อเขาสมัครด้วยอีเมลหรือรหัสพนักงานที่ตรงกัน หน้ารออนุมัติจะเติมค่าให้ แต่ Admin ยังต้องกดอนุมัติเองทุกคน (ไม่ activate อัตโนมัติ)", "List staff with Role / Plant / department in advance. When they sign up with a matching email or employee code, the approval card is pre-filled, but an Admin still approves each person (nothing is activated automatically)."],
+      rpc: "preregistered_users_import", exportRpc: "preregistered_users_export", filename: "preregistered-users", maxRows: 5000, exampleKey: "email",
+      extraNote: ["Role ที่ระบุล่วงหน้าได้เฉพาะ employee, contractor, supplier, she (Role ระดับสูงต้องตั้งในขั้นอนุมัติเอง) หลาย Plant คั่นด้วย ; เช่น PLANT-A;PLANT-B", "Pre-set roles are limited to employee, contractor, supplier, she (higher roles are set manually at approval). Separate several Plants with ; e.g. PLANT-A;PLANT-B"],
+      columns: [
+        { key: "email", req: true, help: ["อีเมลที่พนักงานจะใช้สมัคร (ไม่ซ้ำกัน)", "Email the person will sign up with (unique)"], ex: "somchai@example.com" },
+        { key: "employee_code", req: false, help: ["รหัสพนักงาน (ไม่ซ้ำกัน ใช้จับคู่เมื่ออีเมลไม่ตรง)", "Employee code (unique; used to match when the email differs)"], ex: "E001" },
+        { key: "full_name", req: false, help: ["ชื่อ-สกุล (ไม่เกิน 100 ตัวอักษร)", "Full name (max 100 characters)"], ex: "สมชาย ใจดี" },
+        { key: "role", req: false, help: ["employee / contractor / supplier / she (ว่าง = employee)", "employee / contractor / supplier / she (blank = employee)"], ex: "employee" },
+        { key: "plant_codes", req: true, help: ["รหัส Plant ที่ต้องเข้าถึง คั่นด้วย ; (ต้องมีอยู่ในหน้าข้อมูลหลัก)", "Plant codes the person needs, separated by ; (must exist in Master data)"], ex: "PLANT-A;PLANT-B" },
+        { key: "department_code", req: false, help: ["รหัสแผนก (ส่วนกลาง หรือแผนกของ Plant ที่ระบุ)", "Department code (central or of one of the listed Plants)"], ex: "PROD" }
+      ],
+      examples: [
+        { email: "example1@example.com", employee_code: "EXAMPLE-001", full_name: "(ชื่อตัวอย่าง)", role: "employee", plant_codes: "(รหัส Plant ที่มีอยู่)", department_code: "" },
+        { email: "example2@example.com", employee_code: "", full_name: "", role: "", plant_codes: "(รหัส Plant ที่มีอยู่)", department_code: "" }
+      ],
+      onDone: load
+    });
   </script>
   <script src="shell-v4.js"></script>
 </body>
