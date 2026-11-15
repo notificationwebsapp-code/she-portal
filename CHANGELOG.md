@@ -6,7 +6,8 @@
 - ใหม่: การ์ด "Leading Indicator" บนหน้าแรก และลิงก์ในเมนูหลัก เห็นได้ทุกบทบาทที่มีสิทธิ์ดู Dashboard (dashboard.view) เปรียบเทียบได้ทุก Plant (ฐานข้อมูลเดิมให้ขอบเขต "ทุก Plant" แก่ผู้มีสิทธิ์นี้อยู่แล้ว ไม่ต้องแก้ DB)
 - ใหม่: Leading Indicator มีส่วน "ภาพรวมเปรียบเทียบ Plant" (การ์ดตัวเลข 4 ใบ + กราฟแท่ง SLA ที่พลาด/ปิด Action ทันเวลา/Repeat/แนวโน้มรายเดือน) ตารางละเอียดยังอยู่ด้านล่าง
 - แก้: พิมพ์ Executive Dashboard ให้พอดี A4 (5→3 แผ่น)
-- ไฟล์: index.html, shell-v4.js, leading.html, executive-dashboard.html, CHANGELOG.md
+- ใหม่: Leading Indicator ส่งออก PowerPoint (Thai Union CI) / CSV / พิมพ์ A4 แนวนอน ได้แบบหน้า Executive Dashboard และตารางละเอียดจัดเป็น 2 คอลัมน์ (leading-pptx.js ใหม่)
+- ไฟล์: index.html, shell-v4.js, leading.html, leading-pptx.js, executive-dashboard.html, CHANGELOG.md
 
 ## 2026-11-15 — B29b ชั่วโมงทำงาน/จำนวนคน/UA-UC รายเดือน + แก้ชื่อภาษาไทยไม่ปนอังกฤษ
 - ใหม่: exposure.html (SHE กรอกเดือนละครั้งเฉพาะ Plant ตน, ประวัติ 12 เดือนพร้อมป้ายสถานะ, นำเข้า/ส่งออก CSV แบบตรวจก่อนยืนยัน, แท็บ Admin เพิ่ม/ปิด/ลบชั้นล่างของพีระมิด เช่น UA และ UC) พร้อมคู่มือผู้ใช้ใหม่และการ์ดบนหน้าแรก

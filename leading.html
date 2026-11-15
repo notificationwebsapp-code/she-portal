@@ -35,6 +35,11 @@
     .hb .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .howto{background:#EEF1F6;border-radius:14px;padding:.7rem 1rem;font-size:.92rem;margin:.6rem 0}
     @media print{.lcharts{display:block}.lcharts .card{break-inside:avoid;margin:.5rem 0}}
+    .ltwo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:start}
+    .ltwo .card{margin:0;min-width:0}
+    .ltwo table{font-size:.8rem;width:100%;min-width:0!important;table-layout:auto;margin:0}.ltwo th,.ltwo td{padding:.3rem .3rem!important;white-space:normal;overflow-wrap:normal;line-height:1.25}.ltwo th:first-child,.ltwo td:first-child{white-space:nowrap}.ltwo th{font-size:.76rem}.ltwo .tablewrap{overflow-x:auto}
+    @media(max-width:900px){.ltwo{grid-template-columns:1fr}}
+    @media print{header,nav,#f,#export-row,#gate,#msg,footer,.howto{display:none!important}body,main,main.wide{background:#fff!important;padding:0!important;margin:0!important;max-width:none!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}#area{zoom:.72}.ltwo{grid-template-columns:repeat(2,minmax(0,1fr))}.card,.lk{break-inside:avoid}.tablewrap{overflow:visible}@page{size:A4 landscape;margin:8mm}}
     [hidden]{display:none!important}
     h3{color:var(--navy)}
   </style>
@@ -86,28 +91,39 @@
           <div class="card"><h4>แนวโน้ม Repeat รายเดือน (เคส)</h4><div id="c-tr"></div><p id="ce-tr" class="hint" hidden>ไม่มีข้อมูลแนวโน้ม</p></div>
         </div>
       </section>
+      <div class="card" id="export-row">
+        <b>ส่งออกเพื่อนำเสนอ</b> <span class="hint">ตามช่วงวันที่และมุมมองที่เลือกอยู่ (ตัวเลขเดียวกับหน้านี้)</span><br>
+        <button type="button" class="secondary" id="b-pptx">⭳ PowerPoint (Thai Union CI)</button>
+        <button type="button" class="secondary" id="b-csv">⭳ CSV (ตัวเลขทั้งหมด)</button>
+        <button type="button" class="secondary" id="b-print">🖨 พิมพ์ / บันทึก PDF</button>
+        <span class="hint" id="export-msg" role="status"></span>
+      </div>
+
       <h3>ตารางละเอียด</h3>
-
-      <section class="card"><h3>1) SLA ที่พลาด แยกตาม Plant และขั้นตอน</h3>
+      <div class="ltwo">
+      <section class="card"><h4>1) SLA ที่พลาด แยกตาม Plant และขั้นตอน</h4>
         <p class="hint">ตัวเลข = พลาดเกณฑ์ (ปิดแล้วเกินเวลา + ยังเปิดอยู่แต่เกินเวลา) · "ไม่มีเกณฑ์" = ยังไม่ตั้งเกณฑ์ จึงไม่ถูกนับว่าพลาด</p>
-        <div class="tablewrap"><table id="t-sla" style="min-width:760px"><thead></thead><tbody></tbody></table></div><p id="e-sla" hidden>ไม่มีข้อมูลในช่วงที่เลือก</p></section>
+        <div class="tablewrap"><table id="t-sla"><thead></thead><tbody></tbody></table></div><p id="e-sla" hidden>ไม่มีข้อมูลในช่วงที่เลือก</p></section>
 
-      <section class="card"><h3>2) ตัวชี้วัดเชิงรุกอื่น</h3>
-        <div class="tablewrap"><table id="t-li" style="min-width:760px"><thead><tr><th>Plant</th><th class="num">Action เกินกำหนดที่ยังเปิด</th><th class="num">Action ปิดแล้ว</th><th class="num">ปิดทันเวลา</th><th class="num">เลื่อนกำหนด 2 ครั้งขึ้นไป</th><th class="num">เหตุ Serious potential ที่ไม่มี Action</th></tr></thead><tbody></tbody></table></div><p id="e-li" hidden>ไม่มีข้อมูล</p></section>
+      <section class="card"><h4>2) ตัวชี้วัดเชิงรุกอื่น</h4>
+        <div class="tablewrap"><table id="t-li"><thead><tr><th>Plant</th><th class="num">Action เกินกำหนดที่ยังเปิด</th><th class="num">Action ปิดแล้ว</th><th class="num">ปิดทันเวลา</th><th class="num">เลื่อนกำหนด 2 ครั้งขึ้นไป</th><th class="num">เหตุ Serious potential ที่ไม่มี Action</th></tr></thead><tbody></tbody></table></div><p id="e-li" hidden>ไม่มีข้อมูล</p></section>
 
-      <section class="card"><h3>3) เหตุการณ์เกิดซ้ำ (Repeat)</h3>
+      <section class="card"><h4>3) เหตุการณ์เกิดซ้ำ (Repeat) แยกตาม Plant</h4>
         <p class="hint" id="h-rep">ต้องตั้งกฎ N/K ที่หน้า "เกณฑ์ SLA / Repeat" ก่อน ระบบจึงนับ</p>
-        <div class="tablewrap"><table id="t-rep" style="min-width:760px"><thead><tr><th>Plant</th><th class="num">เคสทั้งหมด</th><th class="num">Repeat root cause</th><th class="num">Repeat case</th><th class="num">Repeat after closure</th><th class="num">ผู้สอบสวนยืนยัน</th><th>กฎที่เปิด</th></tr></thead><tbody></tbody></table></div><p id="e-rep" hidden>ไม่มีข้อมูล</p>
-        <h4>Root cause ที่เกิดซ้ำ (heatmap)</h4>
-        <div class="tablewrap"><table id="t-heat" class="heat" style="min-width:600px"><thead></thead><tbody></tbody></table></div><p id="e-heat" hidden>ไม่มีรายการเกิดซ้ำ</p>
-        <h4>Action ปิดแล้วแต่ root cause เดิมเกิดอีก</h4>
-        <div class="tablewrap"><table id="t-ac" style="min-width:680px"><thead><tr><th>Plant</th><th>Root cause</th><th>เหตุครั้งก่อน</th><th>เหตุครั้งนี้</th><th class="num">หลังปิด (วัน)</th><th>ผลพิจารณา</th><th></th></tr></thead><tbody></tbody></table></div><p id="e-ac" hidden>ไม่มีรายการ (หรือคุณไม่มีสิทธิ์ดูรายเคส)</p>
-        <h4>แนวโน้มรายเดือน</h4>
-        <div class="tablewrap"><table id="t-tr" style="min-width:520px"><thead><tr><th>เดือน</th><th>นิยาม</th><th>เคส</th></tr></thead><tbody></tbody></table></div><p id="e-tr" hidden>ไม่มีข้อมูล</p>
-      </section>
+        <div class="tablewrap"><table id="t-rep"><thead><tr><th>Plant</th><th class="num">เคสทั้งหมด</th><th class="num">Repeat root cause</th><th class="num">Repeat case</th><th class="num">Repeat after closure</th><th class="num">ผู้สอบสวนยืนยัน</th><th>กฎที่เปิด</th></tr></thead><tbody></tbody></table></div><p id="e-rep" hidden>ไม่มีข้อมูล</p></section>
 
-      <section class="card"><h3>4) Life Saving Rules (จำนวนเคสต่อข้อ)</h3>
-        <div class="tablewrap"><table id="t-lsr" style="min-width:560px"><thead><tr><th>Plant</th><th>รหัส</th><th>ข้อกำหนด</th><th class="num">เคส</th></tr></thead><tbody></tbody></table></div><p id="e-lsr" hidden>ยังไม่มีรายการ Life Saving Rules หรือยังไม่มีเคสที่ผูกข้อ</p></section>
+      <section class="card"><h4>4) Life Saving Rules (จำนวนเคสต่อข้อ)</h4>
+        <div class="tablewrap"><table id="t-lsr"><thead><tr><th>Plant</th><th>รหัส</th><th>ข้อกำหนด</th><th class="num">เคส</th></tr></thead><tbody></tbody></table></div><p id="e-lsr" hidden>ยังไม่มีรายการ Life Saving Rules หรือยังไม่มีเคสที่ผูกข้อ</p></section>
+
+      <section class="card"><h4>5) Root cause ที่เกิดซ้ำ (Plant × Root cause)</h4>
+        <div class="tablewrap"><table id="t-heat" class="heat"><thead></thead><tbody></tbody></table></div><p id="e-heat" hidden>ไม่มีรายการเกิดซ้ำ</p></section>
+
+      <section class="card"><h4>6) Action ปิดแล้วแต่ root cause เดิมเกิดอีก</h4>
+        <div class="tablewrap"><table id="t-ac"><thead><tr><th>Plant</th><th>Root cause</th><th>เหตุครั้งก่อน</th><th>เหตุครั้งนี้</th><th class="num">หลังปิด (วัน)</th><th>ผลพิจารณา</th><th></th></tr></thead><tbody></tbody></table></div><p id="e-ac" hidden>ไม่มีรายการ (หรือคุณไม่มีสิทธิ์ดูรายเคส)</p></section>
+
+      <section class="card"><h4>7) แนวโน้ม Repeat รายเดือน</h4>
+        <div class="tablewrap"><table id="t-tr"><thead><tr><th>เดือน</th><th>นิยาม</th><th>เคส</th></tr></thead><tbody></tbody></table></div><p id="e-tr" hidden>ไม่มีข้อมูล</p></section>
+      </div>
     </div>
   </main>
 
@@ -127,6 +143,10 @@
     function td(text, cls) { const c = el("td", cls, text == null ? "" : String(text)); c.setAttribute("data-no-i18n", ""); return c; }
     function errText(e) { return e && e.code === "42501" ? "คุณไม่มีสิทธิ์ดูข้อมูลชุดนี้" : e && e.code === "22023" ? "ตัวเลือกไม่ถูกต้อง" : "โหลดข้อมูลไม่สำเร็จ"; }
     function fill(tb, rows, empty, build) { const t = document.querySelector(tb + " tbody"); t.replaceChildren(); $(empty).hidden = rows.length > 0; rows.forEach((r) => t.appendChild(build(r))); }
+    function scopeLabel(a) {
+      if (a.p_scope === "all") return "ทุก Plant"; if (a.p_scope === "priority") return "เฉพาะ Priority site";
+      if (a.p_scope === "bu") return "Business unit " + a.p_bu; const o = opts.find((x) => x.plant_id === a.p_plant); return "Plant " + (o ? o.code : "");
+    }
     function params() {
       const sc = $("scope").value;
       return { p_scope: sc, p_plant: sc === "plant" ? $("pl").value || null : null, p_bu: sc === "bu" ? $("bu").value || null : null, p_from: $("from").value, p_to: $("to").value };
@@ -210,9 +230,37 @@
       const mmx = Math.max(1, ...ml.map((m) => mo[m]));
       ml.forEach((m) => { const r = el("div", "hb"); const l = el("span", "l", m); l.setAttribute("data-no-i18n", ""); const t = el("span", "t"); const f = el("span", "f"); f.style.width = (100 * mo[m] / mmx).toFixed(1) + "%"; t.appendChild(f); const v = el("span", "v", String(mo[m])); v.setAttribute("data-no-i18n", ""); r.appendChild(l); r.appendChild(t); r.appendChild(v); th2.appendChild(r); });
       /* 4) LSR */
+      window.__lead = { sla: sla, li: li, rs: rs, hm: hm, ac: ac, mt: mt, lsr: get(6) || [], range: { from: a.p_from, to: a.p_to }, scope: scopeLabel(a), kpi: { miss: totMiss, over: totOver, closed: totClosed, on: totOn, rep: totRep }, miss: miss };
       fill("#t-lsr", get(6) || [], "e-lsr", (r) => { const tr = el("tr"); tr.appendChild(td(r.plant_code)); tr.appendChild(td(r.item_code)); tr.appendChild(td(dbName(r))); tr.appendChild(td(r.cases, "num")); return tr; });
     }
     $("f").addEventListener("submit", (ev) => { ev.preventDefault(); refresh(); });
+
+
+    /* ส่งออก: CSV / PowerPoint / พิมพ์ (ใช้ตัวเลขชุดเดียวกับหน้านี้ ประมวลผลในเบราว์เซอร์ ไม่ส่งข้อมูลออกนอกระบบ) */
+    const exMsg = (t) => { $("export-msg").textContent = t; };
+    $("b-print").addEventListener("click", () => window.print());
+    $("b-csv").addEventListener("click", () => {
+      const d = window.__lead; if (!d) { exMsg("กด \"แสดงผล\" ก่อนส่งออก"); return; }
+      const rows = [["หมวด", "Plant", "รายการ", "ตัวเลข", "ช่วงข้อมูล", "มุมมอง"]]; const per = d.range.from + " ถึง " + d.range.to;
+      const add = (cat, pl, item, v) => rows.push([cat, pl, item, v == null ? "" : v, per, d.scope]);
+      d.sla.forEach((r) => { const st = STAGE_TH[r.stage] || r.stage; add("SLA", r.plant_code, st + " - พลาดทั้งหมด", r.miss_total); add("SLA", r.plant_code, st + " - ทันเกณฑ์", r.met); add("SLA", r.plant_code, st + " - ไม่มีเกณฑ์", r.no_rule); });
+      d.li.forEach((r) => { add("ตัวชี้วัดเชิงรุก", r.plant_code, "Action เกินกำหนดที่ยังเปิด", r.capa_overdue_open); add("ตัวชี้วัดเชิงรุก", r.plant_code, "Action ปิดแล้ว", r.capa_closed_total); add("ตัวชี้วัดเชิงรุก", r.plant_code, "ปิดทันเวลา", r.capa_closed_on_time); add("ตัวชี้วัดเชิงรุก", r.plant_code, "เลื่อนกำหนด 2 ครั้งขึ้นไป", r.capa_due_shifted_2plus); add("ตัวชี้วัดเชิงรุก", r.plant_code, "Serious potential ที่ไม่มี Action", r.serious_potential_no_action); });
+      d.rs.forEach((r) => { add("Repeat", r.plant_code, "เคสทั้งหมด", r.cases_total); add("Repeat", r.plant_code, "Repeat root cause", r.repeat_root_cause); add("Repeat", r.plant_code, "Repeat case", r.repeat_case); add("Repeat", r.plant_code, "Repeat after closure", r.repeat_after_closure); add("Repeat", r.plant_code, "ผู้สอบสวนยืนยัน", r.confirmed_total); });
+      d.hm.forEach((r) => add("Root cause เกิดซ้ำ", r.plant_code, r.root_cause_code, r.repeat_cases));
+      d.mt.forEach((r) => add("แนวโน้มรายเดือน", "", String(r.month).slice(0, 7) + " " + (KIND_TH[r.kind] || r.kind), r.cases));
+      d.lsr.forEach((r) => add("Life Saving Rules", r.plant_code, r.item_code, r.cases));
+      const cell = (x) => { x = String(x == null ? "" : x); if (/^[=+\-@\t\r]/.test(x)) x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; };   /* กัน CSV/Formula injection (OWASP) */
+      const csv = "\uFEFF" + rows.map((r) => r.map(cell).join(",")).join("\r\n");
+      const l = document.createElement("a"), u = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      l.href = u; l.download = "SHE-Leading-Indicator_" + d.range.from + "_" + d.range.to + ".csv"; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+      exMsg("สร้างไฟล์ CSV เรียบร้อย (" + (rows.length - 1) + " แถว)");
+    });
+    $("b-pptx").addEventListener("click", async () => {
+      const d = window.__lead, btn = $("b-pptx"); if (!d) { exMsg("กด \"แสดงผล\" ก่อนส่งออก"); return; }
+      btn.disabled = true; exMsg("กำลังสร้างไฟล์…");
+      try { await window.exportLeadingPptx({ data: d, STAGE_TH: STAGE_TH, STAGE_ORDER: STAGE_ORDER, KIND_TH: KIND_TH }); exMsg("สร้างไฟล์เรียบร้อย (ดูที่โฟลเดอร์ดาวน์โหลด)"); }
+      catch (e) { exMsg("ส่งออกไม่สำเร็จ: " + (e && e.message ? e.message : e)); } finally { btn.disabled = false; }
+    });
 
     (async function init() {
       const session = await requireLogin(); if (!session) return;
@@ -227,6 +275,7 @@
       gate.hidden = true; $("area").hidden = false; syncScope(); refresh();
     })();
   </script>
+  <script src="leading-pptx.js"></script>
   <script src="shell-v4.js"></script>
 </body>
 </html>
