@@ -1700,9 +1700,10 @@
       } else if (!cr.error) body.append(h("p", { class: "hint", text: "ยังไม่พบเหตุการณ์ที่เข้าเงื่อนไข Repeat (หรือยังไม่ได้ตั้งกฎ N/K)" }));
       /* B32: แบบทวนข้อมูลรายเคส + รายการที่ค้างก่อนปิดการสอบสวน */
       const rvHost = h("div"); body.append(rvHost);
-      if (window.Review) { Review.mount(rvHost, inc.id, { title: "แบบทวนข้อมูลเคส", saveLabel: "บันทึกคำตอบ" }).catch(() => {});
-        Review.missing(inc.id).then((m) => { if (!m.length || closed) return;
-          const bn = h("div", { class: "howto", role: "status" }, h("b", { text: "ก่อนปิดการสอบสวน ต้องดำเนินการอีก " + m.length + " รายการ: " }), h("span", { text: m.map((x) => x.text_th || x.code || "-").join(", ") }));
+      if (window.Review) { const mp = Review.mount(rvHost, inc.id, { title: "แบบทวนข้อมูลเคส", saveLabel: "บันทึกคำตอบ" }).catch(() => {});
+        Promise.all([mp, Review.missing(inc.id)]).then((r) => { const m = r[1]; if (!m.length || closed) return;
+          const qn = (x) => { const q = (Review._q || {})[x.code]; return q && typeof window.dbName === "function" ? window.dbName(q, "text") : (x.text_th || x.code || "-"); };
+          const bn = h("div", { class: "howto", role: "status" }, h("b", { text: "ก่อนปิดการสอบสวน ต้องดำเนินการอีก " + m.length + " รายการ: " }), h("span", { text: m.map(qn).join(", ") }));
           body.insertBefore(bn, rvHost); }).catch(() => {}); }
       if (d && d.started && d.can_edit && !closed)
         body.append(h("div", { class: "rowbtns" }, h("button", { type: "button", class: "btn-ok", text: "ปิดการสอบสวน (บันทึกเวลาสอบสวนเสร็จ)",

@@ -91,8 +91,9 @@
 
   async function buildRow(box, q, incidentId, idx) {
     var wrap = el("div", "rvq"), name = "rv-" + incidentId.slice(0, 8) + "-" + idx;
+    (window.Review._q = window.Review._q || {})[q.code] = q; /* B35b: ให้แบนเนอร์รายการค้างแปลชื่อคำถามตามภาษาได้ */
     var t = el("p", "rvt", nm(q, "text")); t.setAttribute("data-no-i18n", ""); wrap.appendChild(t);
-    if (q.help_th) { var hp = el("p", "rvh", q.help_th); hp.setAttribute("data-no-i18n", ""); wrap.appendChild(hp); }
+    if (q.help_th) { var hp = el("p", "rvh", q.help_th); wrap.appendChild(hp); } /* B35b: ไม่ใส่ data-no-i18n เพื่อให้พจนานุกรมแปลคำอธิบายได้ (ข้อความที่ไม่มีในพจนานุกรมยังแสดงเป็นไทยตามเดิม) */
     var st = el("span", "rvst " + (q.answer ? "done" : (q.required_by ? "need" : "")), q.answer ? "ตอบแล้ว" : (q.required_by ? "ต้องตอบก่อนปิดการสอบสวน" : "ยังไม่ตอบ"));
     wrap.appendChild(st); wrap.appendChild(el("span", "rvst", "ถามช่วง: " + (STAGE_TH[q.ask_stage] || q.ask_stage)));
     var opts = el("div", "rvopts"); opts.setAttribute("role", "radiogroup"); opts.setAttribute("aria-label", nm(q, "text"));
@@ -140,5 +141,5 @@
     var r = await sb.rpc("incident_review_missing", { p_incident: incidentId });
     return r.error || !Array.isArray(r.data) ? [] : r.data;
   }
-  window.Review = { mount: mount, missing: missing, ANS_TH: ANS_TH };
+  window.Review = { _q: {}, mount: mount, missing: missing, ANS_TH: ANS_TH };
 })();
