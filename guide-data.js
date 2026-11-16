@@ -172,6 +172,28 @@ window.SHE_GUIDE = {
     std: ["ISO/IEC 27001:2022 A.5.18 (Access rights) และ A.6.5 (หน้าที่หลังสิ้นสุดการจ้างงาน)", "ISO/IEC 27001:2022 A.5.18 (Access rights) and A.6.5 (Responsibilities after termination)."]
   },
 
+  "admin-email": {
+    purpose: ["ตั้งค่าและตรวจสอบการส่งอีเมลแจ้งเตือนจากระบบ ได้แก่ อีเมล CAPA (สรุปรายวัน/ส่งทันที) และ Flash Report เมื่อเกิดเหตุร้ายแรง (FAT/LTI) อีเมลมีเพียงหัวข้อและลิงก์เข้าระบบ ไม่มีรายละเอียดเหตุการณ์", "Configure and monitor system email alerts: CAPA emails (daily digest / immediate) and Flash Report for serious incidents (FAT/LTI). Emails contain only a headline and a link into the portal, never incident details."],
+    who: ["Super admin แก้ไขการตั้งค่าได้ Admin ดูสถานะและคิวอีเมลได้อย่างเดียว", "Super admin can edit settings; Admin can only view status and the email queue."],
+    ifnot: ["ถ้าสวิตช์หลักปิดอยู่ ระบบจะไม่ส่งอีเมลเลย (แจ้งเตือนในกระดิ่งยังทำงานตามปกติ) ถ้าตั้งค่าผิด ผู้รับอาจไม่ได้อีเมลเหตุร้ายแรงทันเวลา", "If the master switch is off, no email is sent (bell notifications still work). Wrong settings may delay serious-incident emails."],
+    steps: [
+      ["ดูกล่อง \"สถานะการส่ง\": รอส่ง / ส่งแล้ววันนี้ / ส่งไม่สำเร็จ / โควตาต่อวัน", "Check the \"Sending status\" box: pending / sent today / failed / daily quota."],
+      ["ตรวจชื่อและอีเมลผู้ส่ง ต้องเป็นโดเมนที่ยืนยันกับผู้ให้บริการส่งอีเมลแล้วเท่านั้น", "Check the sender name and address; it must be a domain verified with the email provider."],
+      ["เลือกโหมด CAPA: สรุปรายวัน (08:00 เวลาไทย) ส่งทันที หรือปิดการส่งอีเมล แล้วเลือก Role ที่รับ Flash Report", "Choose the CAPA mode: daily digest (08:00 Thai time), immediate, or off, then pick the Roles that receive Flash Report."],
+      ["กด \"บันทึกการตั้งค่า\" เปิดสวิตช์หลักเมื่อพร้อมใช้งานจริงเท่านั้น", "Press Save settings. Turn the master switch on only when ready for real use."],
+      ["เปิดตาราง \"คิวอีเมลล่าสุด\" เพื่อตรวจสถานะรายการ กดรีเฟรชเพื่อโหลดใหม่", "Open the \"Latest email queue\" table to check each item; press Refresh to reload."]
+    ],
+    glossary: [
+      ["สวิตช์หลัก", "เปิด/ปิดการส่งอีเมลทั้งระบบ ปิดอยู่ = ไม่ส่งอีเมลใด ๆ", "Turns all email sending on or off; off means nothing is sent."],
+      ["Digest", "สรุปรวมหลายรายการเป็นอีเมลเดียวต่อผู้รับ ส่งวันละครั้ง", "Several items combined into one email per recipient, sent once a day."],
+      ["Flash Report", "อีเมลแจ้งเหตุร้ายแรง (FAT/LTI) ถึง Role ที่กำหนดใน Plant ที่เกี่ยวข้อง", "Email alert for serious incidents (FAT/LTI) to the chosen Roles in the relevant Plant."],
+      ["โควตาต่อวัน", "จำนวนอีเมลสูงสุดต่อวัน ตามแพ็กเกจของผู้ให้บริการ (นับตามเวลา UTC)", "Maximum emails per day under the provider plan (counted in UTC)."],
+      ["Retention", "รายการที่ส่งแล้ว/ล้มเหลว/ข้ามจะถูกลบอัตโนมัติหลัง 90 วัน", "Sent, failed or skipped items are purged automatically after 90 days."]
+    ].map(function (g) { return [[g[0], g[0]], [g[1], g[2]]]; }),
+    example: ["ต้องการให้ Plant Director ได้รับเฉพาะ Flash Report → ตั้งโหมด CAPA = ปิดการส่งอีเมล, เปิด Flash Report, เลือก Role ที่ต้องการ แล้วบันทึก", "To let Plant Directors receive only Flash Report: set CAPA mode to off, enable Flash Report, tick the Roles, and save."],
+    std: ["ISO/IEC 27001:2022 A.5.14 (การถ่ายโอนข้อมูล) และ A.5.15 (สิทธิ์น้อยที่สุด) ISO 45001:2018 ข้อ 7.4 (การสื่อสาร)", "ISO/IEC 27001:2022 A.5.14 (information transfer) and A.5.15 (least privilege); ISO 45001:2018 clause 7.4 (communication)."]
+  },
+
   "admin-notifications": {
     purpose: ["กำหนดว่าใครได้รับแจ้งเตือนในกระดิ่งเมื่อ Action (CAPA) มีเหตุการณ์ เช่น เลยกำหนด ถูกส่งกลับ ตอนนี้แจ้งในระบบเท่านั้น ยังไม่ส่งอีเมล", "Decide who gets bell notifications when an Action (CAPA) has an event such as overdue or returned. In-app only for now; no email yet."],
     who: ["Super admin ตั้งกฎส่วนกลางได้ Admin/SHE ตั้งได้เฉพาะ Plant ที่ดูแล", "Super admin sets central rules; Admin/SHE only for the Plants they manage."],
