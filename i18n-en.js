@@ -2453,4 +2453,10 @@ I18N.add({
 "← กลับรายการ Action": "← Back to Action list",
 "ลงมือแก้ไข": "Carry out",
 "ผู้ตรวจสอบ": "Verifier",
+"เหตุการณ์นี้เกี่ยวข้องกับ Life Saving Rule (กฎพิทักษ์ชีวิต) หรือไม่ ถ้าใช่ เกี่ยวกับข้อใด": "Is this event related to a Life Saving Rule? If yes, which one?",
+"เลือก \"ใช่\" แล้วเลือกข้อที่ตรงที่สุด ถ้าไม่แน่ใจเลือก \"ยังไม่ทราบ\" ผู้สอบสวนจะทวนอีกครั้ง": "Select \"Yes\" and choose the closest rule. If unsure, select \"Not known yet\" and the investigator will review it again",
+"ถ้ายังไม่เก็บ ให้ประสานเก็บภาพก่อนถูกเขียนทับ แล้วแนบในหน้ารายการรายงาน": "If not yet saved, arrange to secure the footage before it is overwritten, then attach it on the report list page",
+"ตัดสินตามเกณฑ์ภายในองค์กร (แนวคิดอ้างอิง OSHA 29 CFR 1904.5)": "Decide according to the organization's internal criteria (reference concept: OSHA 29 CFR 1904.5)",
+"ตอบ \"ไม่เกี่ยวข้อง\" ถ้างานนี้ไม่ต้องมีใบอนุญาต": "Answer \"Not applicable\" if this work does not require a permit",
+"ระบุมาตรการที่ล้มเหลวในหมายเหตุ (แนวคิด Hierarchy of controls ตาม ISO 45001:2018 ข้อ 8.1.2)": "State the failed control measure in the remarks (Hierarchy of controls concept per ISO 45001:2018 clause 8.1.2)",
 });
