@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>ตั้งค่าอีเมลแจ้งเตือน | SHE Portal</title>
+  <style>
+    .em-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.2rem;margin:1rem 0}
+    .em-card h3{margin:.1rem 0 .6rem}
+    .em-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.8rem 1rem;align-items:end}
+    .em-card label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.95rem}
+    .em-card select,.em-card input[type=text]{min-height:44px;font:inherit;font-weight:400}
+    .em-roles{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem}
+    .em-roles label{flex-direction:row;align-items:center;gap:.5rem;font-weight:400;color:inherit;min-height:44px}
+    .em-roles input,.em-sw input{width:22px;height:22px}
+    .em-sw{display:flex;align-items:center;gap:.7rem;min-height:44px;flex-direction:row!important}
+    .em-state{display:inline-flex;align-items:center;gap:.5rem;font-weight:700;border-radius:999px;padding:.25rem .9rem}
+    .em-state i{width:9px;height:9px;border-radius:50%;display:inline-block}
+    .em-on{background:#e6f4ea;color:#14532d}.em-on i{background:#15803d}
+    .em-off{background:#eef0f4;color:#374151}.em-off i{background:#6b7280}
+    .em-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.6rem;margin:.6rem 0}
+    .em-kpi div{background:#f3f6fd;border:1px solid var(--line);border-radius:12px;padding:.6rem .8rem}
+    .em-kpi b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums;color:var(--navy)}
+    .em-help{background:#f3f6fd;border:1px solid var(--line);border-radius:12px;padding:.7rem 1rem;margin:.4rem 0 1rem;font-size:.92rem}
+    .em-help ul{margin:.3rem 0 0 1.1rem;padding:0}.em-help li{margin:.25rem 0}
+    .em-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.6rem 0}
+    .em-row button{min-height:44px;margin:0}
+    table.em{min-width:720px}
+    .hint{color:var(--muted);font-size:.88rem;font-weight:400}
+    [hidden]{display:none!important}
+  </style>
+  <script src="i18n.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">รายการรายงาน</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- หน้านี้เป็นเพียงหน้าจอ: สิทธิ์จริงบังคับที่ RPC email_* (SECURITY DEFINER) ตารางไม่มี GRANT ให้ผู้ใช้ -->
+    <div id="area" hidden>
+      <h2>ตั้งค่าอีเมลแจ้งเตือน</h2>
+      <p>ควบคุมการส่งอีเมลจากระบบ: Flash Report เหตุร้ายแรง (FAT/LTI) และแจ้งเตือน CAPA · ผู้รับดึงจากบัญชีในระบบเท่านั้น และต้องเห็น Plant นั้นได้จริง (ISO/IEC 27001:2022 A.5.15) · อีเมลไม่ใส่รายละเอียดเหตุการณ์ ต้องเข้าสู่ระบบเพื่อดู · ทุกการเปลี่ยนแปลงถูกบันทึกใน Audit log</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <section class="em-card" aria-labelledby="h-state">
+        <h3 id="h-state">สถานะการส่ง</h3>
+        <p><span id="st" class="em-state em-off"><i></i><span id="st-t">ปิดอยู่</span></span></p>
+        <div class="em-kpi">
+          <div><span class="hint">รอส่ง</span><b id="k-pend">-</b></div>
+          <div><span class="hint">ส่งแล้ววันนี้ (UTC)</span><b id="k-sent">-</b></div>
+          <div><span class="hint">ส่งไม่สำเร็จ</span><b id="k-fail">-</b></div>
+          <div><span class="hint">โควตาต่อวัน</span><b id="k-cap">-</b></div>
+        </div>
+        <p class="hint">แผน Free ของ Resend ส่งได้ 100 ฉบับต่อวัน — ถ้าเต็ม ระบบจะเลื่อนที่เหลือไปวันถัดไปอัตโนมัติ</p>
+      </section>
+
+      <section class="em-card" aria-labelledby="h-set">
+        <h3 id="h-set">การตั้งค่า</h3>
+        <div class="em-help"><strong>อ่านก่อนเปิดใช้งาน</strong>
+          <ul>
+            <li><strong>สวิตช์หลัก</strong> เปิดแล้วระบบจะเริ่มส่งอีเมลจริงถึงผู้ใช้ตามกฎ — ระยะทดสอบให้ใช้ข้อมูลทดสอบเท่านั้น</li>
+            <li><strong>Flash Report</strong> = ส่งทันที (ตรวจทุก 2 นาที) เมื่อเหตุการณ์มีระดับความรุนแรงร้ายแรง ถึง Role ที่เลือกซึ่งเห็น Plant นั้น</li>
+            <li><strong>แจ้งเตือน CAPA</strong> = "สรุปรายวัน" รวมเป็นอีเมลฉบับเดียวต่อคนเวลา 08:00 น. (ประหยัดโควตา) · "ส่งทันที" ส่งทุกเหตุการณ์ · "ปิด" ไม่ส่งอีเมล (ยังแจ้งในกระดิ่ง)</li>
+          </ul>
+        </div>
+        <form id="f" novalidate>
+          <label class="em-sw" for="f-on"><input type="checkbox" id="f-on"> เปิดการส่งอีเมล (สวิตช์หลัก)</label>
+          <div class="em-grid">
+            <label for="f-name">ชื่อผู้ส่ง<input id="f-name" type="text" maxlength="80"></label>
+            <label for="f-addr">อีเมลผู้ส่ง (ต้องเป็นโดเมนที่ยืนยันใน Resend)<input id="f-addr" type="text" maxlength="120" inputmode="email" autocomplete="off"></label>
+            <label for="f-capa">แจ้งเตือน CAPA ทางอีเมล
+              <select id="f-capa"><option value="digest">สรุปรายวัน</option><option value="immediate">ส่งทันที</option><option value="off">ปิดการส่งอีเมล</option></select></label>
+          </div>
+          <label class="em-sw" for="f-flash" style="margin-top:.6rem"><input type="checkbox" id="f-flash"> ส่ง Flash Report เหตุร้ายแรง</label>
+          <fieldset style="border:0;padding:0;margin:.4rem 0 0"><legend style="font-weight:700;color:var(--navy)">Role ที่รับ Flash Report</legend>
+            <div class="em-roles" id="f-roles"></div>
+          </fieldset>
+          <div class="em-row"><button type="submit" id="f-save">บันทึกการตั้งค่า</button></div>
+          <p class="hint" id="f-hint"></p>
+        </form>
+      </section>
+
+      <section class="em-card" aria-labelledby="h-q">
+        <h3 id="h-q">คิวอีเมลล่าสุด</h3>
+        <p class="hint">แสดงเฉพาะโดเมนของผู้รับ ไม่แสดงอีเมลเต็ม (data minimization) · ข้อความ error ใช้ตรวจปัญหา เช่น 403 = รหัสไม่ตรง</p>
+        <div class="em-row"><button type="button" id="q-refresh" class="secondary">รีเฟรช</button></div>
+        <div class="tablewrap"><table class="em">
+          <thead><tr><th>เวลา</th><th>ประเภท</th><th>Plant</th><th>หัวข้อ</th><th>โดเมนผู้รับ</th><th>สถานะ</th><th>ข้อผิดพลาด</th></tr></thead>
+          <tbody id="tb"></tbody>
+        </table></div>
+        <p id="empty" class="hint" hidden>ยังไม่มีรายการในคิว</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* หน้านี้เป็นเพียงหน้าจอ: ความปลอดภัยจริงอยู่ที่ DB (migration B36a)
+       - อ่านผ่าน email_settings_get / email_outbox_list (Admin และ Super admin)
+       - แก้ผ่าน email_settings_set (Super admin เท่านั้น) | ตารางไม่มี GRANT ให้ผู้ใช้
+       - แสดงข้อมูลทุกจุดด้วย textContent (OWASP A03) */
+    const $ = (id) => document.getElementById(id);
+    const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+    const nd = (e) => { e.setAttribute("data-no-i18n", ""); return e; };
+    const ROLES = [["she","SHE"],["plant_director","Plant Director"],["director","Director"],["md","MD"],["ceo","CEO"],["admin","Admin"],["super_admin","Super admin"]];
+    const KIND = { capa: "แจ้งเตือน CAPA", flash: "Flash Report" };
+    const STAT = { pending: "รอส่ง", sending: "กำลังส่ง", sent: "ส่งแล้ว", failed: "ส่งไม่สำเร็จ (จะลองใหม่)", skipped: "ข้าม (ข้อมูลไม่ถูกต้อง)" };
+    let isSuper = false;
+
+    function msg(t, ok) { const m = $("msg"); m.hidden = false; m.className = "msg " + (ok ? "ok" : "error"); m.textContent = t; m.scrollIntoView({ block: "nearest" }); }
+    function errText(e) {
+      if (e && e.code === "42501") return "คุณไม่มีสิทธิ์ทำรายการนี้ (แก้ไขได้เฉพาะ Super admin)";
+      if (e && (e.code === "23514" || e.code === "22023")) return "ข้อมูลไม่ถูกต้อง: ตรวจอีเมลผู้ส่ง (ต้องเป็นรูปแบบอีเมล) และ Role ที่เลือก";
+      return "ทำรายการไม่สำเร็จ: " + ((e && e.message) || "");
+    }
+    function fmt(t) { try { return new Date(t).toLocaleString(document.documentElement.lang === "en" ? "en-GB" : "th-TH", { dateStyle: "short", timeStyle: "short" }); } catch (e) { return t || "-"; } }
+
+    async function loadSettings() {
+      const r = await sb.rpc("email_settings_get");
+      if (r.error) { msg(errText(r.error), false); return; }
+      const s = (r.data || [])[0]; if (!s) return;
+      $("f-on").checked = s.enabled; $("f-name").value = s.from_name; $("f-addr").value = s.from_address;
+      $("f-capa").value = s.capa_mode; $("f-flash").checked = s.flash_enabled;
+      document.querySelectorAll("#f-roles input").forEach((i) => { i.checked = (s.flash_roles || []).includes(i.value); });
+      $("st").className = "em-state " + (s.enabled ? "em-on" : "em-off");
+      $("st-t").textContent = s.enabled ? "เปิดอยู่ — ระบบกำลังส่งอีเมลตามกฎ" : "ปิดอยู่ — ไม่มีการส่งอีเมล";
+      $("k-pend").textContent = s.pending; $("k-sent").textContent = s.sent_today; $("k-fail").textContent = s.failed; $("k-cap").textContent = s.daily_cap;
+    }
+    async function loadQueue() {
+      const r = await sb.rpc("email_outbox_list", { p_limit: 50 });
+      const tb = $("tb"); tb.replaceChildren();
+      if (r.error) { msg(errText(r.error), false); return; }
+      const rows = r.data || []; $("empty").hidden = rows.length > 0;
+      rows.forEach((x) => {
+        const tr = el("tr");
+        [fmt(x.created_at), KIND[x.kind] || x.kind, x.plant_code || "-", x.title, x.to_domain || "-", STAT[x.status] || x.status, x.last_error || "-"].forEach((v, i) => {
+          const td = el("td", null, v); if (i === 0 || i === 2 || i === 3 || i === 4 || i === 6) nd(td); tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+    }
+    $("f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const roles = Array.from(document.querySelectorAll("#f-roles input:checked")).map((i) => i.value);
+      if ($("f-flash").checked && !roles.length) { msg("กรุณาเลือก Role ที่รับ Flash Report อย่างน้อย 1 Role", false); return; }
+      const r = await sb.rpc("email_settings_set", {
+        p_enabled: $("f-on").checked, p_from_name: $("f-name").value, p_from_address: $("f-addr").value,
+        p_capa_mode: $("f-capa").value, p_flash_enabled: $("f-flash").checked, p_flash_roles: roles.length ? roles : null
+      });
+      if (r.error) { msg(errText(r.error), false); return; }
+      msg("บันทึกการตั้งค่าแล้ว", true); await loadSettings();
+    });
+    $("q-refresh").addEventListener("click", () => { loadQueue(); loadSettings(); });
+
+    (async function () {
+      const session = await requireLogin(); if (!session) return;
+      const me = await getMyProfile();
+      const gate = $("gate");
+      if (!me || me.status !== "active" || !["admin", "super_admin"].includes(me.role)) { gate.textContent = "หน้านี้สำหรับ Admin และ Super admin เท่านั้น"; return; }
+      isSuper = me.role === "super_admin";   /* ใช้แสดงผลเท่านั้น สิทธิ์จริงตรวจที่ RPC */
+      gate.hidden = true; $("area").hidden = false;
+      const box = $("f-roles");
+      ROLES.forEach((r) => { const l = el("label"); const i = el("input"); i.type = "checkbox"; i.value = r[0]; l.appendChild(i); l.appendChild(nd(el("span", null, r[1]))); box.appendChild(l); });
+      if (!isSuper) {
+        document.querySelectorAll("#f input, #f select").forEach((x) => { x.disabled = true; });
+        $("f-save").hidden = true; $("f-hint").textContent = "ดูได้อย่างเดียว — การแก้ไขการตั้งค่าทำได้เฉพาะ Super admin";
+      }
+      await loadSettings(); await loadQueue();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>
