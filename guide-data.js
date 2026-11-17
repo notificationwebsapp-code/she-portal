@@ -201,6 +201,7 @@ window.SHE_GUIDE = {
       ["ตรวจชื่อและอีเมลผู้ส่ง ต้องเป็นโดเมนที่ยืนยันกับผู้ให้บริการส่งอีเมลแล้วเท่านั้น", "Check the sender name and address; it must be a domain verified with the email provider."],
       ["เลือกโหมด CAPA: สรุปรายวัน (08:00 เวลาไทย) ส่งทันที หรือปิดการส่งอีเมล แล้วเลือก Role ที่รับ Flash Report", "Choose the CAPA mode: daily digest (08:00 Thai time), immediate, or off, then pick the Roles that receive Flash Report."],
       ["กด \"บันทึกการตั้งค่า\" เปิดสวิตช์หลักเมื่อพร้อมใช้งานจริงเท่านั้น", "Press Save settings. Turn the master switch on only when ready for real use."],
+      ["ถ้าต้องการให้ MD ได้รับสรุปรายวัน ให้ใช้กล่อง \"อีเมลสรุปรายวัน MD Brief\": ติ๊กเปิด เลือก Role ผู้รับ แล้วกดบันทึก (ส่ง 08:00 น. เมื่อสวิตช์หลักเปิดอยู่)", "To send the MD a daily summary, use the \"Daily MD Brief email\" box: tick it on, choose the recipient Roles and save (sent at 08:00 when the main switch is on)."],
       ["เปิดตาราง \"คิวอีเมลล่าสุด\" เพื่อตรวจสถานะรายการ กดรีเฟรชเพื่อโหลดใหม่", "Open the \"Latest email queue\" table to check each item; press Refresh to reload."]
     ],
     glossary: [

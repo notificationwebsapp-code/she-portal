@@ -94,6 +94,25 @@
         </form>
       </section>
 
+      <section class="em-card" aria-labelledby="h-md">
+        <h3 id="h-md">อีเมลสรุปรายวัน MD Brief</h3>
+        <div class="em-help"><strong>อ่านก่อนเปิดใช้งาน</strong>
+          <ul>
+            <li>ส่งวันละ 1 ฉบับ เวลา 08:00 น. (เวลาไทย) ถึง Role ที่เลือก เป็นตัวเลขสรุป (เหตุร้ายแรง, Action เกินกำหนด, จำนวน Plant ที่ Overdue) พร้อมลิงก์ไปหน้า MD Brief</li>
+            <li>ไม่มีรายละเอียดเหตุการณ์หรือชื่อบุคคลในอีเมล (data minimization)</li>
+            <li>จะส่งจริงเมื่อ "สวิตช์หลัก" ด้านบนเปิดอยู่ และเปิดตัวเลือกนี้ด้วยเท่านั้น</li>
+          </ul>
+        </div>
+        <form id="md-f" novalidate>
+          <label class="em-sw" for="md-on"><input type="checkbox" id="md-on"> ส่งอีเมลสรุปรายวัน MD Brief</label>
+          <fieldset style="border:0;padding:0;margin:.4rem 0 0"><legend style="font-weight:700;color:var(--navy)">Role ที่รับอีเมลสรุปรายวัน</legend>
+            <div class="em-roles" id="md-roles"></div>
+          </fieldset>
+          <div class="em-row"><button type="submit" id="md-save">บันทึก</button></div>
+          <p class="hint" id="md-hint"></p>
+        </form>
+      </section>
+
       <section class="em-card" aria-labelledby="h-q">
         <h3 id="h-q">คิวอีเมลล่าสุด</h3>
         <p class="hint">แสดงเฉพาะโดเมนของผู้รับ ไม่แสดงอีเมลเต็ม (data minimization) · ข้อความ error ใช้ตรวจปัญหา เช่น 403 = รหัสไม่ตรง</p>
@@ -119,7 +138,8 @@
     const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
     const nd = (e) => { e.setAttribute("data-no-i18n", ""); return e; };
     const ROLES = [["she","SHE"],["plant_director","Plant Director"],["director","Director"],["md","MD"],["ceo","CEO"],["admin","Admin"],["super_admin","Super admin"]];
-    const KIND = { capa: "แจ้งเตือน CAPA", flash: "Flash Report" };
+    const KIND = { capa: "แจ้งเตือน CAPA", flash: "Flash Report", mdbrief: "MD Brief รายวัน" };
+    const MD_ROLES = [["md","MD"],["ceo","CEO"],["admin","Admin"],["super_admin","Super admin"]];
     const STAT = { pending: "รอส่ง", sending: "กำลังส่ง", sent: "ส่งแล้ว", failed: "ส่งไม่สำเร็จ (จะลองใหม่)", skipped: "ข้าม (ข้อมูลไม่ถูกต้อง)" };
     let isSuper = false;
 
@@ -166,7 +186,22 @@
       if (r.error) { msg(errText(r.error), false); return; }
       msg("บันทึกการตั้งค่าแล้ว", true); await loadSettings();
     });
-    $("q-refresh").addEventListener("click", () => { loadQueue(); loadSettings(); });
+    async function loadMd() {
+      const r = await sb.rpc("email_mdbrief_get");
+      if (r.error) { msg(errText(r.error), false); return; }
+      const m = (r.data || [])[0]; if (!m) return;
+      $("md-on").checked = m.enabled;
+      document.querySelectorAll("#md-roles input").forEach((i) => { i.checked = (m.roles || []).includes(i.value); });
+    }
+    $("md-f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const roles = Array.from(document.querySelectorAll("#md-roles input:checked")).map((i) => i.value);
+      if (!roles.length) { msg("กรุณาเลือก Role ที่รับอีเมลอย่างน้อย 1 Role", false); return; }
+      const r = await sb.rpc("email_mdbrief_set", { p_enabled: $("md-on").checked, p_roles: roles });
+      if (r.error) { msg(errText(r.error), false); return; }
+      msg("บันทึกการตั้งค่า MD Brief แล้ว", true); await loadMd();
+    });
+    $("q-refresh").addEventListener("click", () => { loadQueue(); loadSettings(); loadMd(); });
 
     (async function () {
       const session = await requireLogin(); if (!session) return;
@@ -177,11 +212,14 @@
       gate.hidden = true; $("area").hidden = false;
       const box = $("f-roles");
       ROLES.forEach((r) => { const l = el("label"); const i = el("input"); i.type = "checkbox"; i.value = r[0]; l.appendChild(i); l.appendChild(nd(el("span", null, r[1]))); box.appendChild(l); });
+      const mbox = $("md-roles");
+      MD_ROLES.forEach((r) => { const l = el("label"); const i = el("input"); i.type = "checkbox"; i.value = r[0]; l.appendChild(i); l.appendChild(nd(el("span", null, r[1]))); mbox.appendChild(l); });
       if (!isSuper) {
-        document.querySelectorAll("#f input, #f select").forEach((x) => { x.disabled = true; });
-        $("f-save").hidden = true; $("f-hint").textContent = "ดูได้อย่างเดียว — การแก้ไขการตั้งค่าทำได้เฉพาะ Super admin";
+        document.querySelectorAll("#f input, #f select, #md-f input").forEach((x) => { x.disabled = true; });
+        $("f-save").hidden = true; $("md-save").hidden = true; $("f-hint").textContent = "ดูได้อย่างเดียว — การแก้ไขการตั้งค่าทำได้เฉพาะ Super admin";
+        $("md-hint").textContent = "ดูได้อย่างเดียว — การแก้ไขการตั้งค่าทำได้เฉพาะ Super admin";
       }
-      await loadSettings(); await loadQueue();
+      await loadSettings(); await loadMd(); await loadQueue();
     })();
   </script>
   <script src="shell-v4.js"></script>

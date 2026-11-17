@@ -341,4 +341,14 @@ I18N.add({
 "เหตุร้ายแรงใหม่": "New serious incident",
 "เหตุร้ายแรงใหม่ (FAT/LTI / Serious potential)": "New serious incident (FAT/LTI / Serious potential)",
 "เมื่อมีเหตุการณ์ร้ายแรงเกิดใหม่ใน Plant (แจ้งเฉพาะ Plant ระดับความรุนแรง และวันที่ ไม่มีรายละเอียดเหตุการณ์) ใช้เป็น Escalate ให้ MD": "When a new serious incident occurs in a Plant (shows only the Plant, severity level and date, no incident details). Used as an Escalate for the MD.",
+/* B37c MD Brief email */
+"MD Brief รายวัน": "Daily MD Brief",
+"อีเมลสรุปรายวัน MD Brief": "Daily MD Brief email",
+"ส่งวันละ 1 ฉบับ เวลา 08:00 น. (เวลาไทย) ถึง Role ที่เลือก เป็นตัวเลขสรุป (เหตุร้ายแรง, Action เกินกำหนด, จำนวน Plant ที่ Overdue) พร้อมลิงก์ไปหน้า MD Brief": "Sent once a day at 08:00 (Thai time) to the selected Roles: summary numbers (serious incidents, overdue Actions, number of Plants with Overdue) with a link to the MD Brief page.",
+"ไม่มีรายละเอียดเหตุการณ์หรือชื่อบุคคลในอีเมล (data minimization)": "No incident details or personal names in the email (data minimization).",
+"จะส่งจริงเมื่อ \"สวิตช์หลัก\" ด้านบนเปิดอยู่ และเปิดตัวเลือกนี้ด้วยเท่านั้น": "Emails are sent only when the main switch above is on and this option is also on.",
+"ส่งอีเมลสรุปรายวัน MD Brief": "Send the daily MD Brief email",
+"Role ที่รับอีเมลสรุปรายวัน": "Roles that receive the daily email",
+"กรุณาเลือก Role ที่รับอีเมลอย่างน้อย 1 Role": "Please select at least 1 Role to receive the email",
+"บันทึกการตั้งค่า MD Brief แล้ว": "MD Brief settings saved",
 });
