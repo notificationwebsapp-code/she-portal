@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>MD Brief | SHE Portal</title>
+  <style>
+    .mb-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.2rem;margin:1rem 0}
+    .mb-card h3{margin:.1rem 0 .3rem}
+    .mb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.8rem 1rem;align-items:end}
+    .mb-card label{display:flex;flex-direction:column;gap:.3rem;font-weight:700;color:var(--navy);font-size:.95rem}
+    .mb-card select{min-height:44px;font:inherit;font-weight:400}
+    .mb-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(10.5rem,1fr));gap:.7rem;margin:1rem 0}
+    .mb-k{border-radius:14px;padding:.8rem .95rem;color:#fff;display:flex;flex-direction:column;gap:.15rem;min-height:104px}
+    .mb-k .t{font-size:.9rem;display:flex;align-items:center;gap:.4rem;min-height:2.6em}
+    .mb-k .t i{width:9px;height:9px;border-radius:50%;background:#fff;flex:none}
+    .mb-k b{font-size:2.3rem;line-height:1.1;font-variant-numeric:tabular-nums}
+    .mb-k .s{font-size:.85rem;opacity:.95}
+    .k-blue{background:#284499}.k-red{background:#7F1D1D}.k-orange{background:#C2410C}.k-ocean{background:#017AB6}.k-green{background:#15803D}.k-gray{background:#4B5563}
+    .mb-sec svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:-4px;margin-right:.4rem}
+    table.mb{min-width:640px}
+    table.mb td{vertical-align:middle}
+    table.mb td.n,table.mb th.n{text-align:right;font-variant-numeric:tabular-nums}
+    .mb-pill{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.15rem .7rem;font-weight:700;font-size:.88rem}
+    .mb-pill i{width:9px;height:9px;border-radius:50%;display:inline-block}
+    .p-bad{background:#fdecec;color:#8f1d1d}.p-bad i{background:#C62828}
+    .p-ok{background:#e6f4ea;color:#14532d}.p-ok i{background:#15803d}
+    .p-warn{background:#fff4e0;color:#7a4a00}.p-warn i{background:#E0A100}
+    button.rowbtn{min-height:44px;margin:0;background:transparent;color:var(--navy);border:0;font:inherit;font-weight:700;text-align:left;padding:.2rem .4rem;cursor:pointer;text-decoration:underline}
+    .mb-note{background:#f3f6fd;border:1px solid var(--line);border-radius:12px;padding:.7rem 1rem;margin:.4rem 0 1rem;font-size:.92rem}
+    .hint{color:var(--muted);font-size:.88rem;font-weight:400}
+    .em-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.6rem 0}
+    [hidden]{display:none!important}
+  </style>
+  <script src="i18n.js"></script>
+  <script src="i18n-b26.js"></script>
+  <script src="guide-data.js"></script><script src="guide.js"></script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style-v4.css">
+</head>
+<body>
+  <header>
+    <h1>SHE Portal</h1>
+    <nav>
+      <a href="index.html">หน้าแรก</a>
+      <a href="incident.html">รายงานอุบัติเหตุ</a>
+      <a href="checklist.html">เช็กลิสต์ตรวจ</a>
+      <a href="training.html">บันทึกการอบรม</a>
+      <a href="records.html">รายการรายงาน</a>
+      <a href="login.html">เข้าสู่ระบบ</a>
+    </nav>
+  </header>
+
+  <main class="wide">
+    <p id="gate" role="status">กำลังตรวจสอบสิทธิ์…</p>
+    <!-- หน้านี้เป็นเพียงหน้าจอ: สิทธิ์จริงบังคับที่ RPC md_brief (SECURITY DEFINER; role md/ceo/admin/super_admin + dashboard.view)
+         ข้อมูลเป็นตัวเลขรวมและรายการ Action/เคสแบบย่อ ไม่มีรายละเอียดบุคคล/คำอธิบายเหตุการณ์ (data minimization) -->
+    <div id="area" hidden>
+      <h2>MD Brief: ภาพรวมทุก Plant</h2>
+      <p>สรุปสำหรับผู้บริหาร: เหตุร้ายแรงใหม่ (FAT/LTI และ Serious potential), Plant ที่มี Action เกินกำหนด และตัวชี้วัดเชิงรุก (ISO 45001:2018 ข้อ 5.1, 9.1 และ 9.3)</p>
+      <div id="msg" class="msg" hidden role="status"></div>
+
+      <form id="f" class="mb-card mb-grid">
+        <label>มุมมอง
+          <select id="scope"><option value="all">ทุก Plant</option><option value="priority">เฉพาะ Priority site</option><option value="bu">ตาม Business unit</option><option value="plant">Plant เดียว</option></select>
+        </label>
+        <label id="w-bu" hidden>Business unit<select id="bu"></select></label>
+        <label id="w-pl" hidden>Plant<select id="pl"></select></label>
+        <label>ช่วงเวลา
+          <select id="days"><option value="1">24 ชั่วโมงล่าสุด</option><option value="7" selected>7 วันล่าสุด</option><option value="14">14 วันล่าสุด</option><option value="30">30 วันล่าสุด</option><option value="90">90 วันล่าสุด</option></select>
+        </label>
+        <button type="submit" style="min-height:50px">แสดงผล</button>
+      </form>
+      <p class="hint" id="gen" role="status"></p>
+
+      <section class="mb-sec" aria-labelledby="h-k">
+        <h3 id="h-k"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>ตัวเลขสำคัญ</h3>
+        <div class="mb-kpis" id="kpis"></div>
+      </section>
+
+      <section class="mb-card mb-sec" aria-labelledby="h-op">
+        <h3 id="h-op"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2"/></svg>Plant ที่มี Action เกินกำหนด</h3>
+        <p class="hint">เรียงตามจำนวนมากไปน้อย · กดชื่อ Plant เพื่อดูรายการ Action ที่เกินกำหนดของ Plant นั้น</p>
+        <div class="tablewrap"><table class="mb">
+          <thead><tr><th>Plant</th><th class="n">เกินกำหนด (รายการ)</th><th class="n">เก่าสุด (วัน)</th></tr></thead>
+          <tbody id="tb-op"></tbody>
+        </table></div>
+        <p id="e-op" class="hint" hidden>ไม่มี Action เกินกำหนดในขอบเขตที่เลือก</p>
+      </section>
+
+      <section class="mb-card mb-sec" id="items" tabindex="-1" aria-labelledby="h-it" aria-live="polite">
+        <h3 id="h-it"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8.5 9l1.6 1.6L13 7.7M9 15h6"/></svg>Action ที่เกินกำหนด</h3>
+        <p class="hint" id="it-sub">แสดงสูงสุด 50 รายการ เรียงจากเกินกำหนดนานที่สุด</p>
+        <div class="em-row" id="it-clear-w" hidden><button type="button" class="secondary" id="it-clear" style="min-height:44px">ล้างตัวกรอง Plant</button></div>
+        <div class="tablewrap"><table class="mb">
+          <thead><tr><th>Plant</th><th>Action</th><th>ชื่อ Action</th><th>ผู้รับผิดชอบ</th><th>ครบกำหนด</th><th class="n">เกิน (วัน)</th><th>สถานะ</th></tr></thead>
+          <tbody id="tb-it"></tbody>
+        </table></div>
+        <p id="e-it" class="hint" hidden>ไม่มีรายการ</p>
+      </section>
+
+      <section class="mb-card mb-sec" aria-labelledby="h-sc">
+        <h3 id="h-sc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3zM12 10v4.5M12 17.2v.1"/></svg>เหตุร้ายแรงล่าสุด (FAT/LTI และ Serious potential)</h3>
+        <p class="hint">ไม่แสดงรายละเอียดบุคคล/คำอธิบายเหตุการณ์ · ดูรายละเอียดได้ที่หน้ารายการรายงานตามสิทธิ์ · แสดงสูงสุด 20 รายการภายในช่วงเวลาที่เลือก</p>
+        <div class="tablewrap"><table class="mb">
+          <thead><tr><th>Plant</th><th>วันที่เกิดเหตุ</th><th>ความรุนแรง</th><th>ประเภท</th><th>ขั้นตอน</th><th>บันทึกเมื่อ</th></tr></thead>
+          <tbody id="tb-sc"></tbody>
+        </table></div>
+        <p id="e-sc" class="hint" hidden>ไม่มีเหตุร้ายแรงในช่วงเวลาที่เลือก</p>
+        <p><a href="records.html">ไปหน้ารายการรายงาน</a></p>
+      </section>
+
+      <section class="mb-card mb-sec" aria-labelledby="h-li">
+        <h3 id="h-li"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>Leading indicator (ตามช่วงเวลาที่เลือก)</h3>
+        <div class="mb-kpis" id="lead"></div>
+        <p><a href="leading.html">ไปหน้า Leading Indicator (แยกตาม Plant)</a></p>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    /* หน้านี้เป็นเพียงหน้าจอ: ความปลอดภัยจริงอยู่ที่ DB (migration B37a)
+       - อ่านผ่าน RPC md_brief เท่านั้น (ตารางไม่เปิด SELECT ตรง)
+       - แสดงข้อมูลทุกจุดด้วย textContent (OWASP A03) */
+    const $ = (id) => document.getElementById(id);
+    const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+    const nd = (e) => { e.setAttribute("data-no-i18n", ""); return e; };
+    const ST = { open: ["เปิดใหม่", "p-warn"], in_progress: ["กำลังดำเนินการ", "p-warn"], returned: ["ส่งกลับให้แก้", "p-warn"] };
+    let opts = [], cur = null, plantFilter = null;
+
+    function msg(t, ok) { const m = $("msg"); m.hidden = false; m.className = "msg " + (ok ? "ok" : "error"); m.textContent = t; }
+    function errText(e) {
+      if (e && e.code === "42501") return "คุณไม่มีสิทธิ์ดู MD Brief (เฉพาะ MD, CEO, Admin และ Super admin)";
+      if (e && e.code === "22023") return "ตัวกรองไม่ถูกต้อง: ตรวจมุมมองและช่วงเวลา";
+      return "โหลดข้อมูลไม่สำเร็จ: " + ((e && e.message) || "");
+    }
+    function lang() { return document.documentElement.lang === "en" ? "en-GB" : "th-TH"; }
+    function fmtD(t) { try { return new Date(t).toLocaleDateString(lang(), { dateStyle: "medium" }); } catch (e) { return t || "-"; } }
+    function fmtT(t) { try { return new Date(t).toLocaleString(lang(), { dateStyle: "short", timeStyle: "short" }); } catch (e) { return t || "-"; } }
+    function syncScope() { const s = $("scope").value; $("w-bu").hidden = s !== "bu"; $("w-pl").hidden = s !== "plant"; }
+
+    function tile(cls, title, val, sub) {
+      const d = el("div", "mb-k " + cls);
+      const t = el("div", "t"); t.appendChild(el("i")); t.appendChild(el("span", null, title));
+      d.appendChild(t); d.appendChild(nd(el("b", null, String(val)))); if (sub) d.appendChild(el("span", "s", sub));
+      return d;
+    }
+    function renderItems() {
+      const tb = $("tb-it"); tb.replaceChildren();
+      const rows = (cur.overdue_items || []).filter((x) => !plantFilter || x.plant_code === plantFilter);
+      $("e-it").hidden = rows.length > 0; $("it-clear-w").hidden = !plantFilter;
+      $("it-sub").textContent = plantFilter ? "กรองเฉพาะ Plant ที่เลือก · เรียงจากเกินกำหนดนานที่สุด" : "แสดงสูงสุด 50 รายการ เรียงจากเกินกำหนดนานที่สุด";
+      rows.forEach((x) => {
+        const tr = el("tr");
+        tr.appendChild(nd(el("td", null, x.plant_code))); tr.appendChild(nd(el("td", null, x.action_no == null ? "-" : String(x.action_no))));
+        tr.appendChild(nd(el("td", null, x.title || "-"))); tr.appendChild(nd(el("td", null, x.owner || "-")));
+        tr.appendChild(nd(el("td", null, fmtD(x.due_date)))); tr.appendChild(nd(el("td", "n", String(x.days_over))));
+        const s = ST[x.status] || [x.status, "p-warn"]; const c = el("td"); const p = el("span", "mb-pill p-bad"); p.appendChild(el("i"));
+        p.appendChild(el("span", null, "เกินกำหนด · " + s[0])); c.appendChild(p); tr.appendChild(c);
+        tb.appendChild(tr);
+      });
+    }
+    function render(d) {
+      cur = d; plantFilter = null;
+      const k = d.kpi || {}, L = d.leading || {};
+      $("gen").textContent = "อัปเดตเมื่อ " + fmtT(d.generated_at);
+      const kp = $("kpis"); kp.replaceChildren();
+      kp.appendChild(tile("k-red", "เหตุร้ายแรง 24 ชม.", k.serious_24h, "FAT/LTI + Serious potential"));
+      kp.appendChild(tile("k-red", "เหตุร้ายแรงในช่วงที่เลือก", k.serious_period, d.days + " วันล่าสุด"));
+      kp.appendChild(tile("k-blue", "เคสใหม่ 24 ชม. (ทั้งหมด)", k.new_cases_24h, "ทุกระดับความรุนแรง"));
+      kp.appendChild(tile("k-blue", "เคสใหม่ในช่วงที่เลือก", k.new_cases_period, d.days + " วันล่าสุด"));
+      kp.appendChild(tile(k.overdue_total > 0 ? "k-orange" : "k-green", "Action เกินกำหนด", k.overdue_total, k.overdue_total > 0 ? "ต้องติดตาม" : "ไม่มีรายการค้าง"));
+      kp.appendChild(tile(k.plants_overdue > 0 ? "k-orange" : "k-green", "Plant ที่มี Overdue", k.plants_overdue + " / " + k.plants_total, "จากทั้งหมดในขอบเขต"));
+
+      const tb = $("tb-op"); tb.replaceChildren();
+      const ops = d.overdue_plants || []; $("e-op").hidden = ops.length > 0;
+      ops.forEach((x) => {
+        const tr = el("tr"); const c = el("td"); const b = el("button", "rowbtn", x.code + " — " + x.name); b.type = "button"; nd(b);
+        b.addEventListener("click", () => { plantFilter = x.code; renderItems(); $("items").scrollIntoView({ block: "start" }); $("items").focus(); });
+        c.appendChild(b); tr.appendChild(c);
+        tr.appendChild(nd(el("td", "n", String(x.overdue)))); tr.appendChild(nd(el("td", "n", String(x.oldest_days)))); tb.appendChild(tr);
+      });
+      renderItems();
+
+      const sb2 = $("tb-sc"); sb2.replaceChildren();
+      const sc = d.serious_cases || []; $("e-sc").hidden = sc.length > 0;
+      sc.forEach((x) => {
+        const tr = el("tr");
+        tr.appendChild(nd(el("td", null, x.plant_code))); tr.appendChild(nd(el("td", null, fmtD(x.occurred_on))));
+        tr.appendChild(nd(el("td", null, x.severity || "-")));
+        tr.appendChild(el("td", null, x.potential ? "Serious potential" : "ความรุนแรงสูง (FAT/LTI)"));
+        tr.appendChild(nd(el("td", null, x.phase || "-"))); tr.appendChild(nd(el("td", null, fmtT(x.created_at)))); sb2.appendChild(tr);
+      });
+
+      const ld = $("lead"); ld.replaceChildren();
+      const pct = L.capa_closed_total > 0 ? Math.round((100 * L.capa_closed_on_time) / L.capa_closed_total) + "%" : "-";
+      ld.appendChild(tile("k-ocean", "ปิด Action ตรงเวลา", pct, L.capa_closed_on_time + " จาก " + L.capa_closed_total + " รายการที่ปิด"));
+      ld.appendChild(tile(L.capa_due_shifted_2plus > 0 ? "k-orange" : "k-green", "เลื่อนกำหนด 2 ครั้งขึ้นไป", L.capa_due_shifted_2plus, "Action ที่เลื่อนซ้ำ"));
+      ld.appendChild(tile(L.serious_potential_no_action > 0 ? "k-red" : "k-green", "Serious potential ที่ยังไม่มี Action", L.serious_potential_no_action, "ควรมี Action ป้องกัน (ISO 45001 ข้อ 10.2)"));
+    }
+
+    async function load() {
+      const s = $("scope").value;
+      const r = await sb.rpc("md_brief", { p_scope: s, p_plant: s === "plant" ? $("pl").value : null, p_bu: s === "bu" ? $("bu").value : null, p_days: parseInt($("days").value, 10) });
+      if (r.error) { msg(errText(r.error), false); return; }
+      $("msg").hidden = true; render(r.data);
+    }
+    $("scope").addEventListener("change", syncScope);
+    $("f").addEventListener("submit", (e) => { e.preventDefault(); load(); });
+    $("it-clear").addEventListener("click", () => { plantFilter = null; renderItems(); });
+
+    (async function () {
+      const session = await requireLogin(); if (!session) return;
+      const me = await getMyProfile(); const gate = $("gate");
+      if (!me || me.status !== "active") { gate.textContent = "บัญชีนี้ยังไม่เปิดใช้งาน"; return; }
+      if (!["md", "ceo", "admin", "super_admin"].includes(me.role)) { gate.textContent = "หน้านี้สำหรับ MD, CEO, Admin และ Super admin เท่านั้น"; return; }
+      try {
+        const o = await sb.rpc("scope_options"); if (o.error) throw o.error; opts = o.data || [];
+      } catch (e) { gate.textContent = "คุณไม่มีสิทธิ์เข้าหน้านี้ (ต้องมีสิทธิ์ดู Dashboard)"; return; }
+      [...new Set(opts.map((o) => o.business_unit).filter(Boolean))].forEach((b) => { const o = el("option", null, b); o.value = b; nd(o); $("bu").appendChild(o); });
+      opts.forEach((p) => { const o = el("option", null, p.code + " — " + p.name); o.value = p.plant_id; nd(o); $("pl").appendChild(o); });
+      gate.hidden = true; $("area").hidden = false; syncScope(); load();
+    })();
+  </script>
+  <script src="shell-v4.js"></script>
+</body>
+</html>

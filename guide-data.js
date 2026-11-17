@@ -172,6 +172,26 @@ window.SHE_GUIDE = {
     std: ["ISO/IEC 27001:2022 A.5.18 (Access rights) และ A.6.5 (หน้าที่หลังสิ้นสุดการจ้างงาน)", "ISO/IEC 27001:2022 A.5.18 (Access rights) and A.6.5 (Responsibilities after termination)."]
   },
 
+  "md-brief": {
+    purpose: ["ให้ MD เห็นภาพรวมทุก Plant ในหน้าเดียว: เหตุร้ายแรงใหม่ (FAT/LTI และ Serious potential), Plant ที่มี Action เกินกำหนดและรายการที่เกินกำหนด, และตัวชี้วัดเชิงรุก", "Gives the MD one page for all Plants: new serious incidents (FAT/LTI and Serious potential), Plants with overdue Actions and the overdue items, and leading indicators."],
+    who: ["MD, CEO, Admin และ Super admin (ไม่ต้องผูก Plant) ผู้ใช้ role อื่นเข้าหน้านี้ไม่ได้", "MD, CEO, Admin and Super admin (no Plant binding needed). Other roles cannot open this page."],
+    ifnot: ["ถ้าไม่เปิดดู ผู้บริหารอาจไม่ทราบเหตุร้ายแรงหรือ Plant ที่มี Action ค้างจนเลยกำหนดนาน หน้านี้ไม่แสดงชื่อบุคคลหรือคำอธิบายเหตุการณ์", "If not reviewed, management may miss serious incidents or Plants with long-overdue Actions. This page shows no personal names or incident descriptions."],
+    steps: [
+      ["เลือกมุมมอง (ทุก Plant / Priority site / Business unit / Plant เดียว) และช่วงเวลา แล้วกด \"แสดงผล\"", "Choose the view (all Plants / Priority sites / Business unit / single Plant) and the period, then press Show."],
+      ["ดูตัวเลขสำคัญด้านบน: สีแดง = เหตุร้ายแรง สีส้ม = มี Overdue สีเขียว = ไม่มีรายการค้าง", "Read the key numbers at the top: red = serious incidents, orange = overdue items exist, green = nothing outstanding."],
+      ["กดชื่อ Plant ในตาราง \"Plant ที่มี Action เกินกำหนด\" เพื่อดูรายการ Action ที่เกินกำหนดของ Plant นั้น", "Press a Plant name in the \"Plants with overdue Actions\" table to see that Plant's overdue Actions."],
+      ["ดู \"เหตุร้ายแรงล่าสุด\" และ Leading indicator ด้านล่าง หากต้องการรายละเอียดเคสให้ไปหน้ารายการรายงาน", "Check \"Latest serious incidents\" and the leading indicators below; for case details go to the Reports page."]
+    ],
+    glossary: [
+      ["FAT/LTI", "เหตุร้ายแรง: เสียชีวิต (FAT) หรือบาดเจ็บถึงขั้นหยุดงาน (LTI)", "Serious incident: fatality (FAT) or lost time injury (LTI)."],
+      ["Serious potential", "เหตุที่ผลจริงเบาแต่มีศักยภาพร้ายแรง (เช่น Near miss ที่เกือบเป็น FAT)", "An event with a minor actual outcome but serious potential (e.g. a near miss that almost became a fatality)."],
+      ["Overdue", "Action (CAPA) ที่เลยวันครบกำหนดและยังไม่ปิด (เปิดใหม่ / กำลังดำเนินการ / ส่งกลับให้แก้)", "A CAPA Action past its due date and not yet closed (new / in progress / returned)."],
+      ["Leading indicator", "ตัวชี้วัดเชิงรุกที่เตือนก่อนเกิดเหตุ เช่น ปิด Action ตรงเวลา", "A proactive measure that warns before incidents happen, such as closing Actions on time."]
+    ].map(function (g) { return [[g[0], g[0]], [g[1], g[2]]]; }),
+    example: ["ต้องการทราบว่าสัปดาห์นี้ Plant ใดมี Action เกินกำหนด → เลือก \"ทุก Plant\" และ \"7 วันล่าสุด\" → ดูตาราง Plant ที่มี Overdue → กดชื่อ Plant เพื่อดูว่า Action ใดเกินกำหนดและเกินมากี่วัน", "To see which Plants have overdue Actions this week → choose All Plants and Last 7 days → read the Plants table → press a Plant name to see which Actions are overdue and by how many days."],
+    std: ["ISO 45001:2018 ข้อ 5.1 (ภาวะผู้นำ), 9.1 (การเฝ้าติดตามและวัดผล), 9.3 (การทบทวนโดยผู้บริหาร) และ ISO/IEC 27001:2022 A.5.15 (สิทธิ์น้อยที่สุด)", "ISO 45001:2018 clauses 5.1 (leadership), 9.1 (monitoring and measurement), 9.3 (management review) and ISO/IEC 27001:2022 A.5.15 (least privilege)."]
+  },
+
   "admin-email": {
     purpose: ["ตั้งค่าและตรวจสอบการส่งอีเมลแจ้งเตือนจากระบบ ได้แก่ อีเมล CAPA (สรุปรายวัน/ส่งทันที) และ Flash Report เมื่อเกิดเหตุร้ายแรง (FAT/LTI) อีเมลมีเพียงหัวข้อและลิงก์เข้าระบบ ไม่มีรายละเอียดเหตุการณ์", "Configure and monitor system email alerts: CAPA emails (daily digest / immediate) and Flash Report for serious incidents (FAT/LTI). Emails contain only a headline and a link into the portal, never incident details."],
     who: ["Super admin แก้ไขการตั้งค่าได้ Admin ดูสถานะและคิวอีเมลได้อย่างเดียว", "Super admin can edit settings; Admin can only view status and the email queue."],
