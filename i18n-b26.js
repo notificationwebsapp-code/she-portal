@@ -337,4 +337,8 @@ I18N.add({
 "คุณไม่มีสิทธิ์ดู MD Brief (เฉพาะ MD, CEO, Admin และ Super admin)": "You do not have access to MD Brief (MD, CEO, Admin and Super admin only)",
 "ตัวกรองไม่ถูกต้อง: ตรวจมุมมองและช่วงเวลา": "Invalid filter: check the view and period",
 "หน้านี้สำหรับ MD, CEO, Admin และ Super admin เท่านั้น": "This page is for MD, CEO, Admin and Super admin only",
+/* B37b MD bell */
+"เหตุร้ายแรงใหม่": "New serious incident",
+"เหตุร้ายแรงใหม่ (FAT/LTI / Serious potential)": "New serious incident (FAT/LTI / Serious potential)",
+"เมื่อมีเหตุการณ์ร้ายแรงเกิดใหม่ใน Plant (แจ้งเฉพาะ Plant ระดับความรุนแรง และวันที่ ไม่มีรายละเอียดเหตุการณ์) ใช้เป็น Escalate ให้ MD": "When a new serious incident occurs in a Plant (shows only the Plant, severity level and date, no incident details). Used as an Escalate for the MD.",
 });

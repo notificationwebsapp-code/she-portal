@@ -26,7 +26,7 @@
   function bellItem(n,t,href){var a=el("a","bellitem");a.href=href;var b=el("b",null,String(n));a.appendChild(b);a.appendChild(el("span",null,t));return a}
   /* ข้อความแจ้งเตือน CAPA: ส่วนคงที่แปลได้ (i18n) ส่วนที่ผู้ใช้พิมพ์/ชื่อเรื่องใส่ด้วย textContent และกันไม่ให้แปล (OWASP A03) */
   var CST={open:"เปิดใหม่",in_progress:"กำลังดำเนินการ",returned:"ส่งกลับให้แก้",closed:"รอตรวจสอบ",verified:"ตรวจสอบแล้ว",cancelled:"ยกเลิก"};
-  var CEV={capa_assigned:"มอบหมาย Action ให้คุณ",capa_due_soon:"ใกล้ครบกำหนด",capa_overdue:"เกินกำหนดแล้ว",capa_status:"เปลี่ยนสถานะ",capa_due_changed:"เลื่อนกำหนดเสร็จ",capa_comment:"ความคิดเห็นใหม่"};
+  var CEV={capa_assigned:"มอบหมาย Action ให้คุณ",capa_due_soon:"ใกล้ครบกำหนด",capa_overdue:"เกินกำหนดแล้ว",capa_status:"เปลี่ยนสถานะ",capa_due_changed:"เลื่อนกำหนดเสร็จ",capa_comment:"ความคิดเห็นใหม่",incident_serious:"เหตุร้ายแรงใหม่"};
   function noData(t){var s=el("span",null,t);s.setAttribute("data-no-i18n","true");return s}
   /* รูปแบบการ์ดแจ้งเตือน: ใส่ผ่าน <style> ในไฟล์นี้ เพื่อไม่ต้องแก้ style-v4.css เพิ่ม; สีป้ายทุกสีตัวอักษรขาวบนพื้นเข้ม (WCAG 2.2 ข้อ 1.4.3 ≥ 4.5:1) */
   (function(){var st=document.createElement("style");st.textContent=
@@ -44,13 +44,14 @@
    ".nttl{display:block;font-size:.95rem;font-weight:700;overflow-wrap:anywhere}"+
    ".nnote{display:block;margin-top:.3rem;padding:.3rem .5rem;border-left:3px solid #b8c2d6;border-radius:4px;background:#f1f3f7;font-size:.85rem;font-weight:400;overflow-wrap:anywhere}"+
    ".nmeta{display:block;margin-top:.3rem;font-size:.76rem;font-weight:400;color:#4b5565}"+
-   ".ncard.t-assigned{--nc:#0d47a1}.ncard.t-due_soon{--nc:#8a5a00}.ncard.t-overdue{--nc:#b71c1c}.ncard.t-status{--nc:#6a2c91}.ncard.t-due_changed{--nc:#a64b00}.ncard.t-comment{--nc:#00695c}";
+   ".ncard.t-assigned{--nc:#0d47a1}.ncard.t-due_soon{--nc:#8a5a00}.ncard.t-overdue{--nc:#b71c1c}.ncard.t-status{--nc:#6a2c91}.ncard.t-due_changed{--nc:#a64b00}.ncard.t-comment{--nc:#00695c}.ncard.t-serious{--nc:#7f1d1d}";
    document.head.appendChild(st)})();
   function notifItem(n){
-    var tp=(n.event_type||"").replace("capa_","");
-    var a=el("a","ncard t-"+tp+(n.read_at?"":" unread"));a.href="capa.html?id="+encodeURIComponent(n.entity_id);
+    var tp=(n.event_type||"").replace("capa_","").replace("incident_","");
+    var a=el("a","ncard t-"+tp+(n.read_at?"":" unread"));a.href=(n.entity_type==="incident"?"records.html":"capa.html?id="+encodeURIComponent(n.entity_id));
     var pill=el("span","npill",CEV[n.event_type]||"แจ้งเตือน");
     if(n.event_type==="capa_status"&&n.code){pill.appendChild(document.createTextNode(" → "));pill.appendChild(el("span",null,CST[n.code]||n.code))}
+    else if(n.code&&(n.event_type==="incident_serious")){pill.appendChild(noData(" · "+n.code))}
     else if(n.code&&(n.event_type==="capa_due_changed"||n.event_type==="capa_due_soon"||n.event_type==="capa_overdue")){pill.appendChild(noData(" · "+n.code))}
     a.appendChild(pill);
     var ti=String(n.title||""),sp=ti.indexOf(" "),no=sp>0?ti.slice(0,sp):"",nm=sp>0?ti.slice(sp+1):ti;

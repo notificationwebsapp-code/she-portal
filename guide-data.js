@@ -227,7 +227,7 @@ window.SHE_GUIDE = {
     glossary: [
       ["ตาม Role", "ทุกคนที่มี Role นั้นและดู Plant นั้นได้ จะได้รับแจ้ง", "Everyone with that Role who can see that Plant is notified."],
       ["รายบุคคล", "เฉพาะคนที่เลือก ต้องระบุ Plant ด้วย", "Only the chosen person; a Plant is required."],
-      ["Escalate", "ปุ่มลัดเลือกเฉพาะ \"เกินกำหนด\" และ \"ส่งกลับ / ยกเลิก\" เหมาะกับผู้บริหารที่ไม่ต้องการแจ้งทุกเรื่อง", "A shortcut that picks only \"overdue\" and \"returned/cancelled\", suited to managers who do not want every notification."],
+      ["Escalate", "ปุ่มลัดเลือกเฉพาะ \"เกินกำหนด\" \"ส่งกลับ / ยกเลิก\" และ \"เหตุร้ายแรงใหม่\" เหมาะกับผู้บริหารที่ไม่ต้องการแจ้งทุกเรื่อง", "A shortcut that picks only \"overdue\", \"returned/cancelled\" and \"new serious incident\", suited to managers who do not want every notification."],
       ["กฎ \"ทุก Plant\"", "กฎส่วนกลาง ตั้งได้เฉพาะ Super admin", "A central rule that only Super admin can set."]
     ].map(function (g) { return [[g[0], g[0]], [g[1], g[2]]]; }),
     example: ["ผู้อำนวยการโรงงาน A อยากรู้เฉพาะเรื่องที่ต้องตัดสินใจ → Plant = โรงงาน A, ตาม Role = Plant Director, กด Escalate → จะได้แจ้งเฉพาะเมื่อ Action เลยกำหนดหรือถูกส่งกลับ/ยกเลิก (เป็นตัวอย่าง)", "A Factory A director only wants decision items → Plant = Factory A, by Role = Plant Director, press Escalate → notified only when an Action is overdue or returned/cancelled (example)."],

@@ -148,10 +148,11 @@
       ["status_all", "เปลี่ยนสถานะทุกครั้ง", "ทุกครั้งที่สถานะเปลี่ยน เช่น เริ่มดำเนินการ รอตรวจสอบ ปิดงาน"],
       ["status_return", "ส่งกลับ / ยกเลิก", "เฉพาะเมื่อ Action ถูกส่งกลับให้แก้ไข หรือถูกยกเลิก (ใช้เป็น Escalate)"],
       ["due_changed", "เปลี่ยนวันครบกำหนด", "เมื่อมีการเลื่อนหรือแก้วันครบกำหนด พร้อมเหตุผล"],
-      ["comment", "ความคิดเห็นใหม่", "เมื่อมีคนเขียนความคิดเห็นใน Action (ผู้เขียนเองไม่ได้รับ)"]
+      ["comment", "ความคิดเห็นใหม่", "เมื่อมีคนเขียนความคิดเห็นใน Action (ผู้เขียนเองไม่ได้รับ)"],
+      ["serious_case", "เหตุร้ายแรงใหม่ (FAT/LTI / Serious potential)", "เมื่อมีเหตุการณ์ร้ายแรงเกิดใหม่ใน Plant (แจ้งเฉพาะ Plant ระดับความรุนแรง และวันที่ ไม่มีรายละเอียดเหตุการณ์) ใช้เป็น Escalate ให้ MD"]
     ];
     
-    const ESC = ["overdue", "status_return"];
+    const ESC = ["overdue", "status_return", "serious_case"];
     let me = null, plants = [], isSuper = false, rules = [], editing = null, cands = [];
 
     function msg(t, ok) { const m = $("msg"); m.hidden = false; m.className = "msg " + (ok ? "ok" : "error"); m.textContent = t; m.scrollIntoView({ block: "nearest" }); }
