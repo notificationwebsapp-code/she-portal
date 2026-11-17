@@ -167,12 +167,12 @@
     function render(d) {
       cur = d; plantFilter = null;
       const k = d.kpi || {}, L = d.leading || {};
-      $("gen").textContent = "อัปเดตเมื่อ " + fmtT(d.generated_at);
+      $("gen").textContent = (lang() === "en-GB" ? "Updated " : "อัปเดตเมื่อ ") + fmtT(d.generated_at);
       const kp = $("kpis"); kp.replaceChildren();
       kp.appendChild(tile("k-red", "เหตุร้ายแรง 24 ชม.", k.serious_24h, "FAT/LTI + Serious potential"));
-      kp.appendChild(tile("k-red", "เหตุร้ายแรงในช่วงที่เลือก", k.serious_period, d.days + " วันล่าสุด"));
+      kp.appendChild(tile("k-red", "เหตุร้ายแรงในช่วงที่เลือก", k.serious_period, (lang() === "en-GB" ? "Last " + d.days + " days" : d.days + " วันล่าสุด")));
       kp.appendChild(tile("k-blue", "เคสใหม่ 24 ชม. (ทั้งหมด)", k.new_cases_24h, "ทุกระดับความรุนแรง"));
-      kp.appendChild(tile("k-blue", "เคสใหม่ในช่วงที่เลือก", k.new_cases_period, d.days + " วันล่าสุด"));
+      kp.appendChild(tile("k-blue", "เคสใหม่ในช่วงที่เลือก", k.new_cases_period, (lang() === "en-GB" ? "Last " + d.days + " days" : d.days + " วันล่าสุด")));
       kp.appendChild(tile(k.overdue_total > 0 ? "k-orange" : "k-green", "Action เกินกำหนด", k.overdue_total, k.overdue_total > 0 ? "ต้องติดตาม" : "ไม่มีรายการค้าง"));
       kp.appendChild(tile(k.plants_overdue > 0 ? "k-orange" : "k-green", "Plant ที่มี Overdue", k.plants_overdue + " / " + k.plants_total, "จากทั้งหมดในขอบเขต"));
 
@@ -198,7 +198,7 @@
 
       const ld = $("lead"); ld.replaceChildren();
       const pct = L.capa_closed_total > 0 ? Math.round((100 * L.capa_closed_on_time) / L.capa_closed_total) + "%" : "-";
-      ld.appendChild(tile("k-ocean", "ปิด Action ตรงเวลา", pct, L.capa_closed_on_time + " จาก " + L.capa_closed_total + " รายการที่ปิด"));
+      ld.appendChild(tile("k-ocean", "ปิด Action ตรงเวลา", pct, (lang() === "en-GB" ? L.capa_closed_on_time + " of " + L.capa_closed_total + " closed items" : L.capa_closed_on_time + " จาก " + L.capa_closed_total + " รายการที่ปิด")));
       ld.appendChild(tile(L.capa_due_shifted_2plus > 0 ? "k-orange" : "k-green", "เลื่อนกำหนด 2 ครั้งขึ้นไป", L.capa_due_shifted_2plus, "Action ที่เลื่อนซ้ำ"));
       ld.appendChild(tile(L.serious_potential_no_action > 0 ? "k-red" : "k-green", "Serious potential ที่ยังไม่มี Action", L.serious_potential_no_action, "ควรมี Action ป้องกัน (ISO 45001 ข้อ 10.2)"));
     }
