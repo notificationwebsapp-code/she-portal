@@ -139,7 +139,7 @@ html[data-ui="modern"] a.card:hover .icon svg{stroke:#fff}
 /* ===== มือถือ ===== */
 @media(max-width:900px){
   html[data-ui="modern"] header{padding-top:.4rem}
-  html[data-ui="modern"] header nav{background:rgba(251,251,253,.94);border-top:1px solid var(--line);box-shadow:none}
+  html[data-ui="modern"] header nav{background:#FBFBFD;border-top:1px solid var(--line);box-shadow:none}
   html[data-ui="modern"] header nav a{border-radius:0;background:transparent;padding:.35rem .1rem;font-size:.75rem}
   html[data-ui="modern"] header nav a[aria-current="page"],html[data-ui="modern"] header nav a.on{background:transparent;color:var(--brand)}
   html[data-ui="modern"] header nav a svg.ni{display:block}
