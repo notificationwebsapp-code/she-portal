@@ -82,7 +82,7 @@
       <section class="mb-card mb-sec" aria-labelledby="h-op">
         <h3 id="h-op"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2"/></svg>Plant ที่มี Action เกินกำหนด</h3>
         <p class="hint">เรียงตามจำนวนมากไปน้อย · กดชื่อ Plant เพื่อดูรายการ Action ที่เกินกำหนดของ Plant นั้น</p>
-        <div class="tablewrap"><table class="mb">
+        <div class="tablewrap"><table class="mb stack">
           <thead><tr><th>Plant</th><th class="n">เกินกำหนด (รายการ)</th><th class="n">เก่าสุด (วัน)</th></tr></thead>
           <tbody id="tb-op"></tbody>
         </table></div>
@@ -93,7 +93,7 @@
         <h3 id="h-it"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8.5 9l1.6 1.6L13 7.7M9 15h6"/></svg>Action ที่เกินกำหนด</h3>
         <p class="hint" id="it-sub">แสดงสูงสุด 50 รายการ เรียงจากเกินกำหนดนานที่สุด</p>
         <div class="em-row" id="it-clear-w" hidden><button type="button" class="secondary" id="it-clear" style="min-height:44px">ล้างตัวกรอง Plant</button></div>
-        <div class="tablewrap"><table class="mb">
+        <div class="tablewrap"><table class="mb stack">
           <thead><tr><th>Plant</th><th>Action</th><th>ชื่อ Action</th><th>ผู้รับผิดชอบ</th><th>ครบกำหนด</th><th class="n">เกิน (วัน)</th><th>สถานะ</th></tr></thead>
           <tbody id="tb-it"></tbody>
         </table></div>
@@ -103,7 +103,7 @@
       <section class="mb-card mb-sec" aria-labelledby="h-sc">
         <h3 id="h-sc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3zM12 10v4.5M12 17.2v.1"/></svg>เหตุร้ายแรงล่าสุด (FAT/LTI และ Serious potential)</h3>
         <p class="hint">ไม่แสดงรายละเอียดบุคคล/คำอธิบายเหตุการณ์ · ดูรายละเอียดได้ที่หน้ารายการรายงานตามสิทธิ์ · แสดงสูงสุด 20 รายการภายในช่วงเวลาที่เลือก</p>
-        <div class="tablewrap"><table class="mb">
+        <div class="tablewrap"><table class="mb stack">
           <thead><tr><th>Plant</th><th>วันที่เกิดเหตุ</th><th>ความรุนแรง</th><th>ประเภท</th><th>ขั้นตอน</th><th>บันทึกเมื่อ</th></tr></thead>
           <tbody id="tb-sc"></tbody>
         </table></div>
@@ -149,6 +149,11 @@
       d.appendChild(t); d.appendChild(nd(el("b", null, String(val)))); if (sub) d.appendChild(el("span", "s", sub));
       return d;
     }
+    // มือถือ: ตารางแสดงเป็นการ์ด (style-v4.css table.stack) ต้องมี data-label ต่อช่อง ดึงจากหัวตารางตามภาษาปัจจุบัน
+    function labelize(tbody) {
+      const heads = Array.from(tbody.closest("table").querySelectorAll("thead th")).map((h) => h.textContent.trim());
+      tbody.querySelectorAll("tr").forEach((tr) => Array.from(tr.children).forEach((c, i) => c.setAttribute("data-label", heads[i] || "")));
+    }
     function renderItems() {
       const tb = $("tb-it"); tb.replaceChildren();
       const rows = (cur.overdue_items || []).filter((x) => !plantFilter || x.plant_code === plantFilter);
@@ -163,6 +168,7 @@
         p.appendChild(el("span", null, "เกินกำหนด · " + s[0])); c.appendChild(p); tr.appendChild(c);
         tb.appendChild(tr);
       });
+      labelize(tb);
     }
     function render(d) {
       cur = d; plantFilter = null;
@@ -184,6 +190,7 @@
         c.appendChild(b); tr.appendChild(c);
         tr.appendChild(nd(el("td", "n", String(x.overdue)))); tr.appendChild(nd(el("td", "n", String(x.oldest_days)))); tb.appendChild(tr);
       });
+      labelize(tb);
       renderItems();
 
       const sb2 = $("tb-sc"); sb2.replaceChildren();
@@ -195,6 +202,7 @@
         tr.appendChild(el("td", null, x.potential ? "Serious potential" : "ความรุนแรงสูง (FAT/LTI)"));
         tr.appendChild(nd(el("td", null, x.phase || "-"))); tr.appendChild(nd(el("td", null, fmtT(x.created_at)))); sb2.appendChild(tr);
       });
+      labelize(sb2);
 
       const ld = $("lead"); ld.replaceChildren();
       const pct = L.capa_closed_total > 0 ? Math.round((100 * L.capa_closed_on_time) / L.capa_closed_total) + "%" : "-";
